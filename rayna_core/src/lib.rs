@@ -1,3 +1,3 @@
-pub mod shape;
-pub mod ray;
+pub mod obj;
 pub mod shared;
+mod scene;

@@ -9,5 +9,6 @@ edition = "2021"
 # ===== DEPENDENCIES =====
 
 [dependencies]
+glam = "0.24.2"
 
 # ===== BUILD PROFILES =====

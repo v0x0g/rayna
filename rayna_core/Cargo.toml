@@ -9,11 +9,12 @@ edition = "2021"
 # ===== DEPENDENCIES =====
 
 [dependencies]
+
+# Maths
 glam = { version = "0.24.2", optional = true }
 nalgebra = { version = "0.32.3", optional = true }
 
-[build-dependencies]
-
+# Other
 cfg-if = "1.0.0"
 
 # ===== BUILD PROFILES =====

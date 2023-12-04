@@ -12,10 +12,12 @@ macro_rules! features {
         };
         const _ : u64 = 0 $( + (cfg!(feature = $feature) as u64) )+;
 
-        $(
-            #[cfg(feature = $feature)]
-            $($tokens)*;
-        )+
+        ::cfg_if::cfg_if!{
+            $(
+                if #[cfg(feature = $feature)] { $($tokens)* }
+            ) else +
+            else {}
+        }
     };
 }
 

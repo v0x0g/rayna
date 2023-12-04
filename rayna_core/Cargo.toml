@@ -11,21 +11,10 @@ edition = "2021"
 [dependencies]
 
 # Maths
-glam = { version = "0.24.2", optional = true }
-nalgebra = { version = "0.32.3", optional = true }
+glam = { version = "0.24.2", features = ["approx", "mint", "rand", "serde", "debug-glam-assert", "std"] }
 
 # Raytracing
 rtbvh = "0.6.2"
 
 # Other
 cfg-if = "1.0.0"
-
-# ===== BUILD PROFILES =====
-
-# ===== FEATURES =====
-[features]
-default = []
-
-# Choose which math backend is used
-math_glam = ["dep:glam"]
-math_nalgebra = ["dep:nalgebra"]

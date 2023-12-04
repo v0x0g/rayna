@@ -19,46 +19,33 @@ macro_rules! features {
     };
 }
 
-/// Type alias for scalar numbers
-pub type Scalar = PrecisionFeatureValue;
 features! {
-    "precision_f32" => {type PrecisionFeatureValue = f32;};
-    "precision_f64" => {type PrecisionFeature = f64;};
+    "precision_f32" => {type ScalarType = f32;};
+    "precision_f64" => {type ScalarType = f64;};
 }
 
-// features! {
-//     "math_glam" => {
-//
-//     };
-//
-//
-// }
+features! {
+    "math_glam" => {
+        features!{
+            "precision_f32" => {
+                type VectorType = ::glam::Vec3;
+                type PointType = ::glam::Vec3;
+            };
+            "precision_f64" => {
+                type VectorType = ::glam::DVec3;
+                type PointType = ::glam::DVec3;
+            };
+        }
+    };
+    "math_nalgebra" => {
+        type VectorType = ::nalgebra::Vector3<Scalar>;
+        type PointType = ::nalgebra::UnitVector3<Scalar>;
+    };
+}
 
-// #[cfg(not(any(feature = "precision_f32", feature = "precision_f64")))]
-// compile_error!("Need to select either `feature=precision_f32` or `feature=precision_f64`");
-// #[cfg(all(feature = "precision_f32", feature = "precision_f64"))]
-//
-// // endregion
-//
-// #[cfg(feature = "math_nalgebra")]
-// pub type Vector = ::;
-//
-// #[cfg(feature = "math_glam", feature = "precision_f32")]
-// pub type Vector = ::glam::f32::Vec3;
-// #[cfg(feature = "math_glam", feature = "precision_f64")]
-// pub type Vector = ::glam::f32::Vec3;
-//
-// #[cfg(feature = "math_nalgebra")]
-// pub use self::nalgebra::*;
-// pub(self) trait MathBackend {
-//     type Scalar;
-//     type Vector;
-//     type Position;
-//
-//     #[inline]
-//     fn cross(a: Self::Vector, b: Self::Vector) -> Self::Vector;
-//     #[inline]
-//     fn dot(a: Self::Vector, b: Self::Vector) -> Self::Scalar;
-//     #[inline]
-//     fn cross(a: Self::Vector, b: Self::Vector);
-// }
+/// Type alias for scalar numbers
+pub type Scalar = ScalarType;
+/// Type alias for a vector in space
+pub type Vector = VectorType;
+/// Type alias for a point in space
+pub type Point = VectorType;

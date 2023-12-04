@@ -14,6 +14,9 @@ edition = "2021"
 glam = { version = "0.24.2", optional = true }
 nalgebra = { version = "0.32.3", optional = true }
 
+# Raytracing
+rtbvh = "0.6.2"
+
 # Other
 cfg-if = "1.0.0"
 

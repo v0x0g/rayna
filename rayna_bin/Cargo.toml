@@ -11,7 +11,9 @@ edition = "2021"
 [dependencies]
 
 # Raytracing deps
-#rtbvh = "0.6.2"
 rayna_core = {path = "../rayna_core"}
+
+# Display/UI
+imgui = { version = "0.11.0", features = [] }
 
 # ===== BUILD PROFILES =====

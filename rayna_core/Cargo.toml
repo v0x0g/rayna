@@ -29,6 +29,3 @@ default = []
 # Choose which math backend is used
 math_glam = ["dep:glam"]
 math_nalgebra = ["dep:nalgebra"]
-# Choose which float precision is used
-precision_f32 = []
-precision_f64 = []

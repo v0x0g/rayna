@@ -1,4 +1,10 @@
-// region === WARNINGS ===
+/// Type alias for scalar numbers
+pub type Scalar = f64;
+/// Type alias for a vector in space
+pub type Vector = VectorType;
+/// Type alias for a point in space
+pub type Point = VectorType;
+
 macro_rules! features {
     {
     $(
@@ -20,10 +26,15 @@ macro_rules! features {
 }
 
 features! {
-    "precision_f32" => {type ScalarType = f32;};
-    "precision_f64" => {type ScalarType = f64;};
+    "math_glam" => {
+        mod glam;
+        pub use self::glam::*;
+    };
+    "math_nalgebra" => {
+        mod nalgebra;
+        pub use self::nalgebra::*;
+    };
 }
-
 features! {
     "math_glam" => {
         features!{
@@ -42,10 +53,3 @@ features! {
         type PointType = ::nalgebra::UnitVector3<Scalar>;
     };
 }
-
-/// Type alias for scalar numbers
-pub type Scalar = ScalarType;
-/// Type alias for a vector in space
-pub type Vector = VectorType;
-/// Type alias for a point in space
-pub type Point = VectorType;

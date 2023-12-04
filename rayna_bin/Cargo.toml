@@ -12,5 +12,6 @@ edition = "2021"
 
 # Raytracing deps
 #rtbvh = "0.6.2"
+rayna_core = {path = "../rayna_core"}
 
 # ===== BUILD PROFILES =====

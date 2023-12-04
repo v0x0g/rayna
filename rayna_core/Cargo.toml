@@ -9,6 +9,22 @@ edition = "2021"
 # ===== DEPENDENCIES =====
 
 [dependencies]
-glam = "0.24.2"
+glam = { version = "0.24.2", optional = true }
+nalgebra = { version = "0.32.3", optional = true }
+
+[build-dependencies]
+
+cfg-if = "1.0.0"
 
 # ===== BUILD PROFILES =====
+
+# ===== FEATURES =====
+[features]
+default = []
+
+# Choose which math backend is used
+math_glam = ["dep:glam"]
+math_nalgebra = ["dep:nalgebra"]
+# Choose which float precision is used
+precision_f32 = []
+precision_f64 = []

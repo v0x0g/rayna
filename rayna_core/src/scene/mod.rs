@@ -3,14 +3,29 @@ use crate::shared::ray::Ray;
 
 pub struct Scene {
     // TODO: Maybe use [std::boxed::ThinBox] instead of [Box], might be better for perf
-    pub objects: Vec<Box<dyn Object>>
+    pub objects: Vec<Box<dyn Object>>,
 }
 
-impl Scene{
+#[macro_export]
+macro_rules! scene {
+    [
+        $(
+            $value:expr
+        ),* $(,)?
+    ] => {{
+            let mut objs = vec![$($value),*];
+            $crate::scene::Scene{
+                objects: objs
+            }
+        }};
+}
+
+impl Scene {
     pub fn test(&self, ray: Ray) {
-        self.objects.iter()
-            .map(|o| o.intersect(ray))
-            .for_each(|i| println!("{i:#?}"));
+        // self.objects
+        //     .iter()
+        //     .map(|o| o.intersect_all(ray))
+        //     .for_each(|i| println!("{i:#?}"));
 
         ()
     }

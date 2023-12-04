@@ -5,36 +5,34 @@ macro_rules! features {
         $feature:literal => {$($tokens:tt)*};
     )+
     } => {
-        const _ : () = match {0 $( + (cfg!(feature = $feature) as u64) )+} {
-            0 => panic!(concat!("Have to enable a feature: ", $( " ", $feature ),+ )),
-            1 => (),
-            _ => panic!(concat!("Only one feature can be enabled: ", $(" ", $feature),+ )),
-        };
-        const _ : u64 = 0 $( + (cfg!(feature = $feature) as u64) )+;
-
         ::cfg_if::cfg_if!{
+            if #[cfg(all( $( feature = $feature ),+  ))] {
+                compile_error!(concat!("Selected too many of the following features:" $(, " ", $feature)+ ));
+            }
             $(
-                if #[cfg(feature = $feature)] { $($tokens)* }
-            ) else +
-            else {}
+                else if #[cfg(feature = $feature)] { $($tokens)* }
+            )+
+            else {
+                compile_error!(concat!("You need to select one of the following features:" $(, " ", $feature)+ ));
+            }
         }
     };
 }
 
 /// Type alias for scalar numbers
-pub type Scalar = PrecisionFeature;
+pub type Scalar = PrecisionFeatureValue;
 features! {
-    "precision_f32" => {type PrecisionFeature = f32};
-    "precision_f64" => {type PrecisionFeature = f64};
+    "precision_f32" => {type PrecisionFeatureValue = f32;};
+    "precision_f64" => {type PrecisionFeature = f64;};
 }
 
-features! {
-    "math_glam" => {
-
-    };
-
-
-}
+// features! {
+//     "math_glam" => {
+//
+//     };
+//
+//
+// }
 
 // #[cfg(not(any(feature = "precision_f32", feature = "precision_f64")))]
 // compile_error!("Need to select either `feature=precision_f32` or `feature=precision_f64`");

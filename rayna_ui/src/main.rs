@@ -1,162 +1,75 @@
-use std::{ffi::CString, num::NonZeroU32, time::Instant};
-
-use glow::{Context, HasContext};
-use glutin::{
-    config::ConfigTemplateBuilder,
-    context::ContextAttributesBuilder,
-    display::GetGlDisplay,
-    prelude::{
-        GlDisplay, NotCurrentGlContextSurfaceAccessor, PossiblyCurrentContextGlSurfaceAccessor,
-    },
-    surface::{GlSurface, SurfaceAttributesBuilder, WindowSurface},
-};
-use glutin_winit::DisplayBuilder;
-use imgui::ConfigFlags;
-use imgui_winit_glow_renderer_viewports::Renderer;
-use raw_window_handle::HasRawWindowHandle;
-use winit::{dpi::LogicalSize, event::WindowEvent, event_loop::EventLoop, window::WindowBuilder};
-
-fn main() {
-    let event_loop = EventLoop::new();
-
-    let window_builder = WindowBuilder::new()
-        .with_inner_size(LogicalSize::new(800.0, 600.0))
-        .with_visible(true)
-        .with_resizable(true)
-        .with_title("Viewports example");
-
-    let template_builder = ConfigTemplateBuilder::new();
-    let (window, gl_config) = DisplayBuilder::new()
-        .with_window_builder(Some(window_builder))
-        .build(&event_loop, template_builder, |mut configs| {
-            configs.next().unwrap()
-        })
-        .expect("Failed to create main window");
-
-    let window = window.unwrap();
-
-    let context_attribs = ContextAttributesBuilder::new().build(Some(window.raw_window_handle()));
-    let context = unsafe {
-        gl_config
-            .display()
-            .create_context(&gl_config, &context_attribs)
-            .expect("Failed to create main context")
+fn main() -> eframe::Result<()> {
+    let opts = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size([400.0, 300.0])
+            .with_min_inner_size([300.0, 220.0]),
+        ..Default::default()
     };
+    let mut label = "label";
+    let mut value = 0.0;
 
-    let size = window.inner_size();
-    let surface_attribs = SurfaceAttributesBuilder::<WindowSurface>::new().build(
-        window.raw_window_handle(),
-        NonZeroU32::new(size.width).unwrap(),
-        NonZeroU32::new(size.height).unwrap(),
-    );
-    let surface = unsafe {
-        gl_config
-            .display()
-            .create_window_surface(&gl_config, &surface_attribs)
-            .expect("Failed to create main surface")
-    };
+    eframe::run_simple_native("rayna", opts, move |ctx, frame| {
+        // Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
+        // For inspiration and more examples, go to https://emilk.github.io/egui
 
-    let context = context
-        .make_current(&surface)
-        .expect("Failed to make current");
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            // The top panel is often a good place for a menu bar:
 
-    let glow = unsafe {
-        Context::from_loader_function(|name| {
-            let name = CString::new(name).unwrap();
-            context.display().get_proc_address(&name)
-        })
-    };
-
-    let mut imgui = imgui::Context::create();
-    imgui
-        .io_mut()
-        .config_flags
-        .insert(ConfigFlags::DOCKING_ENABLE);
-    imgui
-        .io_mut()
-        .config_flags
-        .insert(ConfigFlags::VIEWPORTS_ENABLE);
-    imgui.set_ini_filename(None);
-
-    let mut renderer = Renderer::new(&mut imgui, &window, &glow).expect("Failed to init Renderer");
-
-    let mut last_frame = Instant::now();
-
-    event_loop.run(move |event, window_target, control_flow| {
-        control_flow.set_poll();
-
-        renderer.handle_event(&mut imgui, &window, &event);
-
-        match event {
-            winit::event::Event::NewEvents(_) => {
-                let now = Instant::now();
-                imgui.io_mut().update_delta_time(now - last_frame);
-                last_frame = now;
-            }
-            winit::event::Event::WindowEvent {
-                window_id,
-                event: WindowEvent::CloseRequested,
-            } if window_id == window.id() => {
-                control_flow.set_exit();
-            }
-            winit::event::Event::WindowEvent {
-                window_id,
-                event: WindowEvent::Resized(new_size),
-            } if window_id == window.id() => {
-                surface.resize(
-                    &context,
-                    NonZeroU32::new(new_size.width).unwrap(),
-                    NonZeroU32::new(new_size.height).unwrap(),
-                );
-            }
-            winit::event::Event::MainEventsCleared => {
-                window.request_redraw();
-            }
-            winit::event::Event::RedrawRequested(_) => {
-                let ui = imgui.frame();
-
-                ui.dockspace_over_main_viewport();
-
-                ui.show_demo_window(&mut true);
-                ui.window("Style Editor").build(|| {
-                    ui.show_default_style_editor();
-                });
-
-                ui.end_frame_early();
-
-                renderer.prepare_render(&mut imgui, &window);
-
-                imgui.update_platform_windows();
-                renderer
-                    .update_viewports(&mut imgui, window_target, &glow)
-                    .expect("Failed to update viewports");
-
-                let draw_data = imgui.render();
-
-                if let Err(e) = context.make_current(&surface) {
-                    // For some reason make_current randomly throws errors on windows.
-                    // Until the reason for this is found, we just print it out instead of panicing.
-                    eprintln!("Failed to make current: {e}");
+            egui::menu::bar(ui, |ui| {
+                // NOTE: no File->Quit on web pages!
+                let is_web = cfg!(target_arch = "wasm32");
+                if !is_web {
+                    ui.menu_button("File", |ui| {
+                        if ui.button("Quit").clicked() {
+                            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                        }
+                    });
+                    ui.add_space(16.0);
                 }
 
-                unsafe {
-                    glow.disable(glow::SCISSOR_TEST);
-                    glow.clear(glow::COLOR_BUFFER_BIT);
-                }
+                egui::widgets::global_dark_light_mode_buttons(ui);
+            });
+        });
 
-                renderer
-                    .render(&window, &glow, draw_data)
-                    .expect("Failed to render main viewport");
+        egui::CentralPanel::default().show(ctx, |ui| {
+            // The central panel the region left after adding TopPanel's and SidePanel's
+            ui.heading("eframe template");
 
-                surface
-                    .swap_buffers(&context)
-                    .expect("Failed to swap buffers");
+            ui.horizontal(|ui| {
+                ui.label("Write something: ");
+                ui.text_edit_singleline(&mut label);
+            });
 
-                renderer
-                    .render_viewports(&glow, &mut imgui)
-                    .expect("Failed to render viewports");
+            ui.add(egui::Slider::new(&mut value, 0.0..=10.0).text("value"));
+            if ui.button("Increment").clicked() {
+                value += 1.0;
             }
-            _ => {}
-        }
+
+            ui.separator();
+
+            ui.add(egui::github_link_file!(
+                "https://github.com/emilk/eframe_template/blob/master/",
+                "Source code."
+            ));
+
+            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+                powered_by_egui_and_eframe(ui);
+                egui::warn_if_debug_build(ui);
+            });
+        });
+    })
+}
+
+fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 0.0;
+        ui.label("Powered by ");
+        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
+        ui.label(" and ");
+        ui.hyperlink_to(
+            "eframe",
+            "https://github.com/emilk/egui/tree/master/crates/eframe",
+        );
+        ui.label(".");
     });
 }

@@ -1,6 +1,6 @@
 # ===== PACKAGE =====
 [package]
-name = "rayna_bin"
+name = "rayna_ui"
 version = "0.1.0"
 edition = "2021"
 
@@ -15,5 +15,6 @@ rayna_core = {path = "../rayna_core"}
 
 # Display/UI
 egui = "0.24.1"
+eframe = { version = "0.24.1", features=["glow", "default_fonts"] }
 
 # ===== BUILD PROFILES =====

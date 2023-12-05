@@ -3,5 +3,5 @@
 resolver = "2"
 members = [
 	"rayna_core",
-	"rayna_bin",
+    "rayna_ui",
 ]

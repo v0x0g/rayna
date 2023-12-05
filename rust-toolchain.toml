@@ -1,0 +1,5 @@
+[toolchain]
+#target = "x86_64-pc-windows-gnu"
+components = ["rustfmt", "clippy", "llvm-tools", "cargo", "miri"]
+profile = "complete"
+channel = "nightly"

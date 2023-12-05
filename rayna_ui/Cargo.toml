@@ -1,0 +1,19 @@
+# ===== PACKAGE =====
+[package]
+name = "rayna_bin"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+# ===== DEPENDENCIES =====
+
+[dependencies]
+
+# Raytracing deps
+rayna_core = {path = "../rayna_core"}
+
+# Display/UI
+egui = "0.24.1"
+
+# ===== BUILD PROFILES =====

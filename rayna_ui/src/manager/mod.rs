@@ -1,11 +1,11 @@
 /// Trait for a function that is called when the UI backend is being initialised
-pub trait UiInitFn = FnOnce(&egui::Context) -> ();
+pub trait UiInitFn = FnOnce(&egui::Context) -> () + 'static;
 /// Trait for a function that is called each frame.
 ///
 /// This will be where the rendering occurs
-pub trait UiUpdateFn = FnMut(&egui::Context) -> ();
+pub trait UiUpdateFn = FnMut(&egui::Context) -> () + 'static;
 /// Trait for a function that is called when the UI backend is being shut down
-pub trait UiShutdownFn = FnOnce() -> ();
+pub trait UiShutdownFn = FnOnce() -> () + 'static;
 
 /// A data struct
 pub struct UiManager<Init: UiInitFn, Update: UiUpdateFn, Shutdown: UiShutdownFn> {

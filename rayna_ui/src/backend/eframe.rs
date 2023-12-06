@@ -6,14 +6,14 @@ pub struct EFrameBackend<Init: UiInitFn, Update: UiUpdateFn, Shutdown: UiShutdow
     manager: UiManager<Init, Update, Shutdown>,
 }
 
-impl<Init: UiInitFn, Update: UiUpdateFn + 'static, Shutdown: UiShutdownFn>
+impl<'L, Init: UiInitFn + 'L, Update: UiUpdateFn + 'L, Shutdown: UiShutdownFn + 'L>
     UiBackend<Init, Update, Shutdown> for EFrameBackend<Init, Update, Shutdown>
 {
     fn new(manager: UiManager<Init, Update, Shutdown>) -> Self {
         Self { manager }
     }
 
-    fn run(mut self) -> Result<(), Box<dyn Error>> {
+    fn run(self) -> Result<(), Box<dyn Error>> {
         let UiManager {
             init_fn,
             update_fn,
@@ -22,8 +22,9 @@ impl<Init: UiInitFn, Update: UiUpdateFn + 'static, Shutdown: UiShutdownFn>
 
         /// Internal struct that acts as an app instance for [eframe]
         struct EFrameApp {
-            update_fn: Box<dyn UiInitFn<Output = ()> + 'static>,
-            shutdown_fn: Option<Box<dyn UiShutdownFn<Output = ()>>>,
+            update_fn: Box<dyn UiUpdateFn>,
+            /// [Option] so that we can tell if shutdown has already been called
+            shutdown_fn: Option<Box<dyn UiShutdownFn>>,
         }
 
         impl eframe::App for EFrameApp {
@@ -32,11 +33,11 @@ impl<Init: UiInitFn, Update: UiUpdateFn + 'static, Shutdown: UiShutdownFn>
             }
 
             fn on_exit(&mut self, _glow: Option<&eframe::glow::Context>) {
-                let boxed = self
+                let shutdown = self
                     .shutdown_fn
                     .take()
                     .expect("on_exit should not have been called before");
-                (boxed)();
+                (shutdown)();
             }
         }
 

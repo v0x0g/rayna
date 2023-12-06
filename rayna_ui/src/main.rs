@@ -1,4 +1,5 @@
 #![feature(type_alias_impl_trait)]
+#![feature(trait_alias)]
 #![feature(associated_type_defaults)]
 
 use crate::backend::UiBackend;
@@ -13,7 +14,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut label = "label";
     let mut value = 0.0;
 
-    let init_fn = |_| {};
+    let init_fn = |_: &egui::Context| {};
     let update_fn = move |ctx: &egui::Context| {
         // Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui

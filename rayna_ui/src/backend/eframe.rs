@@ -6,8 +6,8 @@ pub struct EFrameBackend<Init, Update, Shutdown> {
     shutdown_fn: Shutdown,
 }
 
-impl<Init: InitFn, Update: UpdateFn, Shutdown: ShutdownFn> UiBackend<Init, Update, Shutdown>
-    for EFrameBackend<Init, Update, Shutdown>
+impl<Init: InitFn, Update: UpdateFn + 'static, Shutdown: ShutdownFn>
+    UiBackend<Init, Update, Shutdown> for EFrameBackend<Init, Update, Shutdown>
 {
     type RunResultSuccess = ();
     type RunResultError = eframe::Error;

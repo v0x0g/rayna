@@ -8,7 +8,8 @@ fn main() -> eframe::Result<()> {
     let mut label = "label";
     let mut value = 0.0;
 
-    let update_fn = move |ctx| {
+    let init_fn = || {};
+    let update_fn = move |ctx: &egui::Context| {
         // Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
@@ -68,8 +69,16 @@ fn main() -> eframe::Result<()> {
             });
         });
     };
+    let shutdown_fn = || {};
 
-    let back = backend::eframe::EFrameBackend::new(|| {}, update_fn, || {});
+    let back = backend::eframe::EFrameBackend::new(
+        //
+        init_fn,
+        //
+        update_fn,
+        //
+        shutdown_fn,
+    );
 
     UiBackend::run(back)
 }

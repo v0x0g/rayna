@@ -2,11 +2,11 @@
 pub mod eframe;
 
 pub trait InitFn: FnOnce() -> () {}
-pub trait UpdateFn: FnMut(&egui::Context) -> () + 'static {}
+pub trait UpdateFn: FnMut(&egui::Context) -> () {}
 pub trait ShutdownFn: FnOnce() -> () {}
 
 impl<T: FnOnce() -> ()> InitFn for T {}
-impl<T: FnMut(&egui::Context) -> () + 'static> UpdateFn for T {}
+impl<T: FnMut(&egui::Context) -> ()> UpdateFn for T {}
 impl<T: FnOnce() -> ()> ShutdownFn for T {}
 
 pub trait UiBackend<Init: InitFn, Update: UpdateFn, Shutdown: ShutdownFn> {

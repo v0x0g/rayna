@@ -6,8 +6,8 @@ pub struct EFrameBackend<Init: UiInitFn, Update: UiUpdateFn, Shutdown: UiShutdow
     manager: UiManager<Init, Update, Shutdown>,
 }
 
-impl<'L, Init: UiInitFn + 'L, Update: UiUpdateFn + 'L, Shutdown: UiShutdownFn + 'L>
-    UiBackend<Init, Update, Shutdown> for EFrameBackend<Init, Update, Shutdown>
+impl<Init: UiInitFn, Update: UiUpdateFn, Shutdown: UiShutdownFn> UiBackend<Init, Update, Shutdown>
+    for EFrameBackend<Init, Update, Shutdown>
 {
     fn new(manager: UiManager<Init, Update, Shutdown>) -> Self {
         Self { manager }

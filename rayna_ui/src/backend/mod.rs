@@ -1,19 +1,13 @@
+use crate::{manager::UiInitFn, manager::UiManager, manager::UiShutdownFn, manager::UiUpdateFn};
+use std::error::Error;
+
 #[cfg(feature = "backend_eframe")]
 pub mod eframe;
 
-pub trait InitFn: FnOnce() -> () {}
-pub trait UpdateFn: FnMut(&egui::Context) -> () {}
-pub trait ShutdownFn: FnOnce() -> () {}
-
-impl<T: FnOnce() -> ()> InitFn for T {}
-impl<T: FnMut(&egui::Context) -> ()> UpdateFn for T {}
-impl<T: FnOnce() -> ()> ShutdownFn for T {}
-
-pub trait UiBackend<Init: InitFn, Update: UpdateFn, Shutdown: ShutdownFn> {
-    type RunResultSuccess;
-    type RunResultError;
-
-    /// Creates a new
-    fn new(init_fn: Init, update_fn: Update, shutdown_fn: Shutdown) -> Self;
-    fn run(self) -> Result<Self::RunResultSuccess, Self::RunResultError>;
+/// A trait that represents a type that can be used as a backend for the UI
+pub trait UiBackend<Init: UiInitFn, Update: UiUpdateFn, Shutdown: UiShutdownFn> {
+    /// Creates a new [`UiBackend`] which uses the functions in the given [`UiManager`]
+    /// for init, update, etc
+    fn new(ui_manager: UiManager<Init, Update, Shutdown>) -> Self;
+    fn run(self) -> Result<(), Box<dyn Error>>;
 }

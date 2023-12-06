@@ -1,14 +1,19 @@
 #![feature(type_alias_impl_trait)]
+#![feature(associated_type_defaults)]
 
 use crate::backend::UiBackend;
+use crate::manager::UiManager;
+use std::error::Error;
 
 mod backend;
 mod definitions;
-fn main() -> eframe::Result<()> {
+mod manager;
+
+fn main() -> Result<(), Box<dyn Error>> {
     let mut label = "label";
     let mut value = 0.0;
 
-    let init_fn = || {};
+    let init_fn = |_| {};
     let update_fn = move |ctx: &egui::Context| {
         // Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
@@ -71,14 +76,13 @@ fn main() -> eframe::Result<()> {
     };
     let shutdown_fn = || {};
 
-    let back = backend::eframe::EFrameBackend::new(
-        //
+    let ui_runner = UiManager {
         init_fn,
-        //
         update_fn,
-        //
         shutdown_fn,
-    );
+    };
 
-    UiBackend::run(back)
+    let backend = backend::eframe::EFrameBackend::new(ui_runner);
+
+    UiBackend::run(backend)
 }

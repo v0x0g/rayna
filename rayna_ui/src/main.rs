@@ -1,14 +1,14 @@
+#![feature(type_alias_impl_trait)]
+
+use crate::backend::UiBackend;
+
+mod backend;
+mod definitions;
 fn main() -> eframe::Result<()> {
-    let opts = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_inner_size([400.0, 300.0])
-            .with_min_inner_size([300.0, 220.0]),
-        ..Default::default()
-    };
     let mut label = "label";
     let mut value = 0.0;
 
-    eframe::run_simple_native("rayna", opts, move |ctx, frame| {
+    let update_fn = move |ctx| {
         // Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
@@ -53,23 +53,23 @@ fn main() -> eframe::Result<()> {
             ));
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                powered_by_egui_and_eframe(ui);
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 0.0;
+                    ui.label("Powered by ");
+                    ui.hyperlink_to("egui", "https://github.com/emilk/egui");
+                    ui.label(" and ");
+                    ui.hyperlink_to(
+                        "eframe",
+                        "https://github.com/emilk/egui/tree/master/crates/eframe",
+                    );
+                    ui.label(".");
+                });
                 egui::warn_if_debug_build(ui);
             });
         });
-    })
-}
+    };
 
-fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 0.0;
-        ui.label("Powered by ");
-        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-        ui.label(" and ");
-        ui.hyperlink_to(
-            "eframe",
-            "https://github.com/emilk/egui/tree/master/crates/eframe",
-        );
-        ui.label(".");
-    });
+    let back = backend::eframe::EFrameBackend::new(|| {}, update_fn, || {});
+
+    UiBackend::run(back)
 }

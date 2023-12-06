@@ -15,6 +15,14 @@ rayna_core = {path = "../rayna_core"}
 
 # Display/UI
 egui = "0.24.1"
-eframe = { version = "0.24.1", features=["glow", "default_fonts"] }
+eframe = { version = "0.24.1", features=["glow", "default_fonts"], optional = true }
 
-# ===== BUILD PROFILES =====
+# Error handling
+anyhow = { version = "1.0.75", features = [] }
+
+# ===== FEATURES =====
+
+[features]
+default = ["backend_eframe"]
+
+backend_eframe = ["dep:eframe"]

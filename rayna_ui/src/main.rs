@@ -18,11 +18,12 @@ fn main() -> anyhow::Result<()> {
     backends.insert("eframe", Box::new(backend::eframe::EFrameBackend {}));
 
     // TODO: Better backend selection that's not just hardcoded
-    let backend = backends
-        .into_iter()
-        .next()
-        .expect("at least one backend should be enabled")
-        .1;
+    // let backend = backends
+    //     .into_iter()
+    //     .next()
+    //     .expect("at least one backend should be enabled")
+    //     .1;
+    let backend = backends.remove("eframe").unwrap();
 
     backend.run(app)?;
 

@@ -3,9 +3,9 @@ use crate::backend::UiBackend;
 use anyhow::anyhow;
 use eframe::Theme;
 
-pub struct EFrameBackend;
+pub struct EframeBackend;
 
-impl<Init: App, Uninit: UninitApp<InitApp = Init>> UiBackend<Init, Uninit> for EFrameBackend {
+impl<Init: App, Uninit: UninitApp<InitApp = Init>> UiBackend<Init, Uninit> for EframeBackend {
     fn run(self, uninit_app: Uninit) -> anyhow::Result<()> {
         eframe::run_native(
             Uninit::app_name(),

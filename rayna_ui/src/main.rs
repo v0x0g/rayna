@@ -15,7 +15,7 @@ fn main() -> anyhow::Result<()> {
 
     let mut backends = HashMap::new();
     #[cfg(feature = "backend_eframe")]
-    backends.insert("eframe", Box::new(backend::eframe::EFrameBackend {}));
+    backends.insert("eframe", Box::new(backend::eframe::EframeBackend {}));
 
     // TODO: Better backend selection that's not just hardcoded
     // let backend = backends

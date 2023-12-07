@@ -10,8 +10,10 @@ edition = "2021"
 
 [dependencies]
 
-egui = "0.24.1"
-eframe = { version = "0.24.1", features=["glow", "wayland", "x11", "default_fonts"], optional = true }
+# The current version of egui-miniquad (0.14.0) uses egui (0.21.0)
+# So we have to use a lower version here :(
+egui = "0.21.0"
+eframe = { version = "0.21.3", features=["glow", "default_fonts"], optional = true }
 egui-miniquad = { version = "0.14.0", features = [], optional = true }
 miniquad = { version = "0.3.16", features = [], optional = true }
 
@@ -21,7 +23,7 @@ anyhow = { version = "1.0.75", features = [] }
 # ===== FEATURES =====
 
 [features]
-default = ["backend_eframe"]
+default = ["backend_eframe", "backend_miniquad"]
 
 backend_eframe = ["dep:eframe"]
 backend_miniquad = ["dep:egui-miniquad", "dep:miniquad"]

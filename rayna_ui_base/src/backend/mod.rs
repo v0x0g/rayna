@@ -2,7 +2,9 @@ use crate::app::{App, UninitApp};
 
 #[cfg(feature = "backend_eframe")]
 pub mod eframe;
-mod miniquad;
+
+#[cfg(feature = "backend_miniquad")]
+pub mod miniquad;
 
 /// A trait that represents a type that can be used as a backend for the UI
 pub trait UiBackend<Init: App, Uninit: UninitApp<InitApp = Init>> {

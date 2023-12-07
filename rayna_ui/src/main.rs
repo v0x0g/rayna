@@ -3,12 +3,12 @@
 #![feature(associated_type_defaults)]
 
 use crate::backend::UiBackend;
-use crate::manager::UiManager;
+use crate::func::UiFunctions;
 use std::error::Error;
 
 mod backend;
 mod definitions;
-mod manager;
+mod func;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut label = "label";
@@ -77,7 +77,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
     let shutdown_fn = || {};
 
-    let ui_runner = UiManager {
+    let ui_runner = UiFunctions {
         init_fn,
         update_fn,
         shutdown_fn,

@@ -12,7 +12,7 @@ impl<Init: App, Uninit: UninitApp<InitApp = Init>> UiBackend<Init, Uninit> for M
             Conf {
                 ..Default::default()
             },
-            |ctx| Box::new(MiniquadWrapper::new(ctx)) as Box<dyn EventHandler>,
+            |ctx| Box::new(MiniquadWrapper::new(uninit_app, ctx)) as Box<dyn EventHandler>,
         );
 
         // miniquad never errors?
@@ -20,19 +20,24 @@ impl<Init: App, Uninit: UninitApp<InitApp = Init>> UiBackend<Init, Uninit> for M
     }
 }
 
-struct MiniquadWrapper {
+struct MiniquadWrapper<A> {
     egui_mq: EguiMq,
+    app: A,
 }
 
-impl MiniquadWrapper {
-    fn new(ctx: &mut miniquad::Context) -> Self {
-        Self {
-            egui_mq: EguiMq::new(ctx),
-        }
+impl<T: App> MiniquadWrapper<T> {
+    fn new<U: UninitApp<InitApp = T>>(app: U, ctx: &mut miniquad::Context) -> Self {
+        let egui_mq = EguiMq::new(ctx);
+
+        let app = app.init(egui_mq.egui_ctx());
+
+        Self { egui_mq, app }
     }
 }
 
-impl miniquad::EventHandler for MiniquadWrapper {
+impl<T: App> EventHandler for MiniquadWrapper<T> {
+    // TODO: Quit/shutdown
+
     fn update(&mut self, _: &mut miniquad::Context) {
         // Draw and update are (mostly) called together,
         // so we might as well just do everything in draw
@@ -45,9 +50,7 @@ impl miniquad::EventHandler for MiniquadWrapper {
 
         // Render the egui frame (but don't draw yet)
         self.egui_mq.run(mq_ctx, |_mq_ctx, egui_ctx| {
-            egui::Window::new("Egui Window").show(egui_ctx, |ui| {
-                ui.heading("Hello World!");
-            });
+            self.app.on_update(egui_ctx);
         });
 
         // Draw things behind egui here

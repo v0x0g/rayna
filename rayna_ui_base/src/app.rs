@@ -10,7 +10,7 @@ pub trait UninitApp: 'static {
     fn app_name<'l>() -> &'l str;
 }
 
-pub trait App {
+pub trait App: 'static {
     /// Trait for a function that is called each frame.
     ///
     /// This will be where the rendering occurs

@@ -1,5 +1,6 @@
 use crate::backend::{UiBackend, UiInitFn, UiShutdownFn, UiUpdateFn};
 use crate::manager::UiManager;
+use eframe::Theme;
 use std::error::Error;
 
 pub struct EFrameBackend<Init: UiInitFn, Update: UiUpdateFn, Shutdown: UiShutdownFn> {
@@ -42,8 +43,8 @@ impl<Init: UiInitFn, Update: UiUpdateFn, Shutdown: UiShutdownFn> UiBackend<Init,
         }
 
         // This closure is called by `eframe` to initialise the app
-        // It moves all the functions into itself
-        let factory_closure = move |ctx: &eframe::CreationContext| {
+        // It moves all the functions into itself so that they can be called at the appropriate times
+        let app_creator_closure = move |ctx: &eframe::CreationContext| {
             (init_fn)(&ctx.egui_ctx);
             let app = EFrameApp {
                 update_fn: Box::new(update_fn),
@@ -52,7 +53,7 @@ impl<Init: UiInitFn, Update: UiUpdateFn, Shutdown: UiShutdownFn> UiBackend<Init,
             Box::new(app) as Box<dyn eframe::App>
         };
 
-        let app_creator: eframe::AppCreator = Box::new(factory_closure);
+        let app_creator: eframe::AppCreator = Box::new(app_creator_closure);
 
         eframe::run_native(
             crate::definitions::constants::APP_NAME,
@@ -60,11 +61,14 @@ impl<Init: UiInitFn, Update: UiUpdateFn, Shutdown: UiShutdownFn> UiBackend<Init,
                 viewport: egui::ViewportBuilder::default()
                     .with_inner_size([400.0, 300.0])
                     .with_min_inner_size([300.0, 220.0]),
+                run_and_return: true,
+                default_theme: Theme::Dark,
+
                 ..Default::default()
             },
             app_creator,
         )?;
 
-        unreachable!();
+        Ok(())
     }
 }

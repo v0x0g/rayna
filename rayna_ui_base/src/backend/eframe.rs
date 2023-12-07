@@ -1,14 +1,14 @@
 use crate::app::{App, UninitApp};
 use crate::backend::UiBackend;
+use anyhow::anyhow;
 use eframe::Theme;
-use std::error::Error;
 
 pub struct EFrameBackend;
 
 impl<Init: App, Uninit: UninitApp<InitApp = Init>> UiBackend<Init, Uninit> for EFrameBackend {
-    fn run(uninit_app: Uninit) -> Result<(), Box<dyn Error>> {
+    fn run(self, uninit_app: Uninit) -> anyhow::Result<()> {
         eframe::run_native(
-            crate::definitions::constants::APP_NAME,
+            Uninit::app_name(),
             eframe::NativeOptions {
                 viewport: egui::ViewportBuilder::default()
                     .with_inner_size([400.0, 300.0])
@@ -19,7 +19,8 @@ impl<Init: App, Uninit: UninitApp<InitApp = Init>> UiBackend<Init, Uninit> for E
                 ..Default::default()
             },
             make_app_creator(uninit_app),
-        )?;
+        )
+        .map_err(|e| anyhow!("failed running eframe: {e:#?}"))?;
 
         Ok(())
     }

@@ -1,5 +1,5 @@
-use super::{App, UninitApp};
 use egui::Context;
+use rayna_ui_base::app::{App, UninitApp};
 
 pub struct RaynaAppUninit;
 impl UninitApp for RaynaAppUninit {
@@ -12,6 +12,10 @@ impl UninitApp for RaynaAppUninit {
             label: "label".to_string(),
             value: 0.0,
         }
+    }
+
+    fn app_name<'l>() -> &'l str {
+        crate::definitions::constants::APP_NAME
     }
 }
 pub struct RaynaApp {

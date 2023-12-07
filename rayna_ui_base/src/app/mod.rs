@@ -1,5 +1,3 @@
-pub(crate) mod rayna_app;
-
 pub trait UninitApp: 'static {
     type InitApp: App;
 
@@ -7,6 +5,8 @@ pub trait UninitApp: 'static {
     ///
     /// Can take in an [egui::Context] to setup things before the app starts
     fn init(self, ctx: &egui::Context) -> Self::InitApp;
+
+    fn app_name<'l>() -> &'l str;
 }
 
 pub trait App {

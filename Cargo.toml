@@ -2,6 +2,7 @@
 [workspace]
 resolver = "2"
 members = [
-	"rayna_core",
+    "rayna_core",
     "rayna_ui",
+    "rayna_ui_base",
 ]

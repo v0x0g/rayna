@@ -23,6 +23,10 @@ anyhow = { version = "1.0.75", features = [] }
 # ===== FEATURES =====
 
 [features]
-default = ["backend_eframe"]
+default = [
+#    "backend_eframe",
+    "backend_miniquad"
+]
 
 backend_eframe = ["rayna_ui_base/backend_eframe"]
+backend_miniquad = ["rayna_ui_base/backend_miniquad"]

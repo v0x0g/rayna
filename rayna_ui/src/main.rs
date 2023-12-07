@@ -16,6 +16,8 @@ fn main() -> anyhow::Result<()> {
     let mut backends = HashMap::new();
     #[cfg(feature = "backend_eframe")]
     backends.insert("eframe", Box::new(backend::eframe::EframeBackend {}));
+    #[cfg(feature = "backend_miniquad")]
+    backends.insert("miniquad", Box::new(backend::eframe::EframeBackend {}));
 
     // TODO: Better backend selection that's not just hardcoded
     // let backend = backends
@@ -23,7 +25,7 @@ fn main() -> anyhow::Result<()> {
     //     .next()
     //     .expect("at least one backend should be enabled")
     //     .1;
-    let backend = backends.remove("eframe").unwrap();
+    let backend = backends.remove("miniquad").unwrap();
 
     backend.run(app)?;
 

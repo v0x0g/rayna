@@ -24,7 +24,7 @@ anyhow = { version = "1.0.75", features = [] }
 
 [features]
 default = [
-#    "backend_eframe",
+    "backend_eframe",
     "backend_miniquad"
 ]
 

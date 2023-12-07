@@ -15,7 +15,7 @@ rayna_core = {path = "../rayna_core"}
 rayna_ui_base = {path = "../rayna_ui_base"}
 
 # Display/UI
-egui = "0.24.1"
+egui = "0.21.0"
 
 # Error handling
 anyhow = { version = "1.0.75", features = [] }

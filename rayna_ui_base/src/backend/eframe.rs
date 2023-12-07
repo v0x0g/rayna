@@ -10,9 +10,8 @@ impl<Init: App, Uninit: UninitApp<InitApp = Init>> UiBackend<Init, Uninit> for E
         eframe::run_native(
             Uninit::app_name(),
             eframe::NativeOptions {
-                viewport: egui::ViewportBuilder::default()
-                    .with_inner_size([400.0, 300.0])
-                    .with_min_inner_size([300.0, 220.0]),
+                min_window_size: Some([300.0, 220.0].into()),
+                initial_window_size: Some([400.0, 300.0].into()),
                 run_and_return: true,
                 default_theme: Theme::Dark,
 

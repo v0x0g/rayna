@@ -12,6 +12,7 @@ edition = "2021"
 
 # Maths
 glam = { version = "0.24.2", features = ["approx", "mint", "rand", "serde", "debug-glam-assert", "std"] }
+glamour = { version = "0.9.0", features = ["serde", "mint"] }
 
 # Raytracing
 rtbvh = "0.6.2"

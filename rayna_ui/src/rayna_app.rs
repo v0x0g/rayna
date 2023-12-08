@@ -1,5 +1,8 @@
+use crate::definitions::ui_str;
 use egui::Context;
+use nonzero::nonzero;
 use rayna_ui_base::app::{App, UninitApp};
+use std::num::NonZeroUsize;
 
 pub struct RaynaAppUninit;
 impl UninitApp for RaynaAppUninit {
@@ -9,14 +12,13 @@ impl UninitApp for RaynaAppUninit {
         println!("rayna_app::init");
 
         RaynaApp {
-            label: "label".to_string(),
-            value: 0.0,
+            img_dims: (nonzero!(1920_usize), nonzero!(1080_usize)),
         }
     }
 }
+
 pub struct RaynaApp {
-    label: String,
-    value: f64,
+    img_dims: (NonZeroUsize, NonZeroUsize),
 }
 
 impl App for RaynaApp {
@@ -34,19 +36,36 @@ impl App for RaynaApp {
             });
         });
 
+        // Central panel contains the main render window
+        // Must come after all other panels
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
-            ui.heading("eframe template");
+            ui.heading("Render");
 
-            ui.horizontal(|ui| {
-                ui.label("Write something: ");
-                ui.text_edit_singleline(&mut self.label);
+            ui.group(|ui| {
+                // Have to do a bit of magic since we can't use NonZeroUsize directly
+                ui.label("width");
+                let mut w = self.img_dims.0.get();
+                ui.add(egui::DragValue::new(&mut w).suffix(ui_str::PIXELS_UNIT));
+                self.img_dims.0 = NonZeroUsize::new(w).unwrap_or(NonZeroUsize::MIN);
+
+                ui.label("height");
+                let mut h = self.img_dims.1.get();
+                ui.add(egui::DragValue::new(&mut h).suffix(ui_str::PIXELS_UNIT));
+                self.img_dims.1 = NonZeroUsize::new(h).unwrap_or(NonZeroUsize::MIN);
             });
 
-            ui.add(egui::Slider::new(&mut self.value, 0.0..=10.0).text("value"));
-            if ui.button("Increment").clicked() {
-                self.value += 1.0;
-            }
+            // ui.image(
+            //     tex_id,
+            //     egui::vec2(self.img_dims.0.get() as f32, self.img_dims.1.get() as f32),
+            // );
+
+            // ui.group(|ui| egui::Slider::new(&mut self.img_dims.1));
+            //
+            // ui.add(egui::Slider::new(&mut self.value, 0.0..=10.0).text("value"));
+            // if ui.button("Increment").clicked() {
+            //     self.value += 1.0;
+            // }
 
             ui.separator();
 
@@ -67,7 +86,6 @@ impl App for RaynaApp {
                     );
                     ui.label(".");
                 });
-                egui::warn_if_debug_build(ui);
             });
         });
     }

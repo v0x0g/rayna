@@ -15,10 +15,18 @@ rayna_core = {path = "../rayna_core"}
 rayna_ui_base = {path = "../rayna_ui_base"}
 
 # Display/UI
-egui = "0.21.0"
+egui = "0.*"
+
+# Maths
+glam = {version = "0.*"}
+glamour = {version = "0.*"}
 
 # Error handling
 anyhow = { version = "1.0.75", features = [] }
+
+# Other
+
+nonzero = "0.2.0"
 
 # ===== FEATURES =====
 

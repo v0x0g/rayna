@@ -27,7 +27,7 @@ fn main() -> anyhow::Result<()> {
     //     .1;
     let backend = backends.remove("miniquad").unwrap();
 
-    backend.run(app)?;
+    backend.run_init(definitions::constants::APP_NAME, app)?;
 
     Ok(())
 }

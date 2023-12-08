@@ -6,8 +6,13 @@ use miniquad::EventHandler;
 
 pub struct MiniquadBackend;
 
-impl<Init: App, Uninit: UninitApp<InitApp = Init>> UiBackend<Init, Uninit> for MiniquadBackend {
-    fn run(self, uninit_app: Uninit) -> anyhow::Result<()> {
+impl UiBackend for MiniquadBackend {
+    fn run_init<Uninit: UninitApp>(
+        self,
+        _app_name: &str,
+        uninit_app: Uninit,
+    ) -> anyhow::Result<()> {
+        // TODO: Figure out how to use app_name
         miniquad::start(
             Conf {
                 ..Default::default()
@@ -20,7 +25,8 @@ impl<Init: App, Uninit: UninitApp<InitApp = Init>> UiBackend<Init, Uninit> for M
     }
 }
 
-struct MiniquadWrapper<A> {
+/// Internal struct that acts as miniquad app, that delegates events onto our actual app
+struct MiniquadWrapper<A: App> {
     egui_mq: EguiMq,
     app: A,
 }
@@ -35,6 +41,7 @@ impl<T: App> MiniquadWrapper<T> {
     }
 }
 
+/// Implement the miniquad::App equivalent for our wrapper, that just delegates to our crate::app object
 impl<T: App> EventHandler for MiniquadWrapper<T> {
     // TODO: Quit/shutdown
 

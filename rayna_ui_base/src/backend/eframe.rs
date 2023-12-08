@@ -5,10 +5,10 @@ use eframe::Theme;
 
 pub struct EframeBackend;
 
-impl<Init: App, Uninit: UninitApp<InitApp = Init>> UiBackend<Init, Uninit> for EframeBackend {
-    fn run(self, uninit_app: Uninit) -> anyhow::Result<()> {
+impl UiBackend for EframeBackend {
+    fn run_init<U: UninitApp>(self, app_name: &str, uninit_app: U) -> anyhow::Result<()> {
         eframe::run_native(
-            Uninit::app_name(),
+            app_name,
             eframe::NativeOptions {
                 min_window_size: Some([300.0, 220.0].into()),
                 initial_window_size: Some([400.0, 300.0].into()),

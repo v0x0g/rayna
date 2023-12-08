@@ -10,9 +10,6 @@ pub trait UninitApp: 'static {
     ///
     /// Can take in an [egui::Context] to setup things before the app starts
     fn init(self, ctx: &egui::Context) -> Self::InitApp;
-
-    /// Gets the application's name
-    fn app_name<'l>() -> &'l str;
 }
 
 /// A trait representing an initialised application that is running

@@ -13,10 +13,6 @@ impl UninitApp for RaynaAppUninit {
             value: 0.0,
         }
     }
-
-    fn app_name<'l>() -> &'l str {
-        crate::definitions::constants::APP_NAME
-    }
 }
 pub struct RaynaApp {
     label: String,

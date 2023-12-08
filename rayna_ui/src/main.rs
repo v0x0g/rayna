@@ -2,7 +2,7 @@
 #![feature(trait_alias)]
 #![feature(associated_type_defaults)]
 
-use crate::rayna_app::RaynaAppUninit;
+use crate::rayna_app::RaynaApp;
 use rayna_ui_base::backend;
 use rayna_ui_base::backend::UiBackend;
 use std::collections::HashMap;
@@ -11,8 +11,6 @@ pub mod definitions;
 mod rayna_app;
 
 fn main() -> anyhow::Result<()> {
-    let app = RaynaAppUninit;
-
     let mut backends = HashMap::new();
     #[cfg(feature = "backend_eframe")]
     backends.insert("eframe", Box::new(backend::eframe::EframeBackend {}));
@@ -27,7 +25,7 @@ fn main() -> anyhow::Result<()> {
     //     .1;
     let backend = backends.remove("miniquad").unwrap();
 
-    backend.run_init(definitions::constants::APP_NAME, app)?;
+    backend.run(definitions::constants::APP_NAME, RaynaApp::new_ctx)?;
 
     Ok(())
 }

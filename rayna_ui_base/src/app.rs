@@ -1,17 +1,3 @@
-/// A trait representing an uninitialised application
-///
-/// The app will be initialised by calling [Self::init], which allows for
-/// [egui] to be configured via the [egui::Context] parameter (e.g. setting fonts),
-/// before the app actually runs
-pub trait UninitApp: 'static {
-    type InitApp: App;
-
-    /// Initialises the application, returning the initialised app
-    ///
-    /// Can take in an [egui::Context] to setup things before the app starts
-    fn init(self, ctx: &egui::Context) -> Self::InitApp;
-}
-
 /// A trait representing an initialised application that is running
 ///
 /// Obtained by calling

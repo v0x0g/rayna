@@ -1,4 +1,4 @@
-use crate::app::{App, UninitApp};
+use crate::app::App;
 use crate::backend::UiBackend;
 use anyhow::anyhow;
 use eframe::Theme;
@@ -6,7 +6,11 @@ use eframe::Theme;
 pub struct EframeBackend;
 
 impl UiBackend for EframeBackend {
-    fn run_init<U: UninitApp>(self, app_name: &str, uninit_app: U) -> anyhow::Result<()> {
+    fn run<A: App>(
+        self,
+        app_name: &str,
+        app_ctor: impl FnOnce(&egui::Context) -> A + 'static,
+    ) -> anyhow::Result<()> {
         eframe::run_native(
             app_name,
             eframe::NativeOptions {
@@ -17,7 +21,13 @@ impl UiBackend for EframeBackend {
 
                 ..Default::default()
             },
-            make_app_creator(uninit_app),
+            // This closure is called by `eframe` to initialise the app
+            // It moves all the functions into itself so that they can be called at the appropriate times
+            Box::new(move |ctx: &eframe::CreationContext| {
+                let app = app_ctor(&ctx.egui_ctx);
+                let wrapper = EframeWrapper { app: Some(app) };
+                Box::new(wrapper) as Box<dyn eframe::App>
+            }),
         )
         .map_err(|e| anyhow!("failed running eframe: {e:#?}"))?;
 
@@ -48,22 +58,4 @@ impl<A: App> eframe::App for EframeWrapper<A> {
             .expect("on_exit called after app has been consumed (shutdown)")
             .on_shutdown();
     }
-}
-
-/// Creates an [eframe::AppCreator] (which wraps around an [EframeWrapper])
-/// for use with [eframe]
-///
-/// # Parameters
-/// See [UiFunctions]
-pub fn make_app_creator<U: UninitApp>(uninit_app: U) -> eframe::AppCreator {
-    // This closure is called by `eframe` to initialise the app
-    // It moves all the functions into itself so that they can be called at the appropriate times
-    let closure = move |ctx: &eframe::CreationContext| {
-        // Initialise the app using the egui context
-        let app = uninit_app.init(&ctx.egui_ctx);
-        let wrapper = EframeWrapper { app: Some(app) };
-        Box::new(wrapper) as Box<dyn eframe::App>
-    };
-
-    Box::new(closure)
 }

@@ -1,28 +1,22 @@
 use crate::definitions::ui_str;
-use egui::Context;
 use nonzero::nonzero;
-use rayna_ui_base::app::{App, UninitApp};
+use rayna_ui_base::app::App;
 use std::num::NonZeroUsize;
-
-pub struct RaynaAppUninit;
-impl UninitApp for RaynaAppUninit {
-    type InitApp = RaynaApp;
-
-    fn init(self, _ctx: &Context) -> Self::InitApp {
-        println!("rayna_app::init");
-
-        RaynaApp {
-            img_dims: (nonzero!(1920_usize), nonzero!(1080_usize)),
-        }
-    }
-}
 
 pub struct RaynaApp {
     img_dims: (NonZeroUsize, NonZeroUsize),
 }
 
+impl RaynaApp {
+    pub fn new_ctx(_ctx: &egui::Context) -> Self {
+        Self {
+            img_dims: (nonzero!(1920_usize), nonzero!(1080_usize)),
+        }
+    }
+}
+
 impl App for RaynaApp {
-    fn on_update(&mut self, ctx: &Context) -> () {
+    fn on_update(&mut self, ctx: &egui::Context) -> () {
         // Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 

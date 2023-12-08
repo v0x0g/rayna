@@ -1,3 +1,8 @@
+/// A trait representing an uninitialised application
+///
+/// The app will be initialised by calling [Self::init], which allows for
+/// [egui] to be configured via the [egui::Context] parameter (e.g. setting fonts),
+/// before the app actually runs
 pub trait UninitApp: 'static {
     type InitApp: App;
 
@@ -10,6 +15,9 @@ pub trait UninitApp: 'static {
     fn app_name<'l>() -> &'l str;
 }
 
+/// A trait representing an initialised application that is running
+///
+/// Obtained by calling
 pub trait App: 'static {
     /// Trait for a function that is called each frame.
     ///

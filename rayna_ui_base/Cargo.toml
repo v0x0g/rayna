@@ -19,8 +19,8 @@ eframe = { version = "0.21.3", features = ["glow", "default_fonts"], default-fea
 egui-miniquad = { version = "0.14.0", optional = true }
 miniquad = { version = "0.3.12", optional = true }
 
-# Error handling
-anyhow = { version = "1.0.75", features = [] }
+# Other
+anyhow = { workspace = true }
 
 # ===== FEATURES =====
 

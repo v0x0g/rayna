@@ -10,17 +10,16 @@ edition = "2021"
 
 [dependencies]
 
-# Maths
-glam = { version = "0.24.2", features = ["approx", "mint", "rand", "serde", "debug-glam-assert", "std"] }
-glamour = { version = "0.9.0", features = ["serde", "mint"] }
+glam = { workspace = true }
+glamour = { workspace = true }
 
 # Raytracing
 rtbvh = "0.6.2" # Used for accelerating intersection checks
-image = "0.24.7" # Used to store image buffers
+image = { workspace = true }
 
 # Other
-cfg-if = "1.0.0"
-anyhow = "1.0.75"
-thiserror = "1.0.50"
-nonzero = "0.2.0"
+cfg-if = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+nonzero = { workspace = true }
 dyn-clone = "1.0.16"

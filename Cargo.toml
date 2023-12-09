@@ -7,5 +7,8 @@ members = [
     "rayna_ui_base",
 ]
 
+[workspace.dependencies]
+tracing = { version = "0.1.40", features = [] }
+
 [profile.dev]
 debug = 2

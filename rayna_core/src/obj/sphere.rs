@@ -11,11 +11,11 @@ pub struct Sphere {
 }
 
 impl Object for Sphere {
-    fn intersect(&self, ray: Ray, dist_bounds: Range<Num>) -> Option<Intersection> {
+    fn intersect(&self, _ray: Ray, _dist_bounds: Range<Num>) -> Option<Intersection> {
         None
     }
 
-    fn intersect_all(&self, ray: Ray) -> Option<Box<dyn Iterator<Item = Intersection>>> {
+    fn intersect_all(&self, _ray: Ray) -> Option<Box<dyn Iterator<Item = Intersection>>> {
         None
     }
 }

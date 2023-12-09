@@ -4,10 +4,32 @@
 
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::integration::worker::BgWorker;
+use std::backtrace::Backtrace;
+use std::num::NonZeroUsize;
 use std::thread::JoinHandle;
+use thiserror::Error;
 
 mod message;
 mod worker;
+
+pub type Result<T> = core::result::Result<T, IntegrationError>;
+#[derive(Error, Debug)]
+pub enum IntegrationError {
+    #[error("channel to background worker disconnected")]
+    TxChannelDisconnected {
+        #[from]
+        source: flume::SendError<MessageToWorker>,
+        #[backtrace]
+        backtrace: Backtrace,
+    },
+    #[error("channel from background worker disconnected")]
+    RxChannelDisconnected {
+        #[from]
+        source: flume::SendError<MessageToUi>,
+        #[backtrace]
+        backtrace: Backtrace,
+    },
+}
 
 pub(crate) struct Integration {
     pub(self) msg_tx: flume::Sender<MessageToWorker>,
@@ -38,7 +60,16 @@ impl Integration {
             msg_tx: m_tx,
             msg_rx: m_rx,
             worker_thread: thread,
-        };
-        todo!()
+        }
+    }
+
+    fn send_message(&self, message: MessageToWorker) -> Result<()> {
+        self.msg_tx
+            .send(message)
+            .map_err(IntegrationError::TxChannelDisconnected)
+    }
+
+    pub fn update_target_img_dims(&self, new_dims: [NonZeroUsize; 2]) -> Result<()> {
+        self.send_message(MessageToWorker::SetTargetRenderDims(new_dims))
     }
 }

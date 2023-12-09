@@ -1,7 +1,9 @@
 use crate::definitions::ui_str;
+use crate::integration::Integration;
 use egui::{ColorImage, RichText, TextureHandle, TextureOptions};
 use image::buffer::ConvertBuffer;
 use image::RgbaImage;
+use log::warn;
 use nonzero::nonzero;
 use num_traits::ToPrimitive;
 use rayna_core::def::types::{ImgBuf, Pix};
@@ -13,10 +15,15 @@ pub struct RaynaApp {
     target_img_dims: [NonZeroUsize; 2],
     /// A handle to the texture that holds the current render buffer
     render_buf_tex: Option<TextureHandle>,
+    /// The amount of space available to display the rendered image in
+    /// This is [`egui::Ui::available_size`] inside [egui::CentralPanel]
+    /// Used by the "fit canvas to screen" button
     render_display_size: egui::Vec2,
+    integration: Integration,
 }
 
 impl RaynaApp {
+    /// Creates a new app instance, with an [`egui::Context`] for configuring the app
     pub fn new_ctx(_ctx: &egui::Context) -> Self {
         Self {
             target_img_dims: [nonzero!(1_usize), nonzero!(1_usize)],
@@ -71,7 +78,54 @@ impl App for RaynaApp {
             });
         });
 
-        // ===== THIS WOULD BE INSIDE RENDERER/CORE =====
+        // If any changes were made to the settings, send across to the worker
+        if dirty {
+            if let Err(err) = self
+                .integration
+                .update_target_img_dims(self.target_img_dims)
+            {
+                warn!()
+            }
+
+            let img_orig = {
+                let [w, h] = self
+                    .target_img_dims
+                    .map(|x| x.get().to_u32())
+                    .map(|d| d.expect("image dims failed to fit inside u32"));
+                let mut img = ImgBuf::new(w, h);
+                img.enumerate_pixels_mut().for_each(|(x, y, p)| {
+                    *p = if x == 0 || y == 0 || x == w - 1 || y == h - 1 {
+                        Pix::from([1.0; 3])
+                    } else {
+                        Pix::from([0.0, 1.0, 0.0])
+                    }
+                });
+                img
+            };
+
+            // Pretend we have 'received' this image from the renderer now
+            // We now translate the image into an egui-appropriate one
+            // And update the texture from it
+            let img_as_rgba: RgbaImage = img_orig.convert();
+            let img_as_egui = ColorImage::from_rgba_unmultiplied(
+                [img_orig.width() as usize, img_orig.height() as usize],
+                img_as_rgba.as_raw().as_slice(),
+            );
+
+            match &mut self.render_buf_tex {
+                None => {
+                    self.render_buf_tex = Some(ctx.load_texture(
+                        "render_buffer_texture",
+                        img_as_egui,
+                        TextureOptions::default(),
+                    ))
+                }
+                Some(tex) => tex.set(img_as_egui, TextureOptions::default()),
+            }
+        }
+
+        // Process any messages from the worker
+
         if dirty {
             let img_orig = {
                 let [w, h] = self

@@ -28,39 +28,36 @@ impl RaynaApp {
 
 impl App for RaynaApp {
     fn on_update(&mut self, ctx: &egui::Context) -> () {
-        // Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
+        let mut dirty = false;
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // The top panel is often a good place for a menu bar:
-
             egui::menu::bar(ui, |ui| {
                 // TODO: QUIT HANDLING
-
                 egui::widgets::global_dark_light_mode_buttons(ui);
             });
         });
-
-        let mut dirty = false;
 
         egui::SidePanel::left("left_panel").show(ctx, |ui| {
             ui.heading("Render Options");
 
             ui.group(|ui| {
-                // Have to do a bit of magic since we can't use NonZeroUsize directly
-                ui.label("Image Width");
-                let mut w = self.target_img_dims[0].get();
-                dirty |= ui
-                    .add(egui::DragValue::new(&mut w).suffix(ui_str::PIXELS_UNIT))
-                    .changed();
-                self.target_img_dims[0] = NonZeroUsize::new(w).unwrap_or(NonZeroUsize::MIN);
+                // Image Dimensions
 
-                ui.label("Image Height");
+                let mut w = self.target_img_dims[0].get();
                 let mut h = self.target_img_dims[1].get();
-                dirty |= ui
-                    .add(egui::DragValue::new(&mut h).suffix(ui_str::PIXELS_UNIT))
-                    .changed();
+
+                ui.label("Image Width");
+                let w_drag = ui.add(egui::DragValue::new(&mut w).suffix(ui_str::PIXELS_UNIT));
+                ui.label("Image Height");
+                let h_drag = ui.add(egui::DragValue::new(&mut h).suffix(ui_str::PIXELS_UNIT));
+
+                dirty |= w_drag.drag_released() || w_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
+                dirty |= h_drag.drag_released() || h_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
+
+                self.target_img_dims[0] = NonZeroUsize::new(w).unwrap_or(NonZeroUsize::MIN);
                 self.target_img_dims[1] = NonZeroUsize::new(h).unwrap_or(NonZeroUsize::MIN);
+
+                // Fill Image Dimensions
 
                 if ui.button("Fill Canvas").clicked() {
                     dirty = true;
@@ -74,8 +71,8 @@ impl App for RaynaApp {
             });
         });
 
+        // ===== THIS WOULD BE INSIDE RENDERER/CORE =====
         if dirty {
-            // ===== THIS WOULD BE INSIDE RENDERER/CORE =====
             let img_orig = {
                 let [w, h] = self
                     .target_img_dims

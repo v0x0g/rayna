@@ -28,6 +28,7 @@ anyhow = "1.*"
 nonzero = "0.*"
 image = "0.*"
 num-traits = "0.2.17"
+flume = { version = "0.11.0", features = ["async"] }
 
 # ===== FEATURES =====
 

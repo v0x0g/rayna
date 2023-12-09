@@ -1,5 +1,6 @@
 use crate::obj::Object;
 
+#[derive(Clone, Debug)]
 pub struct Scene {
     // TODO: Maybe use [std::boxed::ThinBox] instead of [Box], might be better for perf
     pub objects: Vec<Box<dyn Object>>,

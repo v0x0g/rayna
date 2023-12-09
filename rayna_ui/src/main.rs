@@ -8,6 +8,7 @@ use rayna_ui_base::backend::UiBackend;
 use std::collections::HashMap;
 
 pub mod definitions;
+mod integration;
 mod rayna_app;
 
 fn main() -> anyhow::Result<()> {

@@ -17,7 +17,7 @@ impl UiBackend for MiniquadBackend {
             Conf {
                 ..Default::default()
             },
-            |mq_ctx| {
+            move |mq_ctx| {
                 let egui_mq = EguiMq::new(mq_ctx);
                 let app = app_ctor(egui_mq.egui_ctx());
                 Box::new(MiniquadWrapper { egui_mq, app }) as Box<dyn EventHandler>

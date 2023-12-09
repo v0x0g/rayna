@@ -1,16 +1,27 @@
 use crate::definitions::ui_str;
+use egui::{ColorImage, RichText, TextureHandle, TextureOptions};
+use image::buffer::ConvertBuffer;
+use image::RgbaImage;
 use nonzero::nonzero;
+use num_traits::ToPrimitive;
+use rayna_core::def::types::{ImgBuf, Pix};
 use rayna_ui_base::app::App;
 use std::num::NonZeroUsize;
 
 pub struct RaynaApp {
-    img_dims: (NonZeroUsize, NonZeroUsize),
+    /// The target image dimensions we want, stored as `[width, height]`
+    target_img_dims: [NonZeroUsize; 2],
+    /// A handle to the texture that holds the current render buffer
+    render_buf_tex: Option<TextureHandle>,
+    render_display_size: egui::Vec2,
 }
 
 impl RaynaApp {
     pub fn new_ctx(_ctx: &egui::Context) -> Self {
         Self {
-            img_dims: (nonzero!(1920_usize), nonzero!(1080_usize)),
+            target_img_dims: [nonzero!(1_usize), nonzero!(1_usize)],
+            render_buf_tex: None,
+            render_display_size: egui::vec2(1.0, 1.0),
         }
     }
 }
@@ -30,57 +41,88 @@ impl App for RaynaApp {
             });
         });
 
-        // Central panel contains the main render window
-        // Must come after all other panels
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // The central panel the region left after adding TopPanel's and SidePanel's
-            ui.heading("Render");
+        let mut dirty = false;
+
+        egui::SidePanel::left("left_panel").show(ctx, |ui| {
+            ui.heading("Render Options");
 
             ui.group(|ui| {
                 // Have to do a bit of magic since we can't use NonZeroUsize directly
-                ui.label("width");
-                let mut w = self.img_dims.0.get();
-                ui.add(egui::DragValue::new(&mut w).suffix(ui_str::PIXELS_UNIT));
-                self.img_dims.0 = NonZeroUsize::new(w).unwrap_or(NonZeroUsize::MIN);
+                ui.label("Image Width");
+                let mut w = self.target_img_dims[0].get();
+                dirty |= ui
+                    .add(egui::DragValue::new(&mut w).suffix(ui_str::PIXELS_UNIT))
+                    .changed();
+                self.target_img_dims[0] = NonZeroUsize::new(w).unwrap_or(NonZeroUsize::MIN);
 
-                ui.label("height");
-                let mut h = self.img_dims.1.get();
-                ui.add(egui::DragValue::new(&mut h).suffix(ui_str::PIXELS_UNIT));
-                self.img_dims.1 = NonZeroUsize::new(h).unwrap_or(NonZeroUsize::MIN);
+                ui.label("Image Height");
+                let mut h = self.target_img_dims[1].get();
+                dirty |= ui
+                    .add(egui::DragValue::new(&mut h).suffix(ui_str::PIXELS_UNIT))
+                    .changed();
+                self.target_img_dims[1] = NonZeroUsize::new(h).unwrap_or(NonZeroUsize::MIN);
+
+                if ui.button("Fill Canvas").clicked() {
+                    dirty = true;
+                    self.target_img_dims[0] =
+                        NonZeroUsize::new(self.render_display_size.x as usize)
+                            .unwrap_or(NonZeroUsize::MIN);
+                    self.target_img_dims[1] =
+                        NonZeroUsize::new(self.render_display_size.y as usize)
+                            .unwrap_or(NonZeroUsize::MIN);
+                }
             });
+        });
 
-            // ui.image(
-            //     tex_id,
-            //     egui::vec2(self.img_dims.0.get() as f32, self.img_dims.1.get() as f32),
-            // );
-
-            // ui.group(|ui| egui::Slider::new(&mut self.img_dims.1));
-            //
-            // ui.add(egui::Slider::new(&mut self.value, 0.0..=10.0).text("value"));
-            // if ui.button("Increment").clicked() {
-            //     self.value += 1.0;
-            // }
-
-            ui.separator();
-
-            ui.add(egui::github_link_file!(
-                "https://github.com/emilk/eframe_template/blob/master/",
-                "Source code."
-            ));
-
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 0.0;
-                    ui.label("Powered by ");
-                    ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-                    ui.label(" and ");
-                    ui.hyperlink_to(
-                        "eframe",
-                        "https://github.com/emilk/egui/tree/master/crates/eframe",
-                    );
-                    ui.label(".");
+        if dirty {
+            // ===== THIS WOULD BE INSIDE RENDERER/CORE =====
+            let img_orig = {
+                let [w, h] = self
+                    .target_img_dims
+                    .map(|x| x.get().to_u32())
+                    .map(|d| d.expect("image dims failed to fit inside u32"));
+                let mut img = ImgBuf::new(w, h);
+                img.enumerate_pixels_mut().for_each(|(x, y, p)| {
+                    *p = if x == 0 || y == 0 || x == w - 1 || y == h - 1 {
+                        Pix::from([1.0; 3])
+                    } else {
+                        Pix::from([0.0, 1.0, 0.0])
+                    }
                 });
-            });
+                img
+            };
+
+            // Pretend we have 'received' this image from the renderer now
+            // We now translate the image into an egui-appropriate one
+            // And update the texture from it
+            let img_as_rgba: RgbaImage = img_orig.convert();
+            let img_as_egui = ColorImage::from_rgba_unmultiplied(
+                [img_orig.width() as usize, img_orig.height() as usize],
+                img_as_rgba.as_raw().as_slice(),
+            );
+
+            match &mut self.render_buf_tex {
+                None => {
+                    self.render_buf_tex = Some(ctx.load_texture(
+                        "render_buffer_texture",
+                        img_as_egui,
+                        TextureOptions::default(),
+                    ))
+                }
+                Some(tex) => tex.set(img_as_egui, TextureOptions::default()),
+            }
+        }
+
+        // Central panel contains the main render window
+        // Must come after all other panels
+        egui::CentralPanel::default().show(ctx, |ui| {
+            let avail_space = ui.available_size();
+            self.render_display_size = avail_space;
+            if let Some(tex_id) = &mut self.render_buf_tex {
+                ui.image(tex_id, avail_space);
+            } else {
+                ui.label(RichText::new("No texture").size(20.0));
+            }
         });
     }
 

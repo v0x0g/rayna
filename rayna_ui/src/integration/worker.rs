@@ -1,3 +1,4 @@
+use crate::def::targets::BG_WORKER;
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use num_traits::ToPrimitive;
 use rayna_core::def::types::{ImgBuf, Pix};
@@ -19,6 +20,8 @@ pub(super) struct BgWorker {
 impl BgWorker {
     #[instrument(level = tracing::Level::DEBUG, skip(self), parent = None)]
     pub fn thread_run(self) {
+        info!(target: BG_WORKER, "BgWorker thread start");
+
         let Self {
             msg_tx: tx,
             msg_rx: rx,
@@ -28,16 +31,16 @@ impl BgWorker {
 
         loop {
             if rx.is_disconnected() {
-                println!("BgWorker: all senders disconnected from channel");
+                warn!(target: BG_WORKER, "all senders disconnected from channel");
                 break;
             }
 
             if !tx.is_empty() {
-                info!("channel not empty, waiting");
+                info!(target: BG_WORKER, "channel not empty, waiting");
                 std::thread::sleep(Duration::from_millis(1000));
                 continue;
             } else {
-                info!("channel empty, sending new image");
+                info!(target: BG_WORKER, "channel empty, sending new image");
             }
 
             let [w, h] = [render_opts.width, render_opts.height]
@@ -54,10 +57,10 @@ impl BgWorker {
             });
 
             if let Err(_) = tx.send(MessageToUi::RenderFrameComplete(img)) {
-                warn!("failed to send rendered frame to UI")
+                warn!(target: BG_WORKER, "failed to send rendered frame to UI")
             }
         }
 
-        info!("BgWorker thread exit");
+        info!(target: BG_WORKER, "BgWorker thread exit");
     }
 }

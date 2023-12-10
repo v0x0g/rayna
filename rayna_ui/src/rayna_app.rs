@@ -1,4 +1,4 @@
-use crate::definitions::ui_str;
+use crate::def::ui_str;
 use crate::integration::Integration;
 use egui::{ColorImage, RichText, TextureHandle, TextureOptions};
 use image::buffer::ConvertBuffer;

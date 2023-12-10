@@ -1,3 +1,3 @@
 pub mod constants;
-mod targets;
+pub mod targets;
 pub(crate) mod ui_str;

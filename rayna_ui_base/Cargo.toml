@@ -21,7 +21,8 @@ miniquad = { version = "0.3.12", optional = true }
 
 # Other
 anyhow = { workspace = true }
-
+valuable = { workspace = true }
+tracing = { workspace = true }
 
 # ===== FEATURES =====
 

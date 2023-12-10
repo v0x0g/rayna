@@ -7,7 +7,6 @@ use crate::integration::worker::BgWorker;
 use itertools::Itertools;
 use rayna_core::def::types::ImgBuf;
 use rayna_core::render::render_opts::RenderOpts;
-use std::backtrace::Backtrace;
 use std::collections::VecDeque;
 use std::thread::JoinHandle;
 use thiserror::Error;
@@ -20,19 +19,9 @@ pub type Result<T> = core::result::Result<T, IntegrationError>;
 #[derive(Error, Debug)]
 pub enum IntegrationError {
     #[error("channel to background worker disconnected")]
-    TxChannelDisconnected {
-        #[from]
-        source: flume::SendError<MessageToWorker>,
-        #[backtrace]
-        backtrace: Backtrace,
-    },
+    TxChannelDisconnected,
     #[error("channel from background worker disconnected")]
-    RxChannelDisconnected {
-        #[from]
-        source: flume::RecvError,
-        #[backtrace]
-        backtrace: Backtrace,
-    },
+    RxChannelDisconnected,
 }
 
 pub(crate) struct Integration {
@@ -74,7 +63,9 @@ impl Integration {
     // region ===== SENDING =====
 
     fn send_message(&self, message: MessageToWorker) -> Result<()> {
-        self.msg_tx.send(message).map_err(IntegrationError::from)
+        self.msg_tx
+            .send(message)
+            .map_err(|_| IntegrationError::TxChannelDisconnected)
     }
 
     /// Sends a message to the worker, telling it to update the render
@@ -93,7 +84,7 @@ impl Integration {
                 Ok(msg) => self.rx_buffer.push_back(msg),
                 Err(flume::TryRecvError::Empty) => return Ok(()),
                 Err(flume::TryRecvError::Disconnected) => {
-                    return Err(IntegrationError::from(flume::RecvError::Disconnected))
+                    return Err(IntegrationError::RxChannelDisconnected)
                 }
             }
         }

@@ -2,7 +2,9 @@ use crate::app::{App, AppCtor};
 use crate::backend::UiBackend;
 use anyhow::anyhow;
 use eframe::Theme;
+use valuable::Valuable;
 
+#[derive(Debug, Copy, Clone, Valuable)]
 pub struct EframeBackend;
 
 impl UiBackend for EframeBackend {

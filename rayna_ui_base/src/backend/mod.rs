@@ -1,4 +1,5 @@
 use crate::app::AppCtor;
+use std::fmt::Debug;
 
 #[cfg(feature = "backend_eframe")]
 pub mod eframe;
@@ -7,7 +8,7 @@ pub mod eframe;
 pub mod miniquad;
 
 /// A trait that represents a type that can be used as a backend for the UI
-pub trait UiBackend {
+pub trait UiBackend: Debug {
     /// Runs the UI
     ///
     /// Takes in a function (possibly a closure) that will initialise (and return) the application

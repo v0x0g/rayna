@@ -36,11 +36,16 @@ fn main() -> anyhow::Result<()> {
     //     .expect("at least one backend should be enabled")
     //     .1;
     let backend = backends.remove("miniquad").unwrap();
+    debug!(target: MAIN, "using backend {backend:?}");
 
-    backend.run(
+    debug!(target: MAIN, "run");
+    match backend.run(
         def::constants::APP_NAME,
         Box::new(|ctx| Box::new(RaynaApp::new_ctx(ctx))),
-    )?;
+    ) {
+        Ok(()) => debug!(target: MAIN, "run complete (success)"),
+        Err(e) => debug!(target: MAIN, err = ?e, "run complete (error)"),
+    }
 
     Ok(())
 }

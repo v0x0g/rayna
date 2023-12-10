@@ -3,7 +3,9 @@ use crate::backend::UiBackend;
 use egui_miniquad::EguiMq;
 use miniquad::conf::Conf;
 use miniquad::EventHandler;
+use valuable::Valuable;
 
+#[derive(Debug, Copy, Clone, Valuable)]
 pub struct MiniquadBackend;
 
 impl UiBackend for MiniquadBackend {

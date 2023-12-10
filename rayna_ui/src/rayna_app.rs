@@ -3,16 +3,13 @@ use crate::integration::Integration;
 use egui::{ColorImage, RichText, TextureHandle, TextureOptions};
 use image::buffer::ConvertBuffer;
 use image::RgbaImage;
-use log::warn;
-use nonzero::nonzero;
-use num_traits::ToPrimitive;
-use rayna_core::def::types::{ImgBuf, Pix};
+use rayna_core::render::render_opts::RenderOpts;
 use rayna_ui_base::app::App;
 use std::num::NonZeroUsize;
+use tracing::warn;
 
 pub struct RaynaApp {
-    /// The target image dimensions we want, stored as `[width, height]`
-    target_img_dims: [NonZeroUsize; 2],
+    render_opts: RenderOpts,
     /// A handle to the texture that holds the current render buffer
     render_buf_tex: Option<TextureHandle>,
     /// The amount of space available to display the rendered image in
@@ -26,16 +23,17 @@ impl RaynaApp {
     /// Creates a new app instance, with an [`egui::Context`] for configuring the app
     pub fn new_ctx(_ctx: &egui::Context) -> Self {
         Self {
-            target_img_dims: [nonzero!(1_usize), nonzero!(1_usize)],
+            render_opts: Default::default(),
             render_buf_tex: None,
             render_display_size: egui::vec2(1.0, 1.0),
+            integration: Integration::new(),
         }
     }
 }
 
 impl App for RaynaApp {
     fn on_update(&mut self, ctx: &egui::Context) -> () {
-        let mut dirty = false;
+        let mut render_opts_dirty = false;
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
@@ -50,117 +48,68 @@ impl App for RaynaApp {
             ui.group(|ui| {
                 // Image Dimensions
 
-                let mut w = self.target_img_dims[0].get();
-                let mut h = self.target_img_dims[1].get();
+                let mut w = self.render_opts.width.get();
+                let mut h = self.render_opts.height.get();
 
                 ui.label("Image Width");
                 let w_drag = ui.add(egui::DragValue::new(&mut w).suffix(ui_str::PIXELS_UNIT));
                 ui.label("Image Height");
                 let h_drag = ui.add(egui::DragValue::new(&mut h).suffix(ui_str::PIXELS_UNIT));
 
-                dirty |= w_drag.drag_released() || w_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
-                dirty |= h_drag.drag_released() || h_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
+                render_opts_dirty |= w_drag.drag_released() || w_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
+                render_opts_dirty |= h_drag.drag_released() || h_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
 
-                self.target_img_dims[0] = NonZeroUsize::new(w).unwrap_or(NonZeroUsize::MIN);
-                self.target_img_dims[1] = NonZeroUsize::new(h).unwrap_or(NonZeroUsize::MIN);
+                self.render_opts.width = NonZeroUsize::new(w).unwrap_or(NonZeroUsize::MIN);
+                self.render_opts.height = NonZeroUsize::new(h).unwrap_or(NonZeroUsize::MIN);
 
                 // Fill Image Dimensions
 
                 if ui.button("Fill Canvas").clicked() {
-                    dirty = true;
-                    self.target_img_dims[0] =
-                        NonZeroUsize::new(self.render_display_size.x as usize)
-                            .unwrap_or(NonZeroUsize::MIN);
-                    self.target_img_dims[1] =
+                    render_opts_dirty = true;
+                    self.render_opts.width = NonZeroUsize::new(self.render_display_size.x as usize)
+                        .unwrap_or(NonZeroUsize::MIN);
+                    self.render_opts.height =
                         NonZeroUsize::new(self.render_display_size.y as usize)
                             .unwrap_or(NonZeroUsize::MIN);
                 }
             });
         });
 
-        // If any changes were made to the settings, send across to the worker
-        if dirty {
-            if let Err(err) = self
-                .integration
-                .update_target_img_dims(self.target_img_dims)
-            {
-                warn!()
-            }
-
-            let img_orig = {
-                let [w, h] = self
-                    .target_img_dims
-                    .map(|x| x.get().to_u32())
-                    .map(|d| d.expect("image dims failed to fit inside u32"));
-                let mut img = ImgBuf::new(w, h);
-                img.enumerate_pixels_mut().for_each(|(x, y, p)| {
-                    *p = if x == 0 || y == 0 || x == w - 1 || y == h - 1 {
-                        Pix::from([1.0; 3])
-                    } else {
-                        Pix::from([0.0, 1.0, 0.0])
-                    }
-                });
-                img
-            };
-
-            // Pretend we have 'received' this image from the renderer now
-            // We now translate the image into an egui-appropriate one
-            // And update the texture from it
-            let img_as_rgba: RgbaImage = img_orig.convert();
-            let img_as_egui = ColorImage::from_rgba_unmultiplied(
-                [img_orig.width() as usize, img_orig.height() as usize],
-                img_as_rgba.as_raw().as_slice(),
-            );
-
-            match &mut self.render_buf_tex {
-                None => {
-                    self.render_buf_tex = Some(ctx.load_texture(
-                        "render_buffer_texture",
-                        img_as_egui,
-                        TextureOptions::default(),
-                    ))
-                }
-                Some(tex) => tex.set(img_as_egui, TextureOptions::default()),
+        if render_opts_dirty {
+            if let Err(err) = self.integration.update_render_opts(self.render_opts) {
+                warn!(?err)
             }
         }
 
         // Process any messages from the worker
 
-        if dirty {
-            let img_orig = {
-                let [w, h] = self
-                    .target_img_dims
-                    .map(|x| x.get().to_u32())
-                    .map(|d| d.expect("image dims failed to fit inside u32"));
-                let mut img = ImgBuf::new(w, h);
-                img.enumerate_pixels_mut().for_each(|(x, y, p)| {
-                    *p = if x == 0 || y == 0 || x == w - 1 || y == h - 1 {
-                        Pix::from([1.0; 3])
-                    } else {
-                        Pix::from([0.0, 1.0, 0.0])
+        match self.integration.get_next_render() {
+            Ok(None) => {}
+            Ok(Some(img)) => {
+                // Got a rendered image, translate to an egui-appropriate one
+
+                let img_as_rgba: RgbaImage = img.convert();
+                // SAFETY: This may panic if the data doesn't exactly match
+                //  between the image dims and the raw buffer
+                //  This *should* be fine as long as nothing in the [`image`] or [`epaint`] crate changes
+                let img_as_egui = ColorImage::from_rgba_unmultiplied(
+                    [img.width() as usize, img.height() as usize],
+                    img_as_rgba.as_raw().as_slice(),
+                );
+
+                match &mut self.render_buf_tex {
+                    None => {
+                        self.render_buf_tex = Some(ctx.load_texture(
+                            "render_buffer_texture",
+                            img_as_egui,
+                            TextureOptions::default(),
+                        ))
                     }
-                });
-                img
-            };
-
-            // Pretend we have 'received' this image from the renderer now
-            // We now translate the image into an egui-appropriate one
-            // And update the texture from it
-            let img_as_rgba: RgbaImage = img_orig.convert();
-            let img_as_egui = ColorImage::from_rgba_unmultiplied(
-                [img_orig.width() as usize, img_orig.height() as usize],
-                img_as_rgba.as_raw().as_slice(),
-            );
-
-            match &mut self.render_buf_tex {
-                None => {
-                    self.render_buf_tex = Some(ctx.load_texture(
-                        "render_buffer_texture",
-                        img_as_egui,
-                        TextureOptions::default(),
-                    ))
+                    Some(tex) => tex.set(img_as_egui, TextureOptions::default()),
                 }
-                Some(tex) => tex.set(img_as_egui, TextureOptions::default()),
+            }
+            Err(err) => {
+                warn!(?err)
             }
         }
 

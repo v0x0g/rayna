@@ -6,8 +6,8 @@ use std::ops::Range;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Sphere {
-    pos: Vec3,
-    radius: Num,
+    _pos: Vec3,
+    _radius: Num,
 }
 
 impl Object for Sphere {

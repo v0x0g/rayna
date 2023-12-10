@@ -1,10 +1,10 @@
 use rayna_core::def::types::ImgBuf;
-use std::num::NonZeroUsize;
+use rayna_core::render::render_opts::RenderOpts;
 
 /// A message sent by the UI to the worker
 #[derive(Debug, Copy, Clone)]
 pub(in crate::integration) enum MessageToWorker {
-    SetTargetRenderDims([NonZeroUsize; 2]),
+    SetRenderOpts(RenderOpts),
 }
 
 /// A message sent from the worker, to the UI

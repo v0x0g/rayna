@@ -26,7 +26,7 @@ impl BgWorker {
             msg_tx: tx,
             msg_rx: rx,
             render_opts,
-            scene,
+            scene: _,
         } = self;
 
         loop {

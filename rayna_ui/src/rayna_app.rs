@@ -1,4 +1,5 @@
 use crate::def::ui_str;
+use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::integration::Integration;
 use egui::{ColorImage, RichText, TextureHandle, TextureOptions};
 use image::buffer::ConvertBuffer;
@@ -76,40 +77,45 @@ impl App for RaynaApp {
         });
 
         if render_opts_dirty {
-            if let Err(err) = self.integration.update_render_opts(self.render_opts) {
+            if let Err(err) = self
+                .integration
+                .send_message(MessageToWorker::SetRenderOpts(self.render_opts))
+            {
                 warn!(?err)
             }
         }
 
         // Process any messages from the worker
 
-        match self.integration.get_next_render() {
-            Ok(None) => {}
-            Ok(Some(img)) => {
-                // Got a rendered image, translate to an egui-appropriate one
-
-                let img_as_rgba: RgbaImage = img.convert();
-                // SAFETY: This may panic if the data doesn't exactly match
-                //  between the image dims and the raw buffer
-                //  This *should* be fine as long as nothing in the [`image`] or [`epaint`] crate changes
-                let img_as_egui = ColorImage::from_rgba_unmultiplied(
-                    [img.width() as usize, img.height() as usize],
-                    img_as_rgba.as_raw().as_slice(),
-                );
-
-                match &mut self.render_buf_tex {
-                    None => {
-                        self.render_buf_tex = Some(ctx.load_texture(
-                            "render_buffer_texture",
-                            img_as_egui,
-                            TextureOptions::default(),
-                        ))
-                    }
-                    Some(tex) => tex.set(img_as_egui, TextureOptions::default()),
+        while let Some(res) = self.integration.try_recv_message() {
+            match res {
+                Err(err) => {
+                    warn!(?err)
                 }
-            }
-            Err(err) => {
-                warn!(?err)
+
+                Ok(MessageToUi::RenderFrameComplete(img)) => {
+                    // Got a rendered image, translate to an egui-appropriate one
+
+                    let img_as_rgba: RgbaImage = img.convert();
+                    // SAFETY: This may panic if the data doesn't exactly match
+                    //  between the image dims and the raw buffer
+                    //  This *should* be fine as long as nothing in the [`image`] or [`epaint`] crate changes
+                    let img_as_egui = ColorImage::from_rgba_unmultiplied(
+                        [img.width() as usize, img.height() as usize],
+                        img_as_rgba.as_raw().as_slice(),
+                    );
+
+                    match &mut self.render_buf_tex {
+                        None => {
+                            self.render_buf_tex = Some(ctx.load_texture(
+                                "render_buffer_texture",
+                                img_as_egui,
+                                TextureOptions::default(),
+                            ))
+                        }
+                        Some(tex) => tex.set(img_as_egui, TextureOptions::default()),
+                    }
+                }
             }
         }
 

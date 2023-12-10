@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::app::{App, AppCtor};
 use crate::backend::UiBackend;
 use egui_miniquad::EguiMq;
 use miniquad::conf::Conf;
@@ -7,11 +7,7 @@ use miniquad::EventHandler;
 pub struct MiniquadBackend;
 
 impl UiBackend for MiniquadBackend {
-    fn run<A: App>(
-        self,
-        _app_name: &str,
-        app_ctor: impl FnOnce(&egui::Context) -> A + 'static,
-    ) -> anyhow::Result<()> {
+    fn run(self: Box<Self>, _app_name: &str, app_ctor: AppCtor) -> anyhow::Result<()> {
         // TODO: Figure out how to use app_name
         miniquad::start(
             Conf {
@@ -19,8 +15,11 @@ impl UiBackend for MiniquadBackend {
             },
             move |mq_ctx| {
                 let egui_mq = EguiMq::new(mq_ctx);
-                let app = app_ctor(egui_mq.egui_ctx());
-                Box::new(MiniquadWrapper { egui_mq, app }) as Box<dyn EventHandler>
+                let box_app = app_ctor(egui_mq.egui_ctx());
+                Box::new(MiniquadWrapper {
+                    egui_mq,
+                    app: box_app,
+                }) as Box<dyn EventHandler>
             },
         );
 
@@ -30,13 +29,13 @@ impl UiBackend for MiniquadBackend {
 }
 
 /// Internal struct that acts as miniquad app, that delegates events onto our actual app
-struct MiniquadWrapper<A> {
+struct MiniquadWrapper {
     egui_mq: EguiMq,
-    app: A,
+    app: Box<dyn App>,
 }
 
 /// Implement the miniquad::App equivalent for our wrapper, that just delegates to our crate::app object
-impl<T: App> EventHandler for MiniquadWrapper<T> {
+impl EventHandler for MiniquadWrapper {
     // TODO: Quit/shutdown
 
     fn update(&mut self, _: &mut miniquad::Context) {

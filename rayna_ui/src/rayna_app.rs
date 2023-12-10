@@ -126,7 +126,7 @@ impl App for RaynaApp {
         });
     }
 
-    fn on_shutdown(self) -> () {
+    fn on_shutdown(&mut self) -> () {
         println!("rayna_app::shutdown")
     }
 }

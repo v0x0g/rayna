@@ -37,7 +37,10 @@ fn main() -> anyhow::Result<()> {
     //     .1;
     let backend = backends.remove("miniquad").unwrap();
 
-    backend.run(def::constants::APP_NAME, RaynaApp::new_ctx)?;
+    backend.run(
+        def::constants::APP_NAME,
+        Box::new(|ctx| Box::new(RaynaApp::new_ctx(ctx))),
+    )?;
 
     Ok(())
 }

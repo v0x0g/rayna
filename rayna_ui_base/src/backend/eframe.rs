@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::app::{App, AppCtor};
 use crate::backend::UiBackend;
 use anyhow::anyhow;
 use eframe::Theme;
@@ -6,11 +6,7 @@ use eframe::Theme;
 pub struct EframeBackend;
 
 impl UiBackend for EframeBackend {
-    fn run<A: App>(
-        self,
-        app_name: &str,
-        app_ctor: impl FnOnce(&egui::Context) -> A + 'static,
-    ) -> anyhow::Result<()> {
+    fn run(self: Box<Self>, app_name: &str, app_ctor: AppCtor) -> anyhow::Result<()> {
         eframe::run_native(
             app_name,
             eframe::NativeOptions {
@@ -24,9 +20,9 @@ impl UiBackend for EframeBackend {
             // This closure is called by `eframe` to initialise the app
             // It moves all the functions into itself so that they can be called at the appropriate times
             Box::new(move |ctx: &eframe::CreationContext| {
-                let app = app_ctor(&ctx.egui_ctx);
-                let wrapper = EframeWrapper { app: Some(app) };
-                Box::new(wrapper) as Box<dyn eframe::App>
+                let box_app = app_ctor(&ctx.egui_ctx);
+                // Box<dyn crate::app> implements eframe::App
+                Box::new(box_app) as Box<dyn eframe::App>
             }),
         )
         .map_err(|e| anyhow!("failed running eframe: {e:#?}"))?;
@@ -35,27 +31,12 @@ impl UiBackend for EframeBackend {
     }
 }
 
-/// Internal struct that acts as an app instance for [eframe]
-///
-/// # Notes
-/// Use an [Option] for the app, so that we can safely consume [T] on shutdown,
-/// as per [App::on_shutdown] contract
-struct EframeWrapper<T> {
-    app: Option<T>,
-}
-
-impl<A: App> eframe::App for EframeWrapper<A> {
+impl eframe::App for Box<dyn App> {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        self.app
-            .as_mut()
-            .expect("on_update called after app has been consumed (shutdown)")
-            .on_update(ctx);
+        self.on_update(ctx);
     }
 
     fn on_exit(&mut self, _glow: Option<&eframe::glow::Context>) {
-        self.app
-            .take()
-            .expect("on_exit called after app has been consumed (shutdown)")
-            .on_shutdown();
+        self.on_shutdown();
     }
 }

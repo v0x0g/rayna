@@ -8,16 +8,18 @@ use crate::rayna_app::RaynaApp;
 use rayna_ui_base::backend;
 use rayna_ui_base::backend::UiBackend;
 use std::collections::HashMap;
-use tracing::debug;
+use tracing::{debug, Event, Level};
+use tracing_subscriber::fmt::format::Writer;
+use tracing_subscriber::fmt::{format, FmtContext};
+use tracing_subscriber::util::SubscriberInitExt;
 
 pub mod def;
 mod integration;
 mod rayna_app;
 
-fn main() -> anyhow::Result<()> {
-    // TODO: Init [tracing]
-
-    let mut backends: HashMap<_, Box<dyn UiBackend>> = HashMap::new();
+/// Gets a map of all the [`UiBackend`] implementations available
+fn backends() -> HashMap<&'static str, Box<dyn UiBackend>> {
+    let mut backends: HashMap<&'static str, Box<dyn UiBackend>> = HashMap::new();
     #[cfg(feature = "backend_eframe")]
     {
         debug!(target: MAIN, "have backend: eframe");
@@ -29,12 +31,33 @@ fn main() -> anyhow::Result<()> {
         backends.insert("miniquad", Box::new(backend::miniquad::MiniquadBackend {}))
     };
 
+    backends
+}
+
+fn main() -> anyhow::Result<()> {
+    // TODO: Init [tracing]
+    {
+        tracing_subscriber::fmt::fmt()
+            .pretty()
+            .with_ansi(true)
+            .log_internal_errors(true)
+            .with_max_level(Level::TRACE)
+            .with_line_number(true)
+            .with_file(true)
+            .with_level(true)
+            .with_target(true)
+            .with_thread_ids(true)
+            .with_thread_names(true)
+            .finish()
+            .init();
+    }
     // TODO: Better backend selection that's not just hardcoded
     // let backend = backends
     //     .into_iter()
     //     .next()
     //     .expect("at least one backend should be enabled")
     //     .1;
+    let mut backends = backends();
     let backend = backends.remove("miniquad").unwrap();
     debug!(target: MAIN, "using backend {backend:?}");
 

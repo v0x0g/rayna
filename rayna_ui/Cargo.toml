@@ -11,8 +11,8 @@ edition = "2021"
 [dependencies]
 
 # Raytracing deps
-rayna_core = {path = "../rayna_core"}
-rayna_ui_base = {path = "../rayna_ui_base"}
+rayna_core = { path = "../rayna_core" }
+rayna_ui_base = { path = "../rayna_ui_base" }
 
 # Display/UI
 egui = "0.*"
@@ -28,7 +28,7 @@ thiserror = { workspace = true }
 
 # Logging is amazing
 tracing = { workspace = true }
-tracing-subscriber = "0.3.18"
+tracing-subscriber = { version = "0.3.18", features = ["json", "local-time", "ansi"] }
 
 # Ray tracing
 image = { workspace = true }

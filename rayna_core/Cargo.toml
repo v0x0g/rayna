@@ -12,6 +12,7 @@ edition = "2021"
 
 glam = { workspace = true }
 glamour = { workspace = true }
+num-traits = { workspace = true }
 
 # Raytracing
 rtbvh = "0.6.2" # Used for accelerating intersection checks

@@ -4,6 +4,9 @@
 
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::integration::worker::BgWorker;
+use rayna_core::obj::sphere::Sphere;
+use rayna_core::scene;
+use rayna_core::shared::Vec3;
 use std::thread::JoinHandle;
 use thiserror::Error;
 use tracing::error;
@@ -40,7 +43,10 @@ impl Integration {
             msg_rx: w_rx,
             msg_tx: w_tx,
             render_opts: Default::default(),
-            scene: None,
+            scene: scene![Sphere {
+                pos: Vec3::new(0.0, 0.0, 0.0),
+                radius: 1.0
+            }],
         };
 
         let thread = std::thread::Builder::new()

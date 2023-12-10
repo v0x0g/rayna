@@ -12,10 +12,11 @@ macro_rules! scene {
         $(
             $value:expr
         ),* $(,)?
-    ] => {{
-            let mut objs = vec![$($value),*];
+    ] => {
             $crate::scene::Scene{
-                objects: objs
+                objects: vec![$(
+                    std::boxed::Box::new($value) as std::boxed::Box<dyn $crate::obj::Object>
+                ),*]
             }
-        }};
+        };
 }

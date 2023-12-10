@@ -49,6 +49,7 @@ fn main() -> anyhow::Result<()> {
             .finish()
             .init();
     }
+
     // TODO: Better backend selection that's not just hardcoded
     // let backend = backends
     //     .into_iter()

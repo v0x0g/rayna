@@ -24,6 +24,7 @@ pub struct RaynaApp {
 impl RaynaApp {
     /// Creates a new app instance, with an [`egui::Context`] for configuring the app
     pub fn new_ctx(_ctx: &egui::Context) -> Self {
+        info!(target: UI, "ui app init");
         Self {
             render_opts: Default::default(),
             render_buf_tex: None,
@@ -140,6 +141,6 @@ impl App for RaynaApp {
     }
 
     fn on_shutdown(&mut self) -> () {
-        println!("rayna_app::shutdown")
+        info!(target: UI, "ui app shutdown")
     }
 }

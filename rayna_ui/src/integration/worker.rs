@@ -47,11 +47,11 @@ impl BgWorker {
             }
 
             if !tx.is_empty() {
-                info!(target: BG_WORKER, "channel not empty, waiting");
+                trace!(target: BG_WORKER, "channel not empty, waiting");
                 std::thread::sleep(Duration::from_millis(1000));
                 continue;
             } else {
-                info!(target: BG_WORKER, "channel empty, sending new image");
+                trace!(target: BG_WORKER, "channel empty, sending new image");
             }
 
             let [w, h] = [render_opts.width, render_opts.height]

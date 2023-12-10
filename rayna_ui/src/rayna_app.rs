@@ -1,3 +1,4 @@
+use crate::def::targets::UI;
 use crate::def::ui_str;
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::integration::Integration;
@@ -7,7 +8,7 @@ use image::RgbaImage;
 use rayna_core::render::render_opts::RenderOpts;
 use rayna_ui_base::app::App;
 use std::num::NonZeroUsize;
-use tracing::warn;
+use tracing::{info, trace, warn};
 
 pub struct RaynaApp {
     render_opts: RenderOpts,
@@ -77,23 +78,29 @@ impl App for RaynaApp {
         });
 
         if render_opts_dirty {
+            info!(target: UI, render_opts = ?self.render_opts, "render opts dirty, sending to worker");
+
             if let Err(err) = self
                 .integration
                 .send_message(MessageToWorker::SetRenderOpts(self.render_opts))
             {
-                warn!(?err)
+                warn!(target: UI, ?err)
             }
         }
 
         // Process any messages from the worker
 
         while let Some(res) = self.integration.try_recv_message() {
+            trace!(target: UI, ?res, "got message from worker");
+
             match res {
                 Err(err) => {
-                    warn!(?err)
+                    warn!(target: UI, ?err)
                 }
 
                 Ok(MessageToUi::RenderFrameComplete(img)) => {
+                    trace!(target: UI, "received new frame from worker");
+
                     // Got a rendered image, translate to an egui-appropriate one
 
                     let img_as_rgba: RgbaImage = img.convert();

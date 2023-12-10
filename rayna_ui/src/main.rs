@@ -8,9 +8,7 @@ use crate::rayna_app::RaynaApp;
 use rayna_ui_base::backend;
 use rayna_ui_base::backend::UiBackend;
 use std::collections::HashMap;
-use tracing::{debug, Event, Level};
-use tracing_subscriber::fmt::format::Writer;
-use tracing_subscriber::fmt::{format, FmtContext};
+use tracing::{debug, Level};
 use tracing_subscriber::util::SubscriberInitExt;
 
 pub mod def;

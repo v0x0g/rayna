@@ -5,7 +5,7 @@ use rayna_core::def::types::{ImgBuf, Pix};
 use rayna_core::render::render_opts::RenderOpts;
 use rayna_core::scene::Scene;
 use std::time::Duration;
-use tracing::{info, instrument, warn};
+use tracing::{info, instrument, trace, warn};
 
 #[derive(Clone, Debug)]
 pub(super) struct BgWorker {
@@ -25,7 +25,7 @@ impl BgWorker {
         let Self {
             msg_tx: tx,
             msg_rx: rx,
-            render_opts,
+            mut render_opts,
             scene: _,
         } = self;
 
@@ -33,6 +33,17 @@ impl BgWorker {
             if rx.is_disconnected() {
                 warn!(target: BG_WORKER, "all senders disconnected from channel");
                 break;
+            }
+
+            // Have two conditions: (empty) or (disconnected)
+            // Checked if disconnected above and skip if empty, so just check Ok() here
+            while let Ok(msg) = rx.try_recv() {
+                match msg {
+                    MessageToWorker::SetRenderOpts(opts) => {
+                        trace!(target: BG_WORKER, ?opts, "got update render opts from ui");
+                        render_opts = opts
+                    }
+                }
             }
 
             if !tx.is_empty() {

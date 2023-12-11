@@ -1,13 +1,13 @@
-//! # [rayna_core::integration]
+//! # [rayna_engine::integration]
 //! This module acts as the integration ("glue") between the rendering backend for [rayna],
 //! and the UI frontend.
 
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::integration::worker::BgWorker;
-use rayna_core::def::types::Vec3;
-use rayna_core::obj::sphere::Sphere;
-use rayna_core::scene;
-use rayna_core::shared::camera::Camera;
+use rayna_engine::def::types::Vec3;
+use rayna_engine::obj::sphere::Sphere;
+use rayna_engine::scene;
+use rayna_engine::shared::camera::Camera;
 use std::thread::JoinHandle;
 use thiserror::Error;
 use tracing::error;

@@ -5,7 +5,7 @@ use crate::integration::Integration;
 use egui::{ColorImage, RichText, TextureHandle, TextureOptions};
 use image::buffer::ConvertBuffer;
 use image::RgbaImage;
-use rayna_core::render::render_opts::RenderOpts;
+use rayna_engine::render::render_opts::RenderOpts;
 use rayna_ui_base::app::App;
 use std::num::NonZeroUsize;
 use tracing::{info, trace, warn};

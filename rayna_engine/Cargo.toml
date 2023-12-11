@@ -1,6 +1,6 @@
 # ===== PACKAGE =====
 [package]
-name = "rayna_core"
+name = "rayna_engine"
 version = "0.1.0"
 edition = "2021"
 

@@ -1,6 +1,6 @@
 use derivative::Derivative;
-use rayna_core::def::types::ImgBuf;
-use rayna_core::render::render_opts::RenderOpts;
+use rayna_engine::def::types::ImgBuf;
+use rayna_engine::render::render_opts::RenderOpts;
 use valuable::Valuable;
 
 /// A message sent by the UI to the worker

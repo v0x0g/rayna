@@ -1,8 +1,8 @@
 use crate::def::targets::BG_WORKER;
 use crate::integration::message::{MessageToUi, MessageToWorker};
-use rayna_core::render::render_opts::RenderOpts;
-use rayna_core::render::renderer;
-use rayna_core::shared::scene::Scene;
+use rayna_engine::render::render_opts::RenderOpts;
+use rayna_engine::render::renderer;
+use rayna_engine::shared::scene::Scene;
 use std::time::Duration;
 use tracing::{info, instrument, trace, warn};
 

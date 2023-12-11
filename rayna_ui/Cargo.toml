@@ -11,7 +11,7 @@ edition = "2021"
 [dependencies]
 
 # Raytracing deps
-rayna_core = { path = "../rayna_core" }
+rayna_engine = { path = "../rayna_engine" }
 rayna_ui_base = { path = "../rayna_ui_base" }
 
 # Display/UI

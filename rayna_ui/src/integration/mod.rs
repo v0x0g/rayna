@@ -4,9 +4,10 @@
 
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::integration::worker::BgWorker;
+use rayna_core::def::types::Vec3;
 use rayna_core::obj::sphere::Sphere;
 use rayna_core::scene;
-use rayna_core::shared::Vec3;
+use rayna_core::shared::camera::Camera;
 use std::thread::JoinHandle;
 use thiserror::Error;
 use tracing::error;
@@ -43,10 +44,18 @@ impl Integration {
             msg_rx: w_rx,
             msg_tx: w_tx,
             render_opts: Default::default(),
-            scene: scene![Sphere {
-                pos: Vec3::new(0.0, 0.0, 0.0),
-                radius: 1.0
-            }],
+            scene: scene! {
+                camera: Camera {
+                    focal_length: 1.,
+                    pos: Vec3::new(0., 0., -1.)
+                },
+                objects: [
+                    Sphere {
+                        pos: Vec3::new(0., 0., 0.),
+                        radius: 0.5
+                    }
+                ]
+            },
         };
 
         let thread = std::thread::Builder::new()

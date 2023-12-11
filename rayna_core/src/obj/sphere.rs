@@ -1,7 +1,7 @@
+use crate::def::types::{Num, Vec3};
 use crate::obj::Object;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use crate::shared::{Num, Vec3};
 use std::ops::Range;
 
 #[derive(Copy, Clone, Debug)]

@@ -1,4 +1,4 @@
-use crate::shared::{Num, Vec3};
+use crate::def::types::{Num, Vec3};
 use crate::shared::ray::Ray;
 
 /// A struct representing a ray-object intersection

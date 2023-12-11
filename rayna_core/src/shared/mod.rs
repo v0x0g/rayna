@@ -1,5 +1,5 @@
+pub mod camera;
 pub mod intersect;
+pub(crate) mod math;
 pub mod ray;
-
-pub type Num = f64;
-pub type Vec3 = glamour::Vector3<Num>;
+pub mod scene;

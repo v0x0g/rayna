@@ -1,6 +1,6 @@
+use crate::def::types::Num;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use crate::shared::Num;
 use dyn_clone::DynClone;
 use std::fmt::Debug;
 use std::ops::Range;

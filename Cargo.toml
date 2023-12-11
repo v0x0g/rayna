@@ -33,3 +33,7 @@ derivative = "2.2.0"
 
 [profile.dev]
 debug = 2
+lto = "off"
+incremental = true
+debug-assertions = true
+opt-level = 0

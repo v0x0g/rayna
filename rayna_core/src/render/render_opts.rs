@@ -14,8 +14,8 @@ pub struct RenderOpts {
 impl Default for RenderOpts {
     fn default() -> Self {
         Self {
-            width: nonzero!(1_usize),
-            height: nonzero!(1_usize),
+            width: nonzero!(800_usize),
+            height: nonzero!(400_usize),
         }
     }
 }

@@ -23,22 +23,24 @@ pub struct Viewport {
 
 impl Camera {
     pub fn calculate_viewport(&self, render_opts: RenderOpts) -> Viewport {
-        let height = render_opts.height.get() as Num;
-        let width = render_opts.width.get() as Num;
+        let img_height = render_opts.height.get() as Num;
+        let img_width = render_opts.width.get() as Num;
+        let view_height = 2.0;
+        let view_width = view_height * (img_width / img_height);
         let cam_pos = self.pos;
         let focal_length = self.focal_length;
 
         // Vectors across the horizontal and vertical viewport edges
-        let u = Vec3::new(width, 0., 0.);
-        let v = Vec3::new(0., -height, 0.);
+        let u = Vec3::new(view_width, 0., 0.);
+        let v = Vec3::new(0., -view_height, 0.);
 
         // Delta vectors from pixel to pixel
-        let delta_u = u / width;
-        let delta_v = v / height;
+        let delta_u = u / view_width;
+        let delta_v = v / view_height;
 
         // Location of first pixel (upper left corner of image)
         let upper_left = cam_pos - Vec3::new(0., 0., focal_length) - (u / 2.) - (v / 2.);
-        let pixel_origin = upper_left + (delta_u + delta_v) * 0.5;
+        let pixel_origin = upper_left + ((delta_u + delta_v) * 0.5);
 
         Viewport {
             u,

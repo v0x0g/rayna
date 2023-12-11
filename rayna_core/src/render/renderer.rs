@@ -21,10 +21,10 @@ pub fn render(scene: &Scene, render_opts: RenderOpts) -> ImgBuf {
 fn render_pixel_once(scene: &Scene, viewport: Viewport, x: usize, y: usize) -> Pix {
     let ray = viewport.calculate_pixel_ray(x, y);
 
-    let a = 0.5 * ray.dir().y + 0.5;
+    let a = (0.5 * ray.dir().y) + 0.5;
 
-    let white = Pix::from([1.; 3]);
-    let blue = Pix::from([0., 0., 1.]);
+    let white = Pix::from([1., 1., 1.]);
+    let blue = Pix::from([0.5, 0.7, 1.]);
 
     math::lerp(white, blue, a)
 }

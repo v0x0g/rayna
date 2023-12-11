@@ -11,14 +11,17 @@ use std::num::NonZeroUsize;
 use tracing::{info, trace, warn};
 
 pub struct RaynaApp {
+    // Engine things
     render_opts: RenderOpts,
+    integration: Integration,
+
+    // Display things
     /// A handle to the texture that holds the current render buffer
     render_buf_tex: Option<TextureHandle>,
     /// The amount of space available to display the rendered image in
     /// This is [`egui::Ui::available_size`] inside [egui::CentralPanel]
     /// Used by the "fit canvas to screen" button
     render_display_size: egui::Vec2,
-    integration: Integration,
 }
 
 impl RaynaApp {
@@ -46,10 +49,10 @@ impl App for RaynaApp {
         });
 
         egui::SidePanel::left("left_panel").show(ctx, |ui| {
-            ui.heading("Render Options");
-
             ui.group(|ui| {
-                // Image Dimensions
+                ui.heading("Render Options");
+
+                // DragValues: Image Dimensions
 
                 let mut w = self.render_opts.width.get();
                 let mut h = self.render_opts.height.get();
@@ -65,7 +68,7 @@ impl App for RaynaApp {
                 self.render_opts.width = NonZeroUsize::new(w).unwrap_or(NonZeroUsize::MIN);
                 self.render_opts.height = NonZeroUsize::new(h).unwrap_or(NonZeroUsize::MIN);
 
-                // Fill Image Dimensions
+                // Button: Fill Image Dimensions
 
                 if ui.button("Fill Canvas").clicked() {
                     render_opts_dirty = true;
@@ -76,6 +79,8 @@ impl App for RaynaApp {
                             .unwrap_or(NonZeroUsize::MIN);
                 }
             });
+
+            ui.group(|ui| {});
         });
 
         if render_opts_dirty {

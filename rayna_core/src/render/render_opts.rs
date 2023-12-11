@@ -1,3 +1,4 @@
+use crate::def::types::Num;
 use nonzero::nonzero;
 use num_traits::cast::ToPrimitive;
 use serde::Serialize;
@@ -26,5 +27,9 @@ impl RenderOpts {
         [self.width, self.height]
             .map(|x| x.get().to_u32())
             .map(|d| d.expect("image dims failed to fit inside u32"))
+    }
+
+    pub fn aspect_ratio(&self) -> Num {
+        self.width.get() as Num / self.height.get() as Num
     }
 }

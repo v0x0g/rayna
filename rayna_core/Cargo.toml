@@ -18,6 +18,9 @@ num-traits = { workspace = true }
 rtbvh = "0.6.2" # Used for accelerating intersection checks
 image = { workspace = true }
 
+# Logs
+tracing = { workspace = true }
+
 # Other
 cfg-if = { workspace = true }
 anyhow = { workspace = true }

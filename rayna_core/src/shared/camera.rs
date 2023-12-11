@@ -1,66 +1,123 @@
 use crate::def::types::{Num, Vec3};
 use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
+use glam::DVec2;
+use num_traits::FloatConst;
 use serde::{Deserialize, Serialize};
+use std::num::NonZeroUsize;
+use thiserror::Error;
+use valuable::Valuable;
 
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Camera {
-    pub focal_length: Num,
-    pub pos: Vec3,
+    /// Position the camera is located at
+    pub look_from: Vec3,
+    ///  A point the camera should look towards - this will be the focus of the camera
+    pub look_towards: Vec3,
+    /// Vector direction the camera considers 'upwards'.
+    /// Use this to rotate the camera around the central view ray (`look_from` -> `look_towards`)
+    /// - inverting this is like rotating the camera upside-down
+    pub up_vector: Vec3,
+    /// Angle in degrees for the vertical field of view
+    pub vertical_fov: Num,
+    /// Radius of the simulated lens. Larger values increase blur
+    pub lens_radius: Num,
+    /// Distance from the camera at which rays are perfectly in focus
+    pub focus_dist: Num,
+}
+
+#[derive(Error, Copy, Clone, Debug, Valuable)]
+pub enum CamInvalidError {
+    /// The provided `up_vector` was too close to zero, and so vector normalisation failed
+    #[error("the provided `up_vector` couldn't be normalised (too small)")]
+    UpVectorTooSmall,
+    /// The calculated look direction was not valid (likely too close to zero).
+    /// Probably due to `look_from` and `look_towards` being too close to each other
+    #[error("the calculated look direction was invalid (likely close to zero)")]
+    LookDirectionInvalid,
+}
+
+impl Camera {
+    /// A method for creating a camera
+    ///
+    /// # Return
+    /// Returns a viewport with values according to the current camera state,
+    /// unless the camera is currently in an invalid state
+    ///
+    /// # Errors
+    /// This will return [`Option::Err`] if the `up_vector` points in the same direction as
+    /// the forward vector (`look_from -> look_towards`),
+    /// equivalent to the case where `cross(look_direction, up_vector) == Vec3::Zero`
+    pub fn calculate_viewport(&self, render_opts: RenderOpts) -> Result<Viewport, CamInvalidError> {
+        // must be normalised
+        let up_vector = self
+            .up_vector
+            .try_normalize()
+            .ok_or(CamInvalidError::UpVectorTooSmall)?;
+
+        let theta = self.vertical_fov * (Num::PI() / 180.);
+        let h = Num::tan(theta / 2.);
+        let viewport_height = 2. * h;
+        let aspect_ratio = render_opts.aspect_ratio();
+        let viewport_width = aspect_ratio * viewport_height;
+
+        //Magic that lets us position and rotate the camera
+        let look_dir = (self.look_from - self.look_towards)
+            .try_normalize()
+            .ok_or(CamInvalidError::LookDirectionInvalid)?;
+        let Some(norm_cross_up_look) = Vec3::cross(up_vector, look_dir).try_normalize() else {
+            return Err(CamInvalidError::LookDirectionInvalid);
+        };
+        let u = norm_cross_up_look;
+        let v = Vec3::cross(look_dir, u);
+
+        let horizontal = u * viewport_width * self.focus_dist;
+        let vertical = v * viewport_height * self.focus_dist;
+        let uv_origin =
+            self.look_from - (horizontal / 2.) - (vertical / 2.) - (look_dir * self.focus_dist);
+
+        Ok(Viewport {
+            u,
+            v,
+            lens_radius: self.lens_radius,
+            look_from: self.look_from,
+            uv_origin,
+            horizontal,
+            vertical,
+            dims: [render_opts.width, render_opts.height],
+        })
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Viewport {
     u: Vec3,
     v: Vec3,
-    delta_u: Vec3,
-    delta_v: Vec3,
-    upper_left: Vec3,
-    pixel_origin: Vec3,
-    focal_length: Num,
-    cam_pos: Vec3,
-}
-
-impl Camera {
-    pub fn calculate_viewport(&self, render_opts: RenderOpts) -> Viewport {
-        let img_height = render_opts.height.get() as Num;
-        let img_width = render_opts.width.get() as Num;
-        let view_height = 2.0;
-        let view_width = view_height * (img_width / img_height);
-        let cam_pos = self.pos;
-        let focal_length = self.focal_length;
-
-        // Vectors across the horizontal and vertical viewport edges
-        let u = Vec3::new(view_width, 0., 0.);
-        let v = Vec3::new(0., -view_height, 0.);
-
-        // Delta vectors from pixel to pixel
-        let delta_u = u / view_width;
-        let delta_v = v / view_height;
-
-        // Location of first pixel (upper left corner of image)
-        let upper_left = cam_pos - Vec3::new(0., 0., focal_length) - (u / 2.) - (v / 2.);
-        let pixel_origin = upper_left + ((delta_u + delta_v) * 0.5);
-
-        Viewport {
-            u,
-            v,
-            delta_u,
-            delta_v,
-            upper_left,
-            pixel_origin,
-            cam_pos,
-            focal_length,
-        }
-    }
+    lens_radius: Num,
+    look_from: Vec3,
+    /// The lower left corner of the viewport
+    uv_origin: Vec3,
+    horizontal: Vec3,
+    vertical: Vec3,
+    dims: [NonZeroUsize; 2],
 }
 
 impl Viewport {
-    pub fn calculate_pixel_ray(&self, x: usize, y: usize) -> Ray {
-        let pixel_centre =
-            self.pixel_origin + (self.delta_u * x as Num) + (self.delta_v * y as Num);
-        let ray_dir = pixel_centre - self.cam_pos;
+    pub fn calculate_pixel_ray(&self, p_x: usize, p_y: usize) -> Ray {
+        /*
+           How this works is all pixels have their rays originating at the same point
+           `look_from` (with a slight jitter from the randomness for DOF),
+           and their direction depends on the pixel's position on screen (its UV coords)
+        */
 
-        Ray::new(self.cam_pos, ray_dir)
+        // Normalised pixel coords (0..=1)
+        let a = p_x as Num / self.dims[0].get() as Num;
+        let b = p_y as Num / self.dims[1].get() as Num;
+
+        let rand = DVec2::ZERO * self.lens_radius; // Random offset to simulate DOF
+        let offset = (self.u * rand.x) + (self.v * rand.y); // Shift pixel origin slightly
+        let origin = self.look_from + offset;
+        let direction = (self.uv_origin + (self.horizontal * a) + (self.vertical * b)) - origin;
+        return Ray::new(origin, direction);
     }
 }

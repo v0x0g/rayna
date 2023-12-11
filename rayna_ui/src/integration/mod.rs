@@ -46,8 +46,12 @@ impl Integration {
             render_opts: Default::default(),
             scene: scene! {
                 camera: Camera {
-                    focal_length: 1.,
-                    pos: Vec3::new(0., 0., -1.)
+                    look_from: Vec3::new(0., 0., -1.),
+                    look_towards: Vec3::ZERO,
+                    up_vector: Vec3::Y,
+                    focus_dist: 1.,
+                    lens_radius: 0.,
+                    vertical_fov: 90.
                 },
                 objects: [
                     Sphere {

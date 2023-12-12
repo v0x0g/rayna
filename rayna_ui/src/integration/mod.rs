@@ -68,6 +68,8 @@ impl Integration {
     }
 
     fn ensure_worker_alive(&self) -> Result<()> {
+        puffin::profile_function!();
+
         if self.worker_thread.is_finished() {
             Err(IntegrationError::WorkerThreadDied)
         } else {
@@ -79,6 +81,8 @@ impl Integration {
 
     /// Sends a message to the worker
     pub fn send_message(&self, message: MessageToWorker) -> Result<()> {
+        puffin::profile_function!();
+
         self.ensure_worker_alive()?;
 
         self.msg_tx
@@ -96,6 +100,8 @@ impl Integration {
     /// # Return Value
     /// See [Self::try_recv_message]
     pub fn try_recv_render(&self) -> Option<Result<ImgBuf>> {
+        puffin::profile_function!();
+
         if let Err(e) = self.ensure_worker_alive() {
             return Some(Err(e));
         }
@@ -116,6 +122,8 @@ impl Integration {
     /// The outer [`Result`] corresponds to whether there was an error during message reception,
     /// or all messages were received successfully. The inner [`Option`] corresponds to whether or not there was
     pub fn try_recv_message(&self) -> Option<Result<MessageToUi>> {
+        puffin::profile_function!();
+
         if let Err(e) = self.ensure_worker_alive() {
             return Some(Err(e));
         }

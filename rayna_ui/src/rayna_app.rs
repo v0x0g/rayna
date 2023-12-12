@@ -3,14 +3,15 @@ use crate::def::ui_val::*;
 use crate::ext::UiExt;
 use crate::integration::message::MessageToWorker;
 use crate::integration::Integration;
-use egui::{ColorImage, Context, RichText, TextureHandle, TextureOptions};
+use egui::{Color32, ColorImage, Context, RichText, TextureHandle, TextureOptions};
 use image::buffer::ConvertBuffer;
 use image::RgbaImage;
+use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::shared::scene::Scene;
 use rayna_ui_base::app::App;
 use std::num::NonZeroUsize;
-use tracing::{debug, error, info, trace, warn};
+use tracing::{error, info, trace, warn};
 
 pub struct RaynaApp {
     // Engine things
@@ -47,13 +48,9 @@ impl RaynaApp {
 
 impl App for RaynaApp {
     fn on_update(&mut self, ctx: &Context) -> () {
-        puffin::GlobalProfiler::lock().new_frame();
+        puffin::GlobalProfiler::lock().new_frame(); // Mark start of frame
 
         puffin::profile_function!();
-
-        debug!(target: UI, "puffin enabled: {}", puffin::are_scopes_on());
-        puffin::set_scopes_on(true);
-        puffin_egui::profiler_window(ctx);
 
         self.process_worker_messages();
         self.process_worker_render(ctx);
@@ -160,6 +157,8 @@ impl App for RaynaApp {
                 ui.label(RichText::new("No texture").size(20.0));
             }
         });
+
+        puffin_egui::profiler_window(ctx);
     }
 
     fn on_shutdown(&mut self) -> () {
@@ -170,6 +169,8 @@ impl App for RaynaApp {
 impl RaynaApp {
     /// Tries to receive the next render frame from the worker
     fn process_worker_render(&mut self, ctx: &Context) {
+        profile_function!();
+
         if let Some(res) = self.integration.try_recv_render() {
             match res {
                 Err(err) => {
@@ -181,24 +182,47 @@ impl RaynaApp {
 
                     // Got a rendered image, translate to an egui-appropriate one
 
-                    let img_as_rgba: RgbaImage = img.convert();
-                    // SAFETY: This may panic if the data doesn't exactly match
-                    //  between the image dims and the raw buffer
-                    //  This *should* be fine as long as nothing in the [`image`] or [`epaint`] crate changes
-                    let img_as_egui = ColorImage::from_rgba_unmultiplied(
-                        [img.width() as usize, img.height() as usize],
-                        img_as_rgba.as_raw().as_slice(),
-                    );
+                    let img_as_rgba: RgbaImage = {
+                        profile_scope!("convert_rgba");
+                        img.convert()
+                    };
 
-                    match &mut self.render_buf_tex {
-                        None => {
-                            self.render_buf_tex = Some(ctx.load_texture(
-                                "render_buffer_texture",
-                                img_as_egui,
-                                TextureOptions::default(),
-                            ))
+                    let img_as_egui = {
+                        profile_scope!("from_rgba");
+                        // This is slightly faster than [`ColorImage::from_rgba_unmultiplied`]
+                        // Because we can skip the alpha part
+
+                        let px = img_as_rgba
+                            .into_vec()
+                            .as_chunks()
+                            .0 // We know there can never be half a pixel's worth of bytes
+                            .iter()
+                            .map(|&[r, g, b, a]| Color32::from_rgba_premultiplied(r, g, b, a))
+                            .collect();
+
+                        ColorImage {
+                            size: [img.width() as usize, img.height() as usize],
+                            pixels: px,
                         }
-                        Some(tex) => tex.set(img_as_egui, TextureOptions::default()),
+
+                        // ColorImage::from_rgba_unmultiplied(
+                        //     [img.width() as usize, img.height() as usize],
+                        //     img_as_rgba.as_raw().as_slice(),
+                        // )
+                    };
+
+                    {
+                        profile_scope!("update_tex");
+                        match &mut self.render_buf_tex {
+                            None => {
+                                self.render_buf_tex = Some(ctx.load_texture(
+                                    "render_buffer_texture",
+                                    img_as_egui,
+                                    TextureOptions::default(),
+                                ))
+                            }
+                            Some(tex) => tex.set(img_as_egui, TextureOptions::default()),
+                        }
                     }
                 }
             }
@@ -207,6 +231,8 @@ impl RaynaApp {
 
     /// Processes the messages from the worker
     fn process_worker_messages(&mut self) {
+        profile_function!();
+
         while let Some(res) = self.integration.try_recv_message() {
             trace!(target: UI, ?res, "got message from worker");
 

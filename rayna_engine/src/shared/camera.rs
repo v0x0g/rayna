@@ -49,6 +49,8 @@ impl Camera {
     /// the forward vector (`look_from -> look_towards`),
     /// equivalent to the case where `cross(look_direction, up_vector) == Vec3::Zero`
     pub fn calculate_viewport(&self, render_opts: RenderOpts) -> Result<Viewport, CamInvalidError> {
+        puffin::profile_function!();
+
         // must be normalised
         let up_vector = self
             .up_vector
@@ -104,6 +106,8 @@ pub struct Viewport {
 
 impl Viewport {
     pub fn calculate_pixel_ray(&self, p_x: usize, p_y: usize) -> Ray {
+        puffin::profile_function!();
+
         /*
            How this works is all pixels have their rays originating at the same point
            `look_from` (with a slight jitter from the randomness for DOF),

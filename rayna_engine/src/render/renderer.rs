@@ -8,6 +8,8 @@ use tracing::trace;
 
 #[memoize::memoize(Capacity: 8)] // Keep cap small since images can be huge
 fn render_failed_image(w: u32, h: u32) -> ImgBuf {
+    puffin::profile_function!();
+
     ImgBuf::from_fn(w, h, |x, y| {
         Pix::from({
             if (x + y) % 2 == 0 {
@@ -20,6 +22,8 @@ fn render_failed_image(w: u32, h: u32) -> ImgBuf {
 }
 
 pub fn render(scene: &Scene, render_opts: RenderOpts) -> ImgBuf {
+    puffin::profile_function!();
+
     let [w, h] = render_opts.dims_u32_slice();
 
     let mut img = ImgBuf::new(w, h);
@@ -40,6 +44,8 @@ pub fn render(scene: &Scene, render_opts: RenderOpts) -> ImgBuf {
 
 /// Renders a single pixel in the scene, and returns the colour
 fn render_pixel_once(scene: &Scene, viewport: Viewport, x: usize, y: usize) -> Pix {
+    puffin::profile_function!();
+
     let ray = viewport.calculate_pixel_ray(x, y);
 
     let a = (0.5 * ray.dir().y) + 0.5;

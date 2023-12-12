@@ -1,5 +1,6 @@
 use crate::def::targets::BG_WORKER;
 use crate::integration::message::{MessageToUi, MessageToWorker};
+use puffin::{profile_function, profile_scope};
 use rayna_engine::def::types::ImgBuf;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer;
@@ -21,6 +22,8 @@ pub(super) struct BgWorker {
 impl BgWorker {
     #[instrument(level = tracing::Level::DEBUG, skip(self), parent = None)]
     pub fn bg_worker(self) {
+        profile_function!();
+
         info!(target: BG_WORKER, "BgWorker thread start");
 
         let Self {
@@ -40,6 +43,8 @@ impl BgWorker {
             // Have two conditions: (empty) or (disconnected)
             // Checked if disconnected above and skip if empty, so just check Ok() here
             while let Ok(msg) = msg_rx.try_recv() {
+                profile_scope!("receive_messages");
+
                 match msg {
                     MessageToWorker::SetRenderOpts(opts) => {
                         trace!(target: BG_WORKER, ?opts, "got render opts from ui");
@@ -54,6 +59,8 @@ impl BgWorker {
 
             // UI hasn't received the last message we sent
             if !msg_tx.is_empty() {
+                profile_scope!("waiting_channel_empty");
+
                 trace!(target: BG_WORKER, "channel not empty, waiting");
                 std::thread::sleep(Duration::from_millis(10));
                 continue;

@@ -33,7 +33,7 @@ derivative = "2.2.0"
 memoize = "0.4.1"
 
 # Performance
-puffin = "0.18.1"
+puffin = "0.15.0"
 
 [profile.dev]
 debug = 2

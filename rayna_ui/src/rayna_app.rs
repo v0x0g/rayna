@@ -10,7 +10,7 @@ use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::shared::scene::Scene;
 use rayna_ui_base::app::App;
 use std::num::NonZeroUsize;
-use tracing::{error, info, trace, warn};
+use tracing::{debug, error, info, trace, warn};
 
 pub struct RaynaApp {
     // Engine things
@@ -48,9 +48,12 @@ impl RaynaApp {
 impl App for RaynaApp {
     fn on_update(&mut self, ctx: &Context) -> () {
         puffin::GlobalProfiler::lock().new_frame();
-        puffin_egui::profiler_window(ctx);
+
+        puffin::profile_function!();
+
+        debug!(target: UI, "puffin enabled: {}", puffin::are_scopes_on());
         puffin::set_scopes_on(true);
-        info!("{}", puffin::are_scopes_on());
+        puffin_egui::profiler_window(ctx);
 
         self.process_worker_messages();
         self.process_worker_render(ctx);

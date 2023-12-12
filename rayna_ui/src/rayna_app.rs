@@ -1,10 +1,9 @@
 use crate::def::targets::UI;
-use crate::def::ui_val;
 use crate::def::ui_val::*;
 use crate::ext::UiExt;
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::integration::Integration;
-use egui::{ColorImage, Context, RichText, TextureHandle, TextureOptions, Widget};
+use egui::{ColorImage, Context, RichText, TextureHandle, TextureOptions};
 use image::buffer::ConvertBuffer;
 use image::RgbaImage;
 use rayna_engine::render::render_opts::RenderOpts;
@@ -112,8 +111,6 @@ impl App for RaynaApp {
                             .speed(DRAG_SLOW),
                     )
                     .changed();
-
-                trace!(target: UI, scene_dirty);
             });
 
             ui.group(|ui| {
@@ -166,7 +163,19 @@ impl RaynaApp {
     ///
     /// This does things like updating the render buffer, if the worker sent a completed render
     fn process_worker_messages(&mut self, ctx: &Context) {
+        // TODO: Can we remove/refactor this?
+        //  Using a SPSC channel is good bud sometimes sender is too fast and rx can't keep up
+        //  Maybe use a barrier/condvar?
+        const LIMIT: usize = 10;
+
+        let mut i = 0;
         while let Some(res) = self.integration.try_recv_message() {
+            // If renderer is too fast, it can keep pumping out frames before we get a chance to process
+            // And we get stuck inside here forever
+            i += 1;
+            if i >= LIMIT {
+                break;
+            }
             trace!(target: UI, ?res, "got message from worker");
 
             match res {

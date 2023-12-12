@@ -19,6 +19,7 @@ fn render_failed_image(w: u32, h: u32) -> ImgBuf {
     })
 }
 
+#[profiling::function]
 pub fn render(scene: &Scene, render_opts: RenderOpts) -> ImgBuf {
     let [w, h] = render_opts.dims_u32_slice();
 
@@ -39,6 +40,7 @@ pub fn render(scene: &Scene, render_opts: RenderOpts) -> ImgBuf {
 }
 
 /// Renders a single pixel in the scene, and returns the colour
+#[profiling::function]
 fn render_pixel_once(scene: &Scene, viewport: Viewport, x: usize, y: usize) -> Pix {
     let ray = viewport.calculate_pixel_ray(x, y);
 

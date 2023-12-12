@@ -35,6 +35,7 @@ pub(crate) struct Integration {
     worker_thread: JoinHandle<()>,
 }
 
+#[profiling::all_functions]
 impl Integration {
     pub(crate) fn new(initial_render_opts: &RenderOpts, initial_scene: &Scene) -> Self {
         // Main thread -> Worker

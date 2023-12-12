@@ -30,3 +30,6 @@ dyn-clone = "1.0.16"
 valuable = { workspace = true }
 serde = { workspace = true }
 memoize = { workspace = true }
+
+# Perf
+profiling = { workspace = true }

@@ -32,6 +32,9 @@ itertools = "0.12.0"
 derivative = "2.2.0"
 memoize = "0.4.1"
 
+# Performance
+profiling = "1.0.12"
+
 [profile.dev]
 debug = 2
 lto = "off"

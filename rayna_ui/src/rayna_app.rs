@@ -45,6 +45,7 @@ impl RaynaApp {
     }
 }
 
+#[profiling::all_functions]
 impl App for RaynaApp {
     fn on_update(&mut self, ctx: &Context) -> () {
         self.process_worker_messages();

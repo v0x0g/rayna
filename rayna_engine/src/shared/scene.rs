@@ -27,6 +27,7 @@ pub struct Scene {
     pub camera: Camera,
 }
 
+#[profiling::all_functions]
 impl Scene {
     pub fn empty() -> Self {
         scene! {

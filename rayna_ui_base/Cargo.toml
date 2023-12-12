@@ -25,7 +25,7 @@ valuable = { workspace = true }
 tracing = { workspace = true }
 
 # Perf
-profiling = { workspace = true }
+puffin = { workspace = true }
 
 # ===== FEATURES =====
 

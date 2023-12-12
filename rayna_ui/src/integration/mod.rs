@@ -35,7 +35,6 @@ pub(crate) struct Integration {
     worker_thread: JoinHandle<()>,
 }
 
-#[profiling::all_functions]
 impl Integration {
     pub(crate) fn new(initial_render_opts: &RenderOpts, initial_scene: &Scene) -> Self {
         // Main thread -> Worker
@@ -53,9 +52,10 @@ impl Integration {
             scene: initial_scene.clone(),
         };
 
+        const THREAD_NAME: &'static str = "integration::BgWorker";
         let thread = std::thread::Builder::new()
-            .name("integration::BgWorker".into())
-            .spawn(move || worker.thread_run())
+            .name(THREAD_NAME.into())
+            .spawn(move || worker.bg_worker())
             // TODO: Error handling if the BgWorker thread fails to spawn
             .expect("failed to spawn thread for BgWorker}");
 

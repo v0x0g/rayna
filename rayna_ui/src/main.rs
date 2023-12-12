@@ -35,22 +35,21 @@ fn backends() -> HashMap<&'static str, Box<dyn UiBackend>> {
 }
 
 fn main() -> anyhow::Result<()> {
-    // TODO: Init [tracing]
-    {
-        tracing_subscriber::fmt::fmt()
-            .pretty()
-            .with_ansi(true)
-            .log_internal_errors(true)
-            .with_max_level(LevelFilter::TRACE)
-            .with_line_number(true)
-            .with_file(true)
-            .with_level(true)
-            .with_target(true)
-            .with_thread_ids(true)
-            .with_thread_names(true)
-            .finish()
-            .init();
-    }
+    tracing_subscriber::fmt::fmt()
+        .pretty()
+        .with_ansi(true)
+        .log_internal_errors(true)
+        .with_max_level(LevelFilter::TRACE)
+        .with_line_number(true)
+        .with_file(true)
+        .with_level(true)
+        .with_target(true)
+        .with_thread_ids(true)
+        .with_thread_names(true)
+        .finish()
+        .init();
+
+    puffin::set_scopes_on(true);
 
     // TODO: Better backend selection that's not just hardcoded
     // let backend = backends

@@ -32,4 +32,4 @@ serde = { workspace = true }
 memoize = { workspace = true }
 
 # Perf
-profiling = { workspace = true }
+puffin = { workspace = true }

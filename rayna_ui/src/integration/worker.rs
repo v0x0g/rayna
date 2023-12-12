@@ -20,7 +20,7 @@ pub(super) struct BgWorker {
 
 impl BgWorker {
     #[instrument(level = tracing::Level::DEBUG, skip(self), parent = None)]
-    pub fn thread_run(self) {
+    pub fn bg_worker(self) {
         info!(target: BG_WORKER, "BgWorker thread start");
 
         let Self {

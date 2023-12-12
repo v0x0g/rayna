@@ -6,7 +6,6 @@ pub struct Ray {
     dir: Vec3,
 }
 
-#[profiling::all_functions]
 impl Ray {
     /// World-space coordinate of the ray
     pub fn pos(&self) -> Vec3 {

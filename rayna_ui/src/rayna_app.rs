@@ -45,9 +45,13 @@ impl RaynaApp {
     }
 }
 
-#[profiling::all_functions]
 impl App for RaynaApp {
     fn on_update(&mut self, ctx: &Context) -> () {
+        puffin::GlobalProfiler::lock().new_frame();
+        puffin_egui::profiler_window(ctx);
+        puffin::set_scopes_on(true);
+        info!("{}", puffin::are_scopes_on());
+
         self.process_worker_messages();
         self.process_worker_render(ctx);
 

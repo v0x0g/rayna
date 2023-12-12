@@ -37,7 +37,6 @@ pub enum CamInvalidError {
     LookDirectionInvalid,
 }
 
-#[profiling::all_functions]
 impl Camera {
     /// A method for creating a camera
     ///
@@ -103,7 +102,6 @@ pub struct Viewport {
     dims: [NonZeroUsize; 2],
 }
 
-#[profiling::all_functions]
 impl Viewport {
     pub fn calculate_pixel_ray(&self, p_x: usize, p_y: usize) -> Ray {
         /*

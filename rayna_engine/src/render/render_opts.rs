@@ -12,7 +12,6 @@ pub struct RenderOpts {
     pub height: NonZeroUsize,
 }
 
-#[profiling::all_functions]
 impl RenderOpts {
     /// Returns the dimensions of the render (width and height) as a [u32] slice
     pub fn dims_u32_slice(&self) -> [u32; 2] {

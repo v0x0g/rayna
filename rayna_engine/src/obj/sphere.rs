@@ -10,7 +10,6 @@ pub struct Sphere {
     pub radius: Num,
 }
 
-#[profiling::all_functions]
 impl Object for Sphere {
     fn intersect(&self, _ray: Ray, _dist_bounds: Range<Num>) -> Option<Intersection> {
         None

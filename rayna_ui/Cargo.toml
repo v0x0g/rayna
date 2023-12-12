@@ -41,7 +41,8 @@ valuable = { workspace = true }
 derivative = { workspace = true }
 
 # Perf
-profiling = { workspace = true }
+puffin_egui = "0.21.0"
+puffin = { workspace = true }
 
 # ===== FEATURES =====
 

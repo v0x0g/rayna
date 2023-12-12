@@ -1,12 +1,13 @@
 use derivative::Derivative;
 use rayna_engine::def::types::ImgBuf;
 use rayna_engine::render::render_opts::RenderOpts;
-use valuable::Valuable;
+use rayna_engine::shared::scene::Scene;
 
 /// A message sent by the UI to the worker
-#[derive(Debug, Copy, Clone, Valuable)]
+#[derive(Debug, Clone)]
 pub(crate) enum MessageToWorker {
     SetRenderOpts(RenderOpts),
+    SetScene(Scene),
 }
 
 /// A message sent from the worker, to the UI

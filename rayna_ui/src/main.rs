@@ -12,6 +12,7 @@ use tracing::{debug, Level};
 use tracing_subscriber::util::SubscriberInitExt;
 
 pub mod def;
+mod ext;
 mod integration;
 mod rayna_app;
 

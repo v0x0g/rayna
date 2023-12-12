@@ -4,10 +4,8 @@
 
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::integration::worker::BgWorker;
-use rayna_engine::def::types::Vec3;
-use rayna_engine::obj::sphere::Sphere;
-use rayna_engine::scene;
-use rayna_engine::shared::camera::Camera;
+use rayna_engine::render::render_opts::RenderOpts;
+use rayna_engine::shared::scene::Scene;
 use std::thread::JoinHandle;
 use thiserror::Error;
 use tracing::error;
@@ -34,7 +32,7 @@ pub(crate) struct Integration {
 }
 
 impl Integration {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(initial_render_opts: &RenderOpts, initial_scene: &Scene) -> Self {
         // Main thread -> Worker
         let (m_tx, w_rx) = flume::unbounded::<MessageToWorker>();
         // Worker -> Main thread
@@ -43,23 +41,8 @@ impl Integration {
         let worker = BgWorker {
             msg_rx: w_rx,
             msg_tx: w_tx,
-            render_opts: Default::default(),
-            scene: scene! {
-                camera: Camera {
-                    look_from: Vec3::new(0., 0., -1.),
-                    look_towards: Vec3::ZERO,
-                    up_vector: Vec3::Y,
-                    focus_dist: 1.,
-                    lens_radius: 0.,
-                    vertical_fov: 90.
-                },
-                objects: [
-                    Sphere {
-                        pos: Vec3::new(0., 0., 0.),
-                        radius: 0.5
-                    }
-                ]
-            },
+            render_opts: initial_render_opts.clone(),
+            scene: initial_scene.clone(),
         };
 
         let thread = std::thread::Builder::new()

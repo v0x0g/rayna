@@ -25,7 +25,7 @@ impl BgWorker {
             msg_tx: tx,
             msg_rx: rx,
             mut render_opts,
-            scene,
+            mut scene,
         } = self;
 
         loop {
@@ -39,8 +39,12 @@ impl BgWorker {
             while let Ok(msg) = rx.try_recv() {
                 match msg {
                     MessageToWorker::SetRenderOpts(opts) => {
-                        trace!(target: BG_WORKER, ?opts, "got update render opts from ui");
+                        trace!(target: BG_WORKER, ?opts, "got render opts from ui");
                         render_opts = opts
+                    }
+                    MessageToWorker::SetScene(s) => {
+                        trace!(target: BG_WORKER, ?scene, "got scene from ui");
+                        scene = s;
                     }
                 }
             }

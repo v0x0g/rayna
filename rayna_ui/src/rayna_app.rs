@@ -183,12 +183,12 @@ impl RaynaApp {
                     // Got a rendered image, translate to an egui-appropriate one
 
                     let img_as_rgba: RgbaImage = {
-                        profile_scope!("convert_rgba");
+                        profile_scope!("RgbaImage::convert");
                         img.convert()
                     };
 
                     let img_as_egui = {
-                        profile_scope!("from_rgba");
+                        profile_scope!("ColorImage::convert");
                         // This is slightly faster than [`ColorImage::from_rgba_unmultiplied`]
                         // Because we can skip the alpha part
                         // It's also faster than [`ColorImage::from_rgb`]

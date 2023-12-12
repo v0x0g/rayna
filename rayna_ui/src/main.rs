@@ -2,7 +2,8 @@
 #![feature(trait_alias)]
 #![feature(associated_type_defaults)]
 #![feature(error_generic_member_access)]
-#![feature(slice_as_chunks)] // Used by [`thiserror::Error`] and `#[source]`
+#![feature(slice_as_chunks)]
+#![feature(vec_into_raw_parts)] // Used by [`thiserror::Error`] and `#[source]`
 
 use crate::def::targets::*;
 use crate::rayna_app::RaynaApp;

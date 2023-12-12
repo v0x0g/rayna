@@ -187,21 +187,21 @@ impl RaynaApp {
                         img.convert()
                     };
 
-                    let img_as_egui = {
+                    let img_as_egui = unsafe {
                         profile_scope!("ColorImage::convert");
-                        // This is slightly faster than [`ColorImage::from_rgba_unmultiplied`]
-                        // Because we can skip the alpha part
-                        // It's also faster than [`ColorImage::from_rgb`]
 
-                        // SAFETY: Color32 is defined as being a `[u8; 4]` internally anyway
-                        // So this is safe because they are actually the same
-                        let px = img_as_rgba
-                            .into_vec()
-                            .as_chunks()
-                            .0 // We know there can never be half a pixel's worth of bytes
-                            .iter()
-                            .map(|&slice: &[u8; 4]| unsafe { std::mem::transmute(slice) })
-                            .collect();
+                        // SAFETY:
+                        // Color32 is defined as being a `[u8; 4]` internally anyway
+                        // And we know that RgbaImage stores pixels as [r, g, b, a]
+                        // So we can safely transmute the vector, because they have the same
+                        // internal representation and layout
+
+                        // PERFORMANCE:
+                        // This is massively faster than calling
+                        // `ColorImage::from_rgba_unmultiplied(size, img_as_rgba.into_vec())`
+                        // It goes from ~7ms to ~1us
+                        let (ptr, len, cap) = img_as_rgba.into_vec().into_raw_parts();
+                        let px = Vec::from_raw_parts(ptr as *mut Color32, len / 4, cap / 4);
 
                         ColorImage {
                             size: [img.width() as usize, img.height() as usize],

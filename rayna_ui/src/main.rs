@@ -8,6 +8,7 @@ use crate::rayna_app::RaynaApp;
 use rayna_ui_base::backend;
 use rayna_ui_base::backend::UiBackend;
 use std::collections::HashMap;
+use tracing::metadata::LevelFilter;
 use tracing::{debug, Level};
 use tracing_subscriber::util::SubscriberInitExt;
 
@@ -40,7 +41,7 @@ fn main() -> anyhow::Result<()> {
             .pretty()
             .with_ansi(true)
             .log_internal_errors(true)
-            .with_max_level(Level::TRACE)
+            .with_max_level(LevelFilter::TRACE)
             .with_line_number(true)
             .with_file(true)
             .with_level(true)

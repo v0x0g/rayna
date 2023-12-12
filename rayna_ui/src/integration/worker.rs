@@ -49,9 +49,10 @@ impl BgWorker {
                 }
             }
 
+            // UI hasn't received the last message we sent
             if !tx.is_empty() {
                 trace!(target: BG_WORKER, "channel not empty, waiting");
-                std::thread::sleep(Duration::from_millis(1000));
+                std::thread::yield_now();
                 continue;
             } else {
                 trace!(target: BG_WORKER, "channel empty, sending new image");

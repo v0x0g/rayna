@@ -1,10 +1,10 @@
 use crate::def::targets::UI;
-use crate::def::ui_str;
-use crate::def::ui_str::LENGTH_UNIT;
+use crate::def::ui_val;
+use crate::def::ui_val::*;
 use crate::ext::UiExt;
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::integration::Integration;
-use egui::{ColorImage, RichText, TextureHandle, TextureOptions};
+use egui::{ColorImage, Context, RichText, TextureHandle, TextureOptions, Widget};
 use image::buffer::ConvertBuffer;
 use image::RgbaImage;
 use rayna_engine::render::render_opts::RenderOpts;
@@ -26,12 +26,13 @@ pub struct RaynaApp {
     /// Used by the "fit canvas to screen" button
     render_display_size: egui::Vec2,
 
+    // The rest
     integration: Integration,
 }
 
 impl RaynaApp {
-    /// Creates a new app instance, with an [`egui::Context`] for configuring the app
-    pub fn new_ctx(_ctx: &egui::Context) -> Self {
+    /// Creates a new app instance, with an [`Context`] for configuring the app
+    pub fn new_ctx(_ctx: &Context) -> Self {
         info!(target: UI, "ui app init");
         let scene = Scene::simple();
         let render_opts = Default::default();
@@ -46,7 +47,9 @@ impl RaynaApp {
 }
 
 impl App for RaynaApp {
-    fn on_update(&mut self, ctx: &egui::Context) -> () {
+    fn on_update(&mut self, ctx: &Context) -> () {
+        self.process_worker_messages(ctx);
+
         let mut render_opts_dirty = false;
         let mut scene_dirty = false;
 
@@ -67,9 +70,9 @@ impl App for RaynaApp {
                 let mut h = self.render_opts.height.get();
 
                 ui.label("Image Width");
-                let w_drag = ui.add(egui::DragValue::new(&mut w).suffix(ui_str::PIXELS_UNIT));
+                let w_drag = ui.add(egui::DragValue::new(&mut w).suffix(UNIT_PX));
                 ui.label("Image Height");
-                let h_drag = ui.add(egui::DragValue::new(&mut h).suffix(ui_str::PIXELS_UNIT));
+                let h_drag = ui.add(egui::DragValue::new(&mut h).suffix(UNIT_PX));
 
                 render_opts_dirty |= w_drag.drag_released() || w_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
                 render_opts_dirty |= h_drag.drag_released() || h_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
@@ -93,13 +96,24 @@ impl App for RaynaApp {
                 ui.heading("Camera");
 
                 let cam = &mut self.scene.camera;
-                //
                 ui.label("look from");
-                scene_dirty |= ui.vec3_edit(&mut cam.look_from, LENGTH_UNIT).changed();
+                scene_dirty |= ui.vec3_edit(&mut cam.look_from, UNIT_LEN).changed();
                 ui.label("look towards");
-                scene_dirty |= ui.vec3_edit(&mut cam.look_towards, LENGTH_UNIT).changed();
+                scene_dirty |= ui.vec3_edit(&mut cam.look_towards, UNIT_LEN).changed();
                 ui.label("upwards");
                 scene_dirty |= ui.vec3_edit(&mut cam.up_vector, "").changed();
+                ui.label("fov");
+                scene_dirty |= ui
+                    .add(
+                        egui::DragValue::new(&mut cam.vertical_fov)
+                            .suffix(UNIT_DEG)
+                            .clamp_range(0.0..=180.0)
+                            .min_decimals(1)
+                            .speed(DRAG_SLOW),
+                    )
+                    .changed();
+
+                trace!(target: UI, scene_dirty);
             });
 
             ui.group(|ui| {
@@ -129,8 +143,29 @@ impl App for RaynaApp {
             }
         }
 
-        // Process any messages from the worker
+        // Central panel contains the main render window
+        // Must come after all other panels
+        egui::CentralPanel::default().show(ctx, |ui| {
+            let avail_space = ui.available_size();
+            self.render_display_size = avail_space;
+            if let Some(tex_id) = &mut self.render_buf_tex {
+                ui.image(tex_id, avail_space);
+            } else {
+                ui.label(RichText::new("No texture").size(20.0));
+            }
+        });
+    }
 
+    fn on_shutdown(&mut self) -> () {
+        info!(target: UI, "ui app shutdown")
+    }
+}
+
+impl RaynaApp {
+    /// Processes the messages from the worker
+    ///
+    /// This does things like updating the render buffer, if the worker sent a completed render
+    fn process_worker_messages(&mut self, ctx: &Context) {
         while let Some(res) = self.integration.try_recv_message() {
             trace!(target: UI, ?res, "got message from worker");
 
@@ -166,21 +201,5 @@ impl App for RaynaApp {
                 }
             }
         }
-
-        // Central panel contains the main render window
-        // Must come after all other panels
-        egui::CentralPanel::default().show(ctx, |ui| {
-            let avail_space = ui.available_size();
-            self.render_display_size = avail_space;
-            if let Some(tex_id) = &mut self.render_buf_tex {
-                ui.image(tex_id, avail_space);
-            } else {
-                ui.label(RichText::new("No texture").size(20.0));
-            }
-        });
-    }
-
-    fn on_shutdown(&mut self) -> () {
-        info!(target: UI, "ui app shutdown")
     }
 }

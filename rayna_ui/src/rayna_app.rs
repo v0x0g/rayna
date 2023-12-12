@@ -5,7 +5,7 @@ use crate::integration::message::MessageToWorker;
 use crate::integration::Integration;
 use egui::{Color32, ColorImage, Context, RichText, TextureHandle, TextureOptions};
 use image::buffer::ConvertBuffer;
-use image::RgbaImage;
+use image::{RgbImage, RgbaImage};
 use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::shared::scene::Scene;
@@ -191,24 +191,22 @@ impl RaynaApp {
                         profile_scope!("from_rgba");
                         // This is slightly faster than [`ColorImage::from_rgba_unmultiplied`]
                         // Because we can skip the alpha part
+                        // It's also faster than [`ColorImage::from_rgb`]
 
+                        // SAFETY: Color32 is defined as being a `[u8; 4]` internally anyway
+                        // So this is safe because they are actually the same
                         let px = img_as_rgba
                             .into_vec()
                             .as_chunks()
                             .0 // We know there can never be half a pixel's worth of bytes
                             .iter()
-                            .map(|&[r, g, b, a]| Color32::from_rgba_premultiplied(r, g, b, a))
+                            .map(|&slice: &[u8; 4]| unsafe { std::mem::transmute(slice) })
                             .collect();
 
                         ColorImage {
                             size: [img.width() as usize, img.height() as usize],
                             pixels: px,
                         }
-
-                        // ColorImage::from_rgba_unmultiplied(
-                        //     [img.width() as usize, img.height() as usize],
-                        //     img_as_rgba.as_raw().as_slice(),
-                        // )
                     };
 
                     {

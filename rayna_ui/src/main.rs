@@ -8,8 +8,8 @@ use crate::rayna_app::RaynaApp;
 use rayna_ui_base::backend;
 use rayna_ui_base::backend::UiBackend;
 use std::collections::HashMap;
+use tracing::debug;
 use tracing::metadata::LevelFilter;
-use tracing::{debug, Level};
 use tracing_subscriber::util::SubscriberInitExt;
 
 pub mod def;

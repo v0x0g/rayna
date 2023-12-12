@@ -1,5 +1,4 @@
 use derivative::Derivative;
-use rayna_engine::def::types::ImgBuf;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::shared::scene::Scene;
 
@@ -13,7 +12,4 @@ pub(crate) enum MessageToWorker {
 /// A message sent from the worker, to the UI
 #[derive(Clone, Derivative)]
 #[derivative(Debug)]
-pub(crate) enum MessageToUi {
-    /// A frame has been rendered and is available for display
-    RenderFrameComplete(#[derivative(Debug = "ignore")] ImgBuf),
-}
+pub(crate) enum MessageToUi {}

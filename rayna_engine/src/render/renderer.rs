@@ -4,7 +4,7 @@ use crate::render::render_opts::RenderOpts;
 use crate::shared::camera::Viewport;
 use crate::shared::math;
 use crate::shared::scene::Scene;
-use tracing::{trace, warn};
+use tracing::trace;
 
 #[memoize::memoize(Capacity: 8)] // Keep cap small since images can be huge
 fn render_failed_image(w: u32, h: u32) -> ImgBuf {

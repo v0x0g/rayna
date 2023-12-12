@@ -1,5 +1,6 @@
 use crate::def::targets::BG_WORKER;
 use crate::integration::message::{MessageToUi, MessageToWorker};
+use rayna_engine::def::types::ImgBuf;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer;
 use rayna_engine::shared::scene::Scene;
@@ -14,6 +15,7 @@ pub(super) struct BgWorker {
     pub msg_tx: flume::Sender<MessageToUi>,
     /// Receiver for messages from the UI, to the worker
     pub msg_rx: flume::Receiver<MessageToWorker>,
+    pub render_tx: flume::Sender<ImgBuf>,
 }
 
 impl BgWorker {
@@ -22,21 +24,22 @@ impl BgWorker {
         info!(target: BG_WORKER, "BgWorker thread start");
 
         let Self {
-            msg_tx: tx,
-            msg_rx: rx,
+            msg_tx,
+            msg_rx,
+            render_tx,
             mut render_opts,
             mut scene,
         } = self;
 
         loop {
-            if rx.is_disconnected() {
+            if msg_rx.is_disconnected() {
                 warn!(target: BG_WORKER, "all senders disconnected from channel");
                 break;
             }
 
             // Have two conditions: (empty) or (disconnected)
             // Checked if disconnected above and skip if empty, so just check Ok() here
-            while let Ok(msg) = rx.try_recv() {
+            while let Ok(msg) = msg_rx.try_recv() {
                 match msg {
                     MessageToWorker::SetRenderOpts(opts) => {
                         trace!(target: BG_WORKER, ?opts, "got render opts from ui");
@@ -50,7 +53,7 @@ impl BgWorker {
             }
 
             // UI hasn't received the last message we sent
-            if !tx.is_empty() {
+            if !msg_tx.is_empty() {
                 trace!(target: BG_WORKER, "channel not empty, waiting");
                 std::thread::sleep(Duration::from_millis(10));
                 continue;
@@ -58,9 +61,11 @@ impl BgWorker {
                 trace!(target: BG_WORKER, "channel empty, sending new image");
             }
 
+            trace!(target: BG_WORKER,"render start");
             let img = renderer::render(&scene, render_opts);
+            trace!(target: BG_WORKER,"render end");
 
-            if let Err(_) = tx.send(MessageToUi::RenderFrameComplete(img)) {
+            if let Err(_) = render_tx.send(img) {
                 warn!(target: BG_WORKER, "failed to send rendered frame to UI")
             }
         }

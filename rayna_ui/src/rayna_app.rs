@@ -1,7 +1,7 @@
 use crate::def::targets::UI;
 use crate::def::ui_val::*;
 use crate::ext::UiExt;
-use crate::integration::message::{MessageToUi, MessageToWorker};
+use crate::integration::message::MessageToWorker;
 use crate::integration::Integration;
 use egui::{ColorImage, Context, RichText, TextureHandle, TextureOptions};
 use image::buffer::ConvertBuffer;
@@ -10,7 +10,7 @@ use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::shared::scene::Scene;
 use rayna_ui_base::app::App;
 use std::num::NonZeroUsize;
-use tracing::{info, trace, warn};
+use tracing::{error, info, trace, warn};
 
 pub struct RaynaApp {
     // Engine things
@@ -47,7 +47,8 @@ impl RaynaApp {
 
 impl App for RaynaApp {
     fn on_update(&mut self, ctx: &Context) -> () {
-        self.process_worker_messages(ctx);
+        self.process_worker_messages();
+        self.process_worker_render(ctx);
 
         let mut render_opts_dirty = false;
         let mut scene_dirty = false;
@@ -159,31 +160,15 @@ impl App for RaynaApp {
 }
 
 impl RaynaApp {
-    /// Processes the messages from the worker
-    ///
-    /// This does things like updating the render buffer, if the worker sent a completed render
-    fn process_worker_messages(&mut self, ctx: &Context) {
-        // TODO: Can we remove/refactor this?
-        //  Using a SPSC channel is good bud sometimes sender is too fast and rx can't keep up
-        //  Maybe use a barrier/condvar?
-        const LIMIT: usize = 10;
-
-        let mut i = 0;
-        while let Some(res) = self.integration.try_recv_message() {
-            // If renderer is too fast, it can keep pumping out frames before we get a chance to process
-            // And we get stuck inside here forever
-            i += 1;
-            if i >= LIMIT {
-                break;
-            }
-            trace!(target: UI, ?res, "got message from worker");
-
+    /// Tries to receive the next render frame from the worker
+    fn process_worker_render(&mut self, ctx: &Context) {
+        if let Some(res) = self.integration.try_recv_render() {
             match res {
                 Err(err) => {
                     warn!(target: UI, ?err)
                 }
 
-                Ok(MessageToUi::RenderFrameComplete(img)) => {
+                Ok(img) => {
                     trace!(target: UI, "received new frame from worker");
 
                     // Got a rendered image, translate to an egui-appropriate one
@@ -207,6 +192,24 @@ impl RaynaApp {
                         }
                         Some(tex) => tex.set(img_as_egui, TextureOptions::default()),
                     }
+                }
+            }
+        }
+    }
+
+    /// Processes the messages from the worker
+    fn process_worker_messages(&mut self) {
+        while let Some(res) = self.integration.try_recv_message() {
+            trace!(target: UI, ?res, "got message from worker");
+
+            match res {
+                Err(err) => {
+                    warn!(target: UI, ?err)
+                }
+
+                Ok(msg) => {
+                    // Don't have any messages implemented currently
+                    error!(target: UI, ?msg, "TODO: Implement message handling")
                 }
             }
         }

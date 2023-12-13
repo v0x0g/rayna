@@ -39,7 +39,7 @@ impl Renderer {
     }
 
     // TODO: Should `render()` be fallible?
-    pub fn render(&self, scene: &Scene, render_opts: RenderOpts) -> Render {
+    pub fn render(&self, scene: &Scene, render_opts: RenderOpts) -> Render<ImgBuf> {
         profile_function!();
 
         let viewport = match scene.camera.calculate_viewport(render_opts) {
@@ -66,7 +66,12 @@ impl Renderer {
         math::lerp(white, blue, a)
     }
 
-    fn render_actual(&self, scene: &Scene, render_opts: RenderOpts, viewport: Viewport) -> Render {
+    fn render_actual(
+        &self,
+        scene: &Scene,
+        render_opts: RenderOpts,
+        viewport: Viewport,
+    ) -> Render<ImgBuf> {
         profile_function!();
 
         let [w, h] = render_opts.dims_u32_slice();
@@ -105,7 +110,7 @@ impl Renderer {
 
     /// Helper function for returning a render in case of a failure
     /// (and so we can't make an actual render)
-    fn render_failed(w: u32, h: u32) -> Render {
+    fn render_failed(w: u32, h: u32) -> Render<ImgBuf> {
         #[memoize::memoize(Capacity: 8)] // Keep cap small since images can be huge
         fn internal(w: u32, h: u32) -> ImgBuf {
             ImgBuf::from_fn(w, h, |x, y| {

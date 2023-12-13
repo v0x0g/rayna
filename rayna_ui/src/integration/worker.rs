@@ -1,6 +1,7 @@
 use crate::def::targets::BG_WORKER;
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use puffin::{profile_function, profile_scope};
+use rayna_engine::def::types::ImgBuf;
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
@@ -16,7 +17,7 @@ pub(super) struct BgWorker {
     pub msg_tx: flume::Sender<MessageToUi>,
     /// Receiver for messages from the UI, to the worker
     pub msg_rx: flume::Receiver<MessageToWorker>,
-    pub render_tx: flume::Sender<Render>,
+    pub render_tx: flume::Sender<Render<ImgBuf>>,
     pub renderer: Renderer,
 }
 

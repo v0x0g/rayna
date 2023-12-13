@@ -4,9 +4,7 @@ use crate::ext::UiExt;
 use crate::integration::message::MessageToWorker;
 use crate::integration::Integration;
 use egui::load::SizedTexture;
-use egui::{Color32, ColorImage, Context, RichText, TextureHandle, TextureOptions};
-use image::buffer::ConvertBuffer;
-use image::RgbaImage;
+use egui::{Context, RichText, TextureHandle, TextureOptions};
 use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::RenderOpts;
@@ -218,35 +216,6 @@ impl RaynaApp {
 
         trace!(target: UI, "received new frame from worker");
 
-        // Got a rendered image, translate to an egui-appropriate one
-
-        let img_as_rgba: RgbaImage = {
-            profile_scope!("convert-rgba");
-            render.img.convert()
-        };
-
-        let img_as_egui = unsafe {
-            profile_scope!("convert_egui");
-
-            // SAFETY:
-            // Color32 is defined as being a `[u8; 4]` internally anyway
-            // And we know that RgbaImage stores pixels as [r, g, b, a]
-            // So we can safely transmute the vector, because they have the same
-            // internal representation and layout
-
-            // PERFORMANCE:
-            // This is massively faster than calling
-            // `ColorImage::from_rgba_unmultiplied(size, img_as_rgba.into_vec())`
-            // It goes from ~7ms to ~1us
-            let (ptr, len, cap) = img_as_rgba.into_vec().into_raw_parts();
-            let px = Vec::from_raw_parts(ptr as *mut Color32, len / 4, cap / 4);
-
-            ColorImage {
-                size: [render.img.width() as usize, render.img.height() as usize],
-                pixels: px,
-            }
-        };
-
         {
             profile_scope!("update_tex");
             match &mut self.render_buf_tex {
@@ -254,13 +223,13 @@ impl RaynaApp {
                     profile_scope!("tex_load");
                     self.render_buf_tex = Some(ctx.load_texture(
                         "render_buffer_texture",
-                        img_as_egui,
+                        render.img,
                         TextureOptions::default(),
                     ))
                 }
                 Some(tex) => {
                     profile_scope!("tex_set");
-                    tex.set(img_as_egui, TextureOptions::default())
+                    tex.set(render.img, TextureOptions::default())
                 }
             }
         }

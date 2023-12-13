@@ -1,4 +1,3 @@
-use crate::def::types::ImgBuf;
 use derivative::Derivative;
 use std::time::Duration;
 
@@ -14,8 +13,8 @@ pub struct RenderStats {
 
 #[derive(Clone, Derivative)]
 #[derivative(Debug)]
-pub struct Render {
+pub struct Render<T> {
     #[derivative(Debug = "ignore")]
-    pub img: ImgBuf,
+    pub img: T,
     pub stats: RenderStats,
 }

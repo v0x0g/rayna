@@ -4,6 +4,11 @@
 
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::integration::worker::BgWorker;
+use egui::{Color32, ColorImage};
+use image::buffer::ConvertBuffer;
+use image::RgbaImage;
+use puffin::profile_scope;
+use rayna_engine::def::types::ImgBuf;
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
@@ -32,7 +37,7 @@ pub enum IntegrationError {
 pub(crate) struct Integration {
     msg_tx: flume::Sender<MessageToWorker>,
     msg_rx: flume::Receiver<MessageToUi>,
-    render_rx: flume::Receiver<Render>,
+    render_rx: flume::Receiver<Render<ImgBuf>>,
     worker_thread: JoinHandle<()>,
 }
 
@@ -43,7 +48,7 @@ impl Integration {
         // Worker -> Main thread
         let (work_tx, main_rx) = flume::unbounded::<MessageToUi>();
         // Worker  -> Main thread (renders)
-        let (rend_tx, rend_rx) = flume::bounded::<Render>(1);
+        let (rend_tx, rend_rx) = flume::bounded::<Render<ImgBuf>>(1);
 
         let worker = BgWorker {
             msg_rx: work_rx,
@@ -100,20 +105,54 @@ impl Integration {
     ///
     /// # Return Value
     /// See [Self::try_recv_message]
-    pub fn try_recv_render(&self) -> Option<Result<Render>> {
+    pub fn try_recv_render(&self) -> Option<Result<Render<ColorImage>>> {
         puffin::profile_function!();
 
         if let Err(e) = self.ensure_worker_alive() {
             return Some(Err(e));
         }
 
-        return match self.render_rx.try_recv() {
-            Ok(render) => Some(Ok(render)),
-            Err(flume::TryRecvError::Empty) => None,
+        let render = match self.render_rx.try_recv() {
+            Ok(r) => r,
+            Err(flume::TryRecvError::Empty) => return None,
             Err(flume::TryRecvError::Disconnected) => {
-                Some(Err(IntegrationError::RenderChannelDisconnected))
+                return Some(Err(IntegrationError::RenderChannelDisconnected))
             }
         };
+
+        // Got a rendered image, translate to an egui-appropriate one
+
+        let img_as_rgba: RgbaImage = {
+            profile_scope!("convert-rgba");
+            render.img.convert()
+        };
+
+        let img_as_egui = unsafe {
+            profile_scope!("convert_egui");
+
+            // SAFETY:
+            // Color32 is defined as being a `[u8; 4]` internally anyway
+            // And we know that RgbaImage stores pixels as [r, g, b, a]
+            // So we can safely transmute the vector, because they have the same
+            // internal representation and layout
+
+            // PERFORMANCE:
+            // This is massively faster than calling
+            // `ColorImage::from_rgba_unmultiplied(size, img_as_rgba.into_vec())`
+            // It goes from ~7ms to ~1us
+            let (ptr, len, cap) = img_as_rgba.into_vec().into_raw_parts();
+            let px = Vec::from_raw_parts(ptr as *mut Color32, len / 4, cap / 4);
+
+            Render {
+                img: ColorImage {
+                    size: [render.img.width() as usize, render.img.height() as usize],
+                    pixels: px,
+                },
+                stats: render.stats,
+            }
+        };
+
+        Some(Ok(img_as_egui))
     }
 
     //noinspection DuplicatedCode

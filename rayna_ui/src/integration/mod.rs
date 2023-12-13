@@ -5,7 +5,6 @@
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::integration::worker::BgWorker;
 use egui::ColorImage;
-use image::buffer::ConvertBuffer;
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
@@ -29,6 +28,8 @@ pub enum IntegrationError {
     RenderChannelDisconnected,
     #[error("worker thread died unexpectedly")]
     WorkerThreadDied,
+    #[error("failed to spawn thread for BgWorker")]
+    WorkerSpawnFailed(#[from] std::io::Error),
 }
 
 pub(crate) struct Integration {
@@ -39,7 +40,7 @@ pub(crate) struct Integration {
 }
 
 impl Integration {
-    pub(crate) fn new(initial_render_opts: &RenderOpts, initial_scene: &Scene) -> Self {
+    pub(crate) fn new(initial_render_opts: &RenderOpts, initial_scene: &Scene) -> Result<Self> {
         // Main thread -> Worker
         let (main_tx, work_rx) = flume::unbounded::<MessageToWorker>();
         // Worker -> Main thread
@@ -56,18 +57,14 @@ impl Integration {
             renderer: Renderer::new().expect("failed to create renderer"),
         };
 
-        let thread = std::thread::Builder::new()
-            .name("BgWorker::thread".into())
-            .spawn(move || worker.bg_worker())
-            // TODO: Error handling if the BgWorker thread fails to spawn
-            .expect("failed to spawn thread for BgWorker}");
+        let thread = worker.start_bg_thread().map_err(IntegrationError::from)?;
 
-        Self {
+        Ok(Self {
             msg_tx: main_tx,
             msg_rx: main_rx,
             render_rx: rend_rx,
             worker_thread: thread,
-        }
+        })
     }
 
     fn ensure_worker_alive(&self) -> Result<()> {

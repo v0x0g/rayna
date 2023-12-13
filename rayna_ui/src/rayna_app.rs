@@ -41,7 +41,8 @@ impl RaynaApp {
             render_opts,
             render_buf_tex: None,
             render_display_size: egui::vec2(1.0, 1.0),
-            integration: Integration::new(&render_opts, &scene),
+            integration: Integration::new(&render_opts, &scene)
+                .expect("couldn't create integration"),
             scene,
             render_stats: Default::default(),
         }

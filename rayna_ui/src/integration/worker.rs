@@ -9,6 +9,7 @@ use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
 use rayna_engine::shared::scene::Scene;
+use std::thread::JoinHandle;
 use std::time::Duration;
 use tracing::{info, instrument, trace, warn};
 
@@ -25,8 +26,17 @@ pub(super) struct BgWorker {
 }
 
 impl BgWorker {
+    /// Starts the worker in a background thread, returning the thread handle
+    pub fn start_bg_thread(self) -> std::io::Result<JoinHandle<()>> {
+        std::thread::Builder::new()
+            .name("BgWorker::thread".into())
+            .spawn(move || self.thread_run())
+    }
+
+    /// Actually runs the thread
+    /// This should be called inside [thread::spawn], it will block
     #[instrument(level = tracing::Level::DEBUG, skip(self), parent = None)]
-    pub fn bg_worker(self) {
+    pub fn thread_run(self) {
         info!(target: BG_WORKER, "BgWorker thread start");
 
         let Self {

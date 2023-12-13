@@ -4,7 +4,6 @@ use crate::render::render_opts::RenderOpts;
 use crate::shared::camera::Viewport;
 use crate::shared::math;
 use crate::shared::scene::Scene;
-use image::{FlatSamples, Pixel};
 use puffin::profile_scope;
 use rayon::prelude::*;
 use tracing::trace;
@@ -40,30 +39,18 @@ pub fn render(scene: &Scene, render_opts: RenderOpts) -> ImgBuf {
     };
 
     {
-        profile_scope!("par_chunks_exact_mut");
-        let FlatSamples {
-            samples, layout, ..
-        } = img.as_flat_samples_mut();
-
-        let w = layout.width as usize;
-        let h = layout.height as usize;
-
-        samples
-            .par_chunks_exact_mut(w * 3) // Iter over rows
-            .enumerate()
-            .for_each(|(y, row)| {
-                for (x, slice) in row.array_chunks_mut::<3>().enumerate() {
-                    // Guaranteed channels are contiguous, so we can slice
-                    let pix = Pix::from_slice_mut(slice);
-                    *pix = render_px(scene, viewport, x, y);
-                }
-            });
-    }
-
-    {
         profile_scope!("enumerate");
-        img.enumerate_pixels_mut()
-            .for_each(|(x, y, p)| *p = render_px(scene, viewport, x as usize, y as usize));
+        rayon::in_place_scope(|scope| {
+            let rows = img.enumerate_rows_mut();
+            for (_, row) in rows {
+                scope.spawn(|_| {
+                    profile_scope!("inner");
+                    for (x, y, pix) in row {
+                        *pix = render_px(scene, viewport, x as usize, y as usize);
+                    }
+                });
+            }
+        });
     }
 
     img

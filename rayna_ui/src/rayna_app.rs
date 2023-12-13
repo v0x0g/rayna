@@ -3,6 +3,7 @@ use crate::def::ui_val::*;
 use crate::ext::UiExt;
 use crate::integration::message::MessageToWorker;
 use crate::integration::Integration;
+use egui::load::SizedTexture;
 use egui::{Color32, ColorImage, Context, RichText, TextureHandle, TextureOptions};
 use image::buffer::ConvertBuffer;
 use image::RgbaImage;
@@ -161,8 +162,11 @@ impl App for RaynaApp {
 
             let avail_space = ui.available_size();
             self.render_display_size = avail_space;
-            if let Some(tex_id) = &mut self.render_buf_tex {
-                ui.image(tex_id, avail_space);
+            if let Some(tex_handle) = &mut self.render_buf_tex {
+                ui.image(SizedTexture {
+                    id: tex_handle.id(),
+                    size: avail_space,
+                });
             } else {
                 ui.label(RichText::new("No texture").size(20.0));
             }

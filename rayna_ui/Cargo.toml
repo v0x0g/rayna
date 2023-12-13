@@ -41,7 +41,7 @@ valuable = { workspace = true }
 derivative = { workspace = true }
 
 # Perf
-puffin_egui = "0.21.0"
+puffin_egui = "0.24.0"
 puffin = { workspace = true }
 
 # ===== FEATURES =====
@@ -49,7 +49,7 @@ puffin = { workspace = true }
 [features]
 default = [
     "backend_eframe",
-    "backend_miniquad"
+#    "backend_miniquad"
 ]
 
 backend_eframe = ["rayna_ui_base/backend_eframe"]

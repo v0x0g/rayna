@@ -2,6 +2,7 @@ use crate::app::{App, AppCtor};
 use crate::backend::UiBackend;
 use anyhow::anyhow;
 use eframe::Theme;
+use egui::ViewportBuilder;
 use valuable::Valuable;
 
 #[derive(Debug, Copy, Clone, Valuable)]
@@ -12,10 +13,12 @@ impl UiBackend for EframeBackend {
         eframe::run_native(
             app_name,
             eframe::NativeOptions {
-                min_window_size: Some([300.0, 220.0].into()),
-                initial_window_size: Some([400.0, 300.0].into()),
                 run_and_return: true,
                 default_theme: Theme::Dark,
+                viewport: ViewportBuilder::default()
+                    .with_min_inner_size([300.0, 220.0])
+                    .with_inner_size([400.0, 300.0])
+                    .with_app_id(app_name),
 
                 ..Default::default()
             },

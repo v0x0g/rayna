@@ -60,7 +60,7 @@ fn main() -> anyhow::Result<()> {
     //     .expect("at least one backend should be enabled")
     //     .1;
     let mut backends = backends();
-    let backend = backends.remove("miniquad").unwrap();
+    let backend = backends.remove("eframe").unwrap();
     debug!(target: MAIN, "using backend {backend:?}");
 
     debug!(target: MAIN, "run");

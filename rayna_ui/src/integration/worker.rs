@@ -35,7 +35,6 @@ impl BgWorker {
         } = self;
 
         loop {
-            puffin::GlobalProfiler::lock().new_frame();
             profile_function!(); // place here not at the start since we are looping
 
             if msg_rx.is_disconnected() {

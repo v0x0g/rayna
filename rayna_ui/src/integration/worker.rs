@@ -1,9 +1,9 @@
 use crate::def::targets::BG_WORKER;
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use puffin::{profile_function, profile_scope};
-use rayna_engine::def::types::ImgBuf;
+use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
-use rayna_engine::render::renderer;
+use rayna_engine::render::renderer::Renderer;
 use rayna_engine::shared::scene::Scene;
 use std::time::Duration;
 use tracing::{info, instrument, trace, warn};
@@ -16,7 +16,8 @@ pub(super) struct BgWorker {
     pub msg_tx: flume::Sender<MessageToUi>,
     /// Receiver for messages from the UI, to the worker
     pub msg_rx: flume::Receiver<MessageToWorker>,
-    pub render_tx: flume::Sender<ImgBuf>,
+    pub render_tx: flume::Sender<Render>,
+    pub renderer: Renderer,
 }
 
 impl BgWorker {
@@ -30,6 +31,7 @@ impl BgWorker {
             render_tx,
             mut render_opts,
             mut scene,
+            renderer,
         } = self;
 
         loop {
@@ -71,15 +73,15 @@ impl BgWorker {
                 }
             }
 
-            let img = {
+            let render_result = {
                 profile_scope!("render");
-                renderer::render(&scene, render_opts)
+                renderer.render(&scene, render_opts)
             };
 
             {
                 profile_scope!("send_frame");
 
-                if let Err(_) = render_tx.send(img) {
+                if let Err(_) = render_tx.send(render_result) {
                     warn!(target: BG_WORKER, "failed to send rendered frame to UI")
                 }
             }

@@ -1,4 +1,3 @@
-use derivative::Derivative;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::shared::scene::Scene;
 
@@ -10,6 +9,5 @@ pub(crate) enum MessageToWorker {
 }
 
 /// A message sent from the worker, to the UI
-#[derive(Clone, Derivative)]
-#[derivative(Debug)]
+#[derive(Clone, Debug)]
 pub(crate) enum MessageToUi {}

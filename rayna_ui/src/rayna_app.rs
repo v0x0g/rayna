@@ -8,6 +8,7 @@ use image::buffer::ConvertBuffer;
 use image::RgbaImage;
 use puffin::{profile_function, profile_scope};
 use puffin_egui::GlobalProfilerUi;
+use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::shared::scene::Scene;
 use rayna_ui_base::app::App;
@@ -26,6 +27,7 @@ pub struct RaynaApp {
     /// This is [`egui::Ui::available_size`] inside [egui::CentralPanel]
     /// Used by the "fit canvas to screen" button
     render_display_size: egui::Vec2,
+    render_stats: RenderStats,
 
     // The rest
     integration: Integration,
@@ -51,6 +53,7 @@ impl RaynaApp {
             render_display_size: egui::vec2(1.0, 1.0),
             integration: Integration::new(&render_opts, &scene),
             scene,
+            render_stats: Default::default(),
             profiler_ui,
         }
     }
@@ -188,64 +191,72 @@ impl RaynaApp {
     fn process_worker_render(&mut self, ctx: &Context) {
         profile_function!();
 
-        if let Some(res) = self.integration.try_recv_render() {
-            match res {
-                Err(err) => {
-                    warn!(target: UI, ?err)
+        let Some(res) = self.integration.try_recv_render() else {
+            return;
+        };
+        let Ok(render) = res else {
+            warn!(target: UI, ?res);
+            return;
+        };
+
+        // let render = match res {
+        //     Err(err) => {
+        //         warn!(target: UI, ?err);
+        //         return;
+        //     }
+        //     Ok(r) => r,
+        // };
+
+        trace!(target: UI, "received new frame from worker");
+
+        // Got a rendered image, translate to an egui-appropriate one
+
+        let img_as_rgba: RgbaImage = {
+            profile_scope!("convert-rgba");
+            render.img.convert()
+        };
+
+        let img_as_egui = unsafe {
+            profile_scope!("convert_egui");
+
+            // SAFETY:
+            // Color32 is defined as being a `[u8; 4]` internally anyway
+            // And we know that RgbaImage stores pixels as [r, g, b, a]
+            // So we can safely transmute the vector, because they have the same
+            // internal representation and layout
+
+            // PERFORMANCE:
+            // This is massively faster than calling
+            // `ColorImage::from_rgba_unmultiplied(size, img_as_rgba.into_vec())`
+            // It goes from ~7ms to ~1us
+            let (ptr, len, cap) = img_as_rgba.into_vec().into_raw_parts();
+            let px = Vec::from_raw_parts(ptr as *mut Color32, len / 4, cap / 4);
+
+            ColorImage {
+                size: [render.img.width() as usize, render.img.height() as usize],
+                pixels: px,
+            }
+        };
+
+        {
+            profile_scope!("update_tex");
+            match &mut self.render_buf_tex {
+                None => {
+                    profile_scope!("tex_load");
+                    self.render_buf_tex = Some(ctx.load_texture(
+                        "render_buffer_texture",
+                        img_as_egui,
+                        TextureOptions::default(),
+                    ))
                 }
-
-                Ok(img) => {
-                    trace!(target: UI, "received new frame from worker");
-
-                    // Got a rendered image, translate to an egui-appropriate one
-
-                    let img_as_rgba: RgbaImage = {
-                        profile_scope!("convert-rgba");
-                        img.convert()
-                    };
-
-                    let img_as_egui = unsafe {
-                        profile_scope!("convert_egui");
-
-                        // SAFETY:
-                        // Color32 is defined as being a `[u8; 4]` internally anyway
-                        // And we know that RgbaImage stores pixels as [r, g, b, a]
-                        // So we can safely transmute the vector, because they have the same
-                        // internal representation and layout
-
-                        // PERFORMANCE:
-                        // This is massively faster than calling
-                        // `ColorImage::from_rgba_unmultiplied(size, img_as_rgba.into_vec())`
-                        // It goes from ~7ms to ~1us
-                        let (ptr, len, cap) = img_as_rgba.into_vec().into_raw_parts();
-                        let px = Vec::from_raw_parts(ptr as *mut Color32, len / 4, cap / 4);
-
-                        ColorImage {
-                            size: [img.width() as usize, img.height() as usize],
-                            pixels: px,
-                        }
-                    };
-
-                    {
-                        profile_scope!("update_tex");
-                        match &mut self.render_buf_tex {
-                            None => {
-                                profile_scope!("tex_load");
-                                self.render_buf_tex = Some(ctx.load_texture(
-                                    "render_buffer_texture",
-                                    img_as_egui,
-                                    TextureOptions::default(),
-                                ))
-                            }
-                            Some(tex) => {
-                                profile_scope!("tex_set");
-                                tex.set(img_as_egui, TextureOptions::default())
-                            }
-                        }
-                    }
+                Some(tex) => {
+                    profile_scope!("tex_set");
+                    tex.set(img_as_egui, TextureOptions::default())
                 }
             }
         }
+
+        self.render_stats = render.stats;
     }
 
     /// Processes the messages from the worker

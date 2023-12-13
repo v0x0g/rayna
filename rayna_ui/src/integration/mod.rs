@@ -4,8 +4,9 @@
 
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::integration::worker::BgWorker;
-use rayna_engine::def::types::ImgBuf;
+use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
+use rayna_engine::render::renderer::Renderer;
 use rayna_engine::shared::scene::Scene;
 use std::thread::JoinHandle;
 use thiserror::Error;
@@ -31,7 +32,7 @@ pub enum IntegrationError {
 pub(crate) struct Integration {
     msg_tx: flume::Sender<MessageToWorker>,
     msg_rx: flume::Receiver<MessageToUi>,
-    render_rx: flume::Receiver<ImgBuf>,
+    render_rx: flume::Receiver<Render>,
     worker_thread: JoinHandle<()>,
 }
 
@@ -42,7 +43,7 @@ impl Integration {
         // Worker -> Main thread
         let (work_tx, main_rx) = flume::unbounded::<MessageToUi>();
         // Worker  -> Main thread (renders)
-        let (rend_tx, rend_rx) = flume::bounded::<ImgBuf>(1);
+        let (rend_tx, rend_rx) = flume::bounded::<Render>(1);
 
         let worker = BgWorker {
             msg_rx: work_rx,
@@ -50,11 +51,11 @@ impl Integration {
             render_tx: rend_tx,
             render_opts: initial_render_opts.clone(),
             scene: initial_scene.clone(),
+            renderer: Renderer::new().expect("failed to create renderer"),
         };
 
-        const THREAD_NAME: &'static str = "integration::BgWorker";
         let thread = std::thread::Builder::new()
-            .name(THREAD_NAME.into())
+            .name("BgWorker::thread".into())
             .spawn(move || worker.bg_worker())
             // TODO: Error handling if the BgWorker thread fails to spawn
             .expect("failed to spawn thread for BgWorker}");
@@ -99,7 +100,7 @@ impl Integration {
     ///
     /// # Return Value
     /// See [Self::try_recv_message]
-    pub fn try_recv_render(&self) -> Option<Result<ImgBuf>> {
+    pub fn try_recv_render(&self) -> Option<Result<Render>> {
         puffin::profile_function!();
 
         if let Err(e) = self.ensure_worker_alive() {
@@ -107,7 +108,7 @@ impl Integration {
         }
 
         return match self.render_rx.try_recv() {
-            Ok(img) => Some(Ok(img)),
+            Ok(render) => Some(Ok(render)),
             Err(flume::TryRecvError::Empty) => None,
             Err(flume::TryRecvError::Disconnected) => {
                 Some(Err(IntegrationError::RenderChannelDisconnected))

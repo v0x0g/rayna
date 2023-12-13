@@ -7,7 +7,7 @@ use std::ops::Range;
 
 pub mod sphere;
 
-pub trait Object: DynClone + Debug + Send {
+pub trait Object: DynClone + Debug + Send + Sync {
     /// Attempts to perform an intersection between the given ray and the target object
     ///
     /// # Return Value

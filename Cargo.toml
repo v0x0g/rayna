@@ -34,9 +34,10 @@ memoize = "0.4.1"
 
 # Performance
 puffin = "0.15.0"
+rayon = "1.8.0"
 
 [profile.dev]
-debug = 2
+debug = "full"
 lto = "off"
 incremental = true
 debug-assertions = true

@@ -35,6 +35,8 @@ impl BgWorker {
         } = self;
 
         loop {
+            // puffin::ThreadProfiler::call(|t| t.);
+
             profile_function!(); // place here not at the start since we are looping
 
             if msg_rx.is_disconnected() {

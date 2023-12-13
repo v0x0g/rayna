@@ -5,7 +5,7 @@ use crate::render::render_opts::RenderOpts;
 use crate::shared::camera::Viewport;
 use crate::shared::math;
 use crate::shared::scene::Scene;
-use puffin::profile_scope;
+use puffin::{profile_function, profile_scope};
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use std::time::Duration;
 use thiserror::Error;
@@ -40,31 +40,42 @@ impl Renderer {
 
     // TODO: Should `render()` be fallible?
     pub fn render(&self, scene: &Scene, render_opts: RenderOpts) -> Render {
-        puffin::profile_function!();
-
-        let [w, h] = render_opts.dims_u32_slice();
-
-        let mut img = ImgBuf::new(w, h);
+        profile_function!();
 
         let viewport = match scene.camera.calculate_viewport(render_opts) {
             Ok(v) => v,
             Err(err) => {
                 trace!(target: RENDERER, ?err, "couldn't calculate viewport");
-                return Render {
-                    img: Self::render_failed_image(w, h),
-                    stats: RenderStats {
-                        num_threads: 0,
-                        duration: Duration::ZERO,
-                        num_px: (w * h) as usize,
-                    },
-                };
+                let [w, h] = render_opts.dims_u32_slice();
+                return Self::render_failed(w, h);
             }
         };
+
+        self.render_actual(scene, render_opts, viewport)
+    }
+
+    /// Renders a single pixel in the scene, and returns the colour
+    fn render_px(_scene: &Scene, viewport: Viewport, x: usize, y: usize) -> Pix {
+        let ray = viewport.calc_ray(x, y);
+
+        let a = (0.5 * ray.dir().y) + 0.5;
+
+        let white = Pix::from([1., 1., 1.]);
+        let blue = Pix::from([0.5, 0.7, 1.]);
+
+        math::lerp(white, blue, a)
+    }
+
+    fn render_actual(&self, scene: &Scene, render_opts: RenderOpts, viewport: Viewport) -> Render {
+        profile_function!();
+
+        let [w, h] = render_opts.dims_u32_slice();
+
+        let mut img = ImgBuf::new(w, h);
 
         let duration;
         let num_threads;
         {
-            profile_scope!("render_pixels");
             let start = puffin::now_ns();
             num_threads = self.thread_pool.current_num_threads();
             self.thread_pool.in_place_scope(|scope| {
@@ -92,24 +103,9 @@ impl Renderer {
         }
     }
 
-    /// Renders a single pixel in the scene, and returns the colour
-    fn render_px(scene: &Scene, viewport: Viewport, x: usize, y: usize) -> Pix {
-        puffin::profile_function!();
-
-        let ray = viewport.calc_ray(x, y);
-
-        let a = (0.5 * ray.dir().y) + 0.5;
-
-        let white = Pix::from([1., 1., 1.]);
-        let blue = Pix::from([0.5, 0.7, 1.]);
-
-        math::lerp(white, blue, a)
-    }
-
-    /// Helper function to
-    fn render_failed_image(w: u32, h: u32) -> ImgBuf {
-        puffin::profile_function!();
-
+    /// Helper function for returning a render in case of a failure
+    /// (and so we can't make an actual render)
+    fn render_failed(w: u32, h: u32) -> Render {
         #[memoize::memoize(Capacity: 8)] // Keep cap small since images can be huge
         fn internal(w: u32, h: u32) -> ImgBuf {
             ImgBuf::from_fn(w, h, |x, y| {
@@ -123,10 +119,19 @@ impl Renderer {
             })
         }
 
-        if w > 16 && h > 16 {
+        let img = if w > 16 && h > 16 {
             internal(w / 4, h / 4)
         } else {
             internal(w, h)
+        };
+
+        Render {
+            img,
+            stats: RenderStats {
+                num_threads: 0,
+                duration: Duration::ZERO,
+                num_px: (w * h) as usize,
+            },
         }
     }
 }

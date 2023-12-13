@@ -1,5 +1,4 @@
 use crate::def::types::{Num, Vec3};
-use puffin::profile_function;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Ray {
@@ -24,8 +23,6 @@ impl Ray {
     }
 
     pub fn new(pos: Vec3, dir: Vec3) -> Self {
-        profile_function!();
-
         Self {
             pos,
             dir: dir.normalize(),
@@ -38,7 +35,6 @@ impl Ray {
     /// Unsafe as it does not normalise the direction, assuming the caller
     /// provided a correct vector, possibly breaking the invariant of a normalised direction
     pub unsafe fn new_unchecked(pos: Vec3, dir: Vec3) -> Self {
-        profile_function!();
         Self { pos, dir }
     }
 
@@ -46,7 +42,6 @@ impl Ray {
     ///
     /// `pos + (t * dir)`
     pub fn at(&self, t: Num) -> Vec3 {
-        profile_function!();
         self.pos + (self.dir * t)
     }
 }

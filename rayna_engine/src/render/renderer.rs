@@ -37,16 +37,16 @@ pub fn render(scene: &Scene, render_opts: RenderOpts) -> ImgBuf {
     };
 
     img.enumerate_pixels_mut()
-        .for_each(|(x, y, p)| *p = render_pixel_once(scene, viewport, x as usize, y as usize));
+        .for_each(|(x, y, p)| *p = render_px(scene, viewport, x as usize, y as usize));
 
     img
 }
 
 /// Renders a single pixel in the scene, and returns the colour
-fn render_pixel_once(scene: &Scene, viewport: Viewport, x: usize, y: usize) -> Pix {
+fn render_px(scene: &Scene, viewport: Viewport, x: usize, y: usize) -> Pix {
     puffin::profile_function!();
 
-    let ray = viewport.calculate_pixel_ray(x, y);
+    let ray = viewport.calc_ray(x, y);
 
     let a = (0.5 * ray.dir().y) + 0.5;
 

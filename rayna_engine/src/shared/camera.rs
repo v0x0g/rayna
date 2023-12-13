@@ -1,10 +1,8 @@
 use crate::def::types::{Num, Vec3};
 use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
-use glam::DVec2;
 use num_traits::FloatConst;
 use serde::{Deserialize, Serialize};
-use std::num::NonZeroUsize;
 use thiserror::Error;
 use valuable::Valuable;
 
@@ -78,34 +76,45 @@ impl Camera {
         let uv_origin =
             self.look_from - (horizontal / 2.) - (vertical / 2.) - (look_dir * self.focus_dist);
 
+        // Extract out some computations from the ray calculations
+        // To save a bit of perf
+        let img_width = render_opts.width.get() as Num;
+        let img_height = render_opts.width.get() as Num;
+        let horizontal_norm = horizontal / img_width;
+        let vertical_norm = horizontal / img_height;
+
         Ok(Viewport {
-            u,
-            v,
+            u_dir: u,
+            v_dir: v,
             lens_radius: self.lens_radius,
             look_from: self.look_from,
             uv_origin,
-            horizontal,
-            vertical,
-            dims: [render_opts.width, render_opts.height],
+            horizontal_norm,
+            vertical_norm,
+            width: render_opts.width.get() as Num,
+            height: render_opts.width.get() as Num,
         })
     }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Viewport {
-    u: Vec3,
-    v: Vec3,
+    u_dir: Vec3,
+    v_dir: Vec3,
     lens_radius: Num,
     look_from: Vec3,
     /// The lower left corner of the viewport
     uv_origin: Vec3,
-    horizontal: Vec3,
-    vertical: Vec3,
-    dims: [NonZeroUsize; 2],
+    horizontal_norm: Vec3,
+    vertical_norm: Vec3,
+    width: Num,
+    height: Num,
 }
 
 impl Viewport {
-    pub fn calculate_pixel_ray(&self, p_x: usize, p_y: usize) -> Ray {
+    /// Calculates the view ray for a given pixel at the coords `(p_x, p_y)`
+    /// (screen-space, top-left to bot-right)
+    pub fn calc_ray(&self, p_x: usize, p_y: usize) -> Ray {
         puffin::profile_function!();
 
         /*
@@ -114,14 +123,15 @@ impl Viewport {
            and their direction depends on the pixel's position on screen (its UV coords)
         */
 
-        // Normalised pixel coords (0..=1)
-        let a = p_x as Num / self.dims[0].get() as Num;
-        let b = p_y as Num / self.dims[1].get() as Num;
+        // Don't need to normalise since we divided by `img_width`/`image_height` in the ctor for the viewport
+        let u = p_x as Num;
+        let v = p_y as Num;
 
-        let rand = DVec2::ZERO * self.lens_radius; // Random offset to simulate DOF
-        let offset = (self.u * rand.x) + (self.v * rand.y); // Shift pixel origin slightly
+        let rand = Vec3::ZERO * self.lens_radius; // Random offset to simulate DOF
+        let offset = (self.u_dir * rand.x) + (self.v_dir * rand.y); // Shift pixel origin slightly
         let origin = self.look_from + offset;
-        let direction = (self.uv_origin + (self.horizontal * a) + (self.vertical * b)) - origin;
+        let direction =
+            (self.uv_origin + (self.horizontal_norm * u) + (self.vertical_norm * v)) - origin;
         return Ray::new(origin, direction);
     }
 }

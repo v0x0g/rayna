@@ -8,7 +8,6 @@ use egui::{Color32, ColorImage, Context, RichText, TextureHandle, TextureOptions
 use image::buffer::ConvertBuffer;
 use image::RgbaImage;
 use puffin::{profile_function, profile_scope};
-use puffin_egui::GlobalProfilerUi;
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::shared::scene::Scene;
@@ -32,9 +31,6 @@ pub struct RaynaApp {
 
     // The rest
     integration: Integration,
-    /// We use a custom profiler UI so we can control frame packing
-    /// Disabled so that it is faster, at the cost of more memory
-    profiler_ui: GlobalProfilerUi,
 }
 
 impl RaynaApp {
@@ -43,11 +39,6 @@ impl RaynaApp {
         info!(target: UI, "ui app init");
         let scene = Scene::simple();
         let render_opts = Default::default();
-        let profiler_ui = GlobalProfilerUi::default();
-        profiler_ui
-            .global_frame_view()
-            .lock()
-            .set_pack_frames(false); // Slows down perf if enabled
         Self {
             render_opts,
             render_buf_tex: None,
@@ -55,7 +46,6 @@ impl RaynaApp {
             integration: Integration::new(&render_opts, &scene),
             scene,
             render_stats: Default::default(),
-            profiler_ui,
         }
     }
 }
@@ -195,8 +185,6 @@ impl App for RaynaApp {
                 warn!(target: UI, ?err)
             }
         }
-
-        self.profiler_ui.window(ctx);
     }
 
     fn on_shutdown(&mut self) -> () {

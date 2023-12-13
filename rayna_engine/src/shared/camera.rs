@@ -2,6 +2,7 @@ use crate::def::types::{Num, Vec3};
 use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
 use num_traits::FloatConst;
+use puffin::profile_function;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use valuable::Valuable;
@@ -47,7 +48,7 @@ impl Camera {
     /// the forward vector (`look_from -> look_towards`),
     /// equivalent to the case where `cross(look_direction, up_vector) == Vec3::Zero`
     pub fn calculate_viewport(&self, render_opts: RenderOpts) -> Result<Viewport, CamInvalidError> {
-        puffin::profile_function!();
+        profile_function!();
 
         // must be normalised
         let up_vector = self
@@ -115,7 +116,7 @@ impl Viewport {
     /// Calculates the view ray for a given pixel at the coords `(p_x, p_y)`
     /// (screen-space, top-left to bot-right)
     pub fn calc_ray(&self, p_x: usize, p_y: usize) -> Ray {
-        puffin::profile_function!();
+        profile_function!();
 
         /*
            How this works is all pixels have their rays originating at the same point

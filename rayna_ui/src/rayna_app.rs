@@ -72,6 +72,8 @@ impl App for RaynaApp {
         let mut scene_dirty = false;
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            profile_scope!("panel/top");
+
             egui::menu::bar(ui, |ui| {
                 // TODO: QUIT HANDLING
                 egui::widgets::global_dark_light_mode_buttons(ui);
@@ -79,7 +81,11 @@ impl App for RaynaApp {
         });
 
         egui::SidePanel::left("left_panel").show(ctx, |ui| {
+            profile_scope!("panel/left");
+
             ui.group(|ui| {
+                profile_scope!("sec/render_opts");
+
                 ui.heading("Render Options");
 
                 // DragValues: Image Dimensions
@@ -111,6 +117,8 @@ impl App for RaynaApp {
             });
 
             ui.group(|ui| {
+                profile_scope!("sec/camera");
+
                 ui.heading("Camera");
 
                 let cam = &mut self.scene.camera;
@@ -133,6 +141,8 @@ impl App for RaynaApp {
             });
 
             ui.group(|ui| {
+                profile_scope!("sec/scene");
+
                 ui.heading("Scene");
             });
 
@@ -144,7 +154,22 @@ impl App for RaynaApp {
             }
         });
 
+        // Central panel contains the main render window
+        // Must come after all other panels
+        egui::CentralPanel::default().show(ctx, |ui| {
+            profile_scope!("panel/central");
+
+            let avail_space = ui.available_size();
+            self.render_display_size = avail_space;
+            if let Some(tex_id) = &mut self.render_buf_tex {
+                ui.image(tex_id, avail_space);
+            } else {
+                ui.label(RichText::new("No texture").size(20.0));
+            }
+        });
+
         if render_opts_dirty {
+            profile_scope!("update_render_opts");
             info!(target: UI, render_opts = ?self.render_opts, "render opts dirty, sending to worker");
 
             if let Err(err) = self
@@ -156,6 +181,7 @@ impl App for RaynaApp {
         }
 
         if scene_dirty {
+            profile_scope!("update_scene");
             info!(target: UI, scene = ?self.scene, "scene dirty, sending to worker");
 
             if let Err(err) = self
@@ -165,18 +191,6 @@ impl App for RaynaApp {
                 warn!(target: UI, ?err)
             }
         }
-
-        // Central panel contains the main render window
-        // Must come after all other panels
-        egui::CentralPanel::default().show(ctx, |ui| {
-            let avail_space = ui.available_size();
-            self.render_display_size = avail_space;
-            if let Some(tex_id) = &mut self.render_buf_tex {
-                ui.image(tex_id, avail_space);
-            } else {
-                ui.label(RichText::new("No texture").size(20.0));
-            }
-        });
 
         self.profiler_ui.window(ctx);
     }

@@ -42,6 +42,7 @@ derivative = { workspace = true }
 
 # Perf
 puffin_egui = "0.24.0"
+puffin_http = "0.15.0"
 puffin = { workspace = true }
 
 # ===== FEATURES =====

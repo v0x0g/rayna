@@ -1,5 +1,8 @@
 use crate::def::targets::BG_WORKER;
 use crate::integration::message::{MessageToUi, MessageToWorker};
+use egui::{Color32, ColorImage};
+use image::buffer::ConvertBuffer;
+use image::RgbaImage;
 use puffin::{profile_function, profile_scope};
 use rayna_engine::def::types::ImgBuf;
 use rayna_engine::render::render::Render;
@@ -17,7 +20,7 @@ pub(super) struct BgWorker {
     pub msg_tx: flume::Sender<MessageToUi>,
     /// Receiver for messages from the UI, to the worker
     pub msg_rx: flume::Receiver<MessageToWorker>,
-    pub render_tx: flume::Sender<Render<ImgBuf>>,
+    pub render_tx: flume::Sender<Render<ColorImage>>,
     pub renderer: Renderer,
 }
 
@@ -77,7 +80,7 @@ impl BgWorker {
 
             let render_result = {
                 profile_scope!("render");
-                renderer.render(&scene, render_opts)
+                renderer.render_convert(&scene, render_opts, Self::convert_img)
             };
 
             {
@@ -90,5 +93,41 @@ impl BgWorker {
         }
 
         info!(target: BG_WORKER, "BgWorker thread exit");
+    }
+
+    /// Converts the image outputted by the renderer into an egui-appropriate one
+    fn convert_img(img: ImgBuf) -> ColorImage {
+        profile_function!();
+
+        // Got a rendered image, translate to an egui-appropriate one
+
+        let img_as_rgba: RgbaImage = {
+            profile_scope!("convert-rgba");
+            img.convert()
+        };
+
+        let img_as_egui = unsafe {
+            profile_scope!("convert_egui");
+
+            // SAFETY:
+            // Color32 is defined as being a `[u8; 4]` internally anyway
+            // And we know that RgbaImage stores pixels as [r, g, b, a]
+            // So we can safely transmute the vector, because they have the same
+            // internal representation and layout
+
+            // PERFORMANCE:
+            // This is massively faster than calling
+            // `ColorImage::from_rgba_unmultiplied(size, img_as_rgba.into_vec())`
+            // It goes from ~7ms to ~1us
+            let (ptr, len, cap) = img_as_rgba.into_vec().into_raw_parts();
+            let px = Vec::from_raw_parts(ptr as *mut Color32, len / 4, cap / 4);
+
+            ColorImage {
+                size: [img.width() as usize, img.height() as usize],
+                pixels: px,
+            }
+        };
+
+        img_as_egui
     }
 }

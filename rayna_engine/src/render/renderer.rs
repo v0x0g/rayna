@@ -54,6 +54,20 @@ impl Renderer {
         self.render_actual(scene, render_opts, viewport)
     }
 
+    pub fn render_convert<T: Send + Sync>(
+        &self,
+        scene: &Scene,
+        render_opts: RenderOpts,
+        convert: impl FnOnce(ImgBuf) -> T,
+    ) -> Render<T> {
+        let render = self.render(scene, render_opts);
+
+        Render {
+            img: convert(render.img),
+            stats: render.stats,
+        }
+    }
+
     /// Renders a single pixel in the scene, and returns the colour
     fn render_px(_scene: &Scene, viewport: Viewport, x: usize, y: usize) -> Pix {
         let ray = viewport.calc_ray(x, y);

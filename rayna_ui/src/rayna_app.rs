@@ -185,6 +185,9 @@ impl App for RaynaApp {
                 warn!(target: UI, ?err)
             }
         }
+
+        // Continuously update UI
+        ctx.request_repaint();
     }
 
     fn on_shutdown(&mut self) -> () {

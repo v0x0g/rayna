@@ -5,8 +5,9 @@ use crate::integration::message::MessageToWorker;
 use crate::integration::Integration;
 use egui::{Color32, ColorImage, Context, RichText, TextureHandle, TextureOptions};
 use image::buffer::ConvertBuffer;
-use image::{RgbImage, RgbaImage};
+use image::RgbaImage;
 use puffin::{profile_function, profile_scope};
+use puffin_egui::GlobalProfilerUi;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::shared::scene::Scene;
 use rayna_ui_base::app::App;
@@ -28,6 +29,9 @@ pub struct RaynaApp {
 
     // The rest
     integration: Integration,
+    /// We use a custom profiler UI so we can control frame packing
+    /// Disabled so that it is faster, at the cost of more memory
+    profiler_ui: GlobalProfilerUi,
 }
 
 impl RaynaApp {
@@ -36,21 +40,27 @@ impl RaynaApp {
         info!(target: UI, "ui app init");
         let scene = Scene::simple();
         let render_opts = Default::default();
+        let profiler_ui = GlobalProfilerUi::default();
+        profiler_ui
+            .global_frame_view()
+            .lock()
+            .set_pack_frames(false); // Slows down perf if enabled
         Self {
             render_opts,
             render_buf_tex: None,
             render_display_size: egui::vec2(1.0, 1.0),
             integration: Integration::new(&render_opts, &scene),
             scene,
+            profiler_ui,
         }
     }
 }
 
 impl App for RaynaApp {
     fn on_update(&mut self, ctx: &Context) -> () {
-        puffin::GlobalProfiler::lock().new_frame(); // Mark start of frame
+        // puffin::GlobalProfiler::lock().new_frame(); // Mark start of frame
 
-        puffin::profile_function!();
+        profile_function!();
 
         self.process_worker_messages();
         self.process_worker_render(ctx);
@@ -122,6 +132,13 @@ impl App for RaynaApp {
             ui.group(|ui| {
                 ui.heading("Scene");
             });
+
+            unsafe {
+                static mut ENABLE: bool = false;
+                if ui.checkbox(&mut ENABLE, "profiling enable").changed() {
+                    puffin::set_scopes_on(ENABLE);
+                }
+            }
         });
 
         if render_opts_dirty {
@@ -158,7 +175,7 @@ impl App for RaynaApp {
             }
         });
 
-        puffin_egui::profiler_window(ctx);
+        self.profiler_ui.window(ctx);
     }
 
     fn on_shutdown(&mut self) -> () {
@@ -183,12 +200,12 @@ impl RaynaApp {
                     // Got a rendered image, translate to an egui-appropriate one
 
                     let img_as_rgba: RgbaImage = {
-                        profile_scope!("RgbaImage::convert");
+                        profile_scope!("convert-rgba");
                         img.convert()
                     };
 
                     let img_as_egui = unsafe {
-                        profile_scope!("ColorImage::convert");
+                        profile_scope!("convert_egui");
 
                         // SAFETY:
                         // Color32 is defined as being a `[u8; 4]` internally anyway
@@ -213,13 +230,17 @@ impl RaynaApp {
                         profile_scope!("update_tex");
                         match &mut self.render_buf_tex {
                             None => {
+                                profile_scope!("tex_load");
                                 self.render_buf_tex = Some(ctx.load_texture(
                                     "render_buffer_texture",
                                     img_as_egui,
                                     TextureOptions::default(),
                                 ))
                             }
-                            Some(tex) => tex.set(img_as_egui, TextureOptions::default()),
+                            Some(tex) => {
+                                profile_scope!("tex_set");
+                                tex.set(img_as_egui, TextureOptions::default())
+                            }
                         }
                     }
                 }

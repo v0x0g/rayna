@@ -22,8 +22,6 @@ pub(super) struct BgWorker {
 impl BgWorker {
     #[instrument(level = tracing::Level::DEBUG, skip(self), parent = None)]
     pub fn bg_worker(self) {
-        profile_function!();
-
         info!(target: BG_WORKER, "BgWorker thread start");
 
         let Self {
@@ -35,6 +33,9 @@ impl BgWorker {
         } = self;
 
         loop {
+            puffin::GlobalProfiler::lock().new_frame();
+            profile_function!(); // place here not at the start since we are looping
+
             if msg_rx.is_disconnected() {
                 warn!(target: BG_WORKER, "all senders disconnected from channel");
                 break;
@@ -42,38 +43,45 @@ impl BgWorker {
 
             // Have two conditions: (empty) or (disconnected)
             // Checked if disconnected above and skip if empty, so just check Ok() here
-            while let Ok(msg) = msg_rx.try_recv() {
+            {
                 profile_scope!("receive_messages");
-
-                match msg {
-                    MessageToWorker::SetRenderOpts(opts) => {
-                        trace!(target: BG_WORKER, ?opts, "got render opts from ui");
-                        render_opts = opts
-                    }
-                    MessageToWorker::SetScene(s) => {
-                        trace!(target: BG_WORKER, ?scene, "got scene from ui");
-                        scene = s;
+                while let Ok(msg) = msg_rx.try_recv() {
+                    match msg {
+                        MessageToWorker::SetRenderOpts(opts) => {
+                            trace!(target: BG_WORKER, ?opts, "got render opts from ui");
+                            render_opts = opts
+                        }
+                        MessageToWorker::SetScene(s) => {
+                            trace!(target: BG_WORKER, ?scene, "got scene from ui");
+                            scene = s;
+                        }
                     }
                 }
             }
 
-            // UI hasn't received the last message we sent
-            if !msg_tx.is_empty() {
+            {
                 profile_scope!("waiting_channel_empty");
-
-                trace!(target: BG_WORKER, "channel not empty, waiting");
-                std::thread::sleep(Duration::from_millis(10));
-                continue;
-            } else {
-                trace!(target: BG_WORKER, "channel empty, sending new image");
+                // UI hasn't received the last message we sent
+                if !msg_tx.is_empty() {
+                    trace!(target: BG_WORKER, "channel not empty, waiting");
+                    std::thread::sleep(Duration::from_millis(10));
+                    continue;
+                } else {
+                    trace!(target: BG_WORKER, "channel empty, sending new image");
+                }
             }
 
-            trace!(target: BG_WORKER,"render start");
-            let img = renderer::render(&scene, render_opts);
-            trace!(target: BG_WORKER,"render end");
+            let img = {
+                profile_scope!("render");
+                renderer::render(&scene, render_opts)
+            };
 
-            if let Err(_) = render_tx.send(img) {
-                warn!(target: BG_WORKER, "failed to send rendered frame to UI")
+            {
+                profile_scope!("send_frame");
+
+                if let Err(_) = render_tx.send(img) {
+                    warn!(target: BG_WORKER, "failed to send rendered frame to UI")
+                }
             }
         }
 

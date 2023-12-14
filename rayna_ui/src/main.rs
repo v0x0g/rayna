@@ -11,6 +11,7 @@ use rayna_shared::def::constants::APP_NAME;
 use rayna_shared::def::targets::*;
 use rayna_shared::profiler;
 use std::collections::HashMap;
+use std::ops::Deref;
 use tracing::debug;
 use tracing::metadata::LevelFilter;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -56,10 +57,11 @@ fn main() -> anyhow::Result<()> {
     debug!(target: MAIN, "init puffin");
     puffin::set_scopes_on(true);
     profiler::main_profiler_init();
-    // Special handling so the 'default' profiler passes on to our custom profiler
-    puffin::GlobalProfiler::lock().add_sink(Box::new(|frame| {
-        profiler::main_profiler_lock().add_frame(frame)
-    }));
+    // // Special handling so the 'default' profiler passes on to our custom profiler
+    // puffin::GlobalProfiler::lock().add_sink(Box::new(|frame| {
+    //     // profiler::main_profiler_lock().new_frame();
+    //     // profiler::main_profiler_lock().add_frame(frame);
+    // }));
 
     // TODO: Better backend selection that's not just hardcoded
     // let backend = backends

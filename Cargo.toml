@@ -39,12 +39,16 @@ memoize = "0.4.1"
 # Performance
 
 
+puffin = { version = "0.18.1" }
+puffin_http = { version = "0.15.0"}
+rayon = "1.8.0"
+
+[patch.crates-io]
 # Using a custom version of puffin (cloned locally in libs/puffin)
 # So that we can have multiple instances of the puffin_http::Server
 # That DON'T share the same global profiler instance
 puffin = { path = "lib/puffin/puffin" }
 puffin_http = { path = "lib/puffin/puffin_http" }
-rayon = "1.8.0"
 
 [profile.dev]
 debug = "full"

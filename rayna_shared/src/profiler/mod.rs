@@ -25,12 +25,13 @@ macro_rules! profiler {
                 pub const [< $name:upper _PROFILER_ADDR >] : &'static str
                     = std::concat!("127.0.0.1:", $port);
 
+                /// Installs the server's sink into the custom profiler
                 #[doc(hidden)]
                 fn [< $name:lower _profiler_server_install >](sink: FrameSink) -> FrameSinkId {
                     [< $name:lower _profiler_lock >]().add_sink(sink)
                 }
 
-                /// Drops the server
+                /// Drops the server's sink and removes from profiler
                 #[doc(hidden)]
                 fn [< $name:lower _profiler_server_drop >](id: FrameSinkId){
                     [< $name:lower _profiler_lock >]().remove_sink(id);

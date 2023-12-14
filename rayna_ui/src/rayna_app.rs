@@ -174,8 +174,9 @@ impl crate::backend::app::App for RaynaApp {
                 scene_dirty = true;
 
                 let delta = img_resp.drag_delta();
+                // Flip Y for image -> world coords
                 self.scene.camera.look_from +=
-                    Vector::new(delta.x as Number, delta.y as Number, 0.0) * 0.001;
+                    Vector::new(delta.x as Number, -(delta.y as Number), 0.0) * 0.001;
             }
         });
 

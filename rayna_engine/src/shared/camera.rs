@@ -121,7 +121,7 @@ impl Viewport {
 
         // Don't need to normalise since we divided by `img_width`/`image_height` in the ctor for the viewport
         let u = p_x as Number / self.width;
-        let v = p_y as Number / self.height;
+        let v = 1.0 - (p_y as Number / self.height); // Flip Y for img coords -> world coords
 
         let pos = Vector::new((u - 0.5) * 4., (v - 0.5) * 4., -1.) - self.look_from;
         let dir = Vector::new(0., 0., 1.);

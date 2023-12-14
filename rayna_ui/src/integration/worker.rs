@@ -5,7 +5,7 @@ use egui::{Color32, ColorImage};
 use image::buffer::ConvertBuffer;
 use image::RgbaImage;
 use puffin::{profile_function, profile_scope};
-use rayna_engine::def::types::ImgBuf;
+use rayna_shared::::types::ImgBuf;
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;

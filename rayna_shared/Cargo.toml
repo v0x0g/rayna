@@ -1,0 +1,23 @@
+[package]
+name = "rayna_shared"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+# ===== DEPENDENCIES =====
+
+[dependencies]
+
+# Maths
+glam = { workspace = true }
+glamour = { workspace = true }
+
+# Raytracing
+image = { workspace = true }
+
+# Logs
+tracing = { workspace = true }
+
+# Perf
+puffin = { workspace = true }

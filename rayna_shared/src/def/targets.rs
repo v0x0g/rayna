@@ -12,5 +12,8 @@ macro_rules! tracing_targets {
 }
 
 tracing_targets! {
+    MAIN = "main",
+    BG_WORKER = "bg_worker",
+    UI = "ui",
     RENDERER = "renderer"
 }

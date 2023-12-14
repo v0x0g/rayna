@@ -1,4 +1,4 @@
-use crate::def::types::{Num, Vec3};
+use rayna_shared::::types::{Num, Vec3};
 use crate::obj::Object;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;

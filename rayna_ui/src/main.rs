@@ -5,8 +5,8 @@
 #![feature(slice_as_chunks)]
 #![feature(vec_into_raw_parts)] // Used by [`thiserror::Error`] and `#[source]`
 
-use crate::def::targets::*;
 use crate::rayna_app::RaynaApp;
+use rayna_shared::def;
 use rayna_ui_base::backend;
 use rayna_ui_base::backend::UiBackend;
 use std::collections::HashMap;
@@ -17,7 +17,6 @@ use tracing_subscriber::util::SubscriberInitExt;
 pub mod def;
 mod ext;
 mod integration;
-mod profiler;
 mod rayna_app;
 
 /// Gets a map of all the [`UiBackend`] implementations available

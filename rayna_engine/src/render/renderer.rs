@@ -1,5 +1,5 @@
-use crate::def::targets::*;
-use crate::def::types::{ImgBuf, Pix};
+use rayna_shared::::targets::*;
+use rayna_shared::::types::{ImgBuf, Pix};
 use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::RenderOpts;
 use crate::shared::camera::Viewport;

@@ -1,4 +1,4 @@
-use crate::def::types::Vec3;
+use rayna_shared::::types::Vec3;
 use crate::obj::sphere::Sphere;
 use crate::obj::Object;
 use crate::shared::camera::Camera;

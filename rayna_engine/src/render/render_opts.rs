@@ -1,4 +1,4 @@
-use crate::def::types::Num;
+use rayna_shared::::types::Num;
 use nonzero::nonzero;
 use num_traits::cast::ToPrimitive;
 use serde::Serialize;

@@ -1,4 +1,4 @@
-use crate::def::types::{Num, Vec3};
+use rayna_shared::::types::{Num, Vec3};
 use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
 use num_traits::FloatConst;

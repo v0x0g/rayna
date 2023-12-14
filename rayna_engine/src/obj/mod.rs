@@ -1,4 +1,4 @@
-use crate::def::types::Num;
+use rayna_shared::::types::Num;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use dyn_clone::DynClone;

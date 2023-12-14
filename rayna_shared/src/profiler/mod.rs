@@ -10,22 +10,42 @@ use puffin_http::Server;
 use std::stringify;
 
 macro_rules! profiler {
-    ($({name: $name:ident, port: $port:expr}),* $(,)?) => {
-        paste::paste! {
-            $(
-                #[doc = concat!("The address to bind the ", stringify!([< $name:lower >]), " thread profiler's server to")]
+    ($(
+        {name: $name:ident, port: $port:expr $(,install: |$install_var:ident| $install:block, drop: |$drop_var:ident| $drop:block)? $(,)?}),*
+    $(,)?)
+    => {
+        $(
+            profiler!(@inner {name: $name, port: $port $(,install: |$install_var| $install, drop: |$drop_var| $drop)?});
+        )*
+    };
+
+    // Default case if no install/drop bodies supplied
+    (@inner {name: $name:ident, port: $port:expr}) => {
+        paste::paste!{
+                profiler!(@inner {
+                name: $name,
+                port: $port,
+                install: |sink| {[< $name:lower _profiler_lock >]().add_sink(sink)},
+                drop: |id| {[< $name:lower _profiler_lock >]().remove_sink(id)}
+            });
+        }
+    };
+
+    (@inner {name: $name:ident, port: $port:expr, install: |$install_var:ident| $install:block, drop: |$drop_var:ident| $drop:block}) => {
+        paste::paste!{
+            #[doc = concat!("The address to bind the ", stringify!([< $name:lower >]), " thread profiler's server to")]
                 pub const [< $name:upper _PROFILER_ADDR >] : &'static str
                     = std::concat!("127.0.0.1:", $port);
 
                 #[doc(hidden)]
-                fn [< $name:lower _profiler_server_install >](sink: FrameSink) -> FrameSinkId {
-                    [< $name:lower _profiler_lock >]().add_sink(sink)
+                fn [< $name:lower _profiler_server_install >]($install_var: FrameSink) -> FrameSinkId {
+                    $install
                 }
 
                 /// Drops the server
                 #[doc(hidden)]
-                fn [< $name:lower _profiler_server_drop >](sink_id: FrameSinkId){
-                    [< $name:lower _profiler_lock >]().remove_sink(sink_id);
+                fn [< $name:lower _profiler_server_drop >]($drop_var: FrameSinkId){
+                    $drop;
                 }
 
                 #[doc = concat!("The instance of the ", stringify!([< $name:lower >]), " thread profiler's server")]
@@ -62,14 +82,13 @@ macro_rules! profiler {
                     tracing::trace!(target: targets::MAIN, "set thread custom profiler \"{}\"", stringify!([<$name:lower>]));
                     ThreadProfiler::initialize(::puffin::now_ns, [< $name:lower _profiler_reporter >]);
                 }
-            )*
         }
     };
 }
 
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 profiler! {
-    {name: MAIN,    port: 8585},
+    {name: MAIN,    port: 8585, install: |sink| {GlobalProfiler::lock().add_sink(sink)}, drop: |id| {GlobalProfiler::lock().remove_sink(id)}},
     {name: WORKER,  port: 8586},
 }

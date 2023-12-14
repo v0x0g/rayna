@@ -41,3 +41,4 @@ approx = { workspace = true }
 # Perf
 puffin = { workspace = true }
 rayon = { workspace = true }
+rand = "0.8.5"

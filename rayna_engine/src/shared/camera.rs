@@ -1,5 +1,6 @@
 use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
+use rand::{thread_rng, Rng};
 use rayna_shared::def::types::{Number, Vector};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -82,10 +83,10 @@ pub struct Viewport {
 impl Viewport {
     /// Calculates the view ray for a given pixel at the coords `(p_x, p_y)`
     /// (screen-space, top-left to bot-right)
-    pub fn calc_ray(&self, p_x: usize, p_y: usize) -> Ray {
-        let pixel_center = self.uv_origin
-            + (self.pixel_delta_u * p_x as Number)
-            + (self.pixel_delta_v * p_y as Number);
+    pub fn calc_ray(&self, mut p_x: Number, mut p_y: Number) -> Ray {
+        p_x += thread_rng().gen_range(0.0..=1.0);
+        p_y += thread_rng().gen_range(0.0..=1.0);
+        let pixel_center = self.uv_origin + (self.pixel_delta_u * p_x) + (self.pixel_delta_v * p_y);
         let ray_direction = pixel_center - self.centre;
         Ray::new(pixel_center, ray_direction)
     }

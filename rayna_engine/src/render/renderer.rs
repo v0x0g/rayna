@@ -73,7 +73,7 @@ impl Renderer {
 
     /// Renders a single pixel in the scene, and returns the colour
     fn render_px(scene: &Scene, viewport: Viewport, x: usize, y: usize) -> Pix {
-        let ray = viewport.calc_ray(x, y);
+        let ray = viewport.calc_ray(x as Number, y as Number);
         let bounds = Bounds::from(0.0..Number::MAX);
 
         let intersect = scene

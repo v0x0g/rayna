@@ -139,12 +139,16 @@ impl crate::backend::app::App for RaynaApp {
                 ui.heading("Scene");
             });
 
-            unsafe {
-                static mut ENABLE: bool = false;
-                if ui.checkbox(&mut ENABLE, "profiling enable").changed() {
-                    puffin::set_scopes_on(ENABLE);
+            ui.group(|ui| {
+                profile_scope!("sce/options");
+
+                ui.heading("Options");
+
+                let mut profiling = puffin::are_scopes_on();
+                if ui.checkbox(&mut profiling, "Profiling").changed() {
+                    puffin::set_scopes_on(profiling);
                 }
-            }
+            });
         });
 
         // Central panel contains the main render window

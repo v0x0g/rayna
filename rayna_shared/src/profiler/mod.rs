@@ -57,7 +57,6 @@ macro_rules! profiler {
                 #[doc = concat!("Initialises the ", stringify!([< $name:lower >]), " thread reporter and server.\
                 Call this on each different thread you want to register with this profiler")]
                 pub fn [< $name:lower _profiler_init >]() {
-                    Lazy::
                     tracing::trace!(target: targets::MAIN, "init thread profiler \"{}\"", stringify!([<$name:lower>]));
                     std::mem::drop([< $name:upper _PROFILER_SERVER >].lock());
                     tracing::trace!(target: targets::MAIN, "set thread custom profiler \"{}\"", stringify!([<$name:lower>]));

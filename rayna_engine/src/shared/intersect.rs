@@ -1,5 +1,5 @@
-use rayna_shared::::types::{Num, Vec3};
 use crate::shared::ray::Ray;
+use rayna_shared::def::types::{Num, Vec3};
 
 /// A struct representing a ray-object intersection
 #[derive(Copy, Clone, Debug, PartialEq)]

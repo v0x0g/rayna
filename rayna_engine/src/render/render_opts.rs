@@ -1,6 +1,6 @@
-use rayna_shared::::types::Num;
 use nonzero::nonzero;
 use num_traits::cast::ToPrimitive;
+use rayna_shared::def::types::Num;
 use serde::Serialize;
 use std::num::NonZeroUsize;
 use valuable::Valuable;

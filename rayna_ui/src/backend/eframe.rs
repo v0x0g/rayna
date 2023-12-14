@@ -1,4 +1,4 @@
-use crate::app::{App, AppCtor};
+use crate::backend::app::AppCtor;
 use crate::backend::UiBackend;
 use anyhow::anyhow;
 use eframe::Theme;
@@ -38,7 +38,7 @@ impl UiBackend for EframeBackend {
     }
 }
 
-impl eframe::App for Box<dyn App> {
+impl eframe::App for Box<dyn crate::backend::app::App> {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.on_update(ctx);
     }

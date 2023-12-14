@@ -1,9 +1,9 @@
-use crate::app::AppCtor;
 use std::fmt::Debug;
 
 #[cfg(feature = "backend_eframe")]
 pub mod eframe;
 
+pub mod app;
 #[cfg(feature = "backend_miniquad")]
 pub mod miniquad;
 
@@ -16,5 +16,5 @@ pub trait UiBackend: Debug {
     ///
     /// # Note
     /// Both the app and closure are boxed for object-safe-ness reasons (dynamic dispatch)
-    fn run(self: Box<Self>, app_name: &str, app_ctor: AppCtor) -> anyhow::Result<()>;
+    fn run(self: Box<Self>, app_name: &str, app_ctor: app::AppCtor) -> anyhow::Result<()>;
 }

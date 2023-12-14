@@ -1,11 +1,11 @@
-use rayna_shared::::targets::*;
-use rayna_shared::::types::{ImgBuf, Pix};
 use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::RenderOpts;
 use crate::shared::camera::Viewport;
 use crate::shared::math;
 use crate::shared::scene::Scene;
 use puffin::{profile_function, profile_scope};
+use rayna_shared::def::targets::*;
+use rayna_shared::def::types::{ImgBuf, Pix};
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use std::time::Duration;
 use thiserror::Error;

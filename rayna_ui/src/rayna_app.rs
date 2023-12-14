@@ -9,7 +9,7 @@ use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::shared::scene::Scene;
-use rayna_ui_base::app::App;
+use rayna_shared::def::targets::*;
 use std::num::NonZeroUsize;
 use tracing::{error, info, trace, warn};
 
@@ -49,7 +49,7 @@ impl RaynaApp {
     }
 }
 
-impl App for RaynaApp {
+impl crate::backend::app::App for RaynaApp {
     fn on_update(&mut self, ctx: &Context) -> () {
         profiler::main_profiler_lock().new_frame();
 

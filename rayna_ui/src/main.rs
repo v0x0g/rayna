@@ -5,16 +5,17 @@
 #![feature(slice_as_chunks)]
 #![feature(vec_into_raw_parts)] // Used by [`thiserror::Error`] and `#[source]`
 
+use crate::backend::UiBackend;
 use crate::rayna_app::RaynaApp;
 use rayna_shared::def::constants::APP_NAME;
+use rayna_shared::def::targets::*;
 use rayna_shared::profiler;
-use rayna_ui_base::backend;
-use rayna_ui_base::backend::UiBackend;
 use std::collections::HashMap;
 use tracing::debug;
 use tracing::metadata::LevelFilter;
 use tracing_subscriber::util::SubscriberInitExt;
 
+mod backend;
 mod ext;
 mod integration;
 mod rayna_app;

@@ -1,4 +1,4 @@
-use rayna_shared::::types::{Num, Vec3};
+use rayna_shared::def::types::{Num, Vec3};
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Ray {

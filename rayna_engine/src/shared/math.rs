@@ -1,5 +1,5 @@
-use rayna_shared::::types::Num;
-use rayna_shared::::types::Pix;
+use rayna_shared::def::types::Num;
+use rayna_shared::def::types::Pix;
 
 pub fn lerp(a: Pix, b: Pix, t: Num) -> Pix {
     glam::DVec3::lerp(

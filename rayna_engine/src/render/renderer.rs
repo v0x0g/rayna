@@ -1,3 +1,5 @@
+use crate::obj::sphere::Sphere;
+use crate::obj::Object;
 use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::RenderOpts;
 use crate::shared::camera::Viewport;
@@ -5,7 +7,7 @@ use crate::shared::scene::Scene;
 use image::Pixel;
 use puffin::{profile_function, profile_scope};
 use rayna_shared::def::targets::*;
-use rayna_shared::def::types::{ImgBuf, Number, Pix};
+use rayna_shared::def::types::{ImgBuf, Number, Pix, Vector};
 use rayna_shared::profiler;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use std::time::Duration;
@@ -75,16 +77,16 @@ impl Renderer {
         let ray = viewport.calc_ray(x, y);
         let bounds = 0.0..Number::INFINITY;
 
-        // return if scene
-        //     .objects
-        //     .iter()
-        //     .filter_map(|obj| obj.intersect_all(ray))
-        //     .any(|mut i| i.next().is_some())
-        // {
-        //     Pix::from([0., 0., 0.])
-        // } else {
-        //     Pix::from([1., 1., 1.])
-        // };
+        let sphere = Sphere {
+            pos: Vector::ZERO,
+            radius: 1.0,
+        };
+
+        return if sphere.intersect(ray, bounds).is_some() {
+            Pix::from([0., 0., 0.])
+        } else {
+            scene.skybox.sky_colour(ray)
+        };
 
         let intersect = scene
             .objects

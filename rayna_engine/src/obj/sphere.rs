@@ -46,7 +46,7 @@ impl Object for Sphere {
         let ray_pos_inside = Vector::dot(ray_dir, outward_normal) > 0.;
         //This flips the normal if the ray is inside the sphere
         //This forces the normal to always be going against the ray
-        let normal = if ray_pos_inside {
+        let ray_normal = if ray_pos_inside {
             -outward_normal
         } else {
             outward_normal
@@ -55,7 +55,8 @@ impl Object for Sphere {
         return Some(Intersection {
             pos: world_point,
             dist,
-            normal,
+            normal: outward_normal,
+            ray_normal,
             ray,
         });
     }
@@ -92,7 +93,7 @@ impl Object for Sphere {
             let inside = Vector::dot(ray_dir, outward_normal) > 0.; //If the ray is 'inside' the sphere
                                                                     //This flips the normal if the ray is inside the sphere
                                                                     //This forces the normal to always be going against the ray
-            let normal = if inside {
+            let ray_normal = if inside {
                 -outward_normal
             } else {
                 outward_normal
@@ -101,7 +102,8 @@ impl Object for Sphere {
             Intersection {
                 pos: world_point,
                 dist: k,
-                normal,
+                normal: outward_normal,
+                ray_normal,
                 ray,
             }
         });

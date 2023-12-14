@@ -77,8 +77,6 @@ impl Renderer {
         let ray = viewport.calc_ray(x, y);
         let bounds = 0.0..Number::MAX;
 
-        // return *Pix::from_slice(&ray.dir().as_array().map(|f| (f / 2.) as f32 + 0.5));
-
         let intersect = scene
             .objects
             .iter()

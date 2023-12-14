@@ -106,6 +106,6 @@ impl Object for Sphere {
             }
         });
 
-        Some(Box::new(intersections.iter()))
+        Some(Box::new(intersections.into_iter()))
     }
 }

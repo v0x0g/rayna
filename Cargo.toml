@@ -10,21 +10,25 @@ members = [
 [workspace.dependencies]
 
 # Maths
+
 glam = { version = "0.24.2", features = ["approx", "mint", "rand", "serde", "debug-glam-assert", "std"] }
 glamour = { version = "0.9.0", features = ["serde", "mint"] }
 num-traits = "0.2.17"
 
 # Errors
+
 anyhow = "1.0.75"
 thiserror = "1.0.50"
 
 # I love logging
+
 tracing = { version = "0.1.40", features = ["valuable"] }
 tracing-serde = { version = "0.1.3", features = [] }
 serde = { version = "1.0.193", features = ["derive"] }
 valuable = { version = "0.1.0", features = ["derive"] }
 
 # Other
+
 image = "0.24.7" # Used to store image buffers
 nonzero = "0.2.0"
 cfg-if = "1.0.0"
@@ -33,7 +37,13 @@ derivative = "2.2.0"
 memoize = "0.4.1"
 
 # Performance
-puffin = "0.18.1"
+
+
+# Using a custom version of puffin (cloned locally in libs/puffin)
+# So that we can have multiple instances of the puffin_http::Server
+# That DON'T share the same global profiler instance
+puffin = { path = "lib/puffin/puffin" }
+puffin_http = { path = "lib/puffin/puffin_http" }
 rayon = "1.8.0"
 
 [profile.dev]

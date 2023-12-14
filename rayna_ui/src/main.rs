@@ -10,13 +10,14 @@ use crate::rayna_app::RaynaApp;
 use rayna_ui_base::backend;
 use rayna_ui_base::backend::UiBackend;
 use std::collections::HashMap;
+use tracing::debug;
 use tracing::metadata::LevelFilter;
-use tracing::{debug, trace};
 use tracing_subscriber::util::SubscriberInitExt;
 
 pub mod def;
 mod ext;
 mod integration;
+mod profiler;
 mod rayna_app;
 
 /// Gets a map of all the [`UiBackend`] implementations available
@@ -53,10 +54,6 @@ fn main() -> anyhow::Result<()> {
 
     debug!(target: MAIN, "init puffin");
     puffin::set_scopes_on(true);
-    let server_addr = format!("127.0.0.1:{}", puffin_http::DEFAULT_PORT);
-    debug!(target: MAIN, "starting puffin_http server on {server_addr}. run puffin_viewer to see it");
-    let _puffin_http_server = puffin_http::Server::new(&server_addr)
-        .inspect_err(|err| trace!(target: UI, ?err, "puffin_http server failed to start"));
 
     // TODO: Better backend selection that's not just hardcoded
     // let backend = backends

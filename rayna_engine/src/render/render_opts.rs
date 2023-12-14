@@ -28,8 +28,8 @@ impl RenderOpts {
 impl Default for RenderOpts {
     fn default() -> Self {
         Self {
-            width: nonzero!(800_usize),
-            height: nonzero!(400_usize),
+            width: nonzero!(740_usize),
+            height: nonzero!(480_usize),
         }
     }
 }

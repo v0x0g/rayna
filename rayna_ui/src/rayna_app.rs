@@ -174,8 +174,8 @@ impl crate::backend::app::App for RaynaApp {
                 scene_dirty = true;
 
                 let delta = img_resp.drag_delta();
-                self.scene.camera.look_towards +=
-                    Vector::new(delta.x as Number, 0.0, delta.y as Number) * 0.001;
+                self.scene.camera.look_from +=
+                    Vector::new(delta.x as Number, delta.y as Number, 0.0) * 0.001;
             }
         });
 

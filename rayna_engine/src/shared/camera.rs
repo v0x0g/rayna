@@ -120,8 +120,13 @@ impl Viewport {
         */
 
         // Don't need to normalise since we divided by `img_width`/`image_height` in the ctor for the viewport
-        let u = p_x as Number;
-        let v = p_y as Number;
+        let u = p_x as Number / self.width;
+        let v = p_y as Number / self.height;
+
+        let pos = Vector::new((u - 0.5) * 4., (v - 0.5) * 4., -1.) - self.look_from;
+        let dir = Vector::new(0., 0., 1.);
+
+        return Ray::new(pos, dir);
 
         let rand = Vector::ZERO * self.lens_radius; // Random offset to simulate DOF
         let offset = (self.u_dir * rand.x) + (self.v_dir * rand.y); // Shift pixel origin slightly

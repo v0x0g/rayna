@@ -33,7 +33,7 @@ pub enum RendererCreateError {
 impl Renderer {
     pub fn new() -> Result<Self, RendererCreateError> {
         let pool = ThreadPoolBuilder::new()
-            .num_threads(0)
+            .num_threads(1)
             .thread_name(|id| format!("Renderer::worker_{id}"))
             .start_handler(|_id| profiler::worker_profiler_init())
             .build()
@@ -75,7 +75,7 @@ impl Renderer {
     /// Renders a single pixel in the scene, and returns the colour
     fn render_px(scene: &Scene, viewport: Viewport, x: usize, y: usize) -> Pix {
         let ray = viewport.calc_ray(x, y);
-        let bounds = 0.0..Number::INFINITY;
+        let bounds = 0.0..Number::MAX;
 
         let sphere = Sphere {
             pos: Vector::ZERO,

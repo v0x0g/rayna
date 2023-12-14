@@ -52,7 +52,9 @@ impl RaynaApp {
 impl crate::backend::app::App for RaynaApp {
     fn on_update(&mut self, ctx: &Context) -> () {
         // egui/eframe call `new_frame()` for us if "puffin" feature enabled in them
-        profiler::main_profiler_lock().new_frame();
+        if !profiler::EGUI_CALLS_PUFFIN {
+            profiler::main_profiler_lock().new_frame();
+        }
 
         profile_function!();
 

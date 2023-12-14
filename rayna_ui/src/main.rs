@@ -57,11 +57,15 @@ fn main() -> anyhow::Result<()> {
     debug!(target: MAIN, "init puffin");
     puffin::set_scopes_on(true);
     profiler::main_profiler_init();
-    // // Special handling so the 'default' profiler passes on to our custom profiler
-    // puffin::GlobalProfiler::lock().add_sink(Box::new(|frame| {
-    //     // profiler::main_profiler_lock().new_frame();
-    //     // profiler::main_profiler_lock().add_frame(frame);
-    // }));
+    // Special handling so the 'default' profiler passes on to our custom profiler
+    // In this case, we already overrode the ThreadProfiler for "main" using `main_profiler_init()`,
+    // So the events are already going to our custom profiler, but egui still calls `new_frame()` on the
+    // global profiler. So here, pass along the `new_frame()`s to the custom one
+    puffin::GlobalProfiler::lock().add_sink(Box::new(|frame| {
+        if profiler::EGUI_CALLS_PUFFIN {
+            profiler::main_profiler_lock().new_frame();
+        }
+    }));
 
     // TODO: Better backend selection that's not just hardcoded
     // let backend = backends

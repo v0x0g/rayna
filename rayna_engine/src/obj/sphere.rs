@@ -12,22 +12,6 @@ pub struct Sphere {
 
 impl Object for Sphere {
     fn intersect(&self, ray: Ray, bounds: Range<Number>) -> Option<Intersection> {
-        let oc = ray.pos() - self.pos;
-        let a = Vector::dot(ray.dir(), ray.dir());
-        let b = 2.0 * Vector::dot(oc, ray.dir());
-        let c = Vector::dot(oc, oc) - (self.radius * self.radius);
-        let discriminant = (b * b) - (4.0 * a * c);
-        return if discriminant >= 0.0 {
-            Some(Intersection {
-                pos: ray.pos(),
-                normal: [a, b, c].into(),
-                ray,
-                dist: discriminant,
-            })
-        } else {
-            None
-        };
-
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();

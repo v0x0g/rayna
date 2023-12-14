@@ -1,9 +1,10 @@
 use crate::def::targets::BG_WORKER;
 use crate::integration::message::{MessageToUi, MessageToWorker};
+use crate::profiler;
 use egui::{Color32, ColorImage};
 use image::buffer::ConvertBuffer;
 use image::RgbaImage;
-use puffin::{profile_function, profile_scope, ThreadProfiler};
+use puffin::{profile_function, profile_scope};
 use rayna_engine::def::types::ImgBuf;
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
@@ -38,10 +39,7 @@ impl BgWorker {
     #[instrument(level = tracing::Level::DEBUG, skip(self), parent = None)]
     pub fn thread_run(self) {
         info!(target: BG_WORKER, "BgWorker thread start");
-
-        // Set up a custom profiler for the thread
-        trace!(target: BG_WORKER, "set custom thread profiler");
-        ThreadProfiler::initialize(puffin::now_ns, crate::profiler::worker_profiler_reporter);
+        profiler::worker_profiler_init();
 
         let Self {
             msg_tx,

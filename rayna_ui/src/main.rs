@@ -54,8 +54,7 @@ fn main() -> anyhow::Result<()> {
 
     debug!(target: MAIN, "init puffin");
     puffin::set_scopes_on(true);
-    drop(profiler::MAIN_PROFILER_SERVER.lock());
-    drop(profiler::WORKER_PROFILER_SERVER.lock());
+    profiler::main_profiler_init();
 
     // TODO: Better backend selection that's not just hardcoded
     // let backend = backends

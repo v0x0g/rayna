@@ -5,10 +5,9 @@
 use crate::def::targets;
 use core::default::Default;
 use once_cell::sync::Lazy;
-use puffin::{FrameSink, FrameSinkId, GlobalProfiler, StreamInfoRef, ThreadInfo};
+use puffin::{FrameSink, FrameSinkId, GlobalProfiler, StreamInfoRef, ThreadInfo, ThreadProfiler};
 use puffin_http::Server;
 use std::stringify;
-use std::sync::{Mutex, MutexGuard};
 
 macro_rules! profiler {
     ($({name: $name:ident, port: $port:expr}),* $(,)?) => {
@@ -54,12 +53,24 @@ macro_rules! profiler {
                     static [< $name _PROFILER >] : Lazy<Mutex<GlobalProfiler>> = Lazy::new(Default::default);
                     [< $name _PROFILER >].lock().expect("poisoned mutex")
                 }
+
+                #[doc = concat!("Initialises the ", stringify!([< $name:lower >]), " thread reporter and server.\
+                Call this on each different thread you want to register with this profiler")]
+                pub fn [< $name:lower _profiler_init >]() {
+                    Lazy::
+                    tracing::trace!(target: targets::MAIN, "init thread profiler \"{}\"", stringify!([<$name:lower>]));
+                    std::mem::drop([< $name:upper _PROFILER_SERVER >].lock());
+                    tracing::trace!(target: targets::MAIN, "set thread custom profiler \"{}\"", stringify!([<$name:lower>]));
+                    ThreadProfiler::initialize(::puffin::now_ns, [< $name:lower _profiler_reporter >]);
+                }
             )*
         }
     };
 }
 
+use std::sync::{Mutex, MutexGuard};
+
 profiler! {
-    {name: MAIN, port: 8585},
-    {name: WORKER, port: 8586},
+    {name: MAIN,    port: 8585},
+    {name: WORKER,  port: 8586},
 }

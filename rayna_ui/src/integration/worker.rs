@@ -3,7 +3,7 @@ use crate::integration::message::{MessageToUi, MessageToWorker};
 use egui::{Color32, ColorImage};
 use image::buffer::ConvertBuffer;
 use image::RgbaImage;
-use puffin::{profile_function, profile_scope};
+use puffin::{profile_function, profile_scope, StreamInfoRef, ThreadInfo, ThreadProfiler};
 use rayna_engine::def::types::ImgBuf;
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
@@ -11,7 +11,7 @@ use rayna_engine::render::renderer::Renderer;
 use rayna_engine::shared::scene::Scene;
 use std::thread::JoinHandle;
 use std::time::Duration;
-use tracing::{info, instrument, trace, warn};
+use tracing::{debug, info, instrument, trace, warn};
 
 #[derive(Clone, Debug)]
 pub(super) struct BgWorker {
@@ -33,11 +33,19 @@ impl BgWorker {
             .spawn(move || self.thread_run())
     }
 
+    /// A custom reporter for the worker threads
+    fn thread_reporter(info: ThreadInfo, stream: &StreamInfoRef<'_>) {}
+
     /// Actually runs the thread
     /// This should be called inside [thread::spawn], it will block
     #[instrument(level = tracing::Level::DEBUG, skip(self), parent = None)]
     pub fn thread_run(self) {
         info!(target: BG_WORKER, "BgWorker thread start");
+
+        // Set up a custom profiler for the thread
+        debug!(target: BG_WORKER, "set custom thread profiler");
+        // debug!(target: BG_WORKER, "ThreadProfiler: {}", ThreadProfiler::call(|t| t as *const _ as usize));
+        // ThreadProfiler::initialize(puffin::now_ns, Self::thread_reporter);
 
         let Self {
             msg_tx,

@@ -41,7 +41,7 @@ fn main() -> anyhow::Result<()> {
         .pretty()
         .with_ansi(true)
         .log_internal_errors(true)
-        .with_max_level(LevelFilter::TRACE)
+        .with_max_level(LevelFilter::DEBUG)
         .with_line_number(true)
         .with_file(true)
         .with_level(true)
@@ -54,7 +54,7 @@ fn main() -> anyhow::Result<()> {
     debug!(target: MAIN, "init puffin");
     puffin::set_scopes_on(true);
     let server_addr = format!("127.0.0.1:{}", puffin_http::DEFAULT_PORT);
-    trace!(target: MAIN, "starting puffin_http server on {server_addr}. run puffin_viewer to see it");
+    debug!(target: MAIN, "starting puffin_http server on {server_addr}. run puffin_viewer to see it");
     let _puffin_http_server = puffin_http::Server::new(&server_addr)
         .inspect_err(|err| trace!(target: UI, ?err, "puffin_http server failed to start"));
 

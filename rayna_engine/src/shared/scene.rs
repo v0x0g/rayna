@@ -35,11 +35,11 @@ impl Scene {
         scene! {
             camera: Camera {
                 look_from: Vector::ZERO,
-                look_towards: Vector::ZERO,
-                up_vector: Vector::Y,
-                focus_dist: 1.,
-                lens_radius: 0.,
-                vertical_fov: 90.
+                // look_towards: Vector::ZERO,
+                // up_vector: Vector::Y,
+                // focus_dist: 1.,
+                // lens_radius: 0.,
+                // vertical_fov: 90.
             },
             objects: []
         }
@@ -49,11 +49,11 @@ impl Scene {
         scene! {
             camera: Camera {
                 look_from: Vector::new(0., 0., -1.),
-                look_towards: Vector::ZERO,
-                up_vector: Vector::Y,
-                focus_dist: 1.,
-                lens_radius: 0.,
-                vertical_fov: 90.
+                // look_towards: Vector::ZERO,
+                // up_vector: Vector::Y,
+                // focus_dist: 1.,
+                // lens_radius: 0.,
+                // vertical_fov: 90.
             },
             objects: [
                 Sphere {

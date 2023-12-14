@@ -118,20 +118,20 @@ impl crate::backend::app::App for RaynaApp {
                 let cam = &mut self.scene.camera;
                 ui.label("look from");
                 scene_dirty |= ui.vec3_edit(&mut cam.look_from, UNIT_LEN).changed();
-                ui.label("look towards");
-                scene_dirty |= ui.vec3_edit(&mut cam.look_towards, UNIT_LEN).changed();
-                ui.label("upwards");
-                scene_dirty |= ui.vec3_edit(&mut cam.up_vector, "").changed();
-                ui.label("fov");
-                scene_dirty |= ui
-                    .add(
-                        egui::DragValue::new(&mut cam.vertical_fov)
-                            .suffix(UNIT_DEG)
-                            .clamp_range(0.0..=180.0)
-                            .min_decimals(1)
-                            .speed(DRAG_SLOW),
-                    )
-                    .changed();
+                // ui.label("look towards");
+                // scene_dirty |= ui.vec3_edit(&mut cam.look_towards, UNIT_LEN).changed();
+                // ui.label("upwards");
+                // scene_dirty |= ui.vec3_edit(&mut cam.up_vector, "").changed();
+                // ui.label("fov");
+                // scene_dirty |= ui
+                //     .add(
+                //         egui::DragValue::new(&mut cam.vertical_fov)
+                //             .suffix(UNIT_DEG)
+                //             .clamp_range(0.0..=180.0)
+                //             .min_decimals(1)
+                //             .speed(DRAG_SLOW),
+                //     )
+                //     .changed();
             });
 
             ui.group(|ui| {

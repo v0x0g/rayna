@@ -4,12 +4,13 @@ use crate::integration::Integration;
 use crate::profiler;
 use crate::ui_val::{DRAG_SLOW, UNIT_DEG, UNIT_LEN, UNIT_PX};
 use egui::load::SizedTexture;
-use egui::{Context, RichText, TextureHandle, TextureOptions};
+use egui::{Context, RichText, Sense, TextureHandle, TextureOptions, Widget};
 use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::shared::scene::Scene;
 use rayna_shared::def::targets::*;
+use rayna_shared::def::types::{Number, Vector};
 use std::num::NonZeroUsize;
 use tracing::{error, info, trace, warn};
 
@@ -158,13 +159,23 @@ impl crate::backend::app::App for RaynaApp {
 
             let avail_space = ui.available_size();
             self.render_display_size = avail_space;
-            if let Some(tex_handle) = &mut self.render_buf_tex {
-                ui.image(SizedTexture {
-                    id: tex_handle.id(),
-                    size: avail_space,
-                });
-            } else {
+
+            let Some(ref mut tex_handle) = self.render_buf_tex else {
                 ui.label(RichText::new("No texture").size(20.0));
+                return;
+            };
+            let img_resp = egui::Image::new(SizedTexture {
+                id: tex_handle.id(),
+                size: avail_space,
+            })
+            .sense(Sense::drag())
+            .ui(ui);
+            if img_resp.dragged() {
+                scene_dirty = true;
+
+                let delta = img_resp.drag_delta();
+                self.scene.camera.look_towards +=
+                    Vector::new(delta.x as Number, delta.y as Number, 0.0) * 0.001;
             }
         });
 

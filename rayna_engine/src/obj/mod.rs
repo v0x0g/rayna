@@ -1,7 +1,7 @@
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use dyn_clone::DynClone;
-use rayna_shared::def::types::Num;
+use rayna_shared::def::types::Number;
 use std::fmt::Debug;
 use std::ops::Range;
 
@@ -15,7 +15,7 @@ pub trait Object: DynClone + Debug + Send + Sync {
     ///
     /// # Parameters
     ///     - ray: The
-    fn intersect(&self, ray: Ray, dist_bounds: Range<Num>) -> Option<Intersection>;
+    fn intersect(&self, ray: Ray, dist_bounds: Range<Number>) -> Option<Intersection>;
 
     /// Returns (possibly) an iterator over all of the intersections for the given object.
     ///

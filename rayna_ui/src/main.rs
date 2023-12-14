@@ -11,7 +11,6 @@ use rayna_shared::def::constants::APP_NAME;
 use rayna_shared::def::targets::*;
 use rayna_shared::profiler;
 use std::collections::HashMap;
-use std::ops::Deref;
 use tracing::debug;
 use tracing::metadata::LevelFilter;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -60,7 +59,7 @@ fn main() -> anyhow::Result<()> {
     // In this case, we already overrode the ThreadProfiler for "main" using `main_profiler_init()`,
     // So the events are already going to our custom profiler, but egui still calls `new_frame()` on the
     // global profiler. So here, pass along the `new_frame()`s to the custom one
-    puffin::GlobalProfiler::lock().add_sink(Box::new(|frame| {
+    puffin::GlobalProfiler::lock().add_sink(Box::new(|_| {
         if profiler::EGUI_CALLS_PUFFIN {
             profiler::main_profiler_lock().new_frame();
         }

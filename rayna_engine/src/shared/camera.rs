@@ -1,7 +1,7 @@
 use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
 use num_traits::FloatConst;
-use rayna_shared::def::types::{Num, Vec3};
+use rayna_shared::def::types::{Number, Vector};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use valuable::Valuable;
@@ -9,19 +9,19 @@ use valuable::Valuable;
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Camera {
     /// Position the camera is located at
-    pub look_from: Vec3,
+    pub look_from: Vector,
     ///  A point the camera should look towards - this will be the focus of the camera
-    pub look_towards: Vec3,
+    pub look_towards: Vector,
     /// Vector direction the camera considers 'upwards'.
     /// Use this to rotate the camera around the central view ray (`look_from` -> `look_towards`)
     /// - inverting this is like rotating the camera upside-down
-    pub up_vector: Vec3,
+    pub up_vector: Vector,
     /// Angle in degrees for the vertical field of view
-    pub vertical_fov: Num,
+    pub vertical_fov: Number,
     /// Radius of the simulated lens. Larger values increase blur
-    pub lens_radius: Num,
+    pub lens_radius: Number,
     /// Distance from the camera at which rays are perfectly in focus
-    pub focus_dist: Num,
+    pub focus_dist: Number,
 }
 
 #[derive(Error, Copy, Clone, Debug, Valuable)]
@@ -53,8 +53,8 @@ impl Camera {
             .try_normalize()
             .ok_or(CamInvalidError::UpVectorTooSmall)?;
 
-        let theta = self.vertical_fov * (Num::PI() / 180.);
-        let h = Num::tan(theta / 2.);
+        let theta = self.vertical_fov * (Number::PI() / 180.);
+        let h = Number::tan(theta / 2.);
         let viewport_height = 2. * h;
         let aspect_ratio = render_opts.aspect_ratio();
         let viewport_width = aspect_ratio * viewport_height;
@@ -63,11 +63,11 @@ impl Camera {
         let look_dir = (self.look_from - self.look_towards)
             .try_normalize()
             .ok_or(CamInvalidError::LookDirectionInvalid)?;
-        let Some(norm_cross_up_look) = Vec3::cross(up_vector, look_dir).try_normalize() else {
+        let Some(norm_cross_up_look) = Vector::cross(up_vector, look_dir).try_normalize() else {
             return Err(CamInvalidError::LookDirectionInvalid);
         };
         let u = norm_cross_up_look;
-        let v = Vec3::cross(look_dir, u);
+        let v = Vector::cross(look_dir, u);
 
         let horizontal = u * viewport_width * self.focus_dist;
         let vertical = v * viewport_height * self.focus_dist;
@@ -76,8 +76,8 @@ impl Camera {
 
         // Extract out some computations from the ray calculations
         // To save a bit of perf
-        let img_width = render_opts.width.get() as Num;
-        let img_height = render_opts.width.get() as Num;
+        let img_width = render_opts.width.get() as Number;
+        let img_height = render_opts.width.get() as Number;
         let horizontal_norm = horizontal / img_width;
         let vertical_norm = horizontal / img_height;
 
@@ -89,24 +89,24 @@ impl Camera {
             uv_origin,
             horizontal_norm,
             vertical_norm,
-            width: render_opts.width.get() as Num,
-            height: render_opts.width.get() as Num,
+            width: render_opts.width.get() as Number,
+            height: render_opts.width.get() as Number,
         })
     }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Viewport {
-    u_dir: Vec3,
-    v_dir: Vec3,
-    lens_radius: Num,
-    look_from: Vec3,
+    u_dir: Vector,
+    v_dir: Vector,
+    lens_radius: Number,
+    look_from: Vector,
     /// The lower left corner of the viewport
-    uv_origin: Vec3,
-    horizontal_norm: Vec3,
-    vertical_norm: Vec3,
-    width: Num,
-    height: Num,
+    uv_origin: Vector,
+    horizontal_norm: Vector,
+    vertical_norm: Vector,
+    width: Number,
+    height: Number,
 }
 
 impl Viewport {
@@ -120,10 +120,10 @@ impl Viewport {
         */
 
         // Don't need to normalise since we divided by `img_width`/`image_height` in the ctor for the viewport
-        let u = p_x as Num;
-        let v = p_y as Num;
+        let u = p_x as Number;
+        let v = p_y as Number;
 
-        let rand = Vec3::ZERO * self.lens_radius; // Random offset to simulate DOF
+        let rand = Vector::ZERO * self.lens_radius; // Random offset to simulate DOF
         let offset = (self.u_dir * rand.x) + (self.v_dir * rand.y); // Shift pixel origin slightly
         let origin = self.look_from + offset;
         let direction =

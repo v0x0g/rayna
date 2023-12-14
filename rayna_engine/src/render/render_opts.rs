@@ -1,6 +1,6 @@
 use nonzero::nonzero;
 use num_traits::cast::ToPrimitive;
-use rayna_shared::def::types::Num;
+use rayna_shared::def::types::Number;
 use serde::Serialize;
 use std::num::NonZeroUsize;
 use valuable::Valuable;
@@ -20,8 +20,8 @@ impl RenderOpts {
             .map(|d| d.expect("image dims failed to fit inside u32"))
     }
 
-    pub fn aspect_ratio(&self) -> Num {
-        self.width.get() as Num / self.height.get() as Num
+    pub fn aspect_ratio(&self) -> Number {
+        self.width.get() as Number / self.height.get() as Number
     }
 }
 

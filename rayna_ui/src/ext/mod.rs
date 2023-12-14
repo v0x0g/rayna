@@ -1,13 +1,13 @@
 use crate::ui_val::*;
 use egui::{Response, Widget};
-use rayna_shared::def::types::Vec3;
+use rayna_shared::def::types::Vector;
 
 pub trait UiExt {
-    fn vec3_edit(&mut self, vec: &mut Vec3, suffix: &str) -> Response;
+    fn vec3_edit(&mut self, vec: &mut Vector, suffix: &str) -> Response;
 }
 
 impl UiExt for egui::Ui {
-    fn vec3_edit(&mut self, vec: &mut Vec3, suffix: &str) -> Response {
+    fn vec3_edit(&mut self, vec: &mut Vector, suffix: &str) -> Response {
         self.horizontal(|ui| {
             let x = egui::DragValue::new(&mut vec.x)
                 .suffix(suffix)

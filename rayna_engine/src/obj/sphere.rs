@@ -1,17 +1,17 @@
 use crate::obj::Object;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use rayna_shared::def::types::{Num, Vec3};
+use rayna_shared::def::types::{Number, Vector};
 use std::ops::Range;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Sphere {
-    pub pos: Vec3,
-    pub radius: Num,
+    pub pos: Vector,
+    pub radius: Number,
 }
 
 impl Object for Sphere {
-    fn intersect(&self, _ray: Ray, _dist_bounds: Range<Num>) -> Option<Intersection> {
+    fn intersect(&self, _ray: Ray, _dist_bounds: Range<Number>) -> Option<Intersection> {
         None
     }
 

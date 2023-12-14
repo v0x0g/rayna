@@ -2,7 +2,7 @@ use crate::obj::sphere::Sphere;
 use crate::obj::Object;
 use crate::shared::camera::Camera;
 use crate::skybox::{DefaultSkybox, Skybox};
-use rayna_shared::def::types::Vec3;
+use rayna_shared::def::types::Vector;
 
 #[macro_export]
 macro_rules! scene {
@@ -34,9 +34,9 @@ impl Scene {
     pub fn empty() -> Self {
         scene! {
             camera: Camera {
-                look_from: Vec3::ZERO,
-                look_towards: Vec3::ZERO,
-                up_vector: Vec3::Y,
+                look_from: Vector::ZERO,
+                look_towards: Vector::ZERO,
+                up_vector: Vector::Y,
                 focus_dist: 1.,
                 lens_radius: 0.,
                 vertical_fov: 90.
@@ -48,16 +48,16 @@ impl Scene {
     pub fn simple() -> Self {
         scene! {
             camera: Camera {
-                look_from: Vec3::new(0., 0., -1.),
-                look_towards: Vec3::ZERO,
-                up_vector: Vec3::Y,
+                look_from: Vector::new(0., 0., -1.),
+                look_towards: Vector::ZERO,
+                up_vector: Vector::Y,
                 focus_dist: 1.,
                 lens_radius: 0.,
                 vertical_fov: 90.
             },
             objects: [
                 Sphere {
-                    pos: Vec3::new(0., 0., 0.),
+                    pos: Vector::new(0., 0., 0.),
                     radius: 0.5
                 }
             ]

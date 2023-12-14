@@ -1,15 +1,15 @@
-use rayna_shared::def::types::{Num, Vec3};
+use rayna_shared::def::types::{Number, Vector};
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Ray {
-    pos: Vec3,
-    dir: Vec3,
+    pos: Vector,
+    dir: Vector,
 }
 
 impl Ray {
     /// World-space coordinate of the ray
     #[inline(always)]
-    pub fn pos(&self) -> Vec3 {
+    pub fn pos(&self) -> Vector {
         self.pos
     }
 
@@ -18,11 +18,11 @@ impl Ray {
     /// # Requirements
     ///     Must be normalised
     #[inline(always)]
-    pub fn dir(&self) -> Vec3 {
+    pub fn dir(&self) -> Vector {
         self.dir
     }
 
-    pub fn new(pos: Vec3, dir: Vec3) -> Self {
+    pub fn new(pos: Vector, dir: Vector) -> Self {
         Self {
             pos,
             dir: dir.normalize(),
@@ -34,14 +34,14 @@ impl Ray {
     /// # Safety
     /// Unsafe as it does not normalise the direction, assuming the caller
     /// provided a correct vector, possibly breaking the invariant of a normalised direction
-    pub unsafe fn new_unchecked(pos: Vec3, dir: Vec3) -> Self {
+    pub unsafe fn new_unchecked(pos: Vector, dir: Vector) -> Self {
         Self { pos, dir }
     }
 
     /// Gets the position at a given distance along the ray
     ///
     /// `pos + (t * dir)`
-    pub fn at(&self, t: Num) -> Vec3 {
+    pub fn at(&self, t: Number) -> Vector {
         self.pos + (self.dir * t)
     }
 }

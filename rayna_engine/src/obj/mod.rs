@@ -1,9 +1,11 @@
+use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use dyn_clone::DynClone;
 use rayna_shared::def::types::Number;
+use std::collections::Bound;
 use std::fmt::Debug;
-use std::ops::Range;
+use std::ops::{Range, RangeBounds};
 
 pub mod sphere;
 
@@ -15,9 +17,9 @@ pub trait Object: DynClone + Debug + Send + Sync {
     ///
     /// # Parameters
     ///     - ray: The
-    fn intersect(&self, ray: Ray, dist_bounds: Range<Number>) -> Option<Intersection> {
+    fn intersect(&self, ray: Ray, bounds: Bounds<Number>) -> Option<Intersection> {
         self.intersect_all(ray)?
-            .filter(|i| dist_bounds.contains(&i.dist))
+            .filter(|i| bounds.contains(&i.dist))
             .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist))
     }
 

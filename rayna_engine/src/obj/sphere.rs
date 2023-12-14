@@ -2,7 +2,8 @@ use crate::obj::Object;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use rayna_shared::def::types::{Number, Vector};
-use std::ops::Range;
+use std::collections::Bound;
+use std::ops::{Range, RangeBounds};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Sphere {
@@ -11,7 +12,12 @@ pub struct Sphere {
 }
 
 impl Object for Sphere {
-    fn intersect(&self, ray: Ray, bounds: Range<Number>) -> Option<Intersection> {
+    fn intersect(
+        &self,
+        ray: Ray,
+        bound_low: Bound<Number>,
+        bound_high: Bound<Number>,
+    ) -> Option<Intersection> {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();
@@ -32,9 +38,9 @@ impl Object for Sphere {
         //This way we do a double check on both, prioritizing the less-positive root (as it's closer)
         //And we only return null if neither is valid
         let mut root = (-half_b - sqrt_d) / a;
-        if !bounds.contains(&root) {
+        if !bound_low.contains(&root) {
             root = (-half_b + sqrt_d) / a;
-            if !bounds.contains(&root) {
+            if !bound_low.contains(&root) {
                 return None;
             }
         }

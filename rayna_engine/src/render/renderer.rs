@@ -2,6 +2,7 @@ use crate::obj::sphere::Sphere;
 use crate::obj::Object;
 use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::RenderOpts;
+use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
 use crate::shared::scene::Scene;
 use image::Pixel;
@@ -75,7 +76,7 @@ impl Renderer {
     /// Renders a single pixel in the scene, and returns the colour
     fn render_px(scene: &Scene, viewport: Viewport, x: usize, y: usize) -> Pix {
         let ray = viewport.calc_ray(x, y);
-        let bounds = 0.0..Number::MAX;
+        let bounds = Bounds::from(0.0..Number::MAX);
 
         let intersect = scene
             .objects

@@ -1,11 +1,11 @@
 use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::RenderOpts;
 use crate::shared::camera::Viewport;
-use crate::shared::math;
 use crate::shared::scene::Scene;
+use image::Pixel;
 use puffin::{profile_function, profile_scope};
 use rayna_shared::def::targets::*;
-use rayna_shared::def::types::{ImgBuf, Pix};
+use rayna_shared::def::types::{ImgBuf, Num, Pix};
 use rayna_shared::profiler;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use std::time::Duration;
@@ -71,15 +71,19 @@ impl Renderer {
     }
 
     /// Renders a single pixel in the scene, and returns the colour
-    fn render_px(_scene: &Scene, viewport: Viewport, x: usize, y: usize) -> Pix {
+    fn render_px(scene: &Scene, viewport: Viewport, x: usize, y: usize) -> Pix {
         let ray = viewport.calc_ray(x, y);
+        let bounds = 0.0..Num::INFINITY;
 
-        let a = (0.5 * ray.dir().y) + 0.5;
+        let intersect = scene
+            .objects
+            .iter()
+            .filter_map(|obj| obj.intersect(ray, bounds.clone()))
+            .min_by(|a, b| Num::total_cmp(&a.dist, &b.dist));
 
-        let white = Pix::from([1., 1., 1.]);
-        let blue = Pix::from([0.5, 0.7, 1.]);
-
-        math::lerp(white, blue, a)
+        intersect
+            .map(|i| *Pix::from_slice(&i.normal.as_array().map(|f| f as f32)))
+            .unwrap_or_else(|| scene.skybox.sky_colour(ray))
     }
 
     fn render_actual(

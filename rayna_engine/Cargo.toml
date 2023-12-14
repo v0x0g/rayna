@@ -35,7 +35,8 @@ valuable = { workspace = true }
 serde = { workspace = true }
 memoize = { workspace = true }
 itertools = { workspace = true }
-derivative = { workspace = true}
+derivative = { workspace = true }
+approx = { workspace = true }
 
 # Perf
 puffin = { workspace = true }

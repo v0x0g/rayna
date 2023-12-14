@@ -15,7 +15,11 @@ pub trait Object: DynClone + Debug + Send + Sync {
     ///
     /// # Parameters
     ///     - ray: The
-    fn intersect(&self, ray: Ray, dist_bounds: Range<Number>) -> Option<Intersection>;
+    fn intersect(&self, ray: Ray, dist_bounds: Range<Number>) -> Option<Intersection> {
+        self.intersect_all(ray)?
+            .filter(|i| dist_bounds.contains(&i.dist))
+            .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist))
+    }
 
     /// Returns (possibly) an iterator over all of the intersections for the given object.
     ///
@@ -23,6 +27,8 @@ pub trait Object: DynClone + Debug + Send + Sync {
     ///     This should return a (boxed) iterator that iterates over all the (unbounded) intersections,
     ///     unbounded by distance.
     fn intersect_all(&self, ray: Ray) -> Option<Box<dyn Iterator<Item = Intersection>>>;
+
+    // TODO: A fast method that simply checks if an intersection occurred at all, with no more info
 }
 
 // NOTE: We have to use [`DynClone`] instead of plain old [`Clone`],

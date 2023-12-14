@@ -57,8 +57,16 @@ impl Scene {
             },
             objects: [
                 Sphere {
-                    pos: Vector::new(0., 0., 0.),
-                    radius: 0.5
+                    pos: Vector::new(-0.2, 0., 0.),
+                    radius: 0.25
+                },
+                Sphere {
+                    pos: Vector::new(0.2, 0., 0.),
+                    radius: 0.15
+                },
+                Sphere {
+                    pos: Vector::new(0., 0.5, 0.),
+                    radius: 0.1
                 }
             ]
         }

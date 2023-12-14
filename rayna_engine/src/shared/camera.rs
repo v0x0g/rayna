@@ -60,7 +60,7 @@ impl Camera {
         let viewport_width = aspect_ratio * viewport_height;
 
         //Magic that lets us position and rotate the camera
-        let look_dir = (self.look_from - self.look_towards)
+        let look_dir = Vector::from_array([0., 0., -1.]) //(self.look_from - self.look_towards)
             .try_normalize()
             .ok_or(CamInvalidError::LookDirectionInvalid)?;
         let Some(norm_cross_up_look) = Vector::cross(up_vector, look_dir).try_normalize() else {
@@ -120,17 +120,18 @@ impl Viewport {
         */
 
         // Don't need to normalise since we divided by `img_width`/`image_height` in the ctor for the viewport
-        let u = p_x as Number / self.width;
-        let v = 1.0 - (p_y as Number / self.height); // Flip Y for img coords -> world coords
+        let u = p_x as Number;
+        let v = p_y as Number;
 
-        let pos = Vector::new((u - 0.5) * 4., (v - 0.5) * 4., -1.) - self.look_from;
-        let dir = Vector::new(0., 0., 1.);
+        // let u = p_x as Number / self.width;
+        // let v = 1.0 - (p_y as Number / self.height); // Flip Y for img coords -> world coords
+        // let pos = Vector::new((u - 0.5) * 4., (v - 0.5) * 4., -1.) - self.look_from;
+        // let dir = Vector::new(0., 0., 1.);
+        // return Ray::new(pos, dir);
 
-        return Ray::new(pos, dir);
-
-        let rand = Vector::ZERO * self.lens_radius; // Random offset to simulate DOF
-        let offset = (self.u_dir * rand.x) + (self.v_dir * rand.y); // Shift pixel origin slightly
-        let origin = self.look_from + offset;
+        // let rand = Vector::ZERO * self.lens_radius; // Random offset to simulate DOF
+        // let offset = (self.u_dir * rand.x) + (self.v_dir * rand.y); // Shift pixel origin slightly
+        let origin = self.look_from; // + offset;
         let direction =
             (self.uv_origin + (self.horizontal_norm * u) + (self.vertical_norm * v)) - origin;
         return Ray::new(origin, direction);

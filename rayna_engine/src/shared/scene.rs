@@ -48,7 +48,7 @@ impl Scene {
     pub fn simple() -> Self {
         scene! {
             camera: Camera {
-                look_from: Vector::new(0., 0., -1.),
+                look_from: Vector::new(0., 0., 1.),
                 // look_towards: Vector::ZERO,
                 // up_vector: Vector::Y,
                 // focus_dist: 1.,

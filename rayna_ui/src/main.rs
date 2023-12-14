@@ -56,6 +56,10 @@ fn main() -> anyhow::Result<()> {
     debug!(target: MAIN, "init puffin");
     puffin::set_scopes_on(true);
     profiler::main_profiler_init();
+    // Special handling so the 'default' profiler passes on to our custom profiler
+    puffin::GlobalProfiler::lock().add_sink(Box::new(|frame| {
+        profiler::main_profiler_lock().add_frame(frame)
+    }));
 
     // TODO: Better backend selection that's not just hardcoded
     // let backend = backends

@@ -10,6 +10,7 @@ pub struct RenderOpts {
     /// The target dimensions of the render, stored as `[width, height]`
     pub width: NonZeroUsize,
     pub height: NonZeroUsize,
+    pub msaa: NonZeroUsize,
 }
 
 impl RenderOpts {
@@ -30,6 +31,7 @@ impl Default for RenderOpts {
         Self {
             width: nonzero!(740_usize),
             height: nonzero!(480_usize),
+            msaa: nonzero!(1_usize),
         }
     }
 }

@@ -238,18 +238,16 @@ impl RaynaApp {
 
         {
             profile_scope!("update_tex");
+            let opts = TextureOptions::NEAREST;
             match &mut self.render_buf_tex {
                 None => {
                     profile_scope!("tex_load");
-                    self.render_buf_tex = Some(ctx.load_texture(
-                        "render_buffer_texture",
-                        render.img,
-                        TextureOptions::default(),
-                    ))
+                    self.render_buf_tex =
+                        Some(ctx.load_texture("render_buffer_texture", render.img, opts))
                 }
                 Some(tex) => {
                     profile_scope!("tex_set");
-                    tex.set(render.img, TextureOptions::default())
+                    tex.set(render.img, opts)
                 }
             }
         }

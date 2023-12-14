@@ -56,17 +56,21 @@ impl Scene {
                 // vertical_fov: 90.
             },
             objects: [
-                Sphere {
+                Sphere { // Left, big
                     pos: Vector::new(-0.2, 0., 0.),
                     radius: 0.25
                 },
-                Sphere {
+                Sphere { // Right, mid
                     pos: Vector::new(0.2, 0., 0.),
                     radius: 0.15
                 },
-                Sphere {
+                Sphere { // Small, top
                     pos: Vector::new(0., 0.5, 0.),
                     radius: 0.1
+                },
+                Sphere { // Ground
+                    pos: Vector::new(0., -100.5, -1.),
+                    radius: 100.
                 }
             ]
         }

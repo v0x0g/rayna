@@ -77,17 +77,6 @@ impl Renderer {
         let ray = viewport.calc_ray(x, y);
         let bounds = 0.0..Number::MAX;
 
-        let sphere = Sphere {
-            pos: Vector::ZERO,
-            radius: 1.0,
-        };
-
-        return if sphere.intersect(ray, bounds).is_some() {
-            Pix::from([0., 0., 0.])
-        } else {
-            scene.skybox.sky_colour(ray)
-        };
-
         let intersect = scene
             .objects
             .iter()

@@ -6,6 +6,7 @@ use crate::shared::scene::Scene;
 use puffin::{profile_function, profile_scope};
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{ImgBuf, Pix};
+use rayna_shared::profiler;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use std::time::Duration;
 use thiserror::Error;
@@ -32,6 +33,7 @@ impl Renderer {
         let pool = ThreadPoolBuilder::new()
             .num_threads(0)
             .thread_name(|id| format!("Renderer::worker_{id}"))
+            .start_handler(|_id| profiler::worker_profiler_init())
             .build()
             .map_err(RendererCreateError::from)?;
 

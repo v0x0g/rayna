@@ -2,7 +2,7 @@
 
 #![allow(unused)] // Generated code isn't smart enough to be picked up
 
-use rayna_shared::::targets;
+use crate::def::targets;
 use core::default::Default;
 use once_cell::sync::Lazy;
 use puffin::{FrameSink, FrameSinkId, GlobalProfiler, StreamInfoRef, ThreadInfo, ThreadProfiler};

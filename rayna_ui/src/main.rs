@@ -6,7 +6,8 @@
 #![feature(vec_into_raw_parts)] // Used by [`thiserror::Error`] and `#[source]`
 
 use crate::rayna_app::RaynaApp;
-use rayna_shared::def;
+use rayna_shared::def::constants::APP_NAME;
+use rayna_shared::profiler;
 use rayna_ui_base::backend;
 use rayna_ui_base::backend::UiBackend;
 use std::collections::HashMap;
@@ -14,10 +15,10 @@ use tracing::debug;
 use tracing::metadata::LevelFilter;
 use tracing_subscriber::util::SubscriberInitExt;
 
-pub mod def;
 mod ext;
 mod integration;
 mod rayna_app;
+mod ui_val;
 
 /// Gets a map of all the [`UiBackend`] implementations available
 fn backends() -> HashMap<&'static str, Box<dyn UiBackend>> {
@@ -66,10 +67,7 @@ fn main() -> anyhow::Result<()> {
     debug!(target: MAIN, "using backend {backend:?}");
 
     debug!(target: MAIN, "run");
-    match backend.run(
-        def::constants::APP_NAME,
-        Box::new(|ctx| Box::new(RaynaApp::new_ctx(ctx))),
-    ) {
+    match backend.run(APP_NAME, Box::new(|ctx| Box::new(RaynaApp::new_ctx(ctx)))) {
         Ok(()) => debug!(target: MAIN, "run complete (success)"),
         Err(e) => debug!(target: MAIN, err = ?e, "run complete (error)"),
     }

@@ -1,6 +1,6 @@
-use crate::def::ui_val::*;
+use crate::ui_val::*;
 use egui::{Response, Widget};
-use rayna_shared::::types::Vec3;
+use rayna_shared::def::types::Vec3;
 
 pub trait UiExt {
     fn vec3_edit(&mut self, vec: &mut Vec3, suffix: &str) -> Response;

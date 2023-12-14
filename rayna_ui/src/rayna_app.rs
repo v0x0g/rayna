@@ -1,9 +1,8 @@
-use crate::def::targets::UI;
-use crate::def::ui_val::*;
 use crate::ext::UiExt;
 use crate::integration::message::MessageToWorker;
 use crate::integration::Integration;
 use crate::profiler;
+use crate::ui_val::{DRAG_SLOW, UNIT_DEG, UNIT_LEN, UNIT_PX};
 use egui::load::SizedTexture;
 use egui::{Context, RichText, TextureHandle, TextureOptions};
 use puffin::{profile_function, profile_scope};

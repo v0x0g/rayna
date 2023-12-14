@@ -1,15 +1,15 @@
-use crate::def::targets::BG_WORKER;
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::profiler;
 use egui::{Color32, ColorImage};
 use image::buffer::ConvertBuffer;
 use image::RgbaImage;
 use puffin::{profile_function, profile_scope};
-use rayna_shared::::types::ImgBuf;
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
 use rayna_engine::shared::scene::Scene;
+use rayna_shared::def::targets::BG_WORKER;
+use rayna_shared::def::types::ImgBuf;
 use std::thread::JoinHandle;
 use std::time::Duration;
 use tracing::{info, instrument, trace, warn};
@@ -51,7 +51,7 @@ impl BgWorker {
         } = self;
 
         loop {
-            crate::profiler::worker_profiler_lock().new_frame();
+            profiler::worker_profiler_lock().new_frame();
 
             profile_function!(); // place here not at the start since we are looping
 

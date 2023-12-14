@@ -10,6 +10,8 @@ edition = "2021"
 
 [dependencies]
 
+rayna_shared = { path = "../rayna_shared" }
+
 egui = { version = "0.24.1", features = ["puffin", "mint", "default_fonts", "bytemuck", "callstack", "cint", "color-hex", "persistence", "ron"] }
 # Having issues when the "accesskit" feature is enabled, so don't use it here
 eframe = { version = "0.24.1", features = ["glow", "default_fonts", "puffin"], default-features = false, optional = true }

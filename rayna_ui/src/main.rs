@@ -55,7 +55,6 @@ fn main() -> anyhow::Result<()> {
         .init();
 
     debug!(target: MAIN, "init puffin");
-    puffin::set_scopes_on(true);
     profiler::main_profiler_init();
     // Special handling so the 'default' profiler passes on to our custom profiler
     // In this case, we already overrode the ThreadProfiler for "main" using `main_profiler_init()`,

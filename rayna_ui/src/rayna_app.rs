@@ -3,6 +3,7 @@ use crate::def::ui_val::*;
 use crate::ext::UiExt;
 use crate::integration::message::MessageToWorker;
 use crate::integration::Integration;
+use crate::profiler;
 use egui::load::SizedTexture;
 use egui::{Context, RichText, TextureHandle, TextureOptions};
 use puffin::{profile_function, profile_scope};
@@ -51,7 +52,7 @@ impl RaynaApp {
 
 impl App for RaynaApp {
     fn on_update(&mut self, ctx: &Context) -> () {
-        // puffin::GlobalProfiler::lock().new_frame(); // Mark start of frame
+        profiler::main_profiler_lock().new_frame();
 
         profile_function!();
 

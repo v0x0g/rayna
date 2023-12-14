@@ -5,7 +5,6 @@ members = [
     "rayna_engine",
     "rayna_shared",
     "rayna_ui",
-    "rayna_ui_base",
 ]
 
 [workspace.dependencies]

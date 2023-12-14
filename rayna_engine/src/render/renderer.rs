@@ -75,6 +75,17 @@ impl Renderer {
         let ray = viewport.calc_ray(x, y);
         let bounds = 0.0..Number::INFINITY;
 
+        // return if scene
+        //     .objects
+        //     .iter()
+        //     .filter_map(|obj| obj.intersect_all(ray))
+        //     .any(|mut i| i.next().is_some())
+        // {
+        //     Pix::from([0., 0., 0.])
+        // } else {
+        //     Pix::from([1., 1., 1.])
+        // };
+
         let intersect = scene
             .objects
             .iter()
@@ -82,7 +93,7 @@ impl Renderer {
             .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist));
 
         intersect
-            .map(|i| *Pix::from_slice(&i.normal.as_array().map(|f| f as f32)))
+            .map(|i| *Pix::from_slice(&i.normal.as_array().map(|f| (f / 2.) as f32 + 0.5)))
             .unwrap_or_else(|| scene.skybox.sky_colour(ray))
     }
 

@@ -1,5 +1,3 @@
-use crate::obj::sphere::Sphere;
-use crate::obj::Object;
 use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::RenderOpts;
 use crate::shared::bounds::Bounds;
@@ -8,7 +6,7 @@ use crate::shared::scene::Scene;
 use image::Pixel;
 use puffin::{profile_function, profile_scope};
 use rayna_shared::def::targets::*;
-use rayna_shared::def::types::{ImgBuf, Number, Pix, Vector};
+use rayna_shared::def::types::{ImgBuf, Number, Pix};
 use rayna_shared::profiler;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use std::time::Duration;

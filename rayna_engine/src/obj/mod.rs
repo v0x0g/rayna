@@ -3,9 +3,7 @@ use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use dyn_clone::DynClone;
 use rayna_shared::def::types::Number;
-use std::collections::Bound;
 use std::fmt::Debug;
-use std::ops::{Range, RangeBounds};
 
 pub mod sphere;
 

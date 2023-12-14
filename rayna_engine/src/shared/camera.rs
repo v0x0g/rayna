@@ -1,6 +1,5 @@
 use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
-use num_traits::FloatConst;
 use rayna_shared::def::types::{Number, Vector};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;

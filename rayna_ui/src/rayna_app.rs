@@ -88,9 +88,9 @@ impl crate::backend::app::App for RaynaApp {
                 let mut h = self.render_opts.height.get();
 
                 ui.label("Image Width");
-                let w_drag = ui.add(egui::DragValue::new(&mut w).suffix(UNIT_PX));
+                let w_drag = egui::DragValue::new(&mut w).suffix(UNIT_PX).ui(ui);
                 ui.label("Image Height");
-                let h_drag = ui.add(egui::DragValue::new(&mut h).suffix(UNIT_PX));
+                let h_drag = egui::DragValue::new(&mut h).suffix(UNIT_PX).ui(ui);
 
                 render_opts_dirty |= w_drag.drag_released() || w_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
                 render_opts_dirty |= h_drag.drag_released() || h_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
@@ -108,6 +108,13 @@ impl crate::backend::app::App for RaynaApp {
                         NonZeroUsize::new(self.render_display_size.y as usize)
                             .unwrap_or(NonZeroUsize::MIN);
                 }
+
+                // MSAA
+
+                let mut msaa = self.render_opts.msaa.get();
+                ui.label("MSAA");
+                render_opts_dirty |= egui::DragValue::new(&mut msaa).ui(ui).changed();
+                self.render_opts.msaa = NonZeroUsize::new(msaa).unwrap_or(NonZeroUsize::MIN)
             });
 
             ui.group(|ui| {

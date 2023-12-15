@@ -1,10 +1,11 @@
-use crate::mat::diffuse::Diffuse;
+use crate::mat::diffuse::DiffuseMaterial;
+use crate::mat::MaterialType;
 use crate::obj::sphere::Sphere;
 use crate::obj::Object;
 use crate::shared::camera::Camera;
-use crate::skybox::{DefaultSkybox, Skybox};
+use crate::skybox::default_skybox::DefaultSkybox;
+use crate::skybox::Skybox;
 use rayna_shared::def::types::Vector;
-use std::sync::Arc;
 
 #[macro_export]
 macro_rules! scene {
@@ -33,22 +34,8 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn empty() -> Self {
-        scene! {
-            camera: Camera {
-                look_from: Vector::ZERO,
-                // look_towards: Vector::ZERO,
-                // up_vector: Vector::Y,
-                // focus_dist: 1.,
-                // lens_radius: 0.,
-                // vertical_fov: 90.
-            },
-            objects: []
-        }
-    }
-
     pub fn simple() -> Self {
-        let material = Arc::new(Diffuse {});
+        let material = MaterialType::Diffuse(DiffuseMaterial {});
         scene! {
             camera: Camera {
                 look_from: Vector::new(0., 0., 1.),

@@ -1,3 +1,4 @@
+use crate::mat::Material;
 use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::{RenderMode, RenderOpts};
 use crate::shared::bounds::Bounds;
@@ -212,7 +213,7 @@ impl Renderer {
             RenderMode::Scatter => Pixel::from(
                 intersect
                     .material
-                    .scatter(intersect)
+                    .scatter(&intersect)
                     .as_array()
                     .map(|f| (f / 2.) as f32 + 0.5),
             ),

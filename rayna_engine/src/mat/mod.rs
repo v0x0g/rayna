@@ -1,9 +1,34 @@
+use crate::mat::diffuse::DiffuseMaterial;
 use crate::shared::intersect::Intersection;
 use crate::shared::RtRequirement;
 use rayna_shared::def::types::Vector;
+use std::sync::Arc;
 
 pub mod diffuse;
 
+/// An optimised implementation of [Material].
+///
+/// By using an enum, we can replace dynamic-dispatch with static dispatch.
+/// Just in case we do require dynamic dispatch for some reason, there is a
+/// [MaterialType::Other] variant, which wraps a generic material in an [Arc]
+#[derive(Clone, Debug)]
+pub enum MaterialType {
+    Diffuse(DiffuseMaterial),
+    Other(Arc<dyn Material>),
+}
+
+impl RtRequirement for MaterialType {}
+
+impl Material for MaterialType {
+    fn scatter(&self, intersection: &Intersection) -> Vector {
+        match self {
+            Self::Diffuse(mat) => mat.scatter(intersection),
+            Self::Other(mat) => mat.scatter(intersection),
+        }
+    }
+}
+
+/// The trait that defines what properties a material has
 pub trait Material: RtRequirement {
     // TODO: Should `scatter()` return a ray?
 
@@ -37,5 +62,5 @@ pub trait Material: RtRequirement {
     ///     }
     /// }
     /// ```
-    fn scatter(&self, intersection: Intersection) -> Vector;
+    fn scatter(&self, intersection: &Intersection) -> Vector;
 }

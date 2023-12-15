@@ -1,18 +1,19 @@
-use crate::mat::diffuse::Diffuse;
-use crate::mat::Material;
+use crate::mat::MaterialType;
 use crate::obj::Object;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
+use crate::shared::RtRequirement;
 use rayna_shared::def::types::{Number, Vector};
-use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub struct Sphere {
     pub pos: Vector,
     pub radius: Number,
-    pub material: Arc<dyn Material>,
+    pub material: MaterialType,
 }
+
+impl RtRequirement for Sphere {}
 
 impl Object for Sphere {
     fn intersect(&self, ray: Ray, bounds: Bounds<Number>) -> Option<Intersection> {
@@ -63,7 +64,7 @@ impl Object for Sphere {
             normal: outward_normal,
             ray_normal,
             ray,
-            material: &Diffuse {},
+            material: self.material.clone(),
         });
     }
 
@@ -111,7 +112,7 @@ impl Object for Sphere {
                 normal: outward_normal,
                 ray_normal,
                 ray,
-                material: &Diffuse {},
+                material: self.material.clone(),
             }
         });
 

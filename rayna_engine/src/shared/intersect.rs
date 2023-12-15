@@ -1,12 +1,12 @@
-use crate::mat::Material;
+use crate::mat::MaterialType;
 use crate::shared::ray::Ray;
 use derivative::Derivative;
 use rayna_shared::def::types::{Number, Vector};
 
 /// A struct representing a ray-object intersection
-#[derive(Copy, Clone, Debug, Derivative)]
+#[derive(Clone, Debug, Derivative)]
 #[derivative(PartialEq)]
-pub struct Intersection<'a> {
+pub struct Intersection {
     /// The position in world coordinates of the intersection
     pub pos: Vector,
     /// Surface normal at intersection.
@@ -27,5 +27,5 @@ pub struct Intersection<'a> {
     /// Original ray
     pub ray: Ray,
     #[derivative(PartialEq = "ignore")]
-    pub material: &'a dyn Material,
+    pub material: MaterialType,
 }

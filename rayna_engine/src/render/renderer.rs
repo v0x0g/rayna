@@ -189,7 +189,9 @@ impl Renderer {
         let intersect = scene
             .objects
             .iter()
+            // Intersect all and only include hits not misses
             .filter_map(|obj| obj.intersect(ray, bounds.clone()))
+            // Choose closes intersect
             .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist));
 
         let Some(intersect) = intersect else {

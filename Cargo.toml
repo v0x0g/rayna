@@ -59,7 +59,14 @@ puffin_http = { path = "lib/puffin/puffin_http" }
 
 [profile.dev]
 debug = "full"
-lto = "off"
+lto = "thin"
 incremental = true
 debug-assertions = true
-opt-level = 0
+opt-level = 1
+codegen-units = 32
+
+[profile.release]
+debug = "full"
+lto = "fat"
+opt-level = 3
+codegen-units = 1

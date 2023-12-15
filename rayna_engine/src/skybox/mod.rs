@@ -1,16 +1,12 @@
-use crate::shared::math;
 use crate::shared::ray::Ray;
-use dyn_clone::DynClone;
+use crate::shared::{math, RtRequirement};
 use rayna_shared::def::types::Pixel;
 use std::fmt::Debug;
 
-pub trait Skybox: DynClone + Debug + Send + Sync {
+dyn_clone::clone_trait_object!(Skybox);
+pub trait Skybox: RtRequirement {
     fn sky_colour(&self, ray: Ray) -> Pixel;
 }
-
-// NOTE: We have to use [`DynClone`] instead of plain old [`Clone`],
-// Since we will be using `Box<dyn Object>` and we need to clone those boxes
-dyn_clone::clone_trait_object!(Skybox);
 
 #[derive(Copy, Clone, Debug)]
 pub struct DefaultSkybox;

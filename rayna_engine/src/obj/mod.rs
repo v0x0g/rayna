@@ -1,13 +1,13 @@
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use dyn_clone::DynClone;
+use crate::shared::RtRequirement;
 use rayna_shared::def::types::Number;
-use std::fmt::Debug;
 
 pub mod sphere;
 
-pub trait Object: DynClone + Debug + Send + Sync {
+dyn_clone::clone_trait_object!(Object);
+pub trait Object: RtRequirement {
     /// Attempts to perform an intersection between the given ray and the target object
     ///
     /// # Return Value
@@ -30,7 +30,3 @@ pub trait Object: DynClone + Debug + Send + Sync {
 
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info
 }
-
-// NOTE: We have to use [`DynClone`] instead of plain old [`Clone`],
-// Since we will be using `Box<dyn Object>` and we need to clone those boxes
-dyn_clone::clone_trait_object!(Object);

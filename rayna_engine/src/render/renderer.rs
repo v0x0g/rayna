@@ -3,10 +3,10 @@ use crate::render::render_opts::RenderOpts;
 use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
 use crate::shared::scene::Scene;
-use image::Pixel;
 use puffin::{profile_function, profile_scope};
+use rand::random;
 use rayna_shared::def::targets::*;
-use rayna_shared::def::types::{ImgBuf, Number, Pix};
+use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel};
 use rayna_shared::profiler;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use std::time::Duration;
@@ -57,34 +57,36 @@ impl Renderer {
         self.render_actual(scene, render_opts, viewport)
     }
 
-    pub fn render_convert<T: Send + Sync>(
-        &self,
-        scene: &Scene,
-        render_opts: RenderOpts,
-        convert: impl FnOnce(ImgBuf) -> T,
-    ) -> Render<T> {
-        let render = self.render(scene, render_opts);
+    /// Helper function for returning a render in case of a failure
+    /// (and so we can't make an actual render)
+    fn render_failed(w: u32, h: u32) -> Render<ImgBuf> {
+        #[memoize::memoize(Capacity: 8)] // Keep cap small since images can be huge
+        fn internal(w: u32, h: u32) -> ImgBuf {
+            ImgBuf::from_fn(w, h, |x, y| {
+                Pixel::from({
+                    if (x + y) % 2 == 0 {
+                        [0., 0., 0.]
+                    } else {
+                        [1., 0., 1.]
+                    }
+                })
+            })
+        }
+
+        let img = if w > 16 && h > 16 {
+            internal(w / 4, h / 4)
+        } else {
+            internal(w, h)
+        };
 
         Render {
-            img: convert(render.img),
-            stats: render.stats,
+            img,
+            stats: RenderStats {
+                num_threads: 0,
+                duration: Duration::ZERO,
+                num_px: (w * h) as usize,
+            },
         }
-    }
-
-    /// Renders a single pixel in the scene, and returns the colour
-    fn render_px(scene: &Scene, viewport: Viewport, x: usize, y: usize) -> Pix {
-        let ray = viewport.calc_ray(x as Number, y as Number);
-        let bounds = Bounds::from(0.0..Number::MAX);
-
-        let intersect = scene
-            .objects
-            .iter()
-            .filter_map(|obj| obj.intersect(ray, bounds.clone()))
-            .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist));
-
-        intersect
-            .map(|i| *Pix::from_slice(&i.normal.as_array().map(|f| (f / 2.) as f32 + 0.5)))
-            .unwrap_or_else(|| scene.skybox.sky_colour(ray))
     }
 
     fn render_actual(
@@ -110,7 +112,13 @@ impl Renderer {
                     scope.spawn(|_| {
                         profile_scope!("inner");
                         for (x, y, pix) in row {
-                            *pix = Self::render_px(scene, viewport, x as usize, y as usize);
+                            *pix = Self::render_px(
+                                scene,
+                                render_opts,
+                                viewport,
+                                x as usize,
+                                y as usize,
+                            );
                         }
                     });
                 }
@@ -129,36 +137,46 @@ impl Renderer {
         }
     }
 
-    /// Helper function for returning a render in case of a failure
-    /// (and so we can't make an actual render)
-    fn render_failed(w: u32, h: u32) -> Render<ImgBuf> {
-        #[memoize::memoize(Capacity: 8)] // Keep cap small since images can be huge
-        fn internal(w: u32, h: u32) -> ImgBuf {
-            ImgBuf::from_fn(w, h, |x, y| {
-                Pix::from({
-                    if (x + y) % 2 == 0 {
-                        [0., 0., 0.]
-                    } else {
-                        [1., 0., 1.]
-                    }
-                })
-            })
-        }
+    /// Renders a single pixel in the scene, and returns the colour
+    fn render_px(
+        scene: &Scene,
+        render_opts: RenderOpts,
+        viewport: Viewport,
+        x: usize,
+        y: usize,
+    ) -> Pixel {
+        let x = x as Number;
+        let y = y as Number;
+        let sample_count = render_opts.msaa.get();
 
-        let img = if w > 16 && h > 16 {
-            internal(w / 4, h / 4)
-        } else {
-            internal(w, h)
-        };
+        let accum = (0..sample_count)
+            .into_iter()
+            // Add MSAA randomness
+            .map(|_s| [x + random::<Number>(), y + random::<Number>()])
+            // Pixel doesn't implement [core::ops::Add], so have to manually do it with slices
+            .map(|[px, py]| Self::render_px_once(scene, viewport, px, py).0)
+            .fold([0.; 3], |[r1, g1, b1], [r2, g2, b2]| {
+                [r1 + r2, g1 + g2, b1 + b2]
+            });
 
-        Render {
-            img,
-            stats: RenderStats {
-                num_threads: 0,
-                duration: Duration::ZERO,
-                num_px: (w * h) as usize,
-            },
-        }
+        let mean = accum.map(|c| c / (sample_count as Channel));
+
+        Pixel::from(mean)
+    }
+
+    fn render_px_once(scene: &Scene, viewport: Viewport, x: Number, y: Number) -> Pixel {
+        let ray = viewport.calc_ray(x, y);
+        let bounds = Bounds::from(0.0..Number::MAX);
+
+        let intersect = scene
+            .objects
+            .iter()
+            .filter_map(|obj| obj.intersect(ray, bounds.clone()))
+            .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist));
+
+        intersect
+            .map(|i| Pixel::from(i.normal.as_array().map(|f| (f / 2.) as f32 + 0.5)))
+            .unwrap_or_else(|| scene.skybox.sky_colour(ray))
     }
 }
 

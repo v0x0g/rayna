@@ -7,11 +7,12 @@ use egui::load::SizedTexture;
 use egui::{Context, RichText, Sense, TextureHandle, TextureOptions, Widget};
 use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::RenderStats;
-use rayna_engine::render::render_opts::RenderOpts;
+use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
 use rayna_engine::shared::scene::Scene;
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Number, Vector};
 use std::num::NonZeroUsize;
+use strum::IntoEnumIterator;
 use tracing::{error, info, trace, warn};
 
 pub struct RaynaApp {
@@ -114,7 +115,20 @@ impl crate::backend::app::App for RaynaApp {
                 let mut msaa = self.render_opts.msaa.get();
                 ui.label("MSAA");
                 render_opts_dirty |= egui::DragValue::new(&mut msaa).ui(ui).changed();
-                self.render_opts.msaa = NonZeroUsize::new(msaa).unwrap_or(NonZeroUsize::MIN)
+                self.render_opts.msaa = NonZeroUsize::new(msaa).unwrap_or(NonZeroUsize::MIN);
+
+                egui::ComboBox::from_label("Mode")
+                    .selected_text(<&'static str>::from(self.render_opts.mode))
+                    .show_ui(ui, |ui| {
+                        for variant in RenderMode::iter() {
+                            let resp = ui.selectable_value::<RenderMode>(
+                                &mut self.render_opts.mode,
+                                variant,
+                                <&'static str>::from(variant),
+                            );
+                            render_opts_dirty |= resp.changed();
+                        }
+                    });
             });
 
             ui.group(|ui| {

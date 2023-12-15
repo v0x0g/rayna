@@ -4,7 +4,7 @@ use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
 use crate::shared::scene::Scene;
 use puffin::{profile_function, profile_scope};
-use rand::{random, thread_rng, Rng};
+use rand::{thread_rng, Rng};
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel};
 use rayna_shared::profiler;

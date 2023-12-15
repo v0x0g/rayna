@@ -3,6 +3,7 @@ use num_traits::cast::ToPrimitive;
 use rayna_shared::def::types::Number;
 use serde::Serialize;
 use std::num::NonZeroUsize;
+use strum_macros::{EnumIter, IntoStaticStr};
 use valuable::Valuable;
 
 #[derive(Copy, Clone, Debug, Valuable, Serialize)]
@@ -12,6 +13,28 @@ pub struct RenderOpts {
     pub height: NonZeroUsize,
     /// How many samples to take for each pixel (MSAA)
     pub msaa: NonZeroUsize,
+    pub mode: RenderMode,
+}
+
+#[derive(
+    Copy,
+    Clone,
+    Debug,
+    Default,
+    Eq,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    Valuable,
+    Serialize,
+    EnumIter,
+    IntoStaticStr,
+)]
+pub enum RenderMode {
+    #[default]
+    PBR,
+    RayNormal,
+    OutwardNormal,
 }
 
 impl RenderOpts {
@@ -33,6 +56,7 @@ impl Default for RenderOpts {
             width: nonzero!(740_usize),
             height: nonzero!(480_usize),
             msaa: nonzero!(1_usize),
+            mode: Default::default(),
         }
     }
 }

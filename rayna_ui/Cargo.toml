@@ -43,6 +43,8 @@ flume = { version = "0.11.0", features = ["async"] }
 itertools = { workspace = true }
 valuable = { workspace = true }
 derivative = { workspace = true }
+strum = { workspace = true }
+strum_macros = { workspace = true }
 
 # Perf
 puffin = { workspace = true }

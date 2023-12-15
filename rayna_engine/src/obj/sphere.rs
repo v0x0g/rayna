@@ -1,14 +1,17 @@
 use crate::mat::diffuse::Diffuse;
+use crate::mat::Material;
 use crate::obj::Object;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use rayna_shared::def::types::{Number, Vector};
+use std::sync::Arc;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct Sphere {
     pub pos: Vector,
     pub radius: Number,
+    pub material: Arc<dyn Material>,
 }
 
 impl Object for Sphere {

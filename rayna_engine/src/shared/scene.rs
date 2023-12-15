@@ -1,8 +1,10 @@
+use crate::mat::diffuse::Diffuse;
 use crate::obj::sphere::Sphere;
 use crate::obj::Object;
 use crate::shared::camera::Camera;
 use crate::skybox::{DefaultSkybox, Skybox};
 use rayna_shared::def::types::Vector;
+use std::sync::Arc;
 
 #[macro_export]
 macro_rules! scene {
@@ -46,6 +48,7 @@ impl Scene {
     }
 
     pub fn simple() -> Self {
+        let material = Arc::new(Diffuse {});
         scene! {
             camera: Camera {
                 look_from: Vector::new(0., 0., 1.),
@@ -58,19 +61,23 @@ impl Scene {
             objects: [
                 Sphere { // Left, big
                     pos: Vector::new(-0.2, 0., 0.),
-                    radius: 0.25
+                    radius: 0.25,
+                    material: material.clone()
                 },
                 Sphere { // Right, mid
                     pos: Vector::new(0.2, 0., 0.),
-                    radius: 0.15
+                    radius: 0.15,
+                    material: material.clone()
                 },
                 Sphere { // Small, top
                     pos: Vector::new(0., 0.5, 0.),
-                    radius: 0.1
+                    radius: 0.1,
+                    material: material.clone()
                 },
                 Sphere { // Ground
                     pos: Vector::new(0., -100.5, -1.),
-                    radius: 100.
+                    radius: 100.,
+                    material: material.clone()
                 }
             ]
         }

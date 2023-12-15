@@ -1,5 +1,5 @@
 use crate::render::render::{Render, RenderStats};
-use crate::render::render_opts::RenderOpts;
+use crate::render::render_opts::{RenderMode, RenderOpts};
 use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
 use crate::shared::scene::Scene;
@@ -159,12 +159,13 @@ impl Renderer {
         let py = y as Number;
         let sample_count = render_opts.msaa.get();
         let mut rng = thread_rng();
+        let mode = render_opts.mode;
 
         let accum = (0..sample_count)
             .into_iter()
             .map(|_s| Self::apply_msaa_shift(px, py, &mut rng))
             // Pixel doesn't implement [core::ops::Add], so have to manually do it with slices
-            .map(|[px, py]| Self::render_px_once(scene, viewport, px, py).0)
+            .map(|[px, py]| Self::render_px_once(scene, viewport, mode, px, py).0)
             .fold([0.; 3], |[r1, g1, b1], [r2, g2, b2]| {
                 [r1 + r2, g1 + g2, b1 + b2]
             });
@@ -175,7 +176,13 @@ impl Renderer {
     }
 
     /// Renders a given pixel a single time
-    fn render_px_once(scene: &Scene, viewport: Viewport, x: Number, y: Number) -> Pixel {
+    fn render_px_once(
+        scene: &Scene,
+        viewport: Viewport,
+        mode: RenderMode,
+        x: Number,
+        y: Number,
+    ) -> Pixel {
         let ray = viewport.calc_ray(x, y);
         let bounds = Bounds::from(0.0..Number::MAX);
 
@@ -185,9 +192,22 @@ impl Renderer {
             .filter_map(|obj| obj.intersect(ray, bounds.clone()))
             .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist));
 
-        intersect
-            .map(|i| Pixel::from(i.normal.as_array().map(|f| (f / 2.) as f32 + 0.5)))
-            .unwrap_or_else(|| scene.skybox.sky_colour(ray))
+        let Some(intersect) = intersect else {
+            return scene.skybox.sky_colour(ray);
+        };
+
+        return match mode {
+            RenderMode::OutwardNormal => {
+                Pixel::from(intersect.normal.as_array().map(|f| (f / 2.) as f32 + 0.5))
+            }
+            RenderMode::RayNormal => Pixel::from(
+                intersect
+                    .ray_normal
+                    .as_array()
+                    .map(|f| (f / 2.) as f32 + 0.5),
+            ),
+            RenderMode::PBR => Pixel::from([1., 0., 0.]),
+        };
     }
 
     /// Calculates a random pixel shift (for MSAA), and applies it to the (pixel) coordinates

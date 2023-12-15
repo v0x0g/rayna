@@ -92,7 +92,7 @@ impl BgWorker {
 
             let render_result = {
                 profile_scope!("render");
-                let render = renderer.render(&scene, render_opts);
+                let render = renderer.render(&scene, &render_opts);
                 Render {
                     img: Self::convert_img(render.img),
                     stats: render.stats,

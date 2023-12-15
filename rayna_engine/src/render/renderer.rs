@@ -3,6 +3,8 @@ use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::{RenderMode, RenderOpts};
 use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
+use crate::shared::intersect::Intersection;
+use crate::shared::ray::Ray;
 use crate::shared::scene::Scene;
 use crate::skybox::Skybox;
 use puffin::{profile_function, profile_scope};
@@ -44,7 +46,7 @@ impl Renderer {
     }
 
     // TODO: Should `render()` be fallible?
-    pub fn render(&self, scene: &Scene, render_opts: RenderOpts) -> Render<ImgBuf> {
+    pub fn render(&self, scene: &Scene, render_opts: &RenderOpts) -> Render<ImgBuf> {
         profile_function!();
 
         let viewport = match scene.camera.calculate_viewport(render_opts) {
@@ -56,7 +58,7 @@ impl Renderer {
             }
         };
 
-        self.render_actual(scene, render_opts, viewport)
+        self.render_actual(scene, render_opts, &viewport)
     }
 
     /// Helper function for returning a render in case of a failure
@@ -102,8 +104,8 @@ impl Renderer {
     fn render_actual(
         &self,
         scene: &Scene,
-        render_opts: RenderOpts,
-        viewport: Viewport,
+        render_opts: &RenderOpts,
+        viewport: &Viewport,
     ) -> Render<ImgBuf> {
         profile_function!();
 
@@ -152,8 +154,8 @@ impl Renderer {
     /// Takes into account [`RenderOpts::msaa`]
     fn render_px(
         scene: &Scene,
-        render_opts: RenderOpts,
-        viewport: Viewport,
+        render_opts: &RenderOpts,
+        viewport: &Viewport,
         x: usize,
         y: usize,
     ) -> Pixel {
@@ -180,7 +182,7 @@ impl Renderer {
     /// Renders a given pixel a single time
     fn render_px_once(
         scene: &Scene,
-        viewport: Viewport,
+        viewport: &Viewport,
         mode: RenderMode,
         x: Number,
         y: Number,
@@ -188,15 +190,7 @@ impl Renderer {
         let ray = viewport.calc_ray(x, y);
         let bounds = Bounds::from(0.0..Number::MAX);
 
-        let intersect = scene
-            .objects
-            .iter()
-            // Intersect all and only include hits not misses
-            .filter_map(|obj| obj.intersect(ray, bounds.clone()))
-            // Choose closes intersect
-            .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist));
-
-        let Some(intersect) = intersect else {
+        let Some(intersect) = Self::calculate_intersection(scene, ray, &bounds) else {
             return scene.skybox.sky_colour(ray);
         };
 
@@ -221,6 +215,22 @@ impl Renderer {
         };
     }
 
+    /// Calculates the nearest intersection in the scene for the given ray
+    fn calculate_intersection(
+        scene: &Scene,
+        ray: Ray,
+        bounds: &Bounds<Number>,
+    ) -> Option<Intersection> {
+        scene
+            .objects
+            .iter()
+            // Intersect all and only include hits not misses
+            .filter_map(|obj| obj.intersect(ray, bounds.clone()))
+            .inspect(|i| validate::intersection(i, bounds))
+            // Choose closes intersect
+            .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist))
+    }
+
     /// Calculates a random pixel shift (for MSAA), and applies it to the (pixel) coordinates
     fn apply_msaa_shift<R: Rng>(px: Number, py: Number, rng: &mut R) -> [Number; 2] {
         let range = -0.5..=0.5;
@@ -235,4 +245,12 @@ impl Clone for Renderer {
     fn clone(&self) -> Self {
         Self::new().expect("could not clone: couldn't create renderer")
     }
+}
+
+mod validate {
+    use crate::shared::bounds::Bounds;
+    use crate::shared::intersect::Intersection;
+    use rayna_shared::def::types::Number;
+
+    pub(super) fn intersection(i: &Intersection, b: &Bounds<Number>) {}
 }

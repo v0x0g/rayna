@@ -1,5 +1,6 @@
 //! Strings for use in the UI, such as units or labels
 
+#![allow(unused_variables, dead_code)]
 use rayna_shared::def::types::Number;
 
 pub const UNIT_PX: &'static str = " px";

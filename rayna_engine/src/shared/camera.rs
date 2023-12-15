@@ -33,7 +33,10 @@ impl Camera {
     /// This will return [`Option::Err`] if the `up_vector` points in the same direction as
     /// the forward vector (`look_from -> look_towards`),
     /// equivalent to the case where `cross(look_direction, up_vector) == Vec3::Zero`
-    pub fn calculate_viewport(&self, render_opts: RenderOpts) -> Result<Viewport, CamInvalidError> {
+    pub fn calculate_viewport(
+        &self,
+        render_opts: &RenderOpts,
+    ) -> Result<Viewport, CamInvalidError> {
         let img_width = render_opts.width.get() as Number;
         let img_height = render_opts.height.get() as Number;
         let aspect_ratio = img_width / img_height;

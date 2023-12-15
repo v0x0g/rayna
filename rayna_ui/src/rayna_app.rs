@@ -168,7 +168,7 @@ impl crate::backend::app::App for RaynaApp {
             });
 
             ui.group(|ui| {
-                profile_scope!("sce/options");
+                profile_scope!("sec/options");
 
                 ui.heading("Options");
 
@@ -176,6 +176,16 @@ impl crate::backend::app::App for RaynaApp {
                 if ui.checkbox(&mut profiling, "Profiling").changed() {
                     puffin::set_scopes_on(profiling);
                 }
+            });
+            ui.group(|ui| {
+                profile_scope!("sec/stats");
+
+                ui.heading("Stats");
+
+                let stats = self.render_stats;
+                ui.label(format!("num pixels: {}", stats.num_px));
+                ui.label(format!("num threads: {}", stats.num_threads));
+                ui.label(format!("duration: {:?}", stats.duration));
             });
         });
 

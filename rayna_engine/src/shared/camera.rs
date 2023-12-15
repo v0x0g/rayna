@@ -80,10 +80,10 @@ pub struct Viewport {
 }
 
 impl Viewport {
-    /// Calculates the view ray for a given pixel at the coords `(p_x, p_y)`
+    /// Calculates the view ray for a given pixel at the coords `(px, py)`
     /// (screen-space, top-left to bot-right)
-    pub fn calc_ray(&self, p_x: Number, p_y: Number) -> Ray {
-        let pixel_center = self.uv_origin + (self.pixel_delta_u * p_x) + (self.pixel_delta_v * p_y);
+    pub fn calc_ray(&self, px: Number, py: Number) -> Ray {
+        let pixel_center = self.uv_origin + (self.pixel_delta_u * px) + (self.pixel_delta_v * py);
         let ray_direction = pixel_center - self.centre;
         Ray::new(pixel_center, ray_direction)
     }

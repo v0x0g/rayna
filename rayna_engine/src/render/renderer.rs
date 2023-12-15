@@ -4,7 +4,7 @@ use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
 use crate::shared::scene::Scene;
 use puffin::{profile_function, profile_scope};
-use rand::random;
+use rand::{random, thread_rng, Rng};
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel};
 use rayna_shared::profiler;
@@ -155,14 +155,14 @@ impl Renderer {
         x: usize,
         y: usize,
     ) -> Pixel {
-        let x = x as Number;
-        let y = y as Number;
+        let px = x as Number;
+        let py = y as Number;
         let sample_count = render_opts.msaa.get();
+        let mut rng = thread_rng();
 
         let accum = (0..sample_count)
             .into_iter()
-            // Add MSAA randomness
-            .map(|_s| [x + random::<Number>(), y + random::<Number>()])
+            .map(|_s| Self::apply_msaa_shift(px, py, &mut rng))
             // Pixel doesn't implement [core::ops::Add], so have to manually do it with slices
             .map(|[px, py]| Self::render_px_once(scene, viewport, px, py).0)
             .fold([0.; 3], |[r1, g1, b1], [r2, g2, b2]| {
@@ -188,6 +188,15 @@ impl Renderer {
         intersect
             .map(|i| Pixel::from(i.normal.as_array().map(|f| (f / 2.) as f32 + 0.5)))
             .unwrap_or_else(|| scene.skybox.sky_colour(ray))
+    }
+
+    /// Calculates a random pixel shift (for MSAA), and applies it to the (pixel) coordinates
+    fn apply_msaa_shift<R: Rng>(px: Number, py: Number, rng: &mut R) -> [Number; 2] {
+        let range = -0.5..=0.5;
+        [
+            px + rng.gen_range(range.clone()),
+            py + rng.gen_range(range.clone()),
+        ]
     }
 }
 

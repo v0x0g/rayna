@@ -209,6 +209,13 @@ impl Renderer {
                     .map(|f| (f / 2.) as f32 + 0.5),
             ),
             RenderMode::PBR => Pixel::from([1., 0., 0.]),
+            RenderMode::Scatter => Pixel::from(
+                intersect
+                    .material
+                    .scatter(intersect)
+                    .as_array()
+                    .map(|f| (f / 2.) as f32 + 0.5),
+            ),
         };
     }
 

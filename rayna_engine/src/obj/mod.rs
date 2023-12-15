@@ -26,7 +26,7 @@ pub trait Object: RtRequirement {
     /// # Return Value
     ///     This should return a (boxed) iterator that iterates over all the (unbounded) intersections,
     ///     unbounded by distance.
-    fn intersect_all(&self, ray: Ray) -> Option<Box<dyn Iterator<Item = Intersection>>>;
+    fn intersect_all(&self, ray: Ray) -> Option<Box<dyn Iterator<Item = Intersection> + '_>>;
 
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info
 }

@@ -1,3 +1,4 @@
+use crate::mat::diffuse::Diffuse;
 use crate::obj::Object;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -15,8 +16,9 @@ impl Object for Sphere {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();
-        let ray_rel_pos = ray_pos - self.pos; // Relative ray pos from sphere centre
-                                              // Quadratic formula variables
+        let ray_rel_pos = ray_pos - self.pos;
+
+        // Quadratic formula variables
         let a = ray_dir.length_squared();
         let half_b = Vector::dot(ray_rel_pos, ray_dir);
         let c = ray_rel_pos.length_squared() - (self.radius * self.radius);
@@ -58,14 +60,15 @@ impl Object for Sphere {
             normal: outward_normal,
             ray_normal,
             ray,
+            material: &Diffuse {},
         });
     }
 
-    fn intersect_all(&self, ray: Ray) -> Option<Box<dyn Iterator<Item = Intersection>>> {
+    fn intersect_all(&self, ray: Ray) -> Option<Box<dyn Iterator<Item = Intersection> + '_>> {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();
-        let ray_rel_pos = ray_pos - self.pos; // Relative ray pos from sphere centre
+        let ray_rel_pos = ray_pos - self.pos;
 
         // Quadratic formula
         let a = ray_dir.length_squared();
@@ -105,6 +108,7 @@ impl Object for Sphere {
                 normal: outward_normal,
                 ray_normal,
                 ray,
+                material: &Diffuse {},
             }
         });
 

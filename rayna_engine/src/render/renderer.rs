@@ -59,9 +59,14 @@ impl Renderer {
 
     /// Helper function for returning a render in case of a failure
     /// (and so we can't make an actual render)
+    /// Probably only called if the viewport couldn't be calculated
     fn render_failed(w: u32, h: u32) -> Render<ImgBuf> {
+        profile_function!();
+
         #[memoize::memoize(Capacity: 8)] // Keep cap small since images can be huge
         fn internal(w: u32, h: u32) -> ImgBuf {
+            profile_function!();
+
             ImgBuf::from_fn(w, h, |x, y| {
                 Pixel::from({
                     if (x + y) % 2 == 0 {
@@ -89,6 +94,9 @@ impl Renderer {
         }
     }
 
+    /// Does the actual rendering
+    ///
+    /// This is only called when the viewport is valid, and therefore an image can be rendered
     fn render_actual(
         &self,
         scene: &Scene,
@@ -138,6 +146,8 @@ impl Renderer {
     }
 
     /// Renders a single pixel in the scene, and returns the colour
+    ///
+    /// Takes into account [`RenderOpts::msaa`]
     fn render_px(
         scene: &Scene,
         render_opts: RenderOpts,
@@ -164,6 +174,7 @@ impl Renderer {
         Pixel::from(mean)
     }
 
+    /// Renders a given pixel a single time
     fn render_px_once(scene: &Scene, viewport: Viewport, x: Number, y: Number) -> Pixel {
         let ray = viewport.calc_ray(x, y);
         let bounds = Bounds::from(0.0..Number::MAX);

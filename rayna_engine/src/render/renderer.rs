@@ -4,6 +4,7 @@ use crate::render::render_opts::{RenderMode, RenderOpts};
 use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
 use crate::shared::scene::Scene;
+use crate::skybox::Skybox;
 use puffin::{profile_function, profile_scope};
 use rand::{thread_rng, Rng};
 use rayna_shared::def::targets::*;

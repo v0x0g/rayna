@@ -4,7 +4,7 @@ use crate::obj::sphere::Sphere;
 use crate::obj::Object;
 use crate::shared::camera::Camera;
 use crate::skybox::default_skybox::DefaultSkybox;
-use crate::skybox::Skybox;
+use crate::skybox::SkyboxType;
 use rayna_shared::def::types::Vector;
 
 #[macro_export]
@@ -20,7 +20,7 @@ macro_rules! scene {
                 objects: vec![$(
                     std::boxed::Box::new($value) as std::boxed::Box<dyn $crate::obj::Object>
                 ),*],
-                skybox: Box::new(DefaultSkybox {})
+                skybox: SkyboxType::Default(DefaultSkybox {})
             }
         };
 }
@@ -30,7 +30,7 @@ pub struct Scene {
     // TODO: Maybe use [std::boxed::ThinBox] instead of [Box], might be better for perf
     pub objects: Vec<Box<dyn Object>>,
     pub camera: Camera,
-    pub skybox: Box<dyn Skybox>,
+    pub skybox: SkyboxType,
 }
 
 impl Scene {

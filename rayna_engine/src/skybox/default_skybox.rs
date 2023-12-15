@@ -3,7 +3,7 @@ use crate::shared::{math, RtRequirement};
 use crate::skybox::Skybox;
 use rayna_shared::def::types::Pixel;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct DefaultSkybox;
 
 impl RtRequirement for DefaultSkybox {}

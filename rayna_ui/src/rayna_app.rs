@@ -117,7 +117,8 @@ impl crate::backend::app::App for RaynaApp {
                 render_opts_dirty |= egui::DragValue::new(&mut msaa).ui(ui).changed();
                 self.render_opts.msaa = NonZeroUsize::new(msaa).unwrap_or(NonZeroUsize::MIN);
 
-                egui::ComboBox::from_label("Mode")
+                ui.label("Mode");
+                egui::ComboBox::from_id_source("mode")
                     .selected_text(<&'static str>::from(self.render_opts.mode))
                     .show_ui(ui, |ui| {
                         for variant in RenderMode::iter() {
@@ -129,6 +130,11 @@ impl crate::backend::app::App for RaynaApp {
                             render_opts_dirty |= resp.changed();
                         }
                     });
+
+                ui.label("Bounces");
+                render_opts_dirty |= egui::DragValue::new(&mut self.render_opts.bounces)
+                    .ui(ui)
+                    .changed();
             });
 
             ui.group(|ui| {

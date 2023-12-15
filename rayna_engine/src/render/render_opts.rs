@@ -14,6 +14,7 @@ pub struct RenderOpts {
     /// How many samples to take for each pixel (MSAA)
     pub msaa: NonZeroUsize,
     pub mode: RenderMode,
+    pub bounces: usize,
 }
 
 #[derive(
@@ -57,6 +58,7 @@ impl Default for RenderOpts {
             height: nonzero!(480_usize),
             msaa: nonzero!(1_usize),
             mode: Default::default(),
+            bounces: 2,
         }
     }
 }

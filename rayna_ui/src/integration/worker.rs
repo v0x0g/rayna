@@ -135,12 +135,15 @@ impl BgWorker {
             // This is massively faster than calling
             // `ColorImage::from_rgba_unmultiplied(size, img_as_rgba.into_vec())`
             // It goes from ~7ms to ~1us
-            let (ptr, len, cap) = img_as_rgba.into_vec().into_raw_parts();
-            let px = Vec::from_raw_parts(ptr as *mut Color32, len / 4, cap / 4);
+            let size = [img.width() as usize, img.height() as usize];
 
-            ColorImage {
-                size: [img.width() as usize, img.height() as usize],
-                pixels: px,
+            if false {
+                let (ptr, len, cap) = img_as_rgba.into_vec().into_raw_parts();
+                let px = Vec::from_raw_parts(ptr as *mut Color32, len / 4, cap / 4);
+
+                ColorImage { size, pixels: px }
+            } else {
+                ColorImage::from_rgba_unmultiplied(size, img_as_rgba.into_raw().as_slice())
             }
         };
 

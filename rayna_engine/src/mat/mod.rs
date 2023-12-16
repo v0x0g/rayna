@@ -1,7 +1,8 @@
 use crate::mat::diffuse::DiffuseMaterial;
 use crate::shared::intersect::Intersection;
+use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
-use rayna_shared::def::types::Vector;
+use rayna_shared::def::types::{Pixel, Vector};
 use std::sync::Arc;
 
 pub mod diffuse;
@@ -20,10 +21,22 @@ pub enum MaterialType {
 impl RtRequirement for MaterialType {}
 
 impl Material for MaterialType {
-    fn scatter(&self, intersection: &Intersection) -> Vector {
+    fn scatter(&self, intersection: &Intersection) -> Option<Vector> {
         match self {
             Self::Diffuse(mat) => mat.scatter(intersection),
             Self::Other(mat) => mat.scatter(intersection),
+        }
+    }
+
+    fn calculate_colour(
+        &self,
+        intersection: &Intersection,
+        future_ray: Ray,
+        future_col: Pixel,
+    ) -> Pixel {
+        match self {
+            Self::Diffuse(mat) => mat.calculate_colour(intersection, future_ray, future_col),
+            Self::Other(mat) => mat.calculate_colour(intersection, future_ray, future_col),
         }
     }
 }
@@ -62,5 +75,34 @@ pub trait Material: RtRequirement {
     ///     }
     /// }
     /// ```
-    fn scatter(&self, intersection: &Intersection) -> Vector;
+    fn scatter(&self, intersection: &Intersection) -> Option<Vector>;
+
+    /// This function does the lighting calculations, based on the light from the future ray
+    ///
+    /// # Arguments
+    ///
+    /// * `intersection`: Information such as where the ray hit, surface normals, etc
+    /// * `future_ray`: The ray for the future bounce that was made
+    /// * `future_col`: The colour information for the future bounce that was made
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use rayna_engine::shared::intersect::Intersection;
+    /// use rayna_engine::shared::ray::Ray;
+    /// use rayna_shared::def::types::Pixel;
+    ///
+    /// fn calculate_colour(intersection: &Intersection, future_ray: Ray, future_col: Pixel) -> Pixel {
+    ///     // Pure reflection
+    ///     return future_col;
+    ///     // Pure absorbtion
+    ///     return Pixel::from([0. ; 3]);
+    /// }
+    /// ```
+    fn calculate_colour(
+        &self,
+        intersection: &Intersection,
+        future_ray: Ray,
+        future_col: Pixel,
+    ) -> Pixel;
 }

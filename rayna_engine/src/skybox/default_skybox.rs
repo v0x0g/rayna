@@ -1,5 +1,6 @@
+use crate::shared::math;
 use crate::shared::ray::Ray;
-use crate::shared::{math, RtRequirement};
+use crate::shared::RtRequirement;
 use crate::skybox::Skybox;
 use rayna_shared::def::types::Pixel;
 

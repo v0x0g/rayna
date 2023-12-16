@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter, Pointer};
 use std::ops::{
     Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
@@ -52,6 +53,19 @@ impl<T: PartialOrd> Bounds<T> {
             Bounds::ToInclusive(r) => r.contains(val),
             Bounds::From(r) => r.contains(val),
             Bounds::Normal(r) => r.contains(val),
+        }
+    }
+}
+
+impl<T: Display> Display for Bounds<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Full(_) => write!(f, ".."),
+            Bounds::Inclusive(r) => write!(f, "{}..={}", r.start(), r.end()),
+            Bounds::To(r) => write!(f, "..{}", r.end),
+            Bounds::ToInclusive(r) => write!(f, "..={}", r.end),
+            Bounds::From(r) => write!(f, "{}..", r.start),
+            Bounds::Normal(r) => write!(f, "{}..{}", r.start, r.end),
         }
     }
 }

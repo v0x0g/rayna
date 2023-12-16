@@ -6,12 +6,14 @@ use crate::shared::camera::Viewport;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::scene::Scene;
+use crate::shared::validate;
 use crate::skybox::Skybox;
 use puffin::{profile_function, profile_scope};
 use rand::{thread_rng, Rng};
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel};
 use rayna_shared::profiler;
+use rayon::prelude::IntoParallelIterator;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use std::time::Duration;
 use thiserror::Error;
@@ -118,6 +120,8 @@ impl Renderer {
         {
             let start = puffin::now_ns();
             num_threads = self.thread_pool.current_num_threads();
+
+            // Split each row into an operation for the thread pool
             self.thread_pool.in_place_scope(|scope| {
                 let rows = img.enumerate_rows_mut();
                 for (_, row) in rows {
@@ -135,6 +139,7 @@ impl Renderer {
                     });
                 }
             });
+
             let end = puffin::now_ns();
             duration = Duration::from_nanos(end.abs_diff(start));
         }
@@ -154,47 +159,52 @@ impl Renderer {
     /// Takes into account [`RenderOpts::msaa`]
     fn render_px(
         scene: &Scene,
-        render_opts: &RenderOpts,
+        opts: &RenderOpts,
         viewport: &Viewport,
         x: usize,
         y: usize,
     ) -> Pixel {
         let px = x as Number;
         let py = y as Number;
-        let sample_count = render_opts.msaa.get();
+        let sample_count = opts.msaa.get();
         let mut rng = thread_rng();
-        let mode = render_opts.mode;
 
         let accum = (0..sample_count)
             .into_iter()
             .map(|_s| Self::apply_msaa_shift(px, py, &mut rng))
+            .map(|[px, py]| Self::render_px_once(scene, viewport, opts, px, py))
+            .inspect(|p| validate::colour(p))
             // Pixel doesn't implement [core::ops::Add], so have to manually do it with slices
-            .map(|[px, py]| Self::render_px_once(scene, viewport, mode, px, py).0)
+            .map(|p| p.0)
             .fold([0.; 3], |[r1, g1, b1], [r2, g2, b2]| {
                 [r1 + r2, g1 + g2, b1 + b2]
             });
 
         let mean = accum.map(|c| c / (sample_count as Channel));
+        let pix = Pixel::from(mean);
 
-        Pixel::from(mean)
+        validate::colour(pix);
+        pix
     }
 
     /// Renders a given pixel a single time
     fn render_px_once(
         scene: &Scene,
         viewport: &Viewport,
-        mode: RenderMode,
+        opts: &RenderOpts,
         x: Number,
         y: Number,
     ) -> Pixel {
         let ray = viewport.calc_ray(x, y);
+        validate::ray(ray);
         let bounds = Bounds::from(0.0..Number::MAX);
 
         let Some(intersect) = Self::calculate_intersection(scene, ray, &bounds) else {
             return scene.skybox.sky_colour(ray);
         };
+        validate::intersection(&intersect, &bounds);
 
-        return match mode {
+        return match opts.mode {
             RenderMode::OutwardNormal => {
                 Pixel::from(intersect.normal.as_array().map(|f| (f / 2.) as f32 + 0.5))
             }
@@ -209,6 +219,7 @@ impl Renderer {
                 intersect
                     .material
                     .scatter(&intersect)
+                    .unwrap_or_default()
                     .as_array()
                     .map(|f| (f / 2.) as f32 + 0.5),
             ),
@@ -227,16 +238,47 @@ impl Renderer {
             // Intersect all and only include hits not misses
             .filter_map(|obj| obj.intersect(ray, bounds.clone()))
             .inspect(|i| validate::intersection(i, bounds))
-            // Choose closes intersect
+            // Choose closest intersect
             .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist))
+    }
+
+    fn ray_colour_recursive(
+        scene: &Scene,
+        ray: Ray,
+        opts: &RenderOpts,
+        bounds: &Bounds<Number>,
+        depth: usize,
+    ) -> Pixel {
+        if depth > opts.bounces {
+            return Pixel::from([0.; 3]);
+        }
+
+        let Some(intersect) = Self::calculate_intersection(scene, ray, bounds) else {
+            return scene.skybox.sky_colour(ray);
+        };
+        validate::intersection(&intersect, bounds);
+
+        let Some(scatter_dir) = intersect.material.scatter(&intersect) else {
+            // No scatter (material absorbed ray)
+            return Pixel::from([0.; 3]);
+        };
+        validate::normal(&scatter_dir);
+        let future_ray = Ray::new(intersect.pos, scatter_dir);
+        validate::ray(&ray);
+
+        let future_col = Self::ray_colour_recursive(scene, future_ray, opts, bounds, depth + 1);
+        validate::colour(&future_col);
+
+        return intersect
+            .material
+            .calculate_colour(&intersect, future_ray, future_col);
     }
 
     /// Calculates a random pixel shift (for MSAA), and applies it to the (pixel) coordinates
     fn apply_msaa_shift<R: Rng>(px: Number, py: Number, rng: &mut R) -> [Number; 2] {
-        let range = -0.5..=0.5;
         [
-            px + rng.gen_range(range.clone()),
-            py + rng.gen_range(range.clone()),
+            px + rng.gen_range(-0.5..=0.5),
+            py + rng.gen_range(-0.5..=0.5),
         ]
     }
 }
@@ -245,12 +287,4 @@ impl Clone for Renderer {
     fn clone(&self) -> Self {
         Self::new().expect("could not clone: couldn't create renderer")
     }
-}
-
-mod validate {
-    use crate::shared::bounds::Bounds;
-    use crate::shared::intersect::Intersection;
-    use rayna_shared::def::types::Number;
-
-    pub(super) fn intersection(i: &Intersection, b: &Bounds<Number>) {}
 }

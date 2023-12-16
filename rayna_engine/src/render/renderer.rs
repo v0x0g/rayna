@@ -59,7 +59,7 @@ impl Renderer {
                 return Self::render_failed(w, h);
             }
         };
-        let bounds = Bounds::from(0.0..Number::MAX);
+        let bounds = Bounds::from(1e-3..Number::MAX);
 
         self.render_actual(scene, render_opts, &viewport, &bounds)
     }

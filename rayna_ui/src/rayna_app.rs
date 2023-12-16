@@ -301,7 +301,7 @@ impl RaynaApp {
 
             match res {
                 Err(err) => {
-                    // warn!(target: UI, ?err)
+                    warn!(target: UI, ?err)
                 }
 
                 Ok(msg) => {

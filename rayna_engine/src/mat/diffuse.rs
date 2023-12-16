@@ -24,8 +24,8 @@ impl Material for DiffuseMaterial {
 
     fn calculate_colour(
         &self,
-        intersection: &Intersection,
-        future_ray: Ray,
+        _intersection: &Intersection,
+        _future_ray: Ray,
         future_col: Pixel,
     ) -> Pixel {
         // Half grey

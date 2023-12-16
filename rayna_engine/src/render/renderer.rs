@@ -13,7 +13,7 @@ use rand::{thread_rng, Rng};
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel};
 use rayna_shared::profiler;
-use rayon::prelude::IntoParallelIterator;
+
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use std::time::Duration;
 use thiserror::Error;

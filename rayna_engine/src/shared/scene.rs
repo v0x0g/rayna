@@ -38,6 +38,32 @@ impl Scene {
         let material = MaterialType::Diffuse(DiffuseMaterial {});
         scene! {
             camera: Camera {
+                look_from: Vector::new(0., 0., 0.),
+                // look_towards: Vector::ZERO,
+                // up_vector: Vector::Y,
+                // focus_dist: 1.,
+                // lens_radius: 0.,
+                // vertical_fov: 90.
+            },
+            objects: [
+                Sphere { // Small, top
+                    pos: Vector::new(0., 0., -1.),
+                    radius: 0.5,
+                    material: material.clone()
+                },
+                Sphere { // Ground
+                    pos: Vector::new(0., -100.5, -1.),
+                    radius: 100.,
+                    material: material.clone()
+                }
+            ]
+        }
+    }
+
+    pub fn balls() -> Self {
+        let material = MaterialType::Diffuse(DiffuseMaterial {});
+        scene! {
+            camera: Camera {
                 look_from: Vector::new(0., 0., 1.),
                 // look_towards: Vector::ZERO,
                 // up_vector: Vector::Y,

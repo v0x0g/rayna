@@ -18,7 +18,8 @@ pub const ULPS: usize = 4;
 pub const RELATIVE: Number = 1e-3;
 
 /// Asserts that an intersection was valid
-#[inline]
+#[inline(always)]
+#[track_caller]
 pub fn intersection(intersect: impl Borrow<Intersection>, bounds: impl Borrow<Bounds<Number>>) {
     debug_assert_only!();
 
@@ -49,37 +50,47 @@ pub fn intersection(intersect: impl Borrow<Intersection>, bounds: impl Borrow<Bo
     normal(intersect.normal);
 }
 
-#[inline]
+#[inline(always)]
+#[track_caller]
 pub fn number(x: impl Borrow<Number>) {
     debug_assert_only!();
 
-    assert!(!x.borrow().is_nan());
+    let x = x.borrow();
+    assert!(!x.is_nan(), "x = {x}");
 }
 
-#[inline]
+#[inline(always)]
+#[track_caller]
 pub fn normal(n: impl Borrow<Vector>) {
     debug_assert_only!();
-
-    vector(n.borrow());
-    assert!(n.borrow().is_normalized());
+    let n = n.borrow();
+    vector(n);
+    assert!(n.is_normalized(), "{n:?} ({:?})", n.length());
 }
 
-#[inline]
+#[inline(always)]
+#[track_caller]
 pub fn vector(v: impl Borrow<Vector>) {
     debug_assert_only!();
-
-    assert!(!v.borrow().is_nan());
+    let v = v.borrow();
+    assert!(!v.is_nan(), "{v:?}");
 }
 
-#[inline]
+#[inline(always)]
+#[track_caller]
 pub fn ray(r: impl Borrow<Ray>) {
     debug_assert_only!();
-
-    normal(r.borrow().dir());
-    vector(r.borrow().dir());
+    let r = r.borrow();
+    normal(r.dir());
 }
 
-#[inline]
+#[inline(always)]
+#[track_caller]
 pub fn colour(c: impl Borrow<Pixel>) {
-    assert!(c.borrow().0.iter().all(|&chan| chan >= 0.0))
+    debug_assert_only!();
+    let c = c.borrow();
+    assert!(
+        c.0.iter().all(|&chan| chan >= 0.0),
+        "channels >= 0 for {c:?}"
+    )
 }

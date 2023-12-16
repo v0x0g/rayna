@@ -16,7 +16,7 @@ impl Material for DiffuseMaterial {
     fn scatter(&self, intersection: &Intersection) -> Option<Vector> {
         // Completely random scatter direction
         // In same hemisphere as normal
-        Some(rng::vector_in_unit_hemisphere(
+        Some(rng::vector_on_unit_hemisphere(
             &mut thread_rng(),
             intersection.normal,
         ))

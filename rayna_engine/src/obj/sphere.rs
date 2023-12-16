@@ -48,7 +48,7 @@ impl Object for Sphere {
         let dist = root;
         let world_point = ray.at(dist);
         let local_point = world_point - self.pos;
-        let outward_normal = local_point.normalize();
+        let outward_normal = local_point / self.radius;
         let ray_pos_inside = Vector::dot(ray_dir, outward_normal) > 0.;
         //This flips the normal if the ray is inside the sphere
         //This forces the normal to always be going against the ray
@@ -93,13 +93,12 @@ impl Object for Sphere {
         //  In this case, return just a single boxed slice
 
         let intersections = [root_1, root_2].map(|k| {
-            let k = k; //How far along the ray we had to go to hit the sphere
-            let world_point = ray.at(k); //Closest point on the surface of the sphere that we hit (world space)
-            let local_point = world_point - self.pos; //Same as above but from the centre of this sphere
-            let outward_normal = local_point.normalize(); //Normal direction at the point. Will always face outwards
-            let inside = Vector::dot(ray_dir, outward_normal) > 0.; //If the ray is 'inside' the sphere
-                                                                    //This flips the normal if the ray is inside the sphere
-                                                                    //This forces the normal to always be going against the ray
+            let world_point = ray.at(k);
+            let local_point = world_point - self.pos;
+            let outward_normal = local_point / self.radius;
+            let inside = Vector::dot(ray_dir, outward_normal) > 0.;
+            //This flips the normal if the ray is inside the sphere
+            //This forces the normal to always be going against the ray
             let ray_normal = if inside {
                 -outward_normal
             } else {

@@ -59,8 +59,9 @@ impl Renderer {
                 return Self::render_failed(w, h);
             }
         };
+        let bounds = Bounds::from(0.0..Number::MAX);
 
-        self.render_actual(scene, render_opts, &viewport)
+        self.render_actual(scene, render_opts, &viewport, &bounds)
     }
 
     /// Helper function for returning a render in case of a failure
@@ -70,6 +71,7 @@ impl Renderer {
         profile_function!();
 
         #[memoize::memoize(Capacity: 8)] // Keep cap small since images can be huge
+        #[cold]
         fn internal(w: u32, h: u32) -> ImgBuf {
             profile_function!();
 
@@ -108,6 +110,7 @@ impl Renderer {
         scene: &Scene,
         render_opts: &RenderOpts,
         viewport: &Viewport,
+        bounds: &Bounds<Number>,
     ) -> Render<ImgBuf> {
         profile_function!();
 
@@ -132,6 +135,7 @@ impl Renderer {
                                 scene,
                                 render_opts,
                                 viewport,
+                                bounds,
                                 x as usize,
                                 y as usize,
                             );
@@ -161,6 +165,7 @@ impl Renderer {
         scene: &Scene,
         opts: &RenderOpts,
         viewport: &Viewport,
+        bounds: &Bounds<Number>,
         x: usize,
         y: usize,
     ) -> Pixel {
@@ -172,7 +177,7 @@ impl Renderer {
         let accum = (0..sample_count)
             .into_iter()
             .map(|_s| Self::apply_msaa_shift(px, py, &mut rng))
-            .map(|[px, py]| Self::render_px_once(scene, viewport, opts, px, py))
+            .map(|[px, py]| Self::render_px_once(scene, viewport, opts, bounds, px, py))
             .inspect(|p| validate::colour(p))
             // Pixel doesn't implement [core::ops::Add], so have to manually do it with slices
             .map(|p| p.0)
@@ -192,17 +197,17 @@ impl Renderer {
         scene: &Scene,
         viewport: &Viewport,
         opts: &RenderOpts,
+        bounds: &Bounds<Number>,
         x: Number,
         y: Number,
     ) -> Pixel {
         let ray = viewport.calc_ray(x, y);
         validate::ray(ray);
-        let bounds = Bounds::from(0.0..Number::MAX);
 
-        let Some(intersect) = Self::calculate_intersection(scene, ray, &bounds) else {
+        let Some(intersect) = Self::calculate_intersection(scene, ray, bounds) else {
             return scene.skybox.sky_colour(ray);
         };
-        validate::intersection(&intersect, &bounds);
+        validate::intersection(&intersect, bounds);
 
         return match opts.mode {
             RenderMode::OutwardNormal => {
@@ -214,7 +219,7 @@ impl Renderer {
                     .as_array()
                     .map(|f| (f / 2.) as f32 + 0.5),
             ),
-            RenderMode::PBR => Pixel::from([1., 0., 0.]),
+            RenderMode::PBR => Self::ray_colour_recursive(scene, ray, opts, bounds, 0),
             RenderMode::Scatter => Pixel::from(
                 intersect
                     .material

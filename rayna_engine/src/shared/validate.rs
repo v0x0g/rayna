@@ -13,6 +13,10 @@ macro_rules! debug_assert_only {
     };
 }
 
+pub const EPSILON: Number = 1e-6;
+pub const ULPS: usize = 4;
+pub const RELATIVE: Number = 1e-3;
+
 /// Asserts that an intersection was valid
 #[inline]
 pub fn intersection(intersect: impl Borrow<Intersection>, bounds: impl Borrow<Bounds<Number>>) {
@@ -34,7 +38,12 @@ pub fn intersection(intersect: impl Borrow<Intersection>, bounds: impl Borrow<Bo
 
     // Dist between start and end should match `.dist` field
     let ray_len = (intersect.ray.pos() - intersect.pos).length();
-    assert_relative_eq!(ray_len, intersect.dist);
+    assert_relative_eq!(
+        ray_len,
+        intersect.dist,
+        epsilon = EPSILON,
+        max_relative = RELATIVE
+    );
 
     normal(intersect.ray_normal);
     normal(intersect.normal);

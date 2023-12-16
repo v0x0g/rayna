@@ -14,12 +14,13 @@ impl RtRequirement for DiffuseMaterial {}
 
 impl Material for DiffuseMaterial {
     fn scatter(&self, intersection: &Intersection) -> Option<Vector> {
-        // Completely random scatter direction
-        // In same hemisphere as normal
-        Some(rng::vector_on_unit_hemisphere(
-            &mut thread_rng(),
-            intersection.normal,
-        ))
+        // Completely random scatter direction, in same hemisphere as normal
+        let rand = rng::vector_on_unit_hemisphere(&mut thread_rng(), intersection.normal);
+
+        // Bias towards the normal so we get a `cos(theta)` distribution (Lambertian scatter)
+        let vec = intersection.normal + rand;
+        // Can normalise safely since we know can never be zero
+        Some(vec.normalize())
     }
 
     fn calculate_colour(

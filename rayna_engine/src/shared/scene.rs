@@ -38,7 +38,7 @@ impl Scene {
         let material = MaterialType::Diffuse(DiffuseMaterial {});
         scene! {
             camera: Camera {
-                look_from: Vector::new(0., 0.5, 0.6),
+                pos: Vector::new(0., 0.5, 0.6),
                 // look_towards: Vector::ZERO,
                 // up_vector: Vector::Y,
                 // focus_dist: 1.,
@@ -64,7 +64,7 @@ impl Scene {
         let material = MaterialType::Diffuse(DiffuseMaterial {});
         scene! {
             camera: Camera {
-                look_from: Vector::new(0., 0., 1.),
+                pos: Vector::new(0., 0., 1.),
                 // look_towards: Vector::ZERO,
                 // up_vector: Vector::Y,
                 // focus_dist: 1.,

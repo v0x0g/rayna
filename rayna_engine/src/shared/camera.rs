@@ -8,7 +8,9 @@ use valuable::Valuable;
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Camera {
     /// Position the camera is located at
-    pub look_from: Vector,
+    pub pos: Vector,
+    // pub up: Vector,
+    // pub forward: Vector,
 }
 
 #[derive(Error, Copy, Clone, Debug, Valuable)]
@@ -27,7 +29,12 @@ impl Camera {
     ///
     /// # Return
     /// Returns a viewport with values according to the current camera state,
-    /// unless the camera is currently in an invalid state
+    /// unless the camera is currently in an invalid state.
+    ///
+    /// # Note
+    /// Once created, the viewport should be used for a single frame only, and is only valid given that the
+    /// state of the renderer system does not mutate.
+    /// This is because it depends on variables such as rendering image dimensions ([RenderOpts.width])
     ///
     /// # Errors
     /// This will return [`Option::Err`] if the `up_vector` points in the same direction as
@@ -56,11 +63,11 @@ impl Camera {
 
         // Calculate the location of the upper left pixel.
         let viewport_upper_left =
-            self.look_from - Vector::new(0., 0., focal_length) - viewport_u / 2. - viewport_v / 2.;
+            self.pos - Vector::new(0., 0., focal_length) - viewport_u / 2. - viewport_v / 2.;
         let uv_origin = viewport_upper_left + (pixel_delta_u + pixel_delta_v) * 0.5;
 
         Ok(Viewport {
-            centre: self.look_from,
+            centre: self.pos,
             pixel_delta_u,
             pixel_delta_v,
             width: img_width,

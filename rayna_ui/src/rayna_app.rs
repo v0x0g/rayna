@@ -4,13 +4,12 @@ use crate::integration::Integration;
 use crate::profiler;
 use crate::ui_val::{UNIT_LEN, UNIT_PX};
 use egui::load::SizedTexture;
-use egui::{Context, RichText, Sense, TextureHandle, TextureOptions, Widget};
+use egui::{Context, RichText, Sense, TextureHandle, TextureOptions, Vec2, Widget};
 use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
 use rayna_engine::shared::scene::Scene;
 use rayna_shared::def::targets::*;
-use rayna_shared::def::types::{Number, Vector};
 use std::num::NonZeroUsize;
 use strum::IntoEnumIterator;
 use tracing::{error, info, trace, warn};
@@ -26,7 +25,7 @@ pub struct RaynaApp {
     /// The amount of space available to display the rendered image in
     /// This is [`egui::Ui::available_size`] inside [egui::CentralPanel]
     /// Used by the "fit canvas to screen" button
-    render_display_size: egui::Vec2,
+    render_display_size: Vec2,
     render_stats: RenderStats,
 
     // The rest
@@ -144,7 +143,7 @@ impl crate::backend::app::App for RaynaApp {
 
                 let cam = &mut self.scene.camera;
                 ui.label("look from");
-                scene_dirty |= ui.vec3_edit(&mut cam.look_from, UNIT_LEN).changed();
+                scene_dirty |= ui.vec3_edit(&mut cam.pos, UNIT_LEN).changed();
                 // ui.label("look towards");
                 // scene_dirty |= ui.vec3_edit(&mut cam.look_towards, UNIT_LEN).changed();
                 // ui.label("upwards");
@@ -189,6 +188,8 @@ impl crate::backend::app::App for RaynaApp {
             });
         });
 
+        let mut delta = Vec2::ZERO;
+
         // Central panel contains the main render window
         // Must come after all other panels
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -207,14 +208,13 @@ impl crate::backend::app::App for RaynaApp {
             })
             .sense(Sense::drag())
             .ui(ui);
-            if img_resp.dragged() {
-                scene_dirty = true;
 
-                let delta = img_resp.drag_delta();
-                // Flip Y for image -> world coords
-                self.scene.camera.look_from +=
-                    Vector::new(delta.x as Number, -(delta.y as Number), 0.0) * 0.001;
-            }
+            delta = img_resp.drag_delta();
+        });
+
+        egui::Window::new("Debug").show(ctx, |ui| {
+            ui.label("delta");
+            ui.label(format!("x: {x}, y: {y}", x = delta.x, y = delta.y));
         });
 
         if render_opts_dirty {

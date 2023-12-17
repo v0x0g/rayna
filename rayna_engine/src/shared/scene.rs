@@ -5,7 +5,7 @@ use crate::obj::Object;
 use crate::shared::camera::Camera;
 use crate::skybox::default_skybox::DefaultSkybox;
 use crate::skybox::SkyboxType;
-use rayna_shared::def::types::{Angle, Point3, Vector3};
+use rayna_shared::def::types::{Angle, Pixel, Point3, Vector3};
 
 #[macro_export]
 macro_rules! scene {
@@ -35,36 +35,39 @@ pub struct Scene {
 
 impl Scene {
     pub fn simple() -> Self {
-        let material = MaterialType::Diffuse(DiffuseMaterial {});
         scene! {
             camera: Camera {
                 pos: Point3::new(0., 0.5, -3.),
                 up: Vector3::Y,
                 fwd: Vector3::Z,
                 v_fov: Angle::from_degrees(45.),
-                // look_towards: Vector::ZERO,
-                // up_vector: Vector::Y,
-                // focus_dist: 1.,
-                // lens_radius: 0.,
-                // vertical_fov: 90.
             },
             objects: [
                 Sphere { // Small, top
                     pos: Point3::new(0., 0., 1.),
                     radius: 0.5,
-                    material: material.clone()
+                    material: MaterialType::Diffuse(DiffuseMaterial {
+                        albedo: Pixel::from([0.8; 3]),
+                        diffusion: 0.0
+                    })
                 },
                 Sphere { // Ground
                     pos: Point3::new(0., -100.5, -1.),
                     radius: 100.,
-                    material: material.clone()
+                    material: MaterialType::Diffuse(DiffuseMaterial {
+                        albedo: Pixel::from([0.5;3]),
+                        diffusion: 1.0
+                    })
                 }
             ]
         }
     }
 
     pub fn balls() -> Self {
-        let material = MaterialType::Diffuse(DiffuseMaterial {});
+        let material = MaterialType::Diffuse(DiffuseMaterial {
+            albedo: Pixel::from([0.9; 3]),
+            diffusion: 0.2,
+        });
         scene! {
             camera: Camera {
                 pos: Point3::new(0., 0., -3.),

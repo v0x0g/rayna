@@ -5,10 +5,13 @@ use crate::shared::rng;
 use crate::shared::RtRequirement;
 use image::Pixel as _;
 use rand::thread_rng;
-use rayna_shared::def::types::{Pixel, Vector3};
+use rayna_shared::def::types::{Number, Pixel, Vector3};
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct DiffuseMaterial {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct DiffuseMaterial {
+    pub diffusion: Number,
+    pub albedo: Pixel,
+}
 
 impl RtRequirement for DiffuseMaterial {}
 
@@ -18,7 +21,7 @@ impl Material for DiffuseMaterial {
         let rand = rng::vector_on_unit_hemisphere(&mut thread_rng(), intersection.normal);
 
         // Bias towards the normal so we get a `cos(theta)` distribution (Lambertian scatter)
-        let vec = intersection.normal + rand;
+        let vec = intersection.normal + (rand * self.diffusion);
         // Can normalise safely since we know can never be zero
         Some(vec.normalize())
     }
@@ -29,7 +32,6 @@ impl Material for DiffuseMaterial {
         _future_ray: Ray,
         future_col: Pixel,
     ) -> Pixel {
-        // Half grey
-        future_col.map(|c| c / 2.)
+        Pixel::map2(&future_col, &self.albedo, |a, b| a * b)
     }
 }

@@ -58,10 +58,20 @@ puffin = { path = "lib/puffin/puffin" }
 puffin_http = { path = "lib/puffin/puffin_http" }
 
 [profile.dev]
-debug = "full"
-lto = "thin"
+debug = "none"
+lto = "off"
 incremental = true
 debug-assertions = true
+opt-level = 1
+codegen-units = 128
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.dbg]
+inherits = "dev"
+debug = "full"
+opt-level = 0
+[profile.dbg.package."*"]
 opt-level = 1
 codegen-units = 32
 

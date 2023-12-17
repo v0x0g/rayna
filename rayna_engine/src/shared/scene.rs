@@ -38,7 +38,7 @@ impl Scene {
         let material = MaterialType::Diffuse(DiffuseMaterial {});
         scene! {
             camera: Camera {
-                pos: Point3::new(0., 0.5, 0.6),
+                pos: Point3::new(0., 0.5, -3.),
                 up: Vector3::Y,
                 fwd: Vector3::Z,
                 v_fov: Angle::from_degrees(45.),
@@ -50,7 +50,7 @@ impl Scene {
             },
             objects: [
                 Sphere { // Small, top
-                    pos: Point3::new(0., 0., -1.),
+                    pos: Point3::new(0., 0., 1.),
                     radius: 0.5,
                     material: material.clone()
                 },
@@ -67,7 +67,7 @@ impl Scene {
         let material = MaterialType::Diffuse(DiffuseMaterial {});
         scene! {
             camera: Camera {
-                pos: Point3::new(0., 0., 1.),
+                pos: Point3::new(0., 0., -3.),
                 up: Vector3::Y,
                 fwd: Vector3::Z,
                 v_fov: Angle::from_degrees(45.),

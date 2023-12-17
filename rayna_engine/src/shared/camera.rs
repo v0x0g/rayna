@@ -1,12 +1,9 @@
 use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
-use glam::{DQuat, Quat, Vec4Swizzles};
+use glam::{DQuat, Vec4Swizzles};
 use glamour::{AsRaw, ToRaw};
-use rayna_shared::def::types::{
-    Angle, Matrix4, Number, Point2, Point3, Transform3, Vector2, Vector3, Vector4,
-};
+use rayna_shared::def::types::{Angle, Matrix4, Number, Point2, Point3, Vector2, Vector3, Vector4};
 use serde::{Deserialize, Serialize};
-use std::ops::Mul;
 use thiserror::Error;
 use valuable::Valuable;
 
@@ -38,8 +35,8 @@ impl Camera {
         self.pos += self.fwd * pos_move.z;
         self.pos += right_dir * pos_move.x;
 
-        let pitch_delta = dir_move.x;
-        let yaw_delta = dir_move.y;
+        let pitch_delta = dir_move.y;
+        let yaw_delta = dir_move.x;
 
         // let pitch_quat = Transform3::from_axis_angle(right_dir, Angle::from_degrees(-pitch_delta));
         // let yaw_quat = Transform3::from_axis_angle(self.up, Angle::from_degrees(-yaw_delta));
@@ -105,10 +102,12 @@ impl Viewport {
     /// (screen-space, top-left to bot-right)
     pub fn calc_ray(&self, px: Number, py: Number) -> Ray {
         let screen_coord = Point2::new(px / self.img_width, py / self.img_height);
+        // 0..1 -> -1..1 so that the camera is centred nicely (centre pixel is coord [0,0])
+        // Also flip Y for image -> uv coords
+        let screen_coord = Point2::new(screen_coord.x * 2. - 1., 1. - (screen_coord.y * 2.));
         let target = self.inv_projection * Vector4::new(screen_coord.x, screen_coord.y, 1., 1.);
         let homogenous = Vector3::from(target.as_raw().xyz() / target.w);
         let ray_dir = self.inv_view.transform_vector(homogenous).normalize();
-        let ray_dir = Vector3::new(ray_dir.x, ray_dir.y, ray_dir.z);
 
         Ray::new(self.pos, ray_dir)
     }

@@ -2,7 +2,7 @@ use crate::ext::UiExt;
 use crate::integration::message::MessageToWorker;
 use crate::integration::Integration;
 use crate::profiler;
-use crate::ui_val::{UNIT_LEN, UNIT_PX};
+use crate::ui_val::{DRAG_SLOW, UNIT_DEG, UNIT_LEN, UNIT_PX};
 use egui::load::SizedTexture;
 use egui::{
     Context, CursorIcon, Key, RichText, Sense, TextureHandle, TextureOptions, Vec2, Widget,
@@ -12,7 +12,7 @@ use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
 use rayna_engine::shared::scene::Scene;
 use rayna_shared::def::targets::*;
-use rayna_shared::def::types::{Number, Vector3};
+use rayna_shared::def::types::{Angle, Number, Vector3};
 use std::num::NonZeroUsize;
 use strum::IntoEnumIterator;
 use tracing::{error, info, trace, warn};
@@ -147,20 +147,25 @@ impl crate::backend::app::App for RaynaApp {
                 let cam = &mut self.scene.camera;
                 ui.label("look from");
                 scene_dirty |= ui.vec3_edit(cam.pos.as_array_mut(), UNIT_LEN).changed();
-                // ui.label("look towards");
-                // scene_dirty |= ui.vec3_edit(&mut cam.look_towards, UNIT_LEN).changed();
-                // ui.label("upwards");
-                // scene_dirty |= ui.vec3_edit(&mut cam.up_vector, "").changed();
-                // ui.label("fov");
-                // scene_dirty |= ui
-                //     .add(
-                //         egui::DragValue::new(&mut cam.vertical_fov)
-                //             .suffix(UNIT_DEG)
-                //             .clamp_range(0.0..=180.0)
-                //             .min_decimals(1)
-                //             .speed(DRAG_SLOW),
-                //     )
-                //     .changed();
+                ui.label("fwd");
+                scene_dirty |= ui.vec3_edit(cam.fwd.as_array_mut(), UNIT_LEN).changed();
+                ui.label("up");
+                scene_dirty |= ui.vec3_edit(cam.up.as_array_mut(), "").changed();
+                ui.label("fov");
+                scene_dirty |= ui
+                    .add(
+                        egui::DragValue::from_get_set(|o| {
+                            if let Some(val) = o {
+                                cam.v_fov = Angle::from_degrees(val);
+                            }
+                            cam.v_fov.to_degrees()
+                        })
+                        .suffix(UNIT_DEG)
+                        .clamp_range(0.0..=180.0)
+                        .min_decimals(1)
+                        .speed(DRAG_SLOW),
+                    )
+                    .changed();
             });
 
             ui.group(|ui| {

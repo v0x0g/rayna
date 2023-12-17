@@ -9,8 +9,8 @@ use valuable::Valuable;
 pub struct Camera {
     /// Position the camera is located at
     pub pos: Vector3,
-    // pub up: Vector,
-    // pub forward: Vector,
+    pub up: Vector3,
+    pub forward: Vector3,
 }
 
 #[derive(Error, Copy, Clone, Debug, Valuable)]

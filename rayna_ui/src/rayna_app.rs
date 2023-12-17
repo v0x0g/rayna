@@ -4,12 +4,13 @@ use crate::integration::Integration;
 use crate::profiler;
 use crate::ui_val::{UNIT_LEN, UNIT_PX};
 use egui::load::SizedTexture;
-use egui::{Context, RichText, Sense, TextureHandle, TextureOptions, Vec2, Widget};
+use egui::{Context, Key, RichText, Sense, TextureHandle, TextureOptions, Vec2, Widget};
 use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
 use rayna_engine::shared::scene::Scene;
 use rayna_shared::def::targets::*;
+use rayna_shared::def::types::{Number, Vector};
 use std::num::NonZeroUsize;
 use strum::IntoEnumIterator;
 use tracing::{error, info, trace, warn};
@@ -188,7 +189,9 @@ impl crate::backend::app::App for RaynaApp {
             });
         });
 
-        let mut delta = Vec2::ZERO;
+        let mut drag_delta = None;
+        let mut input_dirs = Vector::ZERO;
+        let speed = 0.001;
 
         // Central panel contains the main render window
         // Must come after all other panels
@@ -202,6 +205,9 @@ impl crate::backend::app::App for RaynaApp {
                 ui.label(RichText::new("No texture").size(20.0));
                 return;
             };
+
+            // Display the image and get drag inputs
+
             let img_resp = egui::Image::new(SizedTexture {
                 id: tex_handle.id(),
                 size: avail_space,
@@ -209,12 +215,33 @@ impl crate::backend::app::App for RaynaApp {
             .sense(Sense::drag())
             .ui(ui);
 
-            delta = img_resp.drag_delta();
+            if img_resp.dragged() {
+                drag_delta = Some(img_resp.drag_delta());
+            }
+
+            // Now also detect key presses if the mouse button is help
+            if img_resp.is_pointer_button_down_on() {
+                input_dirs.x += ui.input(|i| i.key_down(Key::D)) as u8 as Number;
+                input_dirs.x -= ui.input(|i| i.key_down(Key::A)) as u8 as Number;
+                input_dirs.y += ui.input(|i| i.key_down(Key::Space)) as u8 as Number;
+                input_dirs.y -= ui.input(|i| i.modifiers.ctrl) as u8 as Number;
+                input_dirs.z += ui.input(|i| i.key_down(Key::W)) as u8 as Number;
+                input_dirs.z -= ui.input(|i| i.key_down(Key::S)) as u8 as Number;
+            }
         });
 
         egui::Window::new("Debug").show(ctx, |ui| {
-            ui.label("delta");
-            ui.label(format!("x: {x}, y: {y}", x = delta.x, y = delta.y));
+            ui.label(format!(
+                "dx: {x:+.03}, dy: {y:+.03}",
+                x = drag_delta.unwrap_or_default().x,
+                y = drag_delta.unwrap_or_default().y
+            ));
+            ui.label(format!(
+                "x: {x:+.03}, y: {y:+.03}, z: {z:+.03}",
+                x = input_dirs.x,
+                y = input_dirs.y,
+                z = input_dirs.z,
+            ));
         });
 
         if render_opts_dirty {

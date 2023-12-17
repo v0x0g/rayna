@@ -66,9 +66,7 @@ impl Camera {
 
         Ok(Viewport {
             pos: self.pos,
-            projection,
             inv_projection,
-            view,
             inv_view,
             img_width,
             img_height,
@@ -79,9 +77,7 @@ impl Camera {
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Viewport {
     pos: Point3,
-    projection: Matrix4,
     inv_projection: Matrix4,
-    view: Matrix4,
     inv_view: Matrix4,
     img_width: Number,
     img_height: Number,

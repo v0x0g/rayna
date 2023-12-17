@@ -215,8 +215,8 @@ impl crate::backend::app::App for RaynaApp {
 
             let mut cam_changed = false;
 
-            let mut drag_delta = Vector2::ZERO;
-            let mut input_dirs = Vector3::ZERO;
+            let mut rot_dirs = Vector3::ZERO;
+            let mut move_dirs = Vector3::ZERO;
 
             ctx.set_cursor_icon(if img_resp.is_pointer_button_down_on() {
                 CursorIcon::Grabbing
@@ -229,31 +229,37 @@ impl crate::backend::app::App for RaynaApp {
             if img_resp.dragged() {
                 cam_changed = true;
                 let [x, y] = img_resp.drag_delta().into();
-                drag_delta = Vector2::new(x as Number, y as Number);
-                drag_delta *= ui.input(|i| i.stable_dt as Number) * 0.1;
+                rot_dirs = Vector3::new(x as Number, y as Number, 0.);
+                rot_dirs.z += ui.input(|i| i.key_down(Key::Q)) as u8 as Number;
+                rot_dirs.z -= ui.input(|i| i.key_down(Key::E)) as u8 as Number;
+                rot_dirs *= ui.input(|i| i.stable_dt as Number) * 5.;
             }
 
             // Now also detect key presses if the mouse button is help
             if img_resp.is_pointer_button_down_on() {
                 cam_changed = true;
-                input_dirs.x += ui.input(|i| i.key_down(Key::D)) as u8 as Number;
-                input_dirs.x -= ui.input(|i| i.key_down(Key::A)) as u8 as Number;
-                input_dirs.y += ui.input(|i| i.key_down(Key::Space)) as u8 as Number;
-                input_dirs.y -= ui.input(|i| i.modifiers.ctrl) as u8 as Number;
-                input_dirs.z += ui.input(|i| i.key_down(Key::W)) as u8 as Number;
-                input_dirs.z -= ui.input(|i| i.key_down(Key::S)) as u8 as Number;
-                input_dirs *= ui.input(|i| i.stable_dt as Number) * 0.4;
-                if ui.input(|i| i.modifiers.shift) {
-                    input_dirs *= 5.;
-                };
-                if ui.input(|i| i.modifiers.alt) {
-                    input_dirs /= 5.;
-                };
+                move_dirs.x += ui.input(|i| i.key_down(Key::D)) as u8 as Number;
+                move_dirs.x -= ui.input(|i| i.key_down(Key::A)) as u8 as Number;
+                move_dirs.y += ui.input(|i| i.key_down(Key::Space)) as u8 as Number;
+                move_dirs.y -= ui.input(|i| i.modifiers.ctrl) as u8 as Number;
+                move_dirs.z += ui.input(|i| i.key_down(Key::W)) as u8 as Number;
+                move_dirs.z -= ui.input(|i| i.key_down(Key::S)) as u8 as Number;
+                move_dirs *= ui.input(|i| i.stable_dt as Number) * 0.4;
             }
+
+            let mut speed_mult = 1.;
+            if ui.input(|i| i.modifiers.shift) {
+                speed_mult *= 5.;
+            };
+            if ui.input(|i| i.modifiers.alt) {
+                speed_mult /= 5.;
+            };
 
             if cam_changed {
                 scene_dirty = true;
-                self.scene.camera.apply_motion(input_dirs, drag_delta);
+                self.scene
+                    .camera
+                    .apply_motion(move_dirs * speed_mult, rot_dirs * speed_mult);
             }
         });
 

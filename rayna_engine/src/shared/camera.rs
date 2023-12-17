@@ -2,7 +2,9 @@ use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
 use glam::{DQuat, Vec4Swizzles};
 use glamour::{AsRaw, ToRaw};
-use rayna_shared::def::types::{Angle, Matrix4, Number, Point2, Point3, Vector2, Vector3, Vector4};
+use rayna_shared::def::types::{
+    Angle, Matrix4, Number, Point2, Point3, Transform3, Vector2, Vector3, Vector4,
+};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use valuable::Valuable;
@@ -28,25 +30,22 @@ pub enum CamInvalidError {
 }
 
 impl Camera {
-    pub fn apply_motion(&mut self, pos_move: Vector3, dir_move: Vector2) {
+    pub fn apply_motion(&mut self, position: Vector3, rotate: Vector3) {
         let right_dir = Vector3::cross(self.fwd, self.up).normalize();
 
-        self.pos += self.up * pos_move.y;
-        self.pos += self.fwd * pos_move.z;
-        self.pos += right_dir * pos_move.x;
+        self.pos += self.up * position.y;
+        self.pos += self.fwd * position.z;
+        self.pos += right_dir * position.x;
 
-        let pitch_delta = dir_move.y;
-        let yaw_delta = dir_move.x;
-
-        // let pitch_quat = Transform3::from_axis_angle(right_dir, Angle::from_degrees(-pitch_delta));
-        // let yaw_quat = Transform3::from_axis_angle(self.up, Angle::from_degrees(-yaw_delta));
-        // let rot = pitch_quat * yaw_quat;
-        // self.fwd = (rot.map_vector(self.fwd)).normalize();
-
-        let pitch_quat = DQuat::from_axis_angle(right_dir.to_raw(), -pitch_delta);
-        let yaw_quat = DQuat::from_axis_angle(self.up.to_raw(), -yaw_delta);
-        let rot = DQuat::normalize(pitch_quat * yaw_quat);
-        self.fwd = (rot * self.fwd).normalize();
+        let yaw_quat = Transform3::from_axis_angle(self.up, Angle::from_degrees(-rotate.x));
+        let pitch_quat = Transform3::from_axis_angle(right_dir, Angle::from_degrees(-rotate.y));
+        let roll_quat = Transform3::from_axis_angle(self.fwd, Angle::from_degrees(-rotate.z));
+        self.fwd = (yaw_quat * pitch_quat * roll_quat)
+            .map_vector(self.fwd)
+            .normalize();
+        self.up = (yaw_quat * pitch_quat * roll_quat)
+            .map_vector(self.up)
+            .normalize();
     }
 
     /// A method for creating a camera

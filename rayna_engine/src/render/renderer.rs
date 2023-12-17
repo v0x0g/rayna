@@ -38,7 +38,7 @@ pub enum RendererCreateError {
 impl Renderer {
     pub fn new() -> Result<Self, RendererCreateError> {
         let pool = ThreadPoolBuilder::new()
-            .num_threads(10)
+            .num_threads(1)
             .thread_name(|id| format!("Renderer::worker_{id}"))
             .start_handler(|_id| profiler::worker_profiler_init())
             .build()
@@ -267,7 +267,7 @@ impl Renderer {
             // No scatter (material absorbed ray)
             return Pixel::from([0.; 3]);
         };
-        validate::normal(&scatter_dir);
+        validate::normal3(&scatter_dir);
         let future_ray = Ray::new(intersect.pos, scatter_dir);
         validate::ray(&ray);
 

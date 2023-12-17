@@ -1,9 +1,8 @@
 use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
-use glamour::Swizzle;
-use rayna_shared::def::types::{
-    Angle, Matrix4, Number, Point2, Point3, Transform3, Vector2, Vector3, Vector4,
-};
+use glam::Vec4Swizzles;
+use glamour::AsRaw;
+use rayna_shared::def::types::{Angle, Matrix4, Number, Point2, Point3, Vector2, Vector3, Vector4};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use valuable::Valuable;
@@ -29,38 +28,11 @@ pub enum CamInvalidError {
 }
 
 impl Camera {
-    pub fn new(
-        pos: Vector3,
-        up: Vector3,
-        fwd: Vector3,
-        v_fov: Number,
-        aspect_ratio: Number,
-        focus_dist: Number,
-    ) -> Result<Self, CamInvalidError> {
-        let fwd = fwd
-            .try_normalize()
-            .ok_or(CamInvalidError::ForwardVectorInvalid)?;
-        let up = up.try_normalize().ok_or(CamInvalidError::UpVectorInvalid)?;
-
-        // Create orthogonal unit vectors
-        let u = Vector3::cross(fwd, up);
-        let v = Vector3::cross(fwd, u);
-        let w = Vector3::cross(v, u);
-
-        // TODO: Add a translation matrix on top afterwards
-
-        let theta = glamour::Angle::from_degrees(v_fov);
-        let h = (theta / 2.).tan();
-        let viewport_height = 2. * h;
-        let viewport_width = aspect_ratio * viewport_height;
-
-        let horizontal = u * viewport_width * focus_dist;
-    }
-
     pub fn apply_motion(&mut self, pos_move: Vector3, _dir_move: Vector2) {
-        self.pos += self.u * pos_move.x;
-        self.pos += self.v * pos_move.y;
-        self.pos += self.w * pos_move.z;
+        // self.pos += self.u * pos_move.x;
+        // self.pos += self.v * pos_move.y;
+        // self.pos += self.w * pos_move.z;
+        // TODO
     }
 
     /// A method for creating a camera
@@ -122,9 +94,9 @@ impl Viewport {
     pub fn calc_ray(&self, px: Number, py: Number) -> Ray {
         let screen_coord = Point2::new(px / self.img_width, py / self.img_height);
         let target = self.inv_projection * Vector4::new(screen_coord.x, screen_coord.y, 1., 1.);
-        let ray_dir = Vector3::from(
-            self.inv_view * Vector4::from((target.swizzle3() / target.w).normalize()),
-        );
+        let tmp = target.as_raw().xyz() / target.w;
+        let ray_dir = self.inv_view * Vector4::new(tmp.x, tmp.y, tmp.z, 0.).normalize();
+        let ray_dir = Vector3::new(ray_dir.x, ray_dir.y, ray_dir.z);
 
         Ray::new(self.pos, ray_dir)
     }

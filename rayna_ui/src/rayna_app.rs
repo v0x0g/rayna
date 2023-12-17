@@ -144,7 +144,7 @@ impl crate::backend::app::App for RaynaApp {
 
                 let cam = &mut self.scene.camera;
                 ui.label("look from");
-                scene_dirty |= ui.vec3_edit(&mut cam.pos, UNIT_LEN).changed();
+                scene_dirty |= ui.vec3_edit(cam.pos.as_array_mut(), UNIT_LEN).changed();
                 // ui.label("look towards");
                 // scene_dirty |= ui.vec3_edit(&mut cam.look_towards, UNIT_LEN).changed();
                 // ui.label("upwards");

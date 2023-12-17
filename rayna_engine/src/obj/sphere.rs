@@ -4,11 +4,11 @@ use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
-use rayna_shared::def::types::{Number, Vector3};
+use rayna_shared::def::types::{Number, Point3, Vector3};
 
 #[derive(Clone, Debug)]
 pub struct Sphere {
-    pub pos: Vector3,
+    pub pos: Point3,
     pub radius: Number,
     pub material: MaterialType,
 }

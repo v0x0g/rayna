@@ -12,7 +12,7 @@ use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
 use rayna_engine::shared::scene::Scene;
 use rayna_shared::def::targets::*;
-use rayna_shared::def::types::{Number, Vector2, Vector3};
+use rayna_shared::def::types::{Number, Vector3};
 use std::num::NonZeroUsize;
 use strum::IntoEnumIterator;
 use tracing::{error, info, trace, warn};

@@ -1,9 +1,9 @@
 use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
-use glam::{DQuat, Vec4Swizzles};
-use glamour::{AsRaw, ToRaw};
+use glam::{Vec4Swizzles};
+use glamour::{AsRaw};
 use rayna_shared::def::types::{
-    Angle, Matrix4, Number, Point2, Point3, Transform3, Vector2, Vector3, Vector4,
+    Angle, Matrix4, Number, Point2, Point3, Transform3, Vector3, Vector4,
 };
 use serde::{Deserialize, Serialize};
 use thiserror::Error;

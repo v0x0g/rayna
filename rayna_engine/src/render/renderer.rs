@@ -38,7 +38,7 @@ pub enum RendererCreateError {
 impl Renderer {
     pub fn new() -> Result<Self, RendererCreateError> {
         let pool = ThreadPoolBuilder::new()
-            .num_threads(1)
+            .num_threads(16)
             .thread_name(|id| format!("Renderer::worker_{id}"))
             .start_handler(|_id| profiler::worker_profiler_init())
             .build()

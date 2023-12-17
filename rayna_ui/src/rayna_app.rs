@@ -4,7 +4,9 @@ use crate::integration::Integration;
 use crate::profiler;
 use crate::ui_val::{UNIT_LEN, UNIT_PX};
 use egui::load::SizedTexture;
-use egui::{Context, Key, RichText, Sense, TextureHandle, TextureOptions, Vec2, Widget};
+use egui::{
+    Context, CursorIcon, Key, RichText, Sense, TextureHandle, TextureOptions, Vec2, Widget,
+};
 use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
@@ -189,10 +191,6 @@ impl crate::backend::app::App for RaynaApp {
             });
         });
 
-        let mut drag_delta = Vector2::ZERO;
-        let mut input_dirs = Vector3::ZERO;
-        let speed = 0.001;
-
         // Central panel contains the main render window
         // Must come after all other panels
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -217,10 +215,22 @@ impl crate::backend::app::App for RaynaApp {
 
             let mut cam_changed = false;
 
+            let mut drag_delta = Vector2::ZERO;
+            let mut input_dirs = Vector3::ZERO;
+
+            ctx.set_cursor_icon(if img_resp.is_pointer_button_down_on() {
+                CursorIcon::Grabbing
+            } else if img_resp.hovered() {
+                CursorIcon::Grab
+            } else {
+                CursorIcon::Default
+            });
+
             if img_resp.dragged() {
                 cam_changed = true;
                 let [x, y] = img_resp.drag_delta().into();
                 drag_delta = Vector2::new(x as Number, y as Number);
+                drag_delta *= ui.input(|i| i.stable_dt as Number) * 0.1;
             }
 
             // Now also detect key presses if the mouse button is help
@@ -232,28 +242,19 @@ impl crate::backend::app::App for RaynaApp {
                 input_dirs.y -= ui.input(|i| i.modifiers.ctrl) as u8 as Number;
                 input_dirs.z += ui.input(|i| i.key_down(Key::W)) as u8 as Number;
                 input_dirs.z -= ui.input(|i| i.key_down(Key::S)) as u8 as Number;
+                input_dirs *= ui.input(|i| i.stable_dt as Number) * 0.4;
+                if ui.input(|i| i.modifiers.shift) {
+                    input_dirs *= 5.;
+                };
+                if ui.input(|i| i.modifiers.alt) {
+                    input_dirs /= 5.;
+                };
             }
 
             if cam_changed {
                 scene_dirty = true;
-                self.scene
-                    .camera
-                    .apply_motion(input_dirs * speed, drag_delta * speed);
+                self.scene.camera.apply_motion(input_dirs, drag_delta);
             }
-        });
-
-        egui::Window::new("Debug").show(ctx, |ui| {
-            ui.label(format!(
-                "dx: {x:+.03}, dy: {y:+.03}",
-                x = drag_delta.x,
-                y = drag_delta.y
-            ));
-            ui.label(format!(
-                "x: {x:+.03}, y: {y:+.03}, z: {z:+.03}",
-                x = input_dirs.x,
-                y = input_dirs.y,
-                z = input_dirs.z,
-            ));
         });
 
         if render_opts_dirty {

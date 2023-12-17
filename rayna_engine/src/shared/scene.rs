@@ -40,7 +40,7 @@ impl Scene {
             camera: Camera {
                 pos: Point3::new(0., 0.5, 0.6),
                 up: Vector3::Y,
-                forward: Vector3::Z,
+                fwd: Vector3::Z,
                 v_fov: Angle::from_degrees(45.),
                 // look_towards: Vector::ZERO,
                 // up_vector: Vector::Y,
@@ -69,7 +69,7 @@ impl Scene {
             camera: Camera {
                 pos: Point3::new(0., 0., 1.),
                 up: Vector3::Y,
-                forward: Vector3::Z,
+                fwd: Vector3::Z,
                 v_fov: Angle::from_degrees(45.),
                 // look_towards: Vector::ZERO,
                 // up_vector: Vector::Y,

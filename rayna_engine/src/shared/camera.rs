@@ -1,9 +1,12 @@
 use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
-use glam::Vec4Swizzles;
-use glamour::AsRaw;
-use rayna_shared::def::types::{Angle, Matrix4, Number, Point2, Point3, Vector2, Vector3, Vector4};
+use glam::{DQuat, Quat, Vec4Swizzles};
+use glamour::{AsRaw, ToRaw};
+use rayna_shared::def::types::{
+    Angle, Matrix4, Number, Point2, Point3, Transform3, Vector2, Vector3, Vector4,
+};
 use serde::{Deserialize, Serialize};
+use std::ops::Mul;
 use thiserror::Error;
 use valuable::Valuable;
 
@@ -13,7 +16,7 @@ pub struct Camera {
     pub pos: Point3,
     /// Vertical FOV
     pub v_fov: Angle,
-    pub forward: Vector3,
+    pub fwd: Vector3,
     pub up: Vector3,
 }
 
@@ -28,11 +31,25 @@ pub enum CamInvalidError {
 }
 
 impl Camera {
-    pub fn apply_motion(&mut self, pos_move: Vector3, _dir_move: Vector2) {
-        // self.pos += self.u * pos_move.x;
-        // self.pos += self.v * pos_move.y;
-        // self.pos += self.w * pos_move.z;
-        // TODO
+    pub fn apply_motion(&mut self, pos_move: Vector3, dir_move: Vector2) {
+        let right_dir = Vector3::cross(self.fwd, self.up).normalize();
+
+        self.pos += self.up * pos_move.y;
+        self.pos += self.fwd * pos_move.z;
+        self.pos += right_dir * pos_move.x;
+
+        let pitch_delta = dir_move.x;
+        let yaw_delta = dir_move.y;
+
+        // let pitch_quat = Transform3::from_axis_angle(right_dir, Angle::from_degrees(-pitch_delta));
+        // let yaw_quat = Transform3::from_axis_angle(self.up, Angle::from_degrees(-yaw_delta));
+        // let rot = pitch_quat * yaw_quat;
+        // self.fwd = (rot.map_vector(self.fwd)).normalize();
+
+        let pitch_quat = DQuat::from_axis_angle(right_dir.to_raw(), -pitch_delta);
+        let yaw_quat = DQuat::from_axis_angle(self.up.to_raw(), -yaw_delta);
+        let rot = DQuat::normalize(pitch_quat * yaw_quat);
+        self.fwd = (rot * self.fwd).normalize();
     }
 
     /// A method for creating a camera
@@ -61,7 +78,7 @@ impl Camera {
         let projection = Matrix4::perspective_rh(self.v_fov, aspect_ratio, 0.1, 100.);
         let inv_projection = projection.try_inverse().unwrap();
 
-        let view = Matrix4::look_at_rh(self.pos, self.pos + self.forward, self.up);
+        let view = Matrix4::look_at_rh(self.pos, self.pos + self.fwd, self.up);
         let inv_view = view.try_inverse().unwrap();
 
         Ok(Viewport {

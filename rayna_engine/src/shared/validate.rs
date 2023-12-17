@@ -2,7 +2,7 @@ use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use approx::*;
-use rayna_shared::def::types::{Number, Pixel, Vector};
+use rayna_shared::def::types::{Number, Pixel, Vector3};
 use std::borrow::Borrow;
 
 macro_rules! debug_assert_only {
@@ -61,7 +61,7 @@ pub fn number(x: impl Borrow<Number>) {
 
 #[inline(always)]
 #[track_caller]
-pub fn normal(n: impl Borrow<Vector>) {
+pub fn normal(n: impl Borrow<Vector3>) {
     debug_assert_only!();
     let n = n.borrow();
     vector(n);
@@ -70,7 +70,7 @@ pub fn normal(n: impl Borrow<Vector>) {
 
 #[inline(always)]
 #[track_caller]
-pub fn vector(v: impl Borrow<Vector>) {
+pub fn vector(v: impl Borrow<Vector3>) {
     debug_assert_only!();
     let v = v.borrow();
     assert!(!v.is_nan(), "{v:?}");

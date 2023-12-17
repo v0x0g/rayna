@@ -5,7 +5,7 @@ use crate::shared::rng;
 use crate::shared::RtRequirement;
 use image::Pixel as _;
 use rand::thread_rng;
-use rayna_shared::def::types::{Pixel, Vector};
+use rayna_shared::def::types::{Pixel, Vector3};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct DiffuseMaterial {}
@@ -13,7 +13,7 @@ pub struct DiffuseMaterial {}
 impl RtRequirement for DiffuseMaterial {}
 
 impl Material for DiffuseMaterial {
-    fn scatter(&self, intersection: &Intersection) -> Option<Vector> {
+    fn scatter(&self, intersection: &Intersection) -> Option<Vector3> {
         // Completely random scatter direction, in same hemisphere as normal
         let rand = rng::vector_on_unit_hemisphere(&mut thread_rng(), intersection.normal);
 

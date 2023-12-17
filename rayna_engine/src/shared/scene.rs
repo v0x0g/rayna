@@ -5,7 +5,7 @@ use crate::obj::Object;
 use crate::shared::camera::Camera;
 use crate::skybox::default_skybox::DefaultSkybox;
 use crate::skybox::SkyboxType;
-use rayna_shared::def::types::Vector;
+use rayna_shared::def::types::Vector3;
 
 #[macro_export]
 macro_rules! scene {
@@ -38,7 +38,7 @@ impl Scene {
         let material = MaterialType::Diffuse(DiffuseMaterial {});
         scene! {
             camera: Camera {
-                pos: Vector::new(0., 0.5, 0.6),
+                pos: Vector3::new(0., 0.5, 0.6),
                 // look_towards: Vector::ZERO,
                 // up_vector: Vector::Y,
                 // focus_dist: 1.,
@@ -47,12 +47,12 @@ impl Scene {
             },
             objects: [
                 Sphere { // Small, top
-                    pos: Vector::new(0., 0., -1.),
+                    pos: Vector3::new(0., 0., -1.),
                     radius: 0.5,
                     material: material.clone()
                 },
                 Sphere { // Ground
-                    pos: Vector::new(0., -100.5, -1.),
+                    pos: Vector3::new(0., -100.5, -1.),
                     radius: 100.,
                     material: material.clone()
                 }
@@ -64,7 +64,7 @@ impl Scene {
         let material = MaterialType::Diffuse(DiffuseMaterial {});
         scene! {
             camera: Camera {
-                pos: Vector::new(0., 0., 1.),
+                pos: Vector3::new(0., 0., 1.),
                 // look_towards: Vector::ZERO,
                 // up_vector: Vector::Y,
                 // focus_dist: 1.,
@@ -73,22 +73,22 @@ impl Scene {
             },
             objects: [
                 Sphere { // Left, big
-                    pos: Vector::new(-0.2, 0., 0.),
+                    pos: Vector3::new(-0.2, 0., 0.),
                     radius: 0.25,
                     material: material.clone()
                 },
                 Sphere { // Right, mid
-                    pos: Vector::new(0.2, 0., 0.),
+                    pos: Vector3::new(0.2, 0., 0.),
                     radius: 0.15,
                     material: material.clone()
                 },
                 Sphere { // Small, top
-                    pos: Vector::new(0., 0.5, 0.),
+                    pos: Vector3::new(0., 0.5, 0.),
                     radius: 0.1,
                     material: material.clone()
                 },
                 Sphere { // Ground
-                    pos: Vector::new(0., -100.5, -1.),
+                    pos: Vector3::new(0., -100.5, -1.),
                     radius: 100.,
                     material: material.clone()
                 }

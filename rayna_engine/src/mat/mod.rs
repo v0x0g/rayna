@@ -2,7 +2,7 @@ use crate::mat::diffuse::DiffuseMaterial;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
-use rayna_shared::def::types::{Pixel, Vector};
+use rayna_shared::def::types::{Pixel, Vector3};
 use std::sync::Arc;
 
 pub mod diffuse;
@@ -21,7 +21,7 @@ pub enum MaterialType {
 impl RtRequirement for MaterialType {}
 
 impl Material for MaterialType {
-    fn scatter(&self, intersection: &Intersection) -> Option<Vector> {
+    fn scatter(&self, intersection: &Intersection) -> Option<Vector3> {
         match self {
             Self::Diffuse(mat) => mat.scatter(intersection),
             Self::Other(mat) => mat.scatter(intersection),
@@ -58,9 +58,9 @@ pub trait Material: RtRequirement {
     /// use rand::thread_rng;
     /// use rayna_engine::shared::intersect::Intersection;
     /// use rayna_engine::shared::rng;
-    /// use rayna_shared::def::types::Vector;
+    /// use rayna_shared::def::types::Vector3;
     ///
-    /// fn scatter(intersection: Intersection) -> Vector {
+    /// fn scatter(intersection: Intersection) -> Vector3 {
     ///     let diffuse = false;
     ///     // Diffuse => random
     ///     if diffuse {
@@ -70,12 +70,12 @@ pub trait Material: RtRequirement {
     ///     else {
     ///         let d = intersection.ray.dir();
     ///         let n = intersection.normal;
-    ///         let r = d - n * (2.0 * Vector::dot(d, n));
+    ///         let r = d - n * (2.0 * Vector3::dot(d, n));
     ///         r
     ///     }
     /// }
     /// ```
-    fn scatter(&self, intersection: &Intersection) -> Option<Vector>;
+    fn scatter(&self, intersection: &Intersection) -> Option<Vector3>;
 
     /// This function does the lighting calculations, based on the light from the future ray
     ///

@@ -10,7 +10,7 @@ use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
 use rayna_engine::shared::scene::Scene;
 use rayna_shared::def::targets::*;
-use rayna_shared::def::types::{Number, Vector};
+use rayna_shared::def::types::{Number, Vector2, Vector3};
 use std::num::NonZeroUsize;
 use strum::IntoEnumIterator;
 use tracing::{error, info, trace, warn};
@@ -189,8 +189,8 @@ impl crate::backend::app::App for RaynaApp {
             });
         });
 
-        let mut drag_delta = None;
-        let mut input_dirs = Vector::ZERO;
+        let mut drag_delta = Vector2::ZERO;
+        let mut input_dirs = Vector3::ZERO;
         let speed = 0.001;
 
         // Central panel contains the main render window
@@ -215,12 +215,17 @@ impl crate::backend::app::App for RaynaApp {
             .sense(Sense::drag())
             .ui(ui);
 
+            let mut cam_changed = false;
+
             if img_resp.dragged() {
-                drag_delta = Some(img_resp.drag_delta());
+                cam_changed = true;
+                let [x, y] = img_resp.drag_delta().into();
+                drag_delta = Vector2::new(x as Number, y as Number);
             }
 
             // Now also detect key presses if the mouse button is help
             if img_resp.is_pointer_button_down_on() {
+                cam_changed = true;
                 input_dirs.x += ui.input(|i| i.key_down(Key::D)) as u8 as Number;
                 input_dirs.x -= ui.input(|i| i.key_down(Key::A)) as u8 as Number;
                 input_dirs.y += ui.input(|i| i.key_down(Key::Space)) as u8 as Number;
@@ -228,13 +233,20 @@ impl crate::backend::app::App for RaynaApp {
                 input_dirs.z += ui.input(|i| i.key_down(Key::W)) as u8 as Number;
                 input_dirs.z -= ui.input(|i| i.key_down(Key::S)) as u8 as Number;
             }
+
+            if cam_changed {
+                scene_dirty = true;
+                self.scene
+                    .camera
+                    .apply_motion(input_dirs * speed, drag_delta * speed);
+            }
         });
 
         egui::Window::new("Debug").show(ctx, |ui| {
             ui.label(format!(
                 "dx: {x:+.03}, dy: {y:+.03}",
-                x = drag_delta.unwrap_or_default().x,
-                y = drag_delta.unwrap_or_default().y
+                x = drag_delta.x,
+                y = drag_delta.y
             ));
             ui.label(format!(
                 "x: {x:+.03}, y: {y:+.03}, z: {z:+.03}",

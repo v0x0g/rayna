@@ -1,6 +1,6 @@
 use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
-use rayna_shared::def::types::{Number, Vector};
+use rayna_shared::def::types::{Number, Vector2, Vector3};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use valuable::Valuable;
@@ -8,7 +8,7 @@ use valuable::Valuable;
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Camera {
     /// Position the camera is located at
-    pub pos: Vector,
+    pub pos: Vector3,
     // pub up: Vector,
     // pub forward: Vector,
 }
@@ -25,6 +25,11 @@ pub enum CamInvalidError {
 }
 
 impl Camera {
+    pub fn apply_motion(&mut self, pos_move: Vector3, _dir_move: Vector2) {
+        self.pos += pos_move;
+        // self.
+    }
+
     /// A method for creating a camera
     ///
     /// # Return
@@ -54,8 +59,8 @@ impl Camera {
         let viewport_width = viewport_height * (img_width / img_height);
 
         // Calculate the vectors across the horizontal and down the vertical viewport edges.
-        let viewport_u = Vector::new(viewport_width, 0., 0.);
-        let viewport_v = Vector::new(0., -viewport_height, 0.);
+        let viewport_u = Vector3::new(viewport_width, 0., 0.);
+        let viewport_v = Vector3::new(0., -viewport_height, 0.);
 
         // Calculate the horizontal and vertical delta vectors from pixel to pixel.
         let pixel_delta_u = viewport_u / img_width;
@@ -63,7 +68,7 @@ impl Camera {
 
         // Calculate the location of the upper left pixel.
         let viewport_upper_left =
-            self.pos - Vector::new(0., 0., focal_length) - viewport_u / 2. - viewport_v / 2.;
+            self.pos - Vector3::new(0., 0., focal_length) - viewport_u / 2. - viewport_v / 2.;
         let uv_origin = viewport_upper_left + (pixel_delta_u + pixel_delta_v) * 0.5;
 
         Ok(Viewport {
@@ -80,10 +85,10 @@ impl Camera {
 
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Viewport {
-    centre: Vector,
-    uv_origin: Vector,
-    pixel_delta_u: Vector,
-    pixel_delta_v: Vector,
+    centre: Vector3,
+    uv_origin: Vector3,
+    pixel_delta_u: Vector3,
+    pixel_delta_v: Vector3,
     width: Number,
     height: Number,
     aspect_ratio: Number,

@@ -4,11 +4,11 @@ use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
-use rayna_shared::def::types::{Number, Vector};
+use rayna_shared::def::types::{Number, Vector3};
 
 #[derive(Clone, Debug)]
 pub struct Sphere {
-    pub pos: Vector,
+    pub pos: Vector3,
     pub radius: Number,
     pub material: MaterialType,
 }
@@ -24,7 +24,7 @@ impl Object for Sphere {
 
         // Quadratic formula variables
         let a = ray_dir.length_squared();
-        let half_b = Vector::dot(ray_rel_pos, ray_dir);
+        let half_b = Vector3::dot(ray_rel_pos, ray_dir);
         let c = ray_rel_pos.length_squared() - (self.radius * self.radius);
 
         let discriminant = (half_b * half_b) - (a * c);
@@ -49,7 +49,7 @@ impl Object for Sphere {
         let world_point = ray.at(dist);
         let local_point = world_point - self.pos;
         let outward_normal = local_point / self.radius;
-        let ray_pos_inside = Vector::dot(ray_dir, outward_normal) > 0.;
+        let ray_pos_inside = Vector3::dot(ray_dir, outward_normal) > 0.;
         //This flips the normal if the ray is inside the sphere
         //This forces the normal to always be going against the ray
         let ray_normal = if ray_pos_inside {
@@ -76,7 +76,7 @@ impl Object for Sphere {
 
         // Quadratic formula
         let a = ray_dir.length_squared();
-        let half_b = Vector::dot(ray_rel_pos, ray_dir);
+        let half_b = Vector3::dot(ray_rel_pos, ray_dir);
         let c = ray_rel_pos.length_squared() - (self.radius * self.radius);
         let discriminant = (half_b * half_b) - (a * c);
 
@@ -96,7 +96,7 @@ impl Object for Sphere {
             let world_point = ray.at(k);
             let local_point = world_point - self.pos;
             let outward_normal = local_point / self.radius;
-            let inside = Vector::dot(ray_dir, outward_normal) > 0.;
+            let inside = Vector3::dot(ray_dir, outward_normal) > 0.;
             //This flips the normal if the ray is inside the sphere
             //This forces the normal to always be going against the ray
             let ray_normal = if inside {

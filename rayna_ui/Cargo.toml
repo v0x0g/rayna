@@ -14,6 +14,11 @@ edition = "2021"
 rayna_engine = { path = "../rayna_engine" }
 rayna_shared = { path = "../rayna_shared" }
 
+# Math
+#glam = { workspace = true }
+#glamour = { workspace = true }
+mint = { workspace = true }
+
 # Display/UI
 egui = { workspace = true }
 # Having issues when the "accesskit" feature is enabled, so don't use it here
@@ -21,7 +26,7 @@ eframe = { version = "0.24.1", features = ["glow", "default_fonts", "puffin"], d
 egui-miniquad = { version = "0.14.0", optional = true }
 miniquad = { version = "0.3.12", optional = true }
 
-# Maths
+# Errors
 anyhow = { workspace = true }
 thiserror = { workspace = true }
 

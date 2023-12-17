@@ -58,8 +58,7 @@ impl Camera {
         let img_height = render_opts.height.get() as Number;
         let aspect_ratio = img_width / img_height;
 
-        let projection =
-            Matrix4::perspective_infinite_rh(self.v_fov, aspect_ratio, Number::EPSILON);
+        let projection = Matrix4::perspective_rh(self.v_fov, aspect_ratio, 0.1, 100.);
         let inv_projection = projection.try_inverse().unwrap();
 
         let view = Matrix4::look_at_rh(self.pos, self.pos + self.forward, self.up);
@@ -94,8 +93,8 @@ impl Viewport {
     pub fn calc_ray(&self, px: Number, py: Number) -> Ray {
         let screen_coord = Point2::new(px / self.img_width, py / self.img_height);
         let target = self.inv_projection * Vector4::new(screen_coord.x, screen_coord.y, 1., 1.);
-        let tmp = target.as_raw().xyz() / target.w;
-        let ray_dir = self.inv_view * Vector4::new(tmp.x, tmp.y, tmp.z, 0.).normalize();
+        let homogenous = Vector3::from(target.as_raw().xyz() / target.w);
+        let ray_dir = self.inv_view.transform_vector(homogenous).normalize();
         let ray_dir = Vector3::new(ray_dir.x, ray_dir.y, ray_dir.z);
 
         Ray::new(self.pos, ray_dir)

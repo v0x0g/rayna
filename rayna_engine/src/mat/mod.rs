@@ -1,4 +1,5 @@
 use crate::mat::diffuse::DiffuseMaterial;
+use crate::mat::metal::MetalMaterial;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
@@ -6,7 +7,7 @@ use rayna_shared::def::types::{Pixel, Vector3};
 use std::sync::Arc;
 
 pub mod diffuse;
-mod metal;
+pub mod metal;
 
 /// An optimised implementation of [Material].
 ///
@@ -16,6 +17,7 @@ mod metal;
 #[derive(Clone, Debug)]
 pub enum MaterialType {
     Diffuse(DiffuseMaterial),
+    Metal(MetalMaterial),
     Other(Arc<dyn Material>),
 }
 
@@ -25,6 +27,7 @@ impl Material for MaterialType {
     fn scatter(&self, intersection: &Intersection) -> Option<Vector3> {
         match self {
             Self::Diffuse(mat) => mat.scatter(intersection),
+            Self::Metal(mat) => mat.scatter(intersection),
             Self::Other(mat) => mat.scatter(intersection),
         }
     }
@@ -37,6 +40,7 @@ impl Material for MaterialType {
     ) -> Pixel {
         match self {
             Self::Diffuse(mat) => mat.calculate_colour(intersection, future_ray, future_col),
+            Self::Metal(mat) => mat.calculate_colour(intersection, future_ray, future_col),
             Self::Other(mat) => mat.calculate_colour(intersection, future_ray, future_col),
         }
     }

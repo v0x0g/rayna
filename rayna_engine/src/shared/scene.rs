@@ -1,4 +1,5 @@
 use crate::mat::diffuse::DiffuseMaterial;
+use crate::mat::metal::MetalMaterial;
 use crate::mat::MaterialType;
 use crate::obj::sphere::Sphere;
 use crate::obj::Object;
@@ -46,9 +47,8 @@ impl Scene {
                 Sphere { // Small, top
                     pos: Point3::new(0., 0., 1.),
                     radius: 0.5,
-                    material: MaterialType::Diffuse(DiffuseMaterial {
+                    material: MaterialType::Metal(MetalMaterial {
                         albedo: Pixel::from([0.8; 3]),
-                        diffusion: 0.0
                     })
                 },
                 Sphere { // Ground

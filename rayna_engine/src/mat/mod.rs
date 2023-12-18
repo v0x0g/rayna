@@ -6,6 +6,7 @@ use rayna_shared::def::types::{Pixel, Vector3};
 use std::sync::Arc;
 
 pub mod diffuse;
+mod metal;
 
 /// An optimised implementation of [Material].
 ///

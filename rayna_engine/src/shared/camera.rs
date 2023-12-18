@@ -1,13 +1,15 @@
 use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
-use glam::{Vec4Swizzles};
-use glamour::{AsRaw};
+use glam::Vec4Swizzles;
+use glamour::AsRaw;
 use rayna_shared::def::types::{
     Angle, Matrix4, Number, Point2, Point3, Transform3, Vector3, Vector4,
 };
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use valuable::Valuable;
+
+const UP: Vector3 = Vector3::Y;
 
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Camera {
@@ -16,7 +18,7 @@ pub struct Camera {
     /// Vertical FOV
     pub v_fov: Angle,
     pub fwd: Vector3,
-    pub up: Vector3,
+    pub roll: Angle,
 }
 
 #[derive(Error, Copy, Clone, Debug, Valuable)]
@@ -31,21 +33,16 @@ pub enum CamInvalidError {
 
 impl Camera {
     pub fn apply_motion(&mut self, position: Vector3, rotate: Vector3) {
-        let right_dir = Vector3::cross(self.fwd, self.up).normalize();
+        let right_dir = Vector3::cross(self.fwd, UP).normalize();
 
-        self.pos += self.up * position.y;
+        self.pos += UP * position.y;
         self.pos += self.fwd * position.z;
         self.pos += right_dir * position.x;
 
-        let yaw_quat = Transform3::from_axis_angle(self.up, Angle::from_degrees(-rotate.x));
+        let yaw_quat = Transform3::from_axis_angle(UP, Angle::from_degrees(-rotate.x));
         let pitch_quat = Transform3::from_axis_angle(right_dir, Angle::from_degrees(-rotate.y));
-        let roll_quat = Transform3::from_axis_angle(self.fwd, Angle::from_degrees(-rotate.z));
-        self.fwd = (yaw_quat * pitch_quat * roll_quat)
-            .map_vector(self.fwd)
-            .normalize();
-        self.up = (yaw_quat * pitch_quat * roll_quat)
-            .map_vector(self.up)
-            .normalize();
+        self.roll -= Angle::from_degrees(rotate.z);
+        self.fwd = (yaw_quat * pitch_quat).map_vector(self.fwd).normalize();
     }
 
     /// A method for creating a camera
@@ -74,7 +71,15 @@ impl Camera {
         let projection = Matrix4::perspective_rh(self.v_fov, aspect_ratio, 0.1, 100.);
         let inv_projection = projection.try_inverse().unwrap();
 
-        let view = Matrix4::look_at_rh(self.pos, self.pos + self.fwd, self.up);
+        // Apply the roll transformation
+        let fwd = self
+            .fwd
+            .try_normalize()
+            .ok_or(CamInvalidError::ForwardVectorInvalid)?;
+        let roll_quat = Transform3::from_axis_angle(fwd, self.roll);
+        let up = roll_quat.map_vector(UP);
+
+        let view = Matrix4::look_at_rh(self.pos, self.pos + fwd, up);
         let inv_view = view.try_inverse().unwrap();
 
         Ok(Viewport {

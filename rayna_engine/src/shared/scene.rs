@@ -63,10 +63,10 @@ impl Scene {
         }
     }
 
-    pub fn balls() -> Self {
+    pub fn trio() -> Self {
         let material = MaterialType::Diffuse(DiffuseMaterial {
-            albedo: Pixel::from([0.9; 3]),
-            diffusion: 0.2,
+            albedo: Pixel::from([1.; 3]),
+            diffusion: 0.,
         });
         scene! {
             camera: Camera {
@@ -74,11 +74,6 @@ impl Scene {
                 up: Vector3::Y,
                 fwd: Vector3::Z,
                 v_fov: Angle::from_degrees(45.),
-                // look_towards: Vector::ZERO,
-                // up_vector: Vector::Y,
-                // focus_dist: 1.,
-                // lens_radius: 0.,
-                // vertical_fov: 90.
             },
             objects: [
                 Sphere { // Left, big

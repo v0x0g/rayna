@@ -149,20 +149,6 @@ impl crate::backend::app::App for RaynaApp {
                 scene_dirty |= ui.vec3_edit(cam.pos.as_array_mut(), UNIT_LEN).changed();
                 ui.label("fwd");
                 scene_dirty |= ui.vec3_edit(cam.fwd.as_array_mut(), UNIT_LEN).changed();
-                ui.label("roll");
-                scene_dirty |= ui
-                    .add(
-                        egui::DragValue::from_get_set(|o| {
-                            if let Some(val) = o {
-                                cam.roll = Angle::from_degrees(val % 360.);
-                            }
-                            cam.roll.to_degrees()
-                        })
-                        .suffix(UNIT_DEG)
-                        .min_decimals(1)
-                        .speed(DRAG_SLOW),
-                    )
-                    .changed();
                 ui.label("fov");
                 scene_dirty |= ui
                     .add(

@@ -9,8 +9,6 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use valuable::Valuable;
 
-const UP: Vector3 = Vector3::Y;
-
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Camera {
     /// Position the camera is located at
@@ -18,7 +16,6 @@ pub struct Camera {
     /// Vertical FOV
     pub v_fov: Angle,
     pub fwd: Vector3,
-    pub roll: Angle,
 }
 
 #[derive(Error, Copy, Clone, Debug, Valuable)]
@@ -33,15 +30,15 @@ pub enum CamInvalidError {
 
 impl Camera {
     pub fn apply_motion(&mut self, position: Vector3, rotate: Vector3) {
-        let right_dir = Vector3::cross(self.fwd, UP).normalize();
+        let right_dir = Vector3::cross(self.fwd, Vector3::Y).normalize();
 
-        self.pos += UP * position.y;
+        self.pos += Vector3::Y * position.y;
         self.pos += self.fwd * position.z;
         self.pos += right_dir * position.x;
 
-        let yaw_quat = Transform3::from_axis_angle(UP, Angle::from_degrees(-rotate.x));
+        let yaw_quat = Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(-rotate.x));
         let pitch_quat = Transform3::from_axis_angle(right_dir, Angle::from_degrees(-rotate.y));
-        self.roll -= Angle::from_degrees(rotate.z);
+        // TODO: Implement roll (rotation around `fwd` axis)
         self.fwd = (yaw_quat * pitch_quat).map_vector(self.fwd).normalize();
     }
 
@@ -71,15 +68,7 @@ impl Camera {
         let projection = Matrix4::perspective_rh(self.v_fov, aspect_ratio, 0.1, 100.);
         let inv_projection = projection.try_inverse().unwrap();
 
-        // Apply the roll transformation
-        let fwd = self
-            .fwd
-            .try_normalize()
-            .ok_or(CamInvalidError::ForwardVectorInvalid)?;
-        let roll_quat = Transform3::from_axis_angle(fwd, self.roll);
-        let up = roll_quat.map_vector(UP);
-
-        let view = Matrix4::look_at_rh(self.pos, self.pos + fwd, up);
+        let view = Matrix4::look_at_rh(self.pos, self.pos + self.fwd, Vector3::Y);
         let inv_view = view.try_inverse().unwrap();
 
         Ok(Viewport {

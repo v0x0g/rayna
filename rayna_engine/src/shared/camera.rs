@@ -26,10 +26,13 @@ pub enum CamInvalidError {
     /// The calculated look direction (forward vector) was not valid.
     #[error("the provided `fwd` vector couldn't be normalised (too small)")]
     ForwardVectorInvalid,
+    /// The calculated field-of-view was not valid.
+    #[error("the provided FOV was not valid")]
+    FovInvalid,
 }
 
 impl Camera {
-    pub fn apply_motion(&mut self, position: Vector3, rotate: Vector3) {
+    pub fn apply_motion(&mut self, position: Vector3, rotate: Vector3, fov: Number) {
         let right_dir = Vector3::cross(self.fwd, Vector3::Y).normalize();
 
         self.pos += Vector3::Y * position.y;
@@ -40,6 +43,8 @@ impl Camera {
         let pitch_quat = Transform3::from_axis_angle(right_dir, Angle::from_degrees(-rotate.y));
         // TODO: Implement roll (rotation around `fwd` axis)
         self.fwd = (yaw_quat * pitch_quat).map_vector(self.fwd).normalize();
+
+        self.v_fov += Angle::from_degrees(fov);
     }
 
     /// A method for creating a camera
@@ -65,6 +70,9 @@ impl Camera {
         let img_height = render_opts.height.get() as Number;
         let aspect_ratio = img_width / img_height;
 
+        if self.v_fov.radians == 0. {
+            return Err(CamInvalidError::FovInvalid);
+        }
         let projection = Matrix4::perspective_rh(self.v_fov, aspect_ratio, 0.1, 100.);
         let inv_projection = projection.try_inverse().unwrap();
 

@@ -213,13 +213,14 @@ impl crate::backend::app::App for RaynaApp {
                 id: tex_handle.id(),
                 size: avail_space,
             })
-            .sense(Sense::drag())
+            .sense(Sense::click_and_drag())
             .ui(ui);
 
             let mut cam_changed = false;
 
             let mut rot_dirs = Vector3::ZERO;
             let mut move_dirs = Vector3::ZERO;
+            let mut fov_zoom = 0.;
 
             ctx.set_cursor_icon(if img_resp.is_pointer_button_down_on() {
                 CursorIcon::Grabbing
@@ -250,6 +251,13 @@ impl crate::backend::app::App for RaynaApp {
                 move_dirs *= ui.input(|i| i.stable_dt as Number) * 0.4;
             }
 
+            if img_resp.hovered() {
+                fov_zoom -= ui.input(|i| i.scroll_delta.y as Number);
+                fov_zoom -= 10. * (ui.input(|i| i.zoom_delta() as Number) - 1.);
+                fov_zoom *= 0.05;
+                cam_changed |= (fov_zoom != 0.);
+            }
+
             let mut speed_mult = 1.;
             if ui.input(|i| i.modifiers.shift) {
                 speed_mult *= 5.;
@@ -260,9 +268,11 @@ impl crate::backend::app::App for RaynaApp {
 
             if cam_changed {
                 scene_dirty = true;
-                self.scene
-                    .camera
-                    .apply_motion(move_dirs * speed_mult, rot_dirs * speed_mult);
+                self.scene.camera.apply_motion(
+                    move_dirs * speed_mult,
+                    rot_dirs * speed_mult,
+                    fov_zoom * speed_mult,
+                );
             }
         });
 

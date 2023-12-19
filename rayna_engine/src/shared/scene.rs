@@ -120,17 +120,18 @@ impl Scene {
         objects.push(Box::new(Sphere {
             pos: Point3::new(-1., 0., -1.),
             radius: 0.5,
-            material: MaterialType::Metal(MetalMaterial {
+            material: MaterialType::Dielectric(DielectricMaterial {
                 albedo: [1.; 3].into(),
-                fuzz: 0.3,
+                refractive_index: 1.5,
             }),
         }));
         // Mid
         objects.push(Box::new(Sphere {
             pos: Point3::new(0., 0., -1.),
             radius: 0.5,
-            material: MaterialType::Lambertian(LambertianMaterial {
-                albedo: [0.7, 0.3, 0.3].into(),
+            material: MaterialType::Dielectric(DielectricMaterial {
+                albedo: [1.; 3].into(),
+                refractive_index: 1.5,
             }),
         }));
         // Right

@@ -1,7 +1,7 @@
 use crate::mat::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use crate::shared::{rng, RtRequirement};
+use crate::shared::{math, rng, RtRequirement};
 use image::Pixel as _;
 use rand::thread_rng;
 use rayna_shared::def::types::{Number, Pixel, Vector3};
@@ -16,9 +16,7 @@ impl RtRequirement for MetalMaterial {}
 
 impl Material for MetalMaterial {
     fn scatter(&self, intersection: &Intersection) -> Option<Vector3> {
-        let d = intersection.ray.dir();
-        let n = intersection.ray_normal;
-        let reflected = d - n * (2. * d.dot(n));
+        let reflected = math::reflect(intersection.ray.dir(), intersection.ray_normal);
         let rand = rng::vector_on_unit_sphere(&mut thread_rng());
 
         // Generate some fuzzy reflections by adding a "cloud" of random points

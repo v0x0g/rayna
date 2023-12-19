@@ -6,6 +6,7 @@ use crate::shared::RtRequirement;
 use rayna_shared::def::types::{Pixel, Vector3};
 use std::sync::Arc;
 
+mod dielectric;
 pub mod lambertian;
 pub mod metal;
 

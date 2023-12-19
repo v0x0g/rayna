@@ -1,5 +1,5 @@
-use rayna_shared::def::types::Number;
 use rayna_shared::def::types::Pixel;
+use rayna_shared::def::types::{Number, Vector3};
 
 /// Your standard linear interpolation function
 pub fn lerp(a: Pixel, b: Pixel, t: Number) -> Pixel {
@@ -11,4 +11,9 @@ pub fn lerp(a: Pixel, b: Pixel, t: Number) -> Pixel {
     .as_vec3()
     .to_array()
     .into()
+}
+
+/// Calculates the vector reflection of vector `d` across the surface normal `n`
+pub fn reflect(d: Vector3, n: Vector3) -> Vector3 {
+    d - n * (2. * d.dot(n))
 }

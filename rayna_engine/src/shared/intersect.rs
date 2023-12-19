@@ -21,6 +21,7 @@ pub struct Intersection {
     /// # Invariants
     ///     Must be normalised
     pub ray_normal: Vector3,
+    pub front_face: bool,
     /// Distance along the ray that the intersection occurred
     pub dist: Number,
     #[derivative(PartialEq = "ignore")]

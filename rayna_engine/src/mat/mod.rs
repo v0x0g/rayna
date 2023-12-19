@@ -1,3 +1,4 @@
+use crate::mat::dielectric::DielectricMaterial;
 use crate::mat::lambertian::LambertianMaterial;
 use crate::mat::metal::MetalMaterial;
 use crate::shared::intersect::Intersection;
@@ -6,7 +7,7 @@ use crate::shared::RtRequirement;
 use rayna_shared::def::types::{Pixel, Vector3};
 use std::sync::Arc;
 
-mod dielectric;
+pub mod dielectric;
 pub mod lambertian;
 pub mod metal;
 
@@ -19,6 +20,7 @@ pub mod metal;
 pub enum MaterialType {
     Lambertian(LambertianMaterial),
     Metal(MetalMaterial),
+    Dielectric(DielectricMaterial),
     Other(Arc<dyn Material>),
 }
 
@@ -27,9 +29,10 @@ impl RtRequirement for MaterialType {}
 impl Material for MaterialType {
     fn scatter(&self, ray: &Ray, intersection: &Intersection) -> Option<Vector3> {
         match self {
-            Self::Lambertian(mat) => mat.scatter(ray, intersection),
-            Self::Metal(mat) => mat.scatter(ray, intersection),
-            Self::Other(mat) => mat.scatter(ray, intersection),
+            Self::Lambertian(m) => m.scatter(ray, intersection),
+            Self::Metal(m) => m.scatter(ray, intersection),
+            Self::Dielectric(m) => m.scatter(ray, intersection),
+            Self::Other(m) => m.scatter(ray, intersection),
         }
     }
 
@@ -41,11 +44,10 @@ impl Material for MaterialType {
         future_col: &Pixel,
     ) -> Pixel {
         match self {
-            Self::Lambertian(mat) => {
-                mat.calculate_colour(ray, intersection, future_ray, future_col)
-            }
-            Self::Metal(mat) => mat.calculate_colour(ray, intersection, future_ray, future_col),
-            Self::Other(mat) => mat.calculate_colour(ray, intersection, future_ray, future_col),
+            Self::Lambertian(m) => m.calculate_colour(ray, intersection, future_ray, future_col),
+            Self::Metal(m) => m.calculate_colour(ray, intersection, future_ray, future_col),
+            Self::Dielectric(m) => m.calculate_colour(ray, intersection, future_ray, future_col),
+            Self::Other(m) => m.calculate_colour(ray, intersection, future_ray, future_col),
         }
     }
 }

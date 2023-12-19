@@ -1,3 +1,4 @@
+use crate::mat::dielectric::DielectricMaterial;
 use crate::mat::lambertian::LambertianMaterial;
 use crate::mat::metal::MetalMaterial;
 use crate::mat::MaterialType;
@@ -97,6 +98,58 @@ impl Scene {
         }
     }
 
+    pub fn glass() -> Self {
+        let camera = Camera {
+            pos: Point3::new(0., 0.3, 4.),
+            fwd: Vector3::new(0., 0., -1.).normalize(),
+            v_fov: Angle::from_degrees(45.),
+        };
+
+        let mut objects = Vec::<Box<dyn Object>>::new();
+
+        // Ground
+        objects.push(Box::new(Sphere {
+            pos: Point3::new(0., -100.5, -1.),
+            radius: 100.,
+            material: MaterialType::Lambertian(LambertianMaterial {
+                albedo: [0.8, 0.8, 0.0].into(),
+            }),
+        }));
+
+        // Left
+        objects.push(Box::new(Sphere {
+            pos: Point3::new(-1., 0., -1.),
+            radius: 0.5,
+            material: MaterialType::Metal(MetalMaterial {
+                albedo: [1.; 3].into(),
+                fuzz: 0.,
+            }),
+        }));
+        // Mid
+        objects.push(Box::new(Sphere {
+            pos: Point3::new(0., 0., -1.),
+            radius: 0.5,
+            material: MaterialType::Lambertian(LambertianMaterial {
+                albedo: [0.7, 0.3, 0.3].into(),
+            }),
+        }));
+        // Right
+        objects.push(Box::new(Sphere {
+            pos: Point3::new(1., 0., -1.),
+            radius: 0.5,
+            material: MaterialType::Metal(MetalMaterial {
+                albedo: [0.8, 0.6, 0.2].into(),
+                fuzz: 0.,
+            }),
+        }));
+
+        Scene {
+            camera,
+            objects,
+            skybox: SkyboxType::Default(DefaultSkybox {}),
+        }
+    }
+
     pub fn ballz() -> Self {
         let camera = Camera {
             pos: Point3::new(13., 2., 3.),
@@ -104,23 +157,31 @@ impl Scene {
             v_fov: Angle::from_degrees(20.),
         };
 
-        let objects = Vec::<Box<dyn Object>>::new();
+        let mut objects = Vec::<Box<dyn Object>>::new();
 
-        // objects.push(Box::new(Sphere{
-        //     pos: Point3::new(0., 1., 0.),
-        //     radius: 1.,
-        //     material: MaterialType::Dielectric(DielectricMaterial{refractive_index: 1.5})
-        // }));
-        // objects.push(Box::new(Sphere{
-        //     pos: Point3::new(-4., 1., 0.),
-        //     radius: 1.,
-        //     material: MaterialType::Lambertian(LambertianMaterial {albedo: [0.7, 0.6, 0.5].into()})
-        // }));
-        // objects.push(Box::new(Sphere{
-        //     pos: Point3::new(4., 1., 0.),
-        //     radius: 1.,
-        //     material: MaterialType::Metal(MetalMaterial{albedo: [0.7, 0.6, 0.5].into(), fuzz: 0.})
-        // }));
+        objects.push(Box::new(Sphere {
+            pos: Point3::new(0., 1., 0.),
+            radius: 1.,
+            material: MaterialType::Dielectric(DielectricMaterial {
+                refractive_index: 1.5,
+                albedo: [1.; 3].into(),
+            }),
+        }));
+        objects.push(Box::new(Sphere {
+            pos: Point3::new(-4., 1., 0.),
+            radius: 1.,
+            material: MaterialType::Lambertian(LambertianMaterial {
+                albedo: [0.7, 0.6, 0.5].into(),
+            }),
+        }));
+        objects.push(Box::new(Sphere {
+            pos: Point3::new(4., 1., 0.),
+            radius: 1.,
+            material: MaterialType::Metal(MetalMaterial {
+                albedo: [0.7, 0.6, 0.5].into(),
+                fuzz: 0.,
+            }),
+        }));
 
         Scene {
             camera,

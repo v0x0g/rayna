@@ -63,6 +63,7 @@ impl Object for Sphere {
             dist,
             normal: outward_normal,
             ray_normal,
+            front_face: !ray_pos_inside,
             material: self.material.clone(),
         });
     }
@@ -109,6 +110,7 @@ impl Object for Sphere {
                 dist: k,
                 normal: outward_normal,
                 ray_normal,
+                front_face: !inside,
                 material: self.material.clone(),
             }
         });

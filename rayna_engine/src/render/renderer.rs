@@ -203,13 +203,18 @@ impl Renderer {
     ) -> Pixel {
         let ray = viewport.calc_ray(x, y);
         validate::ray(ray);
+        let mode = opts.mode;
+
+        if mode == RenderMode::PBR {
+            return Self::ray_colour_recursive(scene, &ray, opts, bounds, 0);
+        }
 
         let Some(intersect) = Self::calculate_intersection(scene, &ray, bounds) else {
             return scene.skybox.sky_colour(&ray);
         };
         validate::intersection(ray, &intersect, bounds);
 
-        return match opts.mode {
+        return match mode {
             RenderMode::OutwardNormal => {
                 Pixel::from(intersect.normal.as_array().map(|f| (f / 2.) as f32 + 0.5))
             }
@@ -219,7 +224,7 @@ impl Renderer {
                     .as_array()
                     .map(|f| (f / 2.) as f32 + 0.5),
             ),
-            RenderMode::PBR => Self::ray_colour_recursive(scene, &ray, opts, bounds, 0),
+            RenderMode::PBR => unreachable!("mode == RenderMode::PBR already checked"),
             RenderMode::Scatter => Pixel::from(
                 intersect
                     .material

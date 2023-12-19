@@ -8,22 +8,20 @@ use rand::thread_rng;
 use rayna_shared::def::types::{Number, Pixel, Vector3};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub struct DiffuseMaterial {
-    pub diffusion: Number,
+pub struct LambertianMaterial {
     pub albedo: Pixel,
 }
 
-impl RtRequirement for DiffuseMaterial {}
+impl RtRequirement for LambertianMaterial {}
 
-impl Material for DiffuseMaterial {
+impl Material for LambertianMaterial {
     fn scatter(&self, intersection: &Intersection) -> Option<Vector3> {
         // Completely random scatter direction, in same hemisphere as normal
-        let rand = rng::vector_on_unit_hemisphere(&mut thread_rng(), intersection.normal);
-
+        let rand = rng::vector_in_unit_sphere(&mut thread_rng());
         // Bias towards the normal so we get a `cos(theta)` distribution (Lambertian scatter)
-        let vec = intersection.normal + (rand * self.diffusion);
-        // Can normalise safely since we know can never be zero
-        Some(vec.normalize())
+        let vec = intersection.normal + rand;
+        // Can't necessarily normalise, since maybe `rand + normal == 0`
+        Some(vec.try_normalize().unwrap_or(intersection.normal))
     }
 
     fn calculate_colour(

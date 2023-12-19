@@ -17,13 +17,22 @@ pub fn vector_in_unit_cube_01<R: Rng>(rng: &mut R) -> Vector3 {
     arr.into()
 }
 
-/// Returns a random vector in a unit sphere (`-1..=1`, `length = 1`)
+/// Returns a random vector in a unit sphere (`-1..=1`, `length <= 1`)
 pub fn vector_in_unit_sphere<R: Rng>(rng: &mut R) -> Vector3 {
     loop {
         let v = vector_in_unit_cube(rng);
         if v.length_squared() <= 1. {
             break v;
         }
+    }
+}
+/// Returns a random vector on a unit sphere (`-1..=1`, `length = 1`)
+pub fn vector_on_unit_sphere<R: Rng>(rng: &mut R) -> Vector3 {
+    loop {
+        let Some(vec) = vector_in_unit_sphere(rng).try_normalize() else {
+            continue;
+        };
+        return vec;
     }
 }
 

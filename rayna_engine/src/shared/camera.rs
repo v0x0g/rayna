@@ -15,6 +15,7 @@ pub struct Camera {
     pub pos: Point3,
     /// Vertical FOV
     pub v_fov: Angle,
+    // TODO: DOF
     pub fwd: Vector3,
 }
 

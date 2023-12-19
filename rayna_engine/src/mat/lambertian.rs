@@ -5,7 +5,7 @@ use crate::shared::rng;
 use crate::shared::RtRequirement;
 use image::Pixel as _;
 use rand::thread_rng;
-use rayna_shared::def::types::{Number, Pixel, Vector3};
+use rayna_shared::def::types::{Pixel, Vector3};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct LambertianMaterial {

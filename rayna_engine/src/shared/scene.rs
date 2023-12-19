@@ -48,6 +48,7 @@ impl Scene {
                     radius: 0.5,
                     material: MaterialType::Metal(MetalMaterial {
                         albedo: Pixel::from([0.8; 3]),
+                        fuzz: 1.
                     })
                 },
                 Sphere { // Ground
@@ -55,7 +56,6 @@ impl Scene {
                     radius: 100.,
                     material: MaterialType::Lambertian(LambertianMaterial {
                         albedo: Pixel::from([0.5;3]),
-                        diffusion: 1.0
                     })
                 }
             ]
@@ -65,7 +65,6 @@ impl Scene {
     pub fn trio() -> Self {
         let material = MaterialType::Lambertian(LambertianMaterial {
             albedo: Pixel::from([1.; 3]),
-            diffusion: 0.,
         });
         scene! {
             camera: Camera {
@@ -105,7 +104,7 @@ impl Scene {
             v_fov: Angle::from_degrees(20.),
         };
 
-        let mut objects = Vec::<Box<dyn Object>>::new();
+        let objects = Vec::<Box<dyn Object>>::new();
 
         // objects.push(Box::new(Sphere{
         //     pos: Point3::new(0., 1., 0.),

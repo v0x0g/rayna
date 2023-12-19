@@ -23,7 +23,7 @@ impl Material for MetalMaterial {
 
         // Generate some fuzzy reflections by adding a "cloud" of random points
         // around the reflection (a sphere with `radius=fuzz` centred at `reflected)
-        let vec = reflected + rand;
+        let vec = reflected + (rand * self.fuzz);
         // This might end up scattering beneath the surface of the object, so check here
         return if Vector3::dot(vec, intersection.ray_normal) > 0. {
             // Scatter ok

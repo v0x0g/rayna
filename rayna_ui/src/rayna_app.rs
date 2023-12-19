@@ -255,7 +255,7 @@ impl crate::backend::app::App for RaynaApp {
                 fov_zoom -= ui.input(|i| i.scroll_delta.y as Number);
                 fov_zoom -= 10. * (ui.input(|i| i.zoom_delta() as Number) - 1.);
                 fov_zoom *= 0.05;
-                cam_changed |= (fov_zoom != 0.);
+                cam_changed |= fov_zoom != 0.;
             }
 
             let mut speed_mult = 1.;

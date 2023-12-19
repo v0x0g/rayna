@@ -15,7 +15,7 @@ pub struct LambertianMaterial {
 impl RtRequirement for LambertianMaterial {}
 
 impl Material for LambertianMaterial {
-    fn scatter(&self, intersection: &Intersection) -> Option<Vector3> {
+    fn scatter(&self, _ray: &Ray, intersection: &Intersection) -> Option<Vector3> {
         // Completely random scatter direction, in same hemisphere as normal
         let rand = rng::vector_in_unit_sphere(&mut thread_rng());
         // Bias towards the normal so we get a `cos(theta)` distribution (Lambertian scatter)
@@ -26,9 +26,10 @@ impl Material for LambertianMaterial {
 
     fn calculate_colour(
         &self,
+        _ray: &Ray,
         _intersection: &Intersection,
-        _future_ray: Ray,
-        future_col: Pixel,
+        _future_ray: &Ray,
+        future_col: &Pixel,
     ) -> Pixel {
         Pixel::map2(&future_col, &self.albedo, |a, b| a * b)
     }

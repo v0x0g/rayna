@@ -204,10 +204,10 @@ impl Renderer {
         let ray = viewport.calc_ray(x, y);
         validate::ray(ray);
 
-        let Some(intersect) = Self::calculate_intersection(scene, ray, bounds) else {
-            return scene.skybox.sky_colour(ray);
+        let Some(intersect) = Self::calculate_intersection(scene, &ray, bounds) else {
+            return scene.skybox.sky_colour(&ray);
         };
-        validate::intersection(&intersect, bounds);
+        validate::intersection(ray, &intersect, bounds);
 
         return match opts.mode {
             RenderMode::OutwardNormal => {
@@ -219,11 +219,11 @@ impl Renderer {
                     .as_array()
                     .map(|f| (f / 2.) as f32 + 0.5),
             ),
-            RenderMode::PBR => Self::ray_colour_recursive(scene, ray, opts, bounds, 0),
+            RenderMode::PBR => Self::ray_colour_recursive(scene, &ray, opts, bounds, 0),
             RenderMode::Scatter => Pixel::from(
                 intersect
                     .material
-                    .scatter(&intersect)
+                    .scatter(&ray, &intersect)
                     .unwrap_or_default()
                     .as_array()
                     .map(|f| (f / 2.) as f32 + 0.5),
@@ -234,22 +234,22 @@ impl Renderer {
     /// Calculates the nearest intersection in the scene for the given ray
     fn calculate_intersection(
         scene: &Scene,
-        ray: Ray,
+        ray: &Ray,
         bounds: &Bounds<Number>,
     ) -> Option<Intersection> {
         scene
             .objects
             .iter()
             // Intersect all and only include hits not misses
-            .filter_map(|obj| obj.intersect(ray, bounds.clone()))
-            .inspect(|i| validate::intersection(i, bounds))
+            .filter_map(|obj| obj.intersect(ray, bounds))
+            .inspect(|i| validate::intersection(ray, i, bounds))
             // Choose closest intersect
             .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist))
     }
 
     fn ray_colour_recursive(
         scene: &Scene,
-        ray: Ray,
+        ray: &Ray,
         opts: &RenderOpts,
         bounds: &Bounds<Number>,
         depth: usize,
@@ -261,22 +261,22 @@ impl Renderer {
         let Some(intersect) = Self::calculate_intersection(scene, ray, bounds) else {
             return scene.skybox.sky_colour(ray);
         };
-        validate::intersection(&intersect, bounds);
+        validate::intersection(ray, &intersect, bounds);
 
-        let Some(scatter_dir) = intersect.material.scatter(&intersect) else {
+        let Some(scatter_dir) = intersect.material.scatter(ray, &intersect) else {
             // No scatter (material absorbed ray)
             return Pixel::from([0.; 3]);
         };
         validate::normal3(&scatter_dir);
         let future_ray = Ray::new(intersect.pos, scatter_dir);
-        validate::ray(&ray);
+        validate::ray(future_ray);
 
-        let future_col = Self::ray_colour_recursive(scene, future_ray, opts, bounds, depth + 1);
+        let future_col = Self::ray_colour_recursive(scene, &future_ray, opts, bounds, depth + 1);
         validate::colour(&future_col);
 
         return intersect
             .material
-            .calculate_colour(&intersect, future_ray, future_col);
+            .calculate_colour(&ray, &intersect, &future_ray, &future_col);
     }
 
     /// Calculates a random pixel shift (for MSAA), and applies it to the (pixel) coordinates

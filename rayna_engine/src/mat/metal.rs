@@ -15,8 +15,8 @@ pub struct MetalMaterial {
 impl RtRequirement for MetalMaterial {}
 
 impl Material for MetalMaterial {
-    fn scatter(&self, intersection: &Intersection) -> Option<Vector3> {
-        let reflected = math::reflect(intersection.ray.dir(), intersection.ray_normal);
+    fn scatter(&self, ray: &Ray, intersection: &Intersection) -> Option<Vector3> {
+        let reflected = math::reflect(ray.dir(), intersection.ray_normal);
         let rand = rng::vector_on_unit_sphere(&mut thread_rng());
 
         // Generate some fuzzy reflections by adding a "cloud" of random points
@@ -34,9 +34,10 @@ impl Material for MetalMaterial {
 
     fn calculate_colour(
         &self,
+        _ray: &Ray,
         _intersection: &Intersection,
-        _future_ray: Ray,
-        future_col: Pixel,
+        _future_ray: &Ray,
+        future_col: &Pixel,
     ) -> Pixel {
         Pixel::map2(&future_col, &self.albedo, |a, b| a * b)
     }

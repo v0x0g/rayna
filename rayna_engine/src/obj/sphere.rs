@@ -16,7 +16,7 @@ pub struct Sphere {
 impl RtRequirement for Sphere {}
 
 impl Object for Sphere {
-    fn intersect(&self, ray: Ray, bounds: Bounds<Number>) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();
@@ -63,12 +63,11 @@ impl Object for Sphere {
             dist,
             normal: outward_normal,
             ray_normal,
-            ray,
             material: self.material.clone(),
         });
     }
 
-    fn intersect_all(&self, ray: Ray) -> Option<Box<dyn Iterator<Item = Intersection> + '_>> {
+    fn intersect_all(&self, ray: &Ray) -> Option<Box<dyn Iterator<Item = Intersection> + '_>> {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();
@@ -110,7 +109,6 @@ impl Object for Sphere {
                 dist: k,
                 normal: outward_normal,
                 ray_normal,
-                ray,
                 material: self.material.clone(),
             }
         });

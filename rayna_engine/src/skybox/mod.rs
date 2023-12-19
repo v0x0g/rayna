@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 dyn_clone::clone_trait_object!(Skybox);
 pub trait Skybox: RtRequirement {
-    fn sky_colour(&self, ray: Ray) -> Pixel;
+    fn sky_colour(&self, ray: &Ray) -> Pixel;
 }
 
 #[derive(Clone, Debug)]
@@ -20,7 +20,7 @@ pub enum SkyboxType {
 impl RtRequirement for SkyboxType {}
 
 impl Skybox for SkyboxType {
-    fn sky_colour(&self, ray: Ray) -> Pixel {
+    fn sky_colour(&self, ray: &Ray) -> Pixel {
         match self {
             Self::Default(sky) => sky.sky_colour(ray),
             Self::Other(sky) => sky.sky_colour(ray),

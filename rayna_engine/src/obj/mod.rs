@@ -15,7 +15,7 @@ pub trait Object: RtRequirement {
     ///
     /// # Parameters
     ///     - ray: The
-    fn intersect(&self, ray: Ray, bounds: Bounds<Number>) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         self.intersect_all(ray)?
             .filter(|i| bounds.contains(&i.dist))
             .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist))
@@ -26,7 +26,7 @@ pub trait Object: RtRequirement {
     /// # Return Value
     ///     This should return a (boxed) iterator that iterates over all the (unbounded) intersections,
     ///     unbounded by distance.
-    fn intersect_all(&self, ray: Ray) -> Option<Box<dyn Iterator<Item = Intersection> + '_>>;
+    fn intersect_all(&self, ray: &Ray) -> Option<Box<dyn Iterator<Item = Intersection> + '_>>;
 
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info
 }

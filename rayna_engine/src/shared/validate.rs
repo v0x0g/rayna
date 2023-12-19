@@ -20,15 +20,19 @@ pub const RELATIVE: Number = 1e-3;
 /// Asserts that an intersection was valid
 #[inline(always)]
 #[track_caller]
-pub fn intersection(intersect: impl Borrow<Intersection>, bounds: impl Borrow<Bounds<Number>>) {
+pub fn intersection(
+    ray: impl Borrow<Ray>,
+    intersect: impl Borrow<Intersection>,
+    bounds: impl Borrow<Bounds<Number>>,
+) {
     debug_assert_only!();
 
     let intersect = intersect.borrow();
     let bounds = bounds.borrow();
+    let ray = ray.borrow();
 
     point3(intersect.pos);
     number(intersect.dist);
-    ray(&intersect.ray);
 
     assert!(
         bounds.contains(&intersect.dist),
@@ -38,13 +42,15 @@ pub fn intersection(intersect: impl Borrow<Intersection>, bounds: impl Borrow<Bo
     );
 
     // Dist between start and end should match `.dist` field
-    let ray_len = (intersect.ray.pos() - intersect.pos).length();
+    let ray_len = (ray.pos() - intersect.pos).length();
     assert_relative_eq!(
         ray_len,
         intersect.dist,
         epsilon = EPSILON,
         max_relative = RELATIVE
     );
+
+    // TODO: Ray::at(dist) == intersect.pos
 
     normal3(intersect.ray_normal);
     normal3(intersect.normal);

@@ -25,24 +25,27 @@ pub enum MaterialType {
 impl RtRequirement for MaterialType {}
 
 impl Material for MaterialType {
-    fn scatter(&self, intersection: &Intersection) -> Option<Vector3> {
+    fn scatter(&self, ray: &Ray, intersection: &Intersection) -> Option<Vector3> {
         match self {
-            Self::Lambertian(mat) => mat.scatter(intersection),
-            Self::Metal(mat) => mat.scatter(intersection),
-            Self::Other(mat) => mat.scatter(intersection),
+            Self::Lambertian(mat) => mat.scatter(ray, intersection),
+            Self::Metal(mat) => mat.scatter(ray, intersection),
+            Self::Other(mat) => mat.scatter(ray, intersection),
         }
     }
 
     fn calculate_colour(
         &self,
+        ray: &Ray,
         intersection: &Intersection,
-        future_ray: Ray,
-        future_col: Pixel,
+        future_ray: &Ray,
+        future_col: &Pixel,
     ) -> Pixel {
         match self {
-            Self::Lambertian(mat) => mat.calculate_colour(intersection, future_ray, future_col),
-            Self::Metal(mat) => mat.calculate_colour(intersection, future_ray, future_col),
-            Self::Other(mat) => mat.calculate_colour(intersection, future_ray, future_col),
+            Self::Lambertian(mat) => {
+                mat.calculate_colour(ray, intersection, future_ray, future_col)
+            }
+            Self::Metal(mat) => mat.calculate_colour(ray, intersection, future_ray, future_col),
+            Self::Other(mat) => mat.calculate_colour(ray, intersection, future_ray, future_col),
         }
     }
 }
@@ -55,33 +58,45 @@ pub trait Material: RtRequirement {
     ///
     /// # Arguments
     ///
+    /// * `ray`: The incoming ray that should be scattered
     /// * `intersection`: Information about the intersection we are calculating the scatter for
     ///     Includes surface normals, etc
     ///
     /// # Examples
     ///
     /// ```
-    /// use rand::thread_rng;
-    /// use rayna_engine::shared::intersect::Intersection;
-    /// use rayna_engine::shared::rng;
-    /// use rayna_shared::def::types::Vector3;
-    ///
-    /// fn scatter(intersection: Intersection) -> Vector3 {
-    ///     let diffuse = false;
-    ///     // Diffuse => random
-    ///     if diffuse {
-    ///         rng::vector_in_unit_hemisphere(&mut thread_rng(), intersection.normal)
+    /// # use rand::thread_rng;
+    /// # use rayna_engine::mat::Material;
+    /// # use rayna_engine::shared::intersect::Intersection;
+    /// # use rayna_engine::shared::math::reflect;
+    /// # use rayna_engine::shared::ray::Ray;
+    /// # use rayna_engine::shared::{rng, RtRequirement};
+    /// # use rayna_shared::def::types::{Pixel, Vector3};
+    /// #
+    /// # #[derive(Copy, Clone, Eq, PartialEq, Debug)]
+    /// pub struct Test;
+    /// #
+    /// # impl RtRequirement for Test {}
+    /// #
+    /// impl Material for Test{
+    ///     fn scatter(&self, ray: &Ray, intersection: &Intersection) -> Vector3 {
+    ///         let diffuse = false;
+    ///         // Diffuse => random
+    ///         if diffuse {
+    ///             rng::vector_in_unit_hemisphere(&mut thread_rng(), intersection.normal)
+    ///         }
+    ///         // Reflective => reflect off normal
+    ///         else {
+    ///             let d = ray.dir();
+    ///             let n = intersection.normal;
+    ///             let r = reflect(d, n);
+    ///             r
+    ///         }
     ///     }
-    ///     // Reflective => reflect off normal
-    ///     else {
-    ///         let d = intersection.ray.dir();
-    ///         let n = intersection.normal;
-    ///         let r = d - n * (2.0 * Vector3::dot(d, n));
-    ///         r
-    ///     }
+    /// #   fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel) -> Pixel { todo!() }
     /// }
     /// ```
-    fn scatter(&self, intersection: &Intersection) -> Option<Vector3>;
+    fn scatter(&self, ray: &Ray, intersection: &Intersection) -> Option<Vector3>;
 
     /// This function does the lighting calculations, based on the light from the future ray
     ///
@@ -94,21 +109,34 @@ pub trait Material: RtRequirement {
     /// # Examples
     ///
     /// ```
-    /// use rayna_engine::shared::intersect::Intersection;
-    /// use rayna_engine::shared::ray::Ray;
-    /// use rayna_shared::def::types::Pixel;
-    ///
-    /// fn calculate_colour(intersection: &Intersection, future_ray: Ray, future_col: Pixel) -> Pixel {
-    ///     // Pure reflection
-    ///     return future_col;
-    ///     // Pure absorbtion
-    ///     return Pixel::from([0. ; 3]);
+    /// # use rand::thread_rng;
+    /// # use rayna_engine::mat::Material;
+    /// # use rayna_engine::shared::intersect::Intersection;
+    /// # use rayna_engine::shared::math::reflect;
+    /// # use rayna_engine::shared::ray::Ray;
+    /// # use rayna_engine::shared::{rng, RtRequirement};
+    /// # use rayna_shared::def::types::{Pixel, Vector3};
+    /// #
+    /// # #[derive(Copy, Clone, Eq, PartialEq, Debug)]
+    /// pub struct Test;
+    /// #
+    /// # impl RtRequirement for Test {}
+    /// #
+    /// impl Material for Test{
+    /// #   fn scatter(&self, ray: &Ray, intersection: &Intersection) -> Vector3 { todo!() }
+    ///     fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel) -> Pixel {
+    ///         // Pure reflection
+    ///         return *future_col;
+    ///         // Pure absorbtion
+    ///         return Pixel::from([0. ; 3]);
+    ///     }
     /// }
     /// ```
     fn calculate_colour(
         &self,
+        ray: &Ray,
         intersection: &Intersection,
-        future_ray: Ray,
-        future_col: Pixel,
+        future_ray: &Ray,
+        future_col: &Pixel,
     ) -> Pixel;
 }

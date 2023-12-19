@@ -14,15 +14,16 @@ pub struct DielectricMaterial {
 impl RtRequirement for DielectricMaterial {}
 
 impl Material for DielectricMaterial {
-    fn scatter(&self, intersection: &Intersection) -> Option<Vector3> {
+    fn scatter(&self, _ray: &Ray, _intersection: &Intersection) -> Option<Vector3> {
         todo!()
     }
 
     fn calculate_colour(
         &self,
+        _ray: &Ray,
         _intersection: &Intersection,
-        _future_ray: Ray,
-        future_col: Pixel,
+        _future_ray: &Ray,
+        future_col: &Pixel,
     ) -> Pixel {
         Pixel::map2(&future_col, &self.albedo, |a, b| a * b)
     }

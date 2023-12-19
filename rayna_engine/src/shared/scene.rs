@@ -122,7 +122,7 @@ impl Scene {
             radius: 0.5,
             material: MaterialType::Metal(MetalMaterial {
                 albedo: [1.; 3].into(),
-                fuzz: 0.,
+                fuzz: 0.3,
             }),
         }));
         // Mid
@@ -139,7 +139,7 @@ impl Scene {
             radius: 0.5,
             material: MaterialType::Metal(MetalMaterial {
                 albedo: [0.8, 0.6, 0.2].into(),
-                fuzz: 0.,
+                fuzz: 1.,
             }),
         }));
 

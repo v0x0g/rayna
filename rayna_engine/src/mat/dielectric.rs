@@ -20,14 +20,14 @@ impl Material for DielectricMaterial {
         } else {
             self.refractive_index
         };
-        let cos_theta = Number::min(Vector3::dot(-ray.dir(), intersection.normal), 1.0);
+        let cos_theta = Number::min(Vector3::dot(-ray.dir(), intersection.ray_normal), 1.0);
         let sin_theta = Number::sqrt(1.0 - cos_theta * cos_theta);
 
         let dir = if ir_ratio * sin_theta > 1.0 {
             // Cannot refract, have to reflect
-            math::reflect(ray.dir(), intersection.normal)
+            math::reflect(ray.dir(), intersection.ray_normal)
         } else {
-            math::refract(ray.dir(), intersection.normal, ir_ratio)
+            math::refract(ray.dir(), intersection.ray_normal, ir_ratio)
         };
 
         return Some(dir);

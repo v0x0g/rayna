@@ -59,7 +59,7 @@ impl Default for RenderOpts {
             height: nonzero!(480_usize),
             msaa: nonzero!(1_usize),
             mode: Default::default(),
-            bounces: 2,
+            bounces: 20,
         }
     }
 }

@@ -3,6 +3,8 @@ use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::{math, RtRequirement};
 use image::Pixel as _;
+use num_traits::Pow;
+use rand::{thread_rng, Rng};
 use rayna_shared::def::types::{Number, Pixel, Vector3};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -15,7 +17,7 @@ impl RtRequirement for DielectricMaterial {}
 
 impl Material for DielectricMaterial {
     fn scatter(&self, ray: &Ray, intersection: &Intersection) -> Option<Vector3> {
-        let ir_ratio = if intersection.front_face {
+        let index_ratio = if intersection.front_face {
             1.0 / self.refractive_index
         } else {
             self.refractive_index
@@ -23,11 +25,14 @@ impl Material for DielectricMaterial {
         let cos_theta = Number::min(Vector3::dot(-ray.dir(), intersection.ray_normal), 1.0);
         let sin_theta = Number::sqrt(1.0 - cos_theta * cos_theta);
 
-        let dir = if ir_ratio * sin_theta > 1.0 {
+        let total_internal_reflection = index_ratio * sin_theta > 1.0;
+        let schlick_approx_reflect = Self::reflectance(cos_theta, index_ratio) > thread_rng().gen();
+
+        let dir = if total_internal_reflection || schlick_approx_reflect {
             // Cannot refract, have to reflect
             math::reflect(ray.dir(), intersection.ray_normal)
         } else {
-            math::refract(ray.dir(), intersection.ray_normal, ir_ratio)
+            math::refract(ray.dir(), intersection.ray_normal, index_ratio)
         };
 
         return Some(dir);
@@ -41,5 +46,14 @@ impl Material for DielectricMaterial {
         future_col: &Pixel,
     ) -> Pixel {
         Pixel::map2(&future_col, &self.albedo, |a, b| a * b)
+    }
+}
+
+impl DielectricMaterial {
+    fn reflectance(cosine: Number, ref_idx: Number) -> Number {
+        // Use Schlick's approximation for reflectance.
+        let r0 = (1. - ref_idx) / (1. + ref_idx);
+        let r0_sqr = r0 * r0;
+        return r0_sqr + (1. - r0_sqr) * Number::pow(1. - cosine, 5);
     }
 }

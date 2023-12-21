@@ -9,7 +9,8 @@ use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
 use rayna_engine::shared::scene::Scene;
 use rayna_shared::def::targets::BG_WORKER;
-use rayna_shared::def::types::ImgBuf;
+use rayna_shared::def::types::{Channel, ImgBuf};
+use std::ops::DerefMut;
 use std::thread::JoinHandle;
 use std::time::Duration;
 use tracing::{info, instrument, trace, warn};
@@ -111,40 +112,50 @@ impl BgWorker {
         info!(target: BG_WORKER, "BgWorker thread exit");
     }
 
-    /// Converts the image outputted by the renderer into an egui-appropriate one
-    fn convert_img(img: ImgBuf) -> ColorImage {
+    /// Converts the image outputted by the renderer into an egui-appropriate one.
+    /// Also converts from linear space to SRGB space
+    fn convert_img(mut img: ImgBuf) -> ColorImage {
         profile_function!();
 
         // Got a rendered image, translate to an egui-appropriate one
+
+        {
+            profile_scope!("convert-gamma");
+            const GAMMA: Channel = 2.2;
+            const INV_GAMMA: Channel = 1.0 / GAMMA;
+
+            // Gamma correction is per-channel, not per-pixel
+            // let channels: &mut [Channel] = img.deref_mut();
+            img.deref_mut()
+                .into_iter()
+                .for_each(|c| *c = c.powf(INV_GAMMA));
+        }
 
         let img_as_rgba: RgbaImage = {
             profile_scope!("convert-rgba");
             img.convert()
         };
 
-        let img_as_egui = unsafe {
-            profile_scope!("convert_egui");
+        let img_as_egui = {
+            profile_scope!("convert-egui");
+
+            let size = [img.width() as usize, img.height() as usize];
+
+            // PERFORMANCE:
+            // This is massively faster than calling
+            // `ColorImage::from_rgba_unmultiplied(size, img_as_rgba.into_vec())`
+            // It goes from ~7ms to ~1us
+            // We can do this because we know alpha channel is always 1, so we can skip it
 
             // SAFETY:
             // Color32 is defined as being a `[u8; 4]` internally anyway
             // And we know that RgbaImage stores pixels as [r, g, b, a]
             // So we can safely transmute the vector, because they have the same
             // internal representation and layout
+            let (ptr, len, cap) = img_as_rgba.into_vec().into_raw_parts();
+            let px = unsafe { Vec::from_raw_parts(ptr as *mut Color32, len / 4, cap / 4) };
 
-            // PERFORMANCE:
-            // This is massively faster than calling
-            // `ColorImage::from_rgba_unmultiplied(size, img_as_rgba.into_vec())`
-            // It goes from ~7ms to ~1us
-            let size = [img.width() as usize, img.height() as usize];
-
-            if false {
-                let (ptr, len, cap) = img_as_rgba.into_vec().into_raw_parts();
-                let px = Vec::from_raw_parts(ptr as *mut Color32, len / 4, cap / 4);
-
-                ColorImage { size, pixels: px }
-            } else {
-                ColorImage::from_rgba_unmultiplied(size, img_as_rgba.into_raw().as_slice())
-            }
+            ColorImage { size, pixels: px }
         };
 
         img_as_egui

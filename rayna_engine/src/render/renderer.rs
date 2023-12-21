@@ -15,6 +15,7 @@ use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel};
 use rayna_shared::profiler;
 
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
+use smallvec::SmallVec;
 use std::time::Duration;
 use thiserror::Error;
 use tracing::trace;
@@ -174,16 +175,19 @@ impl Renderer {
         let sample_count = opts.msaa.get();
         let mut rng = thread_rng();
 
-        let accum = (0..sample_count)
+        let samples: SmallVec<[[Channel; 3]; 32]> = (0..sample_count)
             .into_iter()
             .map(|_s| Self::apply_msaa_shift(px, py, &mut rng))
             .map(|[px, py]| Self::render_px_once(scene, viewport, opts, bounds, px, py))
             .inspect(|p| validate::colour(p))
-            // Pixel doesn't implement [core::ops::Add], so have to manually do it with slices
             .map(|p| p.0)
-            .fold([0.; 3], |[r1, g1, b1], [r2, g2, b2]| {
-                [r1 + r2, g1 + g2, b1 + b2]
-            });
+            .collect();
+
+        // Pixel doesn't implement [core::ops::Add], so have to manually do it with slices
+        // TODO: Implement something better than just averaging
+        let accum = samples.iter().fold([0.; 3], |[r1, g1, b1], [r2, g2, b2]| {
+            [r1 + r2, g1 + g2, b1 + b2]
+        });
 
         let mean = accum.map(|c| c / (sample_count as Channel));
         let pix = Pixel::from(mean);

@@ -125,6 +125,14 @@ impl Scene {
                 refractive_index: 1.5,
             }),
         }));
+        objects.push(Box::new(Sphere {
+            pos: Point3::new(-1., 0., -1.),
+            radius: 0.3,
+            material: MaterialType::Dielectric(DielectricMaterial {
+                albedo: [1.; 3].into(),
+                refractive_index: 1.0,
+            }),
+        }));
         // Mid
         objects.push(Box::new(Sphere {
             pos: Point3::new(0., 0., -1.),

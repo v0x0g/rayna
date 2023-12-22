@@ -46,7 +46,7 @@ impl Renderer {
             .map_err(RendererCreateError::from)?;
 
         Ok(Self { thread_pool: pool })
-    }`
+    }
 
     // TODO: Should `render()` be fallible?
     pub fn render(&self, scene: &Scene, render_opts: &RenderOpts) -> Render<ImgBuf> {

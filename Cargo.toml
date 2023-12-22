@@ -59,7 +59,8 @@ puffin = { path = "lib/puffin/puffin" }
 puffin_http = { path = "lib/puffin/puffin_http" }
 
 [profile.dev]
-debug = "none"
+# Default dev profile, fast compile times
+debug = 1
 lto = "off"
 incremental = true
 debug-assertions = true
@@ -69,6 +70,7 @@ codegen-units = 128
 opt-level = 3
 
 [profile.dbg]
+# Only useful for debugging, very slow
 inherits = "dev"
 debug = "full"
 opt-level = 0
@@ -77,6 +79,7 @@ opt-level = 1
 codegen-units = 32
 
 [profile.release]
+# Zooomies in release
 debug = "full"
 lto = "fat"
 opt-level = 3

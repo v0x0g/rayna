@@ -2,6 +2,7 @@ use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
 use glam::Vec4Swizzles;
 use glamour::AsRaw;
+use puffin::profile_function;
 use rayna_shared::def::types::{
     Angle, Matrix4, Number, Point2, Point3, Transform3, Vector3, Vector4,
 };
@@ -34,6 +35,8 @@ pub enum CamInvalidError {
 
 impl Camera {
     pub fn apply_motion(&mut self, position: Vector3, rotate: Vector3, fov: Number) {
+        profile_function!();
+
         let right_dir = Vector3::cross(self.fwd, Vector3::Y).normalize();
 
         self.pos += Vector3::Y * position.y;
@@ -67,6 +70,8 @@ impl Camera {
         &self,
         render_opts: &RenderOpts,
     ) -> Result<Viewport, CamInvalidError> {
+        profile_function!();
+
         let img_width = render_opts.width.get() as Number;
         let img_height = render_opts.height.get() as Number;
         let aspect_ratio = img_width / img_height;

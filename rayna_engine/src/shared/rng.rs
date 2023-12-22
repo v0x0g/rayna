@@ -6,6 +6,23 @@ use rayna_shared::def::types::{Vector2, Vector3};
 // region RNG Pool
 
 // TODO: Thread-safe RNG pool
+pub struct PooledRng<R: Rng> {
+    inner: Box<R>,
+}
+
+impl<R: Rng> Drop for PooledRng<R> {
+    fn drop(&mut self) {
+        // return to pool
+        todo!()
+    }
+}
+
+impl<R: Rng> PooledRng<R> {
+    pub fn get() -> Self {
+        // get from pool
+        todo!()
+    }
+}
 
 // endregion
 

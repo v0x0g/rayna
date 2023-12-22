@@ -82,7 +82,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 /// app calls `new_frame` itself, or lets [egui] do so, as well as the pass-through to
 /// our custom profiler (since egui calls [GlobalProfiler::lock()], which locks the global
 /// profiler, not our own.
-pub static EGUI_CALLS_PUFFIN: bool = true;
+pub static EGUI_CALLS_PUFFIN: bool = false;
 
 profiler! {
     {name: MAIN,    port: 8585},

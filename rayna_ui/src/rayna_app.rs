@@ -164,6 +164,27 @@ impl crate::backend::app::App for RaynaApp {
                         .speed(DRAG_SLOW),
                     )
                     .changed();
+                ui.label("focus dist");
+                scene_dirty |= egui::DragValue::new(&mut cam.focus_dist)
+                    .suffix(UNIT_LEN)
+                    .speed(DRAG_SLOW)
+                    .ui(ui)
+                    .changed();
+                ui.label("defocus angle");
+                scene_dirty |= ui
+                    .add(
+                        egui::DragValue::from_get_set(|o| {
+                            if let Some(val) = o {
+                                cam.defocus_angle = Angle::from_degrees(val);
+                            }
+                            cam.defocus_angle.to_degrees()
+                        })
+                        .suffix(UNIT_DEG)
+                        .clamp_range(0.0..=180.0)
+                        .min_decimals(1)
+                        .speed(DRAG_SLOW),
+                    )
+                    .changed();
             });
 
             ui.group(|ui| {

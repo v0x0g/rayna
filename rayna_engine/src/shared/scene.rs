@@ -42,6 +42,8 @@ impl Scene {
                 pos: Point3::new(0., 0.5, -3.),
                 fwd: Vector3::Z,
                 v_fov: Angle::from_degrees(45.),
+            focus_dist: 3.,
+            defocus_angle: Angle::from_degrees(10.)
             },
             objects: [
                 Sphere { // Small, top
@@ -72,6 +74,8 @@ impl Scene {
                 pos: Point3::new(0., 0., -3.),
                 fwd: Vector3::Z,
                 v_fov: Angle::from_degrees(45.),
+            focus_dist: 3.,
+            defocus_angle: Angle::from_degrees(10.)
             },
             objects: [
                 Sphere { // Left, big
@@ -103,6 +107,8 @@ impl Scene {
             pos: Point3::new(0., 0.3, 4.),
             fwd: Vector3::new(0., 0., -1.).normalize(),
             v_fov: Angle::from_degrees(45.),
+            focus_dist: 3.,
+            defocus_angle: Angle::from_degrees(10.),
         };
 
         let mut objects = Vec::<Box<dyn Object>>::new();
@@ -163,6 +169,8 @@ impl Scene {
             pos: Point3::new(13., 2., 3.),
             fwd: Vector3::new(-13., -2., -3.).normalize(),
             v_fov: Angle::from_degrees(20.),
+            focus_dist: 3.,
+            defocus_angle: Angle::from_degrees(10.),
         };
 
         let mut objects = Vec::<Box<dyn Object>>::new();

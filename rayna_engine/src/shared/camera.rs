@@ -2,7 +2,7 @@ use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
 use crate::shared::rng;
 use puffin::profile_function;
-use rand::{thread_rng, Rng};
+use rand::Rng;
 use rayna_shared::def::types::{Angle, Number, Point3, Transform3, Vector3};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -44,7 +44,7 @@ impl Camera {
         self.pos += right_dir * position.x;
 
         let yaw_quat = Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(-rotate.x));
-        let pitch_quat = Transform3::from_axis_angle(right_dir, Angle::from_degrees(rotate.y));
+        let pitch_quat = Transform3::from_axis_angle(right_dir, Angle::from_degrees(-rotate.y));
         // TODO: Implement roll (rotation around `fwd` axis)
         self.fwd = (yaw_quat * pitch_quat).map_vector(self.fwd).normalize();
 
@@ -75,18 +75,18 @@ impl Camera {
         let img_width = render_opts.width.get() as Number;
         let img_height = render_opts.height.get() as Number;
         let aspect_ratio = img_width / img_height;
-        let focus_dist = self.focus_dist; // Not normally same in real cameras, but in our fake cam it is
+        let focal_length = self.focus_dist; // Not normally same in real cameras, but in our fake cam it is
 
         if self.v_fov.radians == 0. {
             return Err(CamInvalidError::FovInvalid);
         }
         let theta = self.v_fov;
         let h = (theta / 2.).tan();
-        let viewport_height = 2. * h * focus_dist;
+        let viewport_height = 2. * h * focal_length;
         let viewport_width = viewport_height * aspect_ratio;
 
         // Calculate the u,v,w unit basis vectors for the camera coordinate frame.
-        let w = self
+        let w = -self
             .fwd
             .try_normalize()
             .ok_or(CamInvalidError::ForwardVectorInvalid)?;
@@ -105,13 +105,14 @@ impl Camera {
 
         // Calculate the location of the upper left pixel.
         let viewport_upper_left =
-            self.pos - (w * focus_dist) - (viewport_u / 2.) - (viewport_v / 2.);
+            self.pos - (w * focal_length) - (viewport_u / 2.) - (viewport_v / 2.);
         let pixel_0_0_pos = viewport_upper_left + (pixel_delta_u + pixel_delta_v) * 0.5;
 
         // Calculate the camera defocus disk basis vectors.
-        let defocus_radius = focus_dist * (self.defocus_angle / 2.).tan();
+        let defocus_radius = focal_length * (self.defocus_angle / 2.).tan();
         let defocus_disk_u = u * defocus_radius;
         let defocus_disk_v = v * defocus_radius;
+
         Ok(Viewport {
             pos: self.pos,
             pixel_0_0_pos,
@@ -134,28 +135,22 @@ pub struct Viewport {
 }
 
 impl Viewport {
-    fn defocus_disk_sample(&self, rng: &mut impl Rng) -> Point3 {
-        // Returns a random point in the camera defocus disk.
-        let p = rng::vector_in_unit_circle(rng);
-        return self.pos + (self.defocus_disk_u * p.x) + (self.defocus_disk_v * p.y);
-    }
-
     /// Calculates the view ray for a given pixel at the coords `(px, py)`
     /// (screen-space, top-left to bot-right)
     ///
     /// # Note
     /// The values `px` and `py` should already have an appropriate pixel shift (+-0.5) applied,
     /// if MSAA is desired
-    pub fn calc_ray(&self, px: Number, py: Number) -> Ray {
-        // Get a randomly-sampled camera ray for the pixel at location i,j, originating from
-        // the camera defocus disk.
-
-        // Pixel position, taking into account randomness
+    pub fn calc_ray(&self, px: Number, py: Number, rng: &mut impl Rng) -> Ray {
+        // Pixel position
         let pixel_sample =
             self.pixel_0_0_pos + (self.pixel_delta_u * px) + (self.pixel_delta_v * py);
 
         // Ray starts off on the focus disk, and then goes through the pixel position
-        let ray_pos = self.defocus_disk_sample(&mut thread_rng());
+        let defocus_rand = rng::vector_in_unit_circle(rng);
+        let ray_pos = self.pos
+            + (self.defocus_disk_u * defocus_rand.x)
+            + (self.defocus_disk_v * defocus_rand.y);
         let ray_dir = pixel_sample - ray_pos;
 
         return Ray::new(ray_pos, ray_dir);

@@ -46,7 +46,7 @@ impl Renderer {
             .map_err(RendererCreateError::from)?;
 
         Ok(Self { thread_pool: pool })
-    }
+    }`
 
     // TODO: Should `render()` be fallible?
     pub fn render(&self, scene: &Scene, render_opts: &RenderOpts) -> Render<ImgBuf> {
@@ -131,6 +131,10 @@ impl Renderer {
                 for (_, row) in rows {
                     scope.spawn(|_| {
                         profile_scope!("inner");
+                        // Cache random so we don't call `thread_rng()` in hot paths
+                        let mut rng_1 = thread_rng().clone();
+                        let mut rng_2 = thread_rng().clone();
+
                         for (x, y, pix) in row {
                             *pix = Self::render_px(
                                 scene,
@@ -139,6 +143,8 @@ impl Renderer {
                                 bounds,
                                 x as usize,
                                 y as usize,
+                                &mut rng_1,
+                                &mut rng_2,
                             );
                         }
                     });
@@ -169,16 +175,17 @@ impl Renderer {
         bounds: &Bounds<Number>,
         x: usize,
         y: usize,
+        rng_1: &mut impl Rng,
+        rng_2: &mut impl Rng,
     ) -> Pixel {
         let px = x as Number;
         let py = y as Number;
         let sample_count = opts.msaa.get();
-        let mut rng = thread_rng();
 
         let samples: SmallVec<[[Channel; 3]; 32]> = (0..sample_count)
             .into_iter()
-            .map(|_s| Self::apply_msaa_shift(px, py, &mut rng))
-            .map(|[px, py]| Self::render_px_once(scene, viewport, opts, bounds, px, py))
+            .map(|_s| Self::apply_msaa_shift(px, py, rng_1))
+            .map(|[px, py]| Self::render_px_once(scene, viewport, opts, bounds, px, py, rng_2))
             .inspect(|p| validate::colour(p))
             .map(|p| p.0)
             .collect();
@@ -204,8 +211,9 @@ impl Renderer {
         bounds: &Bounds<Number>,
         x: Number,
         y: Number,
+        rng: &mut impl Rng,
     ) -> Pixel {
-        let ray = viewport.calc_ray(x, y);
+        let ray = viewport.calc_ray(x, y, rng);
         validate::ray(ray);
         let mode = opts.mode;
 
@@ -289,7 +297,7 @@ impl Renderer {
     }
 
     /// Calculates a random pixel shift (for MSAA), and applies it to the (pixel) coordinates
-    fn apply_msaa_shift<R: Rng>(px: Number, py: Number, rng: &mut R) -> [Number; 2] {
+    fn apply_msaa_shift(px: Number, py: Number, rng: &mut impl Rng) -> [Number; 2] {
         [
             px + rng.gen_range(-0.5..=0.5),
             py + rng.gen_range(-0.5..=0.5),

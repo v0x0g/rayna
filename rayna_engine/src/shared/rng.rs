@@ -3,6 +3,12 @@
 use rand::Rng;
 use rayna_shared::def::types::{Vector2, Vector3};
 
+// region RNG Pool
+
+// TODO: Thread-safe RNG pool
+
+// endregion
+
 // region 3D
 
 /// Returns a random vector in a unit cube (-1..=1)

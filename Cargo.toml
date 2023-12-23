@@ -60,7 +60,7 @@ puffin_http = { path = "lib/puffin/puffin_http" }
 
 [profile.dev]
 # Default dev profile, fast compile times
-debug = 1
+debug = "full"
 lto = "off"
 incremental = true
 debug-assertions = true

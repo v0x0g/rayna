@@ -4,7 +4,7 @@ use crate::shared::ray::Ray;
 use crate::shared::{math, RtRequirement};
 use image::Pixel as _;
 use num_traits::Pow;
-use rand::{thread_rng, Rng};
+use rand::Rng;
 use rayna_shared::def::types::{Number, Pixel, Vector3};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -15,7 +15,7 @@ pub struct DielectricMaterial {
 
 impl RtRequirement for DielectricMaterial {}
 
-impl Material for DielectricMaterial {
+impl<R: Rng> Material<R> for DielectricMaterial {
     fn scatter(
         &self,
         ray: &Ray,
@@ -31,7 +31,8 @@ impl Material for DielectricMaterial {
         let sin_theta = Number::sqrt(1.0 - cos_theta * cos_theta);
 
         let total_internal_reflection = index_ratio * sin_theta > 1.0;
-        let schlick_approx_reflect = Self::reflectance(cos_theta, index_ratio) > thread_rng().gen();
+        let schlick_approx_reflect =
+            Self::reflectance(cos_theta, index_ratio) > rng.gen::<Number>();
 
         let dir = if total_internal_reflection || schlick_approx_reflect {
             // Cannot refract, have to reflect
@@ -43,6 +44,7 @@ impl Material for DielectricMaterial {
         return Some(dir);
     }
 
+    //noinspection DuplicatedCode
     fn calculate_colour(
         &self,
         _ray: &Ray,

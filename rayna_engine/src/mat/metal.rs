@@ -2,27 +2,24 @@ use crate::mat::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::{math, rng, RtRequirement};
+use derivative::Derivative;
 use image::Pixel as _;
-use rand::{thread_rng, Rng};
+use rand::Rng;
 use rayna_shared::def::types::{Number, Pixel, Vector3};
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub struct MetalMaterial {
+#[derive(Derivative)]
+#[derivative(Copy(bound = ""), Clone(bound = ""), Debug, PartialEq)]
+pub struct MetalMaterial<R: Rng> {
     pub albedo: Pixel,
     pub fuzz: Number,
 }
 
-impl RtRequirement for MetalMaterial {}
+impl<R: Rng> RtRequirement for MetalMaterial<R> {}
 
-impl Material for MetalMaterial {
-    fn scatter(
-        &self,
-        ray: &Ray,
-        intersection: &Intersection,
-        rng: &mut dyn Rng,
-    ) -> Option<Vector3> {
+impl<R: Rng> Material<R> for MetalMaterial<R> {
+    fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut R) -> Option<Vector3> {
         let reflected = math::reflect(ray.dir(), intersection.ray_normal);
-        let rand = rng::vector_on_unit_sphere(&mut thread_rng());
+        let rand = rng::vector_on_unit_sphere(rng);
 
         // Generate some fuzzy reflections by adding a "cloud" of random points
         // around the reflection (a sphere with `radius=fuzz` centred at `reflected)
@@ -37,6 +34,7 @@ impl Material for MetalMaterial {
         };
     }
 
+    //noinspection DuplicatedCode
     fn calculate_colour(
         &self,
         _ray: &Ray,

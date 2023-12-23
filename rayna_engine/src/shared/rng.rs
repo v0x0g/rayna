@@ -3,12 +3,6 @@
 use rand::Rng;
 use rayna_shared::def::types::{Vector2, Vector3};
 
-/// Type alias for the rng type used
-pub type PRng = rand::rngs::ThreadRng;
-pub fn new_rng() -> PRng {
-    rand::thread_rng()
-}
-
 // region RNG Pool
 
 // TODO: Thread-safe RNG pool

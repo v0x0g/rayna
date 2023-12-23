@@ -4,6 +4,7 @@ use crate::mat::metal::MetalMaterial;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
+use derivative::Derivative;
 use rand::Rng;
 use rayna_shared::def::types::{Pixel, Vector3};
 use std::sync::Arc;
@@ -17,17 +18,18 @@ pub mod metal;
 /// By using an enum, we can replace dynamic-dispatch with static dispatch.
 /// Just in case we do require dynamic dispatch for some reason, there is a
 /// [MaterialType::Other] variant, which wraps a generic material in an [Arc]
-#[derive(Clone, Debug)]
-pub enum MaterialType {
-    Lambertian(LambertianMaterial),
-    Metal(MetalMaterial),
+#[derive(Derivative)]
+#[derivative(Clone(bound = ""), Debug(bound = ""))]
+pub enum MaterialType<R: Rng> {
+    Lambertian(LambertianMaterial<R>),
+    Metal(MetalMaterial<R>),
     Dielectric(DielectricMaterial),
-    Other(Arc<dyn Material>),
+    Other(Arc<dyn Material<R>>),
 }
 
-impl RtRequirement for MaterialType {}
+impl<R: Rng> RtRequirement for MaterialType<R> {}
 
-impl Material for MaterialType {
+impl<R: Rng> Material<R> for MaterialType<R> {
     fn scatter(
         &self,
         ray: &Ray,
@@ -35,10 +37,10 @@ impl Material for MaterialType {
         rng: &mut dyn Rng,
     ) -> Option<Vector3> {
         match self {
-            Self::Lambertian(m) => m.scatter(ray, intersection),
-            Self::Metal(m) => m.scatter(ray, intersection),
-            Self::Dielectric(m) => m.scatter(ray, intersection),
-            Self::Other(m) => m.scatter(ray, intersection),
+            Self::Lambertian(m) => m.scatter(ray, intersection, rng),
+            Self::Metal(m) => m.scatter(ray, intersection, rng),
+            Self::Dielectric(m) => m.scatter(ray, intersection, rng),
+            Self::Other(m) => m.scatter(ray, intersection, rng),
         }
     }
 
@@ -59,7 +61,7 @@ impl Material for MaterialType {
 }
 
 /// The trait that defines what properties a material has
-pub trait Material: RtRequirement {
+pub trait Material<R: Rng>: RtRequirement {
     // TODO: Should `scatter()` return a ray?
 
     /// Scatters the input ray, according to the material's properties
@@ -73,7 +75,8 @@ pub trait Material: RtRequirement {
     /// # Examples
     ///
     /// ```
-    /// # use rand::thread_rng;
+    /// # use std::fmt::{Debug, DebugStruct, Formatter};
+    /// # use rand::{Rng, thread_rng};
     /// # use rayna_engine::mat::Material;
     /// # use rayna_engine::shared::intersect::Intersection;
     /// # use rayna_engine::shared::math::reflect;
@@ -82,12 +85,17 @@ pub trait Material: RtRequirement {
     /// # use rayna_shared::def::types::{Pixel, Vector3};
     /// #
     /// # #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-    /// pub struct Test;
+    /// pub struct Test<R: Rng>;
     /// #
-    /// # impl RtRequirement for Test {}
+    /// # impl<R: Rng> Clone for Test<R>{fn clone(&self) -> Self { Self }}
+    /// # impl<R: Rng> Debug for Test<R>{fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    /// #   f.debug_struct("Test").finish()     
+    /// #   }
+    /// # }
+    /// # impl<R: Rng> RtRequirement for Test<R> {}
     /// #
-    /// impl Material for Test{
-    ///     fn scatter(&self, ray: &Ray, intersection: &Intersection) -> Vector3 {
+    /// impl<R: Rng> Material<R> for Test<R> {
+    ///     fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut R) -> Vector3 {
     ///         let diffuse = false;
     ///         // Diffuse => random
     ///         if diffuse {
@@ -104,8 +112,7 @@ pub trait Material: RtRequirement {
     /// #   fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel) -> Pixel { todo!() }
     /// }
     /// ```
-    fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn Rng)
-        -> Option<Vector3>;
+    fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut R) -> Option<Vector3>;
 
     /// This function does the lighting calculations, based on the light from the future ray
     ///
@@ -118,7 +125,8 @@ pub trait Material: RtRequirement {
     /// # Examples
     ///
     /// ```
-    /// # use rand::thread_rng;
+    /// # use std::fmt::{Debug, DebugStruct, Formatter};
+    /// # use rand::{Rng, thread_rng};
     /// # use rayna_engine::mat::Material;
     /// # use rayna_engine::shared::intersect::Intersection;
     /// # use rayna_engine::shared::math::reflect;
@@ -127,12 +135,17 @@ pub trait Material: RtRequirement {
     /// # use rayna_shared::def::types::{Pixel, Vector3};
     /// #
     /// # #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-    /// pub struct Test;
+    /// pub struct Test<R: Rng>;
     /// #
-    /// # impl RtRequirement for Test {}
+    /// # impl<R: Rng> Clone for Test<R>{fn clone(&self) -> Self { Self }}
+    /// # impl<R: Rng> Debug for Test<R>{fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    /// #   f.debug_struct("Test").finish()     
+    /// #   }
+    /// # }
+    /// # impl<R: Rng> RtRequirement for Test<R> {}
     /// #
-    /// impl Material for Test{
-    /// #   fn scatter(&self, ray: &Ray, intersection: &Intersection) -> Vector3 { todo!() }
+    /// impl<R: Rng> Material<R> for Test<R> {
+    /// #   fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut R) -> Vector3 { todo!() }
     ///     fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel) -> Pixel {
     ///         // Pure reflection
     ///         return *future_col;

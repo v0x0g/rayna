@@ -8,14 +8,15 @@ use crate::shared::ray::Ray;
 use crate::shared::scene::Scene;
 use crate::shared::validate;
 use crate::skybox::Skybox;
+use image::Pixel as _;
 use puffin::{profile_function, profile_scope};
 use rand::{thread_rng, Rng};
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel};
 use rayna_shared::profiler;
-
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use smallvec::SmallVec;
+use std::ops::Add;
 use std::time::Duration;
 use thiserror::Error;
 use tracing::trace;
@@ -182,19 +183,23 @@ impl Renderer {
         let py = y as Number;
         let sample_count = opts.msaa.get();
 
-        let samples: SmallVec<[[Channel; 3]; 32]> = (0..sample_count)
+        let samples: SmallVec<[Pixel; 32]> = (0..sample_count)
             .into_iter()
             .map(|_s| Self::apply_msaa_shift(px, py, rng_1))
             .map(|[px, py]| Self::render_px_once(scene, viewport, opts, bounds, px, py, rng_2))
             .inspect(|p| validate::colour(p))
-            .map(|p| p.0)
             .collect();
 
         // Pixel doesn't implement [core::ops::Add], so have to manually do it with slices
         // TODO: Implement something better than just averaging
-        let accum = samples.iter().fold([0.; 3], |[r1, g1, b1], [r2, g2, b2]| {
-            [r1 + r2, g1 + g2, b1 + b2]
+        let accum = samples.iter().copied().fold(Pixel::from([0.; 3]), |a, b| {
+            Pixel::map2(&a, &b, Channel::add)
         });
+        let accum = samples
+            .iter()
+            .copied()
+            .reduce(|a, b| Pixel::map2(&a, &b, Channel::add))
+            .unwrap_or_else(|| [0.; 3].into());
 
         let mean = accum.map(|c| c / (sample_count as Channel));
         let pix = Pixel::from(mean);

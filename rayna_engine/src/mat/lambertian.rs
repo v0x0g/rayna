@@ -5,23 +5,23 @@ use crate::shared::rng;
 use crate::shared::RtRequirement;
 use derivative::Derivative;
 use image::Pixel as _;
-use rand::Rng;
+use rand::RngCore;
 use rayna_shared::def::types::{Pixel, Vector3};
 
 #[derive(Derivative)]
 #[derivative(Copy(bound = ""), Clone(bound = ""), Debug, PartialEq)]
-pub struct LambertianMaterial<R: Rng> {
+pub struct LambertianMaterial {
     pub albedo: Pixel,
 }
 
-impl<R: Rng> RtRequirement for LambertianMaterial<R> {}
+impl RtRequirement for LambertianMaterial {}
 
-impl<R: Rng> Material<R> for LambertianMaterial<R> {
+impl Material for LambertianMaterial {
     fn scatter(
         &self,
         _ray: &Ray,
         intersection: &Intersection,
-        rng: &mut dyn Rng,
+        rng: &mut dyn RngCore,
     ) -> Option<Vector3> {
         // Completely random scatter direction, in same hemisphere as normal
         let rand = rng::vector_in_unit_sphere(rng);

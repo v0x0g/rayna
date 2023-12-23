@@ -4,7 +4,7 @@ use crate::shared::ray::Ray;
 use crate::shared::{math, RtRequirement};
 use image::Pixel as _;
 use num_traits::Pow;
-use rand::Rng;
+use rand::{Rng, RngCore};
 use rayna_shared::def::types::{Number, Pixel, Vector3};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -15,12 +15,12 @@ pub struct DielectricMaterial {
 
 impl RtRequirement for DielectricMaterial {}
 
-impl<R: Rng> Material<R> for DielectricMaterial {
+impl Material for DielectricMaterial {
     fn scatter(
         &self,
         ray: &Ray,
         intersection: &Intersection,
-        rng: &mut dyn Rng,
+        rng: &mut dyn RngCore,
     ) -> Option<Vector3> {
         let index_ratio = if intersection.front_face {
             1.0 / self.refractive_index

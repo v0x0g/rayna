@@ -283,7 +283,7 @@ impl Renderer {
         };
         validate::intersection(ray, &intersect, bounds);
 
-        let Some(scatter_dir) = intersect.material.scatter(ray, &intersect) else {
+        let Some(scatter_dir) = intersect.material.scatter(ray, &intersect, rng) else {
             // No scatter (material absorbed ray)
             return Pixel::from([0.; 3]);
         };

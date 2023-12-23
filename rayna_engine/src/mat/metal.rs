@@ -4,20 +4,25 @@ use crate::shared::ray::Ray;
 use crate::shared::{math, rng, RtRequirement};
 use derivative::Derivative;
 use image::Pixel as _;
-use rand::Rng;
+use rand::RngCore;
 use rayna_shared::def::types::{Number, Pixel, Vector3};
 
 #[derive(Derivative)]
 #[derivative(Copy(bound = ""), Clone(bound = ""), Debug, PartialEq)]
-pub struct MetalMaterial<R: Rng> {
+pub struct MetalMaterial {
     pub albedo: Pixel,
     pub fuzz: Number,
 }
 
-impl<R: Rng> RtRequirement for MetalMaterial<R> {}
+impl RtRequirement for MetalMaterial {}
 
-impl<R: Rng> Material<R> for MetalMaterial<R> {
-    fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut R) -> Option<Vector3> {
+impl Material for MetalMaterial {
+    fn scatter(
+        &self,
+        ray: &Ray,
+        intersection: &Intersection,
+        rng: &mut dyn RngCore,
+    ) -> Option<Vector3> {
         let reflected = math::reflect(ray.dir(), intersection.ray_normal);
         let rand = rng::vector_on_unit_sphere(rng);
 

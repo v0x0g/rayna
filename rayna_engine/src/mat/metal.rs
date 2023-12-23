@@ -3,7 +3,7 @@ use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::{math, rng, RtRequirement};
 use image::Pixel as _;
-use rand::thread_rng;
+use rand::{thread_rng, Rng};
 use rayna_shared::def::types::{Number, Pixel, Vector3};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -15,7 +15,12 @@ pub struct MetalMaterial {
 impl RtRequirement for MetalMaterial {}
 
 impl Material for MetalMaterial {
-    fn scatter(&self, ray: &Ray, intersection: &Intersection) -> Option<Vector3> {
+    fn scatter(
+        &self,
+        ray: &Ray,
+        intersection: &Intersection,
+        rng: &mut dyn Rng,
+    ) -> Option<Vector3> {
         let reflected = math::reflect(ray.dir(), intersection.ray_normal);
         let rand = rng::vector_on_unit_sphere(&mut thread_rng());
 

@@ -4,6 +4,7 @@ use crate::mat::metal::MetalMaterial;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
+use rand::Rng;
 use rayna_shared::def::types::{Pixel, Vector3};
 use std::sync::Arc;
 
@@ -27,7 +28,12 @@ pub enum MaterialType {
 impl RtRequirement for MaterialType {}
 
 impl Material for MaterialType {
-    fn scatter(&self, ray: &Ray, intersection: &Intersection) -> Option<Vector3> {
+    fn scatter(
+        &self,
+        ray: &Ray,
+        intersection: &Intersection,
+        rng: &mut dyn Rng,
+    ) -> Option<Vector3> {
         match self {
             Self::Lambertian(m) => m.scatter(ray, intersection),
             Self::Metal(m) => m.scatter(ray, intersection),
@@ -98,7 +104,8 @@ pub trait Material: RtRequirement {
     /// #   fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel) -> Pixel { todo!() }
     /// }
     /// ```
-    fn scatter(&self, ray: &Ray, intersection: &Intersection) -> Option<Vector3>;
+    fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn Rng)
+        -> Option<Vector3>;
 
     /// This function does the lighting calculations, based on the light from the future ray
     ///

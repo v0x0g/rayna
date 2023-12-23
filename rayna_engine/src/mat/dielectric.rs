@@ -16,7 +16,12 @@ pub struct DielectricMaterial {
 impl RtRequirement for DielectricMaterial {}
 
 impl Material for DielectricMaterial {
-    fn scatter(&self, ray: &Ray, intersection: &Intersection) -> Option<Vector3> {
+    fn scatter(
+        &self,
+        ray: &Ray,
+        intersection: &Intersection,
+        rng: &mut dyn Rng,
+    ) -> Option<Vector3> {
         let index_ratio = if intersection.front_face {
             1.0 / self.refractive_index
         } else {

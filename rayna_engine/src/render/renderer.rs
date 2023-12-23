@@ -220,7 +220,7 @@ impl Renderer {
         let mode = opts.mode;
 
         if mode == RenderMode::PBR {
-            return Self::ray_colour_recursive(scene, &ray, opts, bounds, 0);
+            return Self::ray_colour_recursive(scene, &ray, opts, bounds, 0, rng);
         }
 
         let Some(intersect) = Self::calculate_intersection(scene, &ray, bounds) else {
@@ -242,7 +242,7 @@ impl Renderer {
             RenderMode::Scatter => Pixel::from(
                 intersect
                     .material
-                    .scatter(&ray, &intersect)
+                    .scatter(&ray, &intersect, rng)
                     .unwrap_or_default()
                     .as_array()
                     .map(|f| (f / 2.) as f32 + 0.5),
@@ -272,6 +272,7 @@ impl Renderer {
         opts: &RenderOpts,
         bounds: &Bounds<Number>,
         depth: usize,
+        rng: &mut impl Rng,
     ) -> Pixel {
         if depth > opts.bounces {
             return Pixel::from([0.; 3]);
@@ -290,7 +291,8 @@ impl Renderer {
         let future_ray = Ray::new(intersect.pos, scatter_dir);
         validate::ray(future_ray);
 
-        let future_col = Self::ray_colour_recursive(scene, &future_ray, opts, bounds, depth + 1);
+        let future_col =
+            Self::ray_colour_recursive(scene, &future_ray, opts, bounds, depth + 1, rng);
         validate::colour(&future_col);
 
         return intersect

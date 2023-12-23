@@ -44,6 +44,7 @@ approx = "0.5.1"
 enum2str = "0.1.10"
 strum = "0.25.0"
 strum_macros = "0.25.0"
+rand = { version = "0.8.5", features = ["min_const_gen", "small_rng"] }
 
 # Performance
 

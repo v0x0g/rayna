@@ -192,9 +192,6 @@ impl Renderer {
 
         // Pixel doesn't implement [core::ops::Add], so have to manually do it with slices
         // TODO: Implement something better than just averaging
-        let accum = samples.iter().copied().fold(Pixel::from([0.; 3]), |a, b| {
-            Pixel::map2(&a, &b, Channel::add)
-        });
         let accum = samples
             .iter()
             .copied()

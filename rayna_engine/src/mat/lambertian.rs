@@ -9,7 +9,7 @@ use rand::RngCore;
 use rayna_shared::def::types::{Pixel, Vector3};
 
 #[derive(Derivative)]
-#[derivative(Copy(bound = ""), Clone(bound = ""), Debug, PartialEq)]
+#[derivative(Copy(bound = " "), Clone(bound = ""), Debug, PartialEq)]
 pub struct LambertianMaterial {
     pub albedo: Pixel,
 }

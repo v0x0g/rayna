@@ -144,8 +144,8 @@ impl Renderer {
                                 bounds,
                                 x as usize,
                                 y as usize,
-                                &mut rng_1,
-                                &mut rng_2,
+                                &mut rand::thread_rng(),
+                                &mut rand::thread_rng(),
                             );
                         }
                     });

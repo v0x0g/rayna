@@ -28,7 +28,7 @@ pub struct Renderer {
     /// A thread pool used to distribute the workload
     thread_pool: ThreadPool,
     #[derivative(Debug = "ignore")]
-    rng: rand::rngs::StdRng,
+    rng: MyRng,
 }
 
 #[derive(Error, Debug)]
@@ -40,6 +40,9 @@ pub enum RendererCreateError {
         source: ThreadPoolBuildError,
     },
 }
+
+/// Type alias for what PRNG the renderer uses
+type MyRng = rand::rngs::StdRng;
 
 impl Renderer {
     pub fn new() -> Result<Self, RendererCreateError> {
@@ -60,7 +63,7 @@ impl Renderer {
     }
 
     // TODO: Should `render()` be fallible?
-    pub fn render(&self, scene: &Scene, render_opts: &RenderOpts) -> Render<ImgBuf> {
+    pub fn render(&mut self, scene: &Scene, render_opts: &RenderOpts) -> Render<ImgBuf> {
         profile_function!();
 
         let viewport = match scene.camera.calculate_viewport(render_opts) {
@@ -118,7 +121,7 @@ impl Renderer {
     ///
     /// This is only called when the viewport is valid, and therefore an image can be rendered
     fn render_actual(
-        &self,
+        &mut self,
         scene: &Scene,
         render_opts: &RenderOpts,
         viewport: &Viewport,
@@ -140,11 +143,11 @@ impl Renderer {
             self.thread_pool.in_place_scope(|scope| {
                 let rows = img.enumerate_rows_mut();
                 for (_, row) in rows {
-                    scope.spawn(|_| {
+                    // Cache randoms so we don't `clone()` in hot paths
+                    let mut rng_1 = MyRng::from_seed(self.rng.gen());
+                    let mut rng_2 = MyRng::from_seed(self.rng.gen());
+                    scope.spawn(move |_| {
                         profile_scope!("inner");
-                        // Cache randoms so we don't `clone()` in hot paths
-                        let mut rng_1 = self.rng.clone();
-                        let mut rng_2 = self.rng.clone();
 
                         for (x, y, pix) in row {
                             *pix = Self::render_px(

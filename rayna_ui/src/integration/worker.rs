@@ -48,7 +48,7 @@ impl BgWorker {
             render_tx,
             mut render_opts,
             mut scene,
-            renderer,
+            mut renderer,
         } = self;
 
         loop {

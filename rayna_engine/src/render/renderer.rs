@@ -218,6 +218,11 @@ impl Renderer {
         let mean = accum.map(|c| c / (sample_count as Channel));
         let pix = Pixel::from(mean);
 
+        // Apply gamma correction, per-channel not per-pixel
+        const INV_GAMMA: Channel = 1.0 / GAMMA;
+        const GAMMA: Channel = 2.2;
+        pix.map(|c| c.powf(INV_GAMMA));
+
         validate::colour(pix);
         pix
     }

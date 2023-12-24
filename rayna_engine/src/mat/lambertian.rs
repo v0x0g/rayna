@@ -3,13 +3,11 @@ use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::rng;
 use crate::shared::RtRequirement;
-use derivative::Derivative;
 use image::Pixel as _;
 use rand::RngCore;
 use rayna_shared::def::types::{Pixel, Vector3};
 
-#[derive(Derivative)]
-#[derivative(Copy(bound = " "), Clone(bound = ""), Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct LambertianMaterial {
     pub albedo: Pixel,
 }

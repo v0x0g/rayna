@@ -2,13 +2,11 @@ use crate::mat::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::{math, rng, RtRequirement};
-use derivative::Derivative;
 use image::Pixel as _;
 use rand::RngCore;
 use rayna_shared::def::types::{Number, Pixel, Vector3};
 
-#[derive(Derivative)]
-#[derivative(Copy(bound = ""), Clone(bound = ""), Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct MetalMaterial {
     pub albedo: Pixel,
     pub fuzz: Number,

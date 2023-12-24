@@ -4,7 +4,6 @@ use crate::mat::metal::MetalMaterial;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
-use derivative::Derivative;
 use rand::RngCore;
 use rayna_shared::def::types::{Pixel, Vector3};
 use std::sync::Arc;
@@ -18,8 +17,7 @@ pub mod metal;
 /// By using an enum, we can replace dynamic-dispatch with static dispatch.
 /// Just in case we do require dynamic dispatch for some reason, there is a
 /// [MaterialType::Other] variant, which wraps a generic material in an [Arc]
-#[derive(Derivative)]
-#[derivative(Clone(bound = ""), Debug(bound = ""))]
+#[derive(Clone, Debug)]
 pub enum MaterialType {
     Lambertian(LambertianMaterial),
     Metal(MetalMaterial),
@@ -125,7 +123,7 @@ pub trait Material: RtRequirement {
     ///
     /// ```
     /// # use std::fmt::{Debug, DebugStruct, Formatter};
-    /// # use rand::{Rng, thread_rng};
+    /// # use rand::{RngCore, thread_rng};
     /// # use rayna_engine::mat::Material;
     /// # use rayna_engine::shared::intersect::Intersection;
     /// # use rayna_engine::shared::math::reflect;
@@ -134,17 +132,11 @@ pub trait Material: RtRequirement {
     /// # use rayna_shared::def::types::{Pixel, Vector3};
     /// #
     /// # #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-    /// pub struct Test<R: Rng>;
+    /// pub struct Test;
+    /// # impl RtRequirement for Test {}
     /// #
-    /// # impl<R: Rng> Clone for Test<R>{fn clone(&self) -> Self { Self }}
-    /// # impl<R: Rng> Debug for Test<R>{fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-    /// #   f.debug_struct("Test").finish()     
-    /// #   }
-    /// # }
-    /// # impl<R: Rng> RtRequirement for Test<R> {}
-    /// #
-    /// impl<R: Rng> Material<R> for Test<R> {
-    /// #   fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut R) -> Vector3 { todo!() }
+    /// impl Material for Test {
+    /// #   fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Vector3 { todo!() }
     ///     fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel) -> Pixel {
     ///         // Pure reflection
     ///         return *future_col;

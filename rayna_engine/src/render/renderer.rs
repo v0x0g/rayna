@@ -28,7 +28,7 @@ pub struct Renderer {
     /// A thread pool used to distribute the workload
     thread_pool: ThreadPool,
     #[derivative(Debug = "ignore")]
-    rng: MyRng,
+    seed_rng: SeedRng,
 }
 
 #[derive(Error, Debug)]
@@ -41,8 +41,10 @@ pub enum RendererCreateError {
     },
 }
 
+/// Tge RNG that we use to seed our rendering PRNGs
+type SeedRng = rand::rngs::OsRng;
 /// Type alias for what PRNG the renderer uses
-type MyRng = rand::rngs::OsRng;
+type MyRng = rand_hc::Hc128Rng;
 
 impl Renderer {
     pub fn new() -> Result<Self, RendererCreateError> {
@@ -57,9 +59,12 @@ impl Renderer {
             .build()
             .map_err(RendererCreateError::from)?;
 
-        let rng = MyRng {};
+        let rng = SeedRng::default();
 
-        Ok(Self { thread_pool, rng })
+        Ok(Self {
+            thread_pool,
+            seed_rng: rng,
+        })
     }
 
     // TODO: Should `render()` be fallible?
@@ -144,8 +149,10 @@ impl Renderer {
                 let rows = img.enumerate_rows_mut();
                 for (_, row) in rows {
                     // Cache randoms so we don't `clone()` in hot paths
-                    let mut rng_1 = MyRng {};
-                    let mut rng_2 = MyRng {};
+                    let mut rng_1 =
+                        MyRng::from_rng(self.seed_rng).expect("failed init rng from seed_rng");
+                    let mut rng_2 =
+                        MyRng::from_rng(self.seed_rng).expect("failed init rng from seed_rng");
                     scope.spawn(move |_| {
                         profile_scope!("inner");
 

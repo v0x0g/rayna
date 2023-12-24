@@ -143,12 +143,12 @@ impl Renderer {
             self.thread_pool.in_place_scope(|scope| {
                 let rows = img.enumerate_rows_mut();
                 for (_, row) in rows {
-                    scope.spawn(|_| {
+                    // Cache randoms so we don't `clone()` in hot paths
+                    let mut rng_1 = MyRng::from_seed(self.rng.gen());
+                    let mut rng_2 = MyRng::from_seed(self.rng.gen());
+                    scope.spawn(move |_| {
                         profile_scope!("inner");
 
-                        // Cache randoms so we don't `clone()` in hot paths
-                        let mut rng_1 = rand::thread_rng();
-                        let mut rng_2 = rand::thread_rng();
                         for (x, y, pix) in row {
                             *pix = Self::render_px(
                                 scene,

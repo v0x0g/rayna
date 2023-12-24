@@ -44,7 +44,7 @@ pub enum RendererCreateError {
 /// Tge RNG that we use to seed our rendering PRNGs
 type SeedRng = rand::rngs::OsRng;
 /// Type alias for what PRNG the renderer uses
-type MyRng = rand_chacha::ChaCha8Rng;
+type MyRng = rand::rngs::mock::StepRng;
 
 impl Renderer {
     pub fn new() -> Result<Self, RendererCreateError> {
@@ -149,10 +149,8 @@ impl Renderer {
                 let rows = img.enumerate_rows_mut();
                 for (_, row) in rows {
                     // Cache randoms so we don't `clone()` in hot paths
-                    let mut rng_1 =
-                        MyRng::from_rng(self.seed_rng).expect("failed init rng from seed_rng");
-                    let mut rng_2 =
-                        MyRng::from_rng(self.seed_rng).expect("failed init rng from seed_rng");
+                    let mut rng_1 = MyRng::new(self.seed_rng.gen(), self.seed_rng.gen());
+                    let mut rng_2 = MyRng::new(self.seed_rng.gen(), self.seed_rng.gen());
                     scope.spawn(move |_| {
                         profile_scope!("inner");
 

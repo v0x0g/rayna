@@ -42,7 +42,7 @@ pub enum RendererCreateError {
 }
 
 /// Type alias for what PRNG the renderer uses
-type MyRng = rand::rngs::SmallRng;
+type MyRng = rand::rngs::StdRng;
 
 impl Renderer {
     pub fn new() -> Result<Self, RendererCreateError> {

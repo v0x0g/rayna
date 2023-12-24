@@ -1,14 +1,15 @@
+use std::ops::DerefMut;
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::profiler;
 use egui::{Color32, ColorImage};
-use image::{Pixel, RgbaImage};
+use image::RgbaImage;
 use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
 use rayna_engine::shared::scene::Scene;
 use rayna_shared::def::targets::BG_WORKER;
-use rayna_shared::def::types::ImgBuf;
+use rayna_shared::def::types::{Channel, ImgBuf};
 use std::thread::JoinHandle;
 use std::time::Duration;
 use tracing::{info, instrument, trace, warn};
@@ -112,16 +113,27 @@ impl BgWorker {
 
     /// Converts the image outputted by the renderer into an egui-appropriate one.
     /// Also converts from linear space to SRGB space
-    fn convert_img(img: ImgBuf) -> ColorImage {
+    fn convert_img(mut img: ImgBuf) -> ColorImage {
         profile_function!();
 
         // Got a rendered image, translate to an egui-appropriate one
+
+        {
+            profile_scope!("convert-gamma");
+            const GAMMA: Channel = 2.2;
+            const INV_GAMMA: Channel = 1.0 / GAMMA;
+
+            // Gamma correction is per-channel, not per-pixel
+            img.deref_mut()
+                .into_par_iter()
+                .for_each(|c| *c = c.powf(INV_GAMMA));
+        }
 
         let img_as_rgba: RgbaImage = {
             profile_scope!("convert-rgba");
             let mut buffer: RgbaImage = RgbaImage::new(img.width(), img.height());
             for (to, from) in buffer.pixels_mut().zip(img.pixels()) {
-                image::Rgba::<u8>::from_color(to, from);
+                image::Rgba::<u8>::(to, from);
             }
             buffer
         };

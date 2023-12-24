@@ -45,6 +45,12 @@ enum2str = "0.1.10"
 strum = "0.25.0"
 strum_macros = "0.25.0"
 rand = { version = "0.8.5", features = ["min_const_gen", "small_rng"] }
+rand_core = "0.6.4"
+rand_chacha = "0.3.1"
+rand_pcg = "0.3.1"
+rand_xorshift = "0.3.0"
+rand_hc = "0.3.2"
+rand_isaac = "0.3.0"
 
 # Performance
 

@@ -41,3 +41,9 @@ smallvec = { version = "1.11.2", features = ["const_generics", "const_new", "spe
 puffin = { workspace = true }
 rayon = { workspace = true }
 rand = { workspace = true }
+rand_core = { workspace = true }
+rand_chacha = { workspace = true }
+rand_pcg = { workspace = true }
+rand_xorshift = { workspace = true }
+rand_hc = { workspace = true }
+rand_isaac = { workspace = true }

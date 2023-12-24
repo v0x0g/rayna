@@ -10,7 +10,7 @@ use crate::shared::validate;
 use crate::skybox::Skybox;
 use image::Pixel as _;
 use puffin::{profile_function, profile_scope};
-use rand::{thread_rng, Rng};
+use rand::Rng;
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel};
 use rayna_shared::profiler;
@@ -133,8 +133,8 @@ impl Renderer {
                     scope.spawn(|_| {
                         profile_scope!("inner");
                         // Cache random so we don't call `thread_rng()` in hot paths
-                        let mut rng_1 = thread_rng().clone();
-                        let mut rng_2 = thread_rng().clone();
+                        let mut rng_1 = rand::thread_rng().clone();
+                        let mut rng_2 = rand::thread_rng().clone();
 
                         for (x, y, pix) in row {
                             *pix = Self::render_px(

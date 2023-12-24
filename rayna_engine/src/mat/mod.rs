@@ -74,7 +74,7 @@ pub trait Material: RtRequirement {
     ///
     /// ```
     /// # use std::fmt::{Debug, DebugStruct, Formatter};
-    /// # use rand::{Rng, RngCore, thread_rng};
+    /// # use rand::RngCore;
     /// # use rayna_engine::mat::Material;
     /// # use rayna_engine::shared::intersect::Intersection;
     /// # use rayna_engine::shared::math::reflect;
@@ -123,7 +123,7 @@ pub trait Material: RtRequirement {
     ///
     /// ```
     /// # use std::fmt::{Debug, DebugStruct, Formatter};
-    /// # use rand::{RngCore, thread_rng};
+    /// # use rand::RngCore;
     /// # use rayna_engine::mat::Material;
     /// # use rayna_engine::shared::intersect::Intersection;
     /// # use rayna_engine::shared::math::reflect;

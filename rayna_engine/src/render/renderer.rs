@@ -42,7 +42,7 @@ pub enum RendererCreateError {
 }
 
 /// Type alias for what PRNG the renderer uses
-type MyRng = rand::rngs::StdRng;
+type MyRng = rand::rngs::OsRng;
 
 impl Renderer {
     pub fn new() -> Result<Self, RendererCreateError> {
@@ -57,7 +57,7 @@ impl Renderer {
             .build()
             .map_err(RendererCreateError::from)?;
 
-        let rng = MyRng::from_entropy();
+        let rng = MyRng {};
 
         Ok(Self { thread_pool, rng })
     }
@@ -144,8 +144,8 @@ impl Renderer {
                 let rows = img.enumerate_rows_mut();
                 for (_, row) in rows {
                     // Cache randoms so we don't `clone()` in hot paths
-                    let mut rng_1 = MyRng::from_seed(self.rng.gen());
-                    let mut rng_2 = MyRng::from_seed(self.rng.gen());
+                    let mut rng_1 = MyRng {};
+                    let mut rng_2 = MyRng {};
                     scope.spawn(move |_| {
                         profile_scope!("inner");
 

@@ -1,8 +1,7 @@
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::profiler;
 use egui::{Color32, ColorImage};
-use image::buffer::ConvertBuffer;
-use image::RgbaImage;
+use image::{Pixel, RgbaImage};
 use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
@@ -120,7 +119,11 @@ impl BgWorker {
 
         let img_as_rgba: RgbaImage = {
             profile_scope!("convert-rgba");
-            img.convert()
+            let mut buffer: RgbaImage = RgbaImage::new(img.width(), img.height());
+            for (to, from) in buffer.pixels_mut().zip(img.pixels()) {
+                image::Rgba::<u8>::from_color(to, from);
+            }
+            buffer
         };
 
         let img_as_egui = {

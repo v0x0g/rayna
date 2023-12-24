@@ -3,29 +3,6 @@
 use rand::Rng;
 use rayna_shared::def::types::{Vector2, Vector3};
 
-// region RNG Pool
-
-// TODO: Thread-safe RNG pool
-pub struct PooledRng<R: Rng + ?Sized> {
-    inner: Box<R>,
-}
-
-impl<R: Rng + ?Sized> Drop for PooledRng<R> {
-    fn drop(&mut self) {
-        // return to pool
-        todo!()
-    }
-}
-
-impl<R: Rng + ?Sized> PooledRng<R> {
-    pub fn get() -> Self {
-        // get from pool
-        todo!()
-    }
-}
-
-// endregion
-
 // region 3D
 
 /// Returns a random vector in a unit cube (-1..=1)

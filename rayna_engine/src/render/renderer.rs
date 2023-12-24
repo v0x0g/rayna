@@ -44,7 +44,7 @@ pub enum RendererCreateError {
 /// Tge RNG that we use to seed our rendering PRNGs
 type SeedRng = rand::rngs::OsRng;
 /// Type alias for what PRNG the renderer uses
-type MyRng = rand_hc::Hc128Rng;
+type MyRng = rand_isaac::Isaac64Rng;
 
 impl Renderer {
     pub fn new() -> Result<Self, RendererCreateError> {

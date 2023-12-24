@@ -8,9 +8,10 @@ use crate::shared::ray::Ray;
 use crate::shared::scene::Scene;
 use crate::shared::validate;
 use crate::skybox::Skybox;
+use derivative::Derivative;
 use image::Pixel as _;
 use puffin::{profile_function, profile_scope};
-use rand::Rng;
+use rand::{Rng, SeedableRng};
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel};
 use rayna_shared::profiler;
@@ -21,10 +22,13 @@ use std::time::Duration;
 use thiserror::Error;
 use tracing::trace;
 
-#[derive(Debug)]
+#[derive(Derivative)]
+#[derivative(Debug)]
 pub struct Renderer {
     /// A thread pool used to distribute the workload
     thread_pool: ThreadPool,
+    #[derivative(Debug = "ignore")]
+    rng: rand::rngs::StdRng,
 }
 
 #[derive(Error, Debug)]
@@ -39,14 +43,20 @@ pub enum RendererCreateError {
 
 impl Renderer {
     pub fn new() -> Result<Self, RendererCreateError> {
-        let pool = ThreadPoolBuilder::new()
+        let thread_pool = ThreadPoolBuilder::new()
             .num_threads(10)
             .thread_name(|id| format!("Renderer::worker_{id}"))
-            .start_handler(|_id| profiler::worker_profiler_init())
+            .start_handler(|id| {
+                trace!(target: RENDERER, "renderer worker {id} start");
+                profiler::worker_profiler_init();
+            })
+            .exit_handler(|id| trace!(target: RENDERER, "renderer worker {id} exit"))
             .build()
             .map_err(RendererCreateError::from)?;
 
-        Ok(Self { thread_pool: pool })
+        let rng = rand::rngs::StdRng::from_entropy();
+
+        Ok(Self { thread_pool, rng })
     }
 
     // TODO: Should `render()` be fallible?
@@ -132,9 +142,9 @@ impl Renderer {
                 for (_, row) in rows {
                     scope.spawn(|_| {
                         profile_scope!("inner");
-                        // Cache random so we don't call `thread_rng()` in hot paths
-                        let mut rng_1 = rand::thread_rng().clone();
-                        let mut rng_2 = rand::thread_rng().clone();
+                        // Cache randoms so we don't `clone()` in hot paths
+                        let mut rng_1 = self.rng.clone();
+                        let mut rng_2 = self.rng.clone();
 
                         for (x, y, pix) in row {
                             *pix = Self::render_px(
@@ -144,8 +154,8 @@ impl Renderer {
                                 bounds,
                                 x as usize,
                                 y as usize,
-                                &mut rand::thread_rng(),
-                                &mut rand::thread_rng(),
+                                &mut rng_1,
+                                &mut rng_2,
                             );
                         }
                     });

@@ -42,7 +42,7 @@ pub enum RendererCreateError {
 }
 
 /// Type alias for what PRNG the renderer uses
-type MyRng = rand::rngs::StdRng;
+type MyRng = rand::rngs::SmallRng;
 
 impl Renderer {
     pub fn new() -> Result<Self, RendererCreateError> {
@@ -57,7 +57,7 @@ impl Renderer {
             .build()
             .map_err(RendererCreateError::from)?;
 
-        let rng = rand::rngs::StdRng::from_entropy();
+        let rng = MyRng::from_entropy();
 
         Ok(Self { thread_pool, rng })
     }
@@ -143,12 +143,12 @@ impl Renderer {
             self.thread_pool.in_place_scope(|scope| {
                 let rows = img.enumerate_rows_mut();
                 for (_, row) in rows {
-                    // Cache randoms so we don't `clone()` in hot paths
-                    let mut rng_1 = MyRng::from_seed(self.rng.gen());
-                    let mut rng_2 = MyRng::from_seed(self.rng.gen());
-                    scope.spawn(move |_| {
+                    scope.spawn(|_| {
                         profile_scope!("inner");
 
+                        // Cache randoms so we don't `clone()` in hot paths
+                        let mut rng_1 = rand::thread_rng();
+                        let mut rng_2 = rand::thread_rng();
                         for (x, y, pix) in row {
                             *pix = Self::render_px(
                                 scene,

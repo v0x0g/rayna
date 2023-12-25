@@ -149,7 +149,7 @@ impl Renderer {
 
             // Split each row into an operation for the thread pool
             self.thread_pool.install(|| {
-                const CHUNK_SIZE: usize = 256;
+                const CHUNK_SIZE: usize = 8192;
                 let chunks = img
                     .deref_mut()
                     // Group pixels into chunks

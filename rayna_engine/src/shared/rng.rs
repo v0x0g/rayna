@@ -1,7 +1,16 @@
 //! Helper module for RNG-related functions
 
 use rand::Rng;
+use rand_core::{RngCore, SeedableRng};
 use rayna_shared::def::types::{Vector2, Vector3};
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
+pub struct RngPoolAllocator;
+impl<R: SeedableRng> opool::PoolAllocator<R> for RngPoolAllocator {
+    fn allocate(&self) -> R {
+        R::from_entropy()
+    }
+}
 
 // region 3D
 

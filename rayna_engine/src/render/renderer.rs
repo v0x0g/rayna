@@ -5,11 +5,13 @@ use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
+use crate::shared::rng::RngPoolAllocator;
 use crate::shared::scene::Scene;
 use crate::shared::validate;
 use crate::skybox::Skybox;
 use derivative::Derivative;
 use image::Pixel as _;
+use opool::Pool;
 use puffin::profile_function;
 use rand::rngs::{SmallRng, StdRng};
 use rand::{thread_rng, Rng, SeedableRng};
@@ -30,7 +32,7 @@ pub struct Renderer {
     /// A thread pool used to distribute the workload
     thread_pool: ThreadPool,
     #[derivative(Debug = "ignore")]
-    seed_rng: StdRng,
+    rng_pool: Pool<RngPoolAllocator, SmallRng>,
 }
 
 #[derive(Error, Debug)]
@@ -56,11 +58,12 @@ impl Renderer {
             .build()
             .map_err(RendererCreateError::from)?;
 
-        let rng = StdRng::from_entropy();
+        // Crate a
+        let rng_pool = Pool::new_prefilled(thread_pool.current_num_threads(), RngPoolAllocator);
 
         Ok(Self {
             thread_pool,
-            seed_rng: rng,
+            rng_pool,
         })
     }
 

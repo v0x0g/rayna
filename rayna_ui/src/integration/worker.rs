@@ -1,4 +1,3 @@
-use std::ops::DerefMut;
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::profiler;
 use egui::{Color32, ColorImage};
@@ -10,6 +9,9 @@ use rayna_engine::render::renderer::Renderer;
 use rayna_engine::shared::scene::Scene;
 use rayna_shared::def::targets::BG_WORKER;
 use rayna_shared::def::types::{Channel, ImgBuf};
+use rayon::iter::IntoParallelIterator;
+use rayon::iter::ParallelIterator;
+use std::ops::DerefMut;
 use std::thread::JoinHandle;
 use std::time::Duration;
 use tracing::{info, instrument, trace, warn};
@@ -116,10 +118,11 @@ impl BgWorker {
     fn convert_img(mut img: ImgBuf) -> ColorImage {
         profile_function!();
 
-        // Got a rendered image, translate to an egui-appropriate one
+        // Got a rendered image
+        // Post-process, and translate to an egui-appropriate one
 
         {
-            profile_scope!("convert-gamma");
+            profile_scope!("correct-gamma");
             const GAMMA: Channel = 2.2;
             const INV_GAMMA: Channel = 1.0 / GAMMA;
 
@@ -129,17 +132,21 @@ impl BgWorker {
                 .for_each(|c| *c = c.powf(INV_GAMMA));
         }
 
+        // Convert
         let img_as_rgba: RgbaImage = {
-            profile_scope!("convert-rgba");
+            profile_scope!("convert-channels-u8");
             let mut buffer: RgbaImage = RgbaImage::new(img.width(), img.height());
             for (to, from) in buffer.pixels_mut().zip(img.pixels()) {
-                image::Rgba::<u8>::(to, from);
+                to.0[0] = (from.0[0] * 255.0) as u8;
+                to.0[1] = (from.0[1] * 255.0) as u8;
+                to.0[2] = (from.0[2] * 255.0) as u8;
+                to.0[3] = 255;
             }
             buffer
         };
 
         let img_as_egui = {
-            profile_scope!("convert-egui");
+            profile_scope!("transmute-egui");
 
             let size = [img.width() as usize, img.height() as usize];
 

@@ -45,6 +45,7 @@ strum = { workspace = true }
 
 # Perf
 puffin = { workspace = true }
+rayon = { workspace = true }
 
 # ===== FEATURES =====
 

@@ -22,6 +22,7 @@ use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use smallvec::SmallVec;
 use std::ops::{Add, DerefMut};
+use std::sync::OnceLock;
 use std::time::Duration;
 use thiserror::Error;
 use tracing::trace;
@@ -59,6 +60,8 @@ impl Renderer {
             .map_err(RendererCreateError::from)?;
 
         // Create a pool that should have enough RNGs stored for all of our threads
+        // We pool randoms so we don't have to init in hot paths
+        // `SmallRng` is the (slightly) fastest of all RNGs tested
         let rng_pool = Pool::new_prefilled(256, RngPoolAllocator);
 
         Ok(Self {
@@ -147,16 +150,23 @@ impl Renderer {
             // Split each row into an operation for the thread pool
             self.thread_pool.install(|| {
                 let chunks = img.deref_mut().par_chunks_exact_mut(3).enumerate();
-                let pool = &self.rng_pool;
                 chunks.for_each_init(
-                    move || {
-                        // Cache randoms so we don't `clone()` in hot paths
-                        // `SmallRng` is the (slightly) fastest of all RNGs tested
-                        let rng_1 = pool.get();
-                        let rng_2 = pool.get();
-                        (rng_1, rng_2)
+                    || {
+                        // Can't use macro because of macro hygiene :(
+                        let profiler_scope = if puffin::are_scopes_on() {
+                            static LOCATION: OnceLock<String> = OnceLock::new();
+                            let location = LOCATION.get_or_init(|| {
+                                format!("{}:{}", puffin::current_file_name!(), line!())
+                            });
+                            Some(puffin::ProfilerScope::new("inner", location, ""))
+                        } else {
+                            None
+                        };
+                        let rng_1 = self.rng_pool.get();
+                        let rng_2 = self.rng_pool.get();
+                        (rng_1, rng_2, profiler_scope)
                     },
-                    |(rng_1, rng_2), (idx, chans)| {
+                    |(rng_1, rng_2, _), (idx, chans)| {
                         let (y, x) = num_integer::Integer::div_rem(&idx, &(w as usize));
                         let p = Pixel::from_slice_mut(chans);
                         *p = Self::render_px(

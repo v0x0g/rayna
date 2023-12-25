@@ -59,8 +59,7 @@ impl Renderer {
             .map_err(RendererCreateError::from)?;
 
         // Create a pool that should have enough RNGs stored for all of our threads
-        let rng_pool =
-            Pool::new_prefilled(thread_pool.current_num_threads().min(4), RngPoolAllocator);
+        let rng_pool = Pool::new_prefilled(256, RngPoolAllocator);
 
         Ok(Self {
             thread_pool,
@@ -148,12 +147,13 @@ impl Renderer {
             // Split each row into an operation for the thread pool
             self.thread_pool.install(|| {
                 let chunks = img.deref_mut().par_chunks_exact_mut(3).enumerate();
+                let pool = &self.rng_pool;
                 chunks.for_each_init(
-                    || {
+                    move || {
                         // Cache randoms so we don't `clone()` in hot paths
                         // `SmallRng` is the (slightly) fastest of all RNGs tested
-                        let rng_1 = self.rng_pool.get();
-                        let rng_2 = self.rng_pool.get();
+                        let rng_1 = pool.get();
+                        let rng_2 = pool.get();
                         (rng_1, rng_2)
                     },
                     |(rng_1, rng_2), (idx, chans)| {

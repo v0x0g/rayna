@@ -12,7 +12,7 @@ use crate::skybox::Skybox;
 use derivative::Derivative;
 use image::Pixel as _;
 use opool::Pool;
-use puffin::profile_function;
+use puffin::{profile_function, profile_scope};
 use rand::rngs::SmallRng;
 use rand::Rng;
 use rayna_shared::def::targets::*;
@@ -153,48 +153,54 @@ impl Renderer {
                 let chunks = img
                     .deref_mut()
                     // Group pixels into chunks
-                    .par_chunks_mut(CHUNK_SIZE * Pixel::CHANNEL_COUNT)
+                    .par_chunks_mut(CHUNK_SIZE * Pixel::CHANNEL_COUNT as usize)
                     .enumerate()
                     .map(|(idx, chan)| (idx * CHUNK_SIZE, chan));
 
-                // chunks.for_each_init(
-                //     || {
-                //         // Can't use macro because of macro hygiene :(
-                //         let profiler_scope = if puffin::are_scopes_on() {
-                //             static LOCATION: OnceLock<String> = OnceLock::new();
-                //             let location = LOCATION.get_or_init(|| {
-                //                 format!("{}:{}", puffin::current_file_name!(), line!())
-                //             });
-                //             Some(puffin::ProfilerScope::new("inner", location, ""))
-                //         } else {
-                //             None
-                //         };
-                //         let rng_1 = self.rng_pool.get();
-                //         let rng_2 = self.rng_pool.get();
-                //         (rng_1, rng_2, profiler_scope)
-                //     },
-                //     |(rng_1, rng_2, _), (x,y, chunked_chans)| {
-                //         let pixels =
-                //         chunked_chans.chunks_exact_mut(Pixel::CHANNEL_COUNT).map(|(idx, px)| {
-                //             let (y, x) = num_integer::Integer::div_rem(&idx, &(w as usize));
-                //             (x, y, px)
-                //         });
-                //
-                //         pixels.for_each(|(x,y, chans)| {
-                //             let p = Pixel::from_slice_mut(chans);
-                //             *p = Self::render_px(
-                //                 scene,
-                //                 render_opts,
-                //                 viewport,
-                //                 bounds,
-                //                 x,
-                //                 y,
-                //                 rng_1.deref_mut(),
-                //                 rng_2.deref_mut(),
-                //             );
-                //         }
-                //     },
-                // );
+                chunks.for_each_init(
+                    || {
+                        // Can't use macro because of macro hygiene :(
+                        let profiler_scope = if puffin::are_scopes_on() {
+                            static LOCATION: OnceLock<String> = OnceLock::new();
+                            let location = LOCATION.get_or_init(|| {
+                                format!("{}:{}", puffin::current_file_name!(), line!())
+                            });
+                            Some(puffin::ProfilerScope::new("inner", location, ""))
+                        } else {
+                            None
+                        };
+                        let rng_1 = self.rng_pool.get();
+                        let rng_2 = self.rng_pool.get();
+                        (rng_1, rng_2, profiler_scope)
+                    },
+                    |(rng_1, rng_2, _), (chunk_px_idx, chunk_chans)| {
+                        profile_scope!("chunk");
+                        let pixels = chunk_chans
+                            .chunks_exact_mut(Pixel::CHANNEL_COUNT as usize)
+                            .enumerate()
+                            .map(|(px_idx, px)| {
+                                let (y, x) = num_integer::Integer::div_rem(
+                                    &(px_idx + chunk_px_idx),
+                                    &(w as usize),
+                                );
+                                (x, y, px)
+                            });
+
+                        pixels.for_each(|(x, y, chans)| {
+                            let p = Pixel::from_slice_mut(chans);
+                            *p = Self::render_px(
+                                scene,
+                                render_opts,
+                                viewport,
+                                bounds,
+                                x,
+                                y,
+                                rng_1.deref_mut(),
+                                rng_2.deref_mut(),
+                            );
+                        });
+                    },
+                );
             });
 
             let end = puffin::now_ns();

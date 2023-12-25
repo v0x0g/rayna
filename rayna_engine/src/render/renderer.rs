@@ -153,7 +153,7 @@ impl Renderer {
                         (rng_1, rng_2)
                     },
                     |(rng_1, rng_2), (idx, chans)| {
-                        let (x, y) = num_integer::Integer::div_rem(&idx, &(w as usize));
+                        let (y, x) = num_integer::Integer::div_rem(&idx, &(w as usize));
                         let p = Pixel::from_slice_mut(chans);
                         *p = Self::render_px(
                             scene,

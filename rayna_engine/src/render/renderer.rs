@@ -10,15 +10,16 @@ use crate::shared::validate;
 use crate::skybox::Skybox;
 use derivative::Derivative;
 use image::Pixel as _;
-use puffin::{profile_function, profile_scope};
+use puffin::profile_function;
 use rand::rngs::{SmallRng, StdRng};
-use rand::{Rng, SeedableRng};
+use rand::{thread_rng, Rng, SeedableRng};
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel};
 use rayna_shared::profiler;
+use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use smallvec::SmallVec;
-use std::ops::Add;
+use std::ops::{Add, DerefMut};
 use std::time::Duration;
 use thiserror::Error;
 use tracing::trace;
@@ -141,32 +142,31 @@ impl Renderer {
             num_threads = self.thread_pool.current_num_threads();
 
             // Split each row into an operation for the thread pool
-            self.thread_pool.in_place_scope(|scope| {
-                let rows = img.enumerate_rows_mut();
-                for (_, row) in rows {
-                    // Cache randoms so we don't `clone()` in hot paths
-                    // `SmallRng` is the (slightly) fastest of all RNGs tested
-                    let mut rng_1 =
-                        SmallRng::from_rng(&mut self.seed_rng).expect("init rng failed");
-                    let mut rng_2 =
-                        SmallRng::from_rng(&mut self.seed_rng).expect("init rng failed");
-                    scope.spawn(move |_| {
-                        profile_scope!("inner");
-
-                        for (x, y, pix) in row {
-                            *pix = Self::render_px(
-                                scene,
-                                render_opts,
-                                viewport,
-                                bounds,
-                                x as usize,
-                                y as usize,
-                                &mut rng_1,
-                                &mut rng_2,
-                            );
-                        }
-                    });
-                }
+            self.thread_pool.install(|| {
+                let chunks = img.deref_mut().par_chunks_exact_mut(3).enumerate();
+                chunks.for_each_init(
+                    || {
+                        // Cache randoms so we don't `clone()` in hot paths
+                        // `SmallRng` is the (slightly) fastest of all RNGs tested
+                        let rng_1 = SmallRng::from_rng(&mut thread_rng()).expect("init rng failed");
+                        let rng_2 = SmallRng::from_rng(&mut thread_rng()).expect("init rng failed");
+                        (rng_1, rng_2)
+                    },
+                    |(rng_1, rng_2), (idx, chans)| {
+                        let (x, y) = num_integer::Integer::div_rem(&idx, &(w as usize));
+                        let p = Pixel::from_slice_mut(chans);
+                        *p = Self::render_px(
+                            scene,
+                            render_opts,
+                            viewport,
+                            bounds,
+                            x,
+                            y,
+                            rng_1,
+                            rng_2,
+                        );
+                    },
+                );
             });
 
             let end = puffin::now_ns();

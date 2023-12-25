@@ -12,7 +12,7 @@ use crate::skybox::Skybox;
 use derivative::Derivative;
 use image::Pixel as _;
 use opool::Pool;
-use puffin::{profile_function, profile_scope};
+use puffin::profile_function;
 use rand::rngs::SmallRng;
 use rand::Rng;
 use rayna_shared::def::targets::*;
@@ -147,17 +147,17 @@ impl Renderer {
             let start = puffin::now_ns();
             num_threads = self.thread_pool.current_num_threads();
 
-            // Split each row into an operation for the thread pool
             self.thread_pool.install(|| {
-                const CHUNK_SIZE: usize = 8192;
-                let chunks = img
-                    .deref_mut()
-                    // Group pixels into chunks
-                    .par_chunks_mut(CHUNK_SIZE * Pixel::CHANNEL_COUNT as usize)
-                    .enumerate()
-                    .map(|(idx, chan)| (idx * CHUNK_SIZE, chan));
-
-                chunks.for_each_init(
+                let pixels =
+                    img.deref_mut()
+                        .par_chunks_exact_mut(3)
+                        .enumerate()
+                        .map(|(idx, chans)| {
+                            let (y, x) = num_integer::Integer::div_rem(&idx, &(w as usize));
+                            let p = Pixel::from_slice_mut(chans);
+                            (x, y, p)
+                        });
+                pixels.for_each_init(
                     || {
                         // Can't use macro because of macro hygiene :(
                         let profiler_scope = if puffin::are_scopes_on() {
@@ -173,32 +173,18 @@ impl Renderer {
                         let rng_2 = self.rng_pool.get();
                         (rng_1, rng_2, profiler_scope)
                     },
-                    |(rng_1, rng_2, _), (chunk_px_idx, chunk_chans)| {
-                        profile_scope!("chunk");
-                        let pixels = chunk_chans
-                            .chunks_exact_mut(Pixel::CHANNEL_COUNT as usize)
-                            .enumerate()
-                            .map(|(px_idx, px)| {
-                                let (y, x) = num_integer::Integer::div_rem(
-                                    &(px_idx + chunk_px_idx),
-                                    &(w as usize),
-                                );
-                                (x, y, px)
-                            });
-
-                        pixels.for_each(|(x, y, chans)| {
-                            let p = Pixel::from_slice_mut(chans);
-                            *p = Self::render_px(
-                                scene,
-                                render_opts,
-                                viewport,
-                                bounds,
-                                x,
-                                y,
-                                rng_1.deref_mut(),
-                                rng_2.deref_mut(),
-                            );
-                        });
+                    // Process each pixel
+                    |(rng_1, rng_2, _), (x, y, p)| {
+                        *p = Self::render_px(
+                            scene,
+                            render_opts,
+                            viewport,
+                            bounds,
+                            x,
+                            y,
+                            rng_1.deref_mut(),
+                            rng_2.deref_mut(),
+                        );
                     },
                 );
             });

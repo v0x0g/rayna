@@ -17,6 +17,14 @@ glam = { workspace = true }
 glamour = { workspace = true }
 num-traits = { workspace = true }
 num-integer = { workspace = true }
+rand = { workspace = true }
+rand_core = { workspace = true }
+rand_chacha = { workspace = true }
+rand_pcg = { workspace = true }
+rand_xorshift = { workspace = true }
+rand_hc = { workspace = true }
+rand_isaac = { workspace = true }
+
 
 # Raytracing
 rtbvh = "0.6.2" # Used for accelerating intersection checks
@@ -41,10 +49,3 @@ smallvec = { version = "1.11.2", features = ["const_generics", "const_new", "spe
 # Perf
 puffin = { workspace = true }
 rayon = { workspace = true }
-rand = { workspace = true }
-rand_core = { workspace = true }
-rand_chacha = { workspace = true }
-rand_pcg = { workspace = true }
-rand_xorshift = { workspace = true }
-rand_hc = { workspace = true }
-rand_isaac = { workspace = true }

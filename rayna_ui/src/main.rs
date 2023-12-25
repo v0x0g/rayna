@@ -7,12 +7,13 @@
 
 use crate::backend::UiBackend;
 use crate::rayna_app::RaynaApp;
+use log::trace;
 use rayna_shared::def::constants::APP_NAME;
 use rayna_shared::def::targets::*;
 use rayna_shared::profiler;
 use std::collections::HashMap;
-use tracing::debug;
 use tracing::metadata::LevelFilter;
+use tracing::{debug, trace};
 use tracing_subscriber::util::SubscriberInitExt;
 
 mod backend;
@@ -54,6 +55,10 @@ fn main() -> anyhow::Result<()> {
         .init();
 
     debug!(target: MAIN, "init puffin");
+    // Profiling is pretty low-cost
+    trace!("enable profiling");
+    puffin::set_scopes_on(true);
+    trace!("init main profiler");
     profiler::main_profiler_init();
     // Special handling so the 'default' profiler passes on to our custom profiler
     // In this case, we already overrode the ThreadProfiler for "main" using `main_profiler_init()`,

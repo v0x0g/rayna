@@ -46,6 +46,7 @@ strum = { workspace = true }
 # Perf
 puffin = { workspace = true }
 rayon = { workspace = true }
+log = "0.4.20"
 
 # ===== FEATURES =====
 

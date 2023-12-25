@@ -25,7 +25,6 @@ rand_xorshift = { workspace = true }
 rand_hc = { workspace = true }
 rand_isaac = { workspace = true }
 
-
 # Raytracing
 rtbvh = "0.6.2" # Used for accelerating intersection checks
 image = { workspace = true }
@@ -49,3 +48,6 @@ smallvec = { version = "1.11.2", features = ["const_generics", "const_new", "spe
 # Perf
 puffin = { workspace = true }
 rayon = { workspace = true }
+lockfree-object-pool = "0.1.4"
+lifeguard = "0.6.1"
+opool = "0.1.1"

@@ -1,7 +1,7 @@
 //! Helper module for RNG-related functions
 
 use rand::Rng;
-use rand_core::{RngCore, SeedableRng};
+use rand_core::SeedableRng;
 use rayna_shared::def::types::{Vector2, Vector3};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]

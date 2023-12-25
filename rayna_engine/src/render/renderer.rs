@@ -13,8 +13,8 @@ use derivative::Derivative;
 use image::Pixel as _;
 use opool::Pool;
 use puffin::profile_function;
-use rand::rngs::{SmallRng, StdRng};
-use rand::{thread_rng, Rng, SeedableRng};
+use rand::rngs::SmallRng;
+use rand::Rng;
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel};
 use rayna_shared::profiler;
@@ -58,8 +58,9 @@ impl Renderer {
             .build()
             .map_err(RendererCreateError::from)?;
 
-        // Crate a
-        let rng_pool = Pool::new_prefilled(thread_pool.current_num_threads(), RngPoolAllocator);
+        // Create a pool that should have enough RNGs stored for all of our threads
+        let rng_pool =
+            Pool::new_prefilled(thread_pool.current_num_threads().min(4), RngPoolAllocator);
 
         Ok(Self {
             thread_pool,
@@ -151,8 +152,8 @@ impl Renderer {
                     || {
                         // Cache randoms so we don't `clone()` in hot paths
                         // `SmallRng` is the (slightly) fastest of all RNGs tested
-                        let rng_1 = SmallRng::from_rng(&mut thread_rng()).expect("init rng failed");
-                        let rng_2 = SmallRng::from_rng(&mut thread_rng()).expect("init rng failed");
+                        let rng_1 = self.rng_pool.get();
+                        let rng_2 = self.rng_pool.get();
                         (rng_1, rng_2)
                     },
                     |(rng_1, rng_2), (idx, chans)| {
@@ -165,8 +166,8 @@ impl Renderer {
                             bounds,
                             x,
                             y,
-                            rng_1,
-                            rng_2,
+                            rng_1.deref_mut(),
+                            rng_2.deref_mut(),
                         );
                     },
                 );

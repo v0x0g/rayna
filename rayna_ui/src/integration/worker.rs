@@ -93,7 +93,7 @@ impl BgWorker {
             }
 
             let render_result = {
-                profile_scope!("render");
+                profile_scope!("make_render");
                 let render = renderer.render(&scene, &render_opts);
                 Render {
                     img: Self::convert_img(render.img),
@@ -122,7 +122,7 @@ impl BgWorker {
         // Post-process, and translate to an egui-appropriate one
 
         {
-            profile_scope!("correct-gamma");
+            profile_scope!("correct_gamma");
             const GAMMA: Channel = 2.2;
             const INV_GAMMA: Channel = 1.0 / GAMMA;
 
@@ -134,7 +134,7 @@ impl BgWorker {
 
         // Convert
         let img_as_rgba: RgbaImage = {
-            profile_scope!("convert-channels-u8");
+            profile_scope!("convert_channels_u8");
             let mut buffer: RgbaImage = RgbaImage::new(img.width(), img.height());
             for (to, from) in buffer.pixels_mut().zip(img.pixels()) {
                 to.0[0] = (from.0[0] * 255.0) as u8;
@@ -146,7 +146,7 @@ impl BgWorker {
         };
 
         let img_as_egui = {
-            profile_scope!("transmute-egui");
+            profile_scope!("transmute_egui");
 
             let size = [img.width() as usize, img.height() as usize];
 

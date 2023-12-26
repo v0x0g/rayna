@@ -31,9 +31,3 @@ impl Material for DynamicMaterial {
             .calculate_colour(ray, intersection, future_ray, future_col)
     }
 }
-
-impl<T: Material> From<T> for DynamicMaterial {
-    fn from(value: T) -> Self {
-        Self { inner: value }
-    }
-}

@@ -19,5 +19,3 @@ impl Object for DynamicObject {
         self.inner.intersect_all(ray)
     }
 }
-
-// TODO: impl From<T>

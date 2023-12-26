@@ -13,5 +13,3 @@ impl Skybox for DynamicSkybox {
         self.inner.sky_colour(ray)
     }
 }
-
-// TODO: impl From<dyn T: Skybox>

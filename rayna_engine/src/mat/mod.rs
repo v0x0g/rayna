@@ -15,20 +15,6 @@ pub mod dynamic;
 pub mod lambertian;
 pub mod metal;
 
-/// An optimised implementation of [Material].
-///
-/// By using an enum, we can replace dynamic-dispatch with static dispatch.
-/// Just in case we do require dynamic dispatch for some reason, there is a
-/// [MaterialType::Other] variant, which wraps a generic material in an [Arc]
-#[enum_dispatch(Material)]
-#[derive(Clone, Debug)]
-pub enum MaterialType {
-    LambertianMaterial,
-    MetalMaterial,
-    DielectricMaterial,
-    DynamicMaterial,
-}
-
 /// The trait that defines what properties a material has
 #[enum_dispatch]
 pub trait Material: RtRequirement {
@@ -122,4 +108,18 @@ pub trait Material: RtRequirement {
         future_ray: &Ray,
         future_col: &Pixel,
     ) -> Pixel;
+}
+
+/// An optimised implementation of [Material].
+///
+/// By using an enum, we can replace dynamic-dispatch with static dispatch.
+/// Just in case we do require dynamic dispatch for some reason, there is a
+/// [crate::mat::MaterialType::Other] variant, which wraps a generic material in an [Arc]
+#[enum_dispatch(Material)]
+#[derive(Clone, Debug)]
+pub enum MaterialType {
+    LambertianMaterial,
+    MetalMaterial,
+    DielectricMaterial,
+    DynamicMaterial,
 }

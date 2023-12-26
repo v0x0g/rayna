@@ -1,6 +1,6 @@
 use crate::ext::UiExt;
 use crate::integration::message::MessageToWorker;
-use crate::integration::Integration;
+use crate::integration::{Integration, IntegrationError};
 use crate::profiler;
 use crate::ui_val::{DRAG_SLOW, UNIT_DEG, UNIT_LEN, UNIT_PX};
 use egui::load::SizedTexture;
@@ -380,6 +380,11 @@ impl RaynaApp {
             trace!(target: UI, ?res, "got message from worker");
 
             match res {
+                Err(IntegrationError::WorkerKeepsDying) => {
+                    warn!(target: UI, "worker died too many times too fast");
+                    panic!("worker keeps dying too fast");
+                }
+
                 Err(err) => {
                     warn!(target: UI, ?err)
                 }

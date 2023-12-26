@@ -42,6 +42,7 @@ flume = { version = "0.11.0", features = ["async"] }
 valuable = { workspace = true }
 derivative = { workspace = true }
 strum = { workspace = true }
+throttle = "0.1.0"
 
 # Perf
 puffin = { workspace = true }

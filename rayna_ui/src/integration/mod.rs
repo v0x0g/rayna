@@ -9,14 +9,20 @@ use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
 use rayna_engine::shared::scene::Scene;
+use rayna_shared::def::targets::INTEGRATION;
+use std::sync::Mutex;
 use std::thread::JoinHandle;
+use std::time::Duration;
 use thiserror::Error;
-use tracing::error;
+use throttle::Throttle;
+use tracing::{debug, error};
 
 pub mod message;
 mod worker;
 
 pub type Result<T> = core::result::Result<T, IntegrationError>;
+pub const THREAD_DEATH_THRESHOLD: usize = 10;
+pub const THREAD_DEATH_DURATION: Duration = Duration::from_secs(1);
 
 #[derive(Error, Debug)]
 pub enum IntegrationError {
@@ -27,7 +33,7 @@ pub enum IntegrationError {
     #[error("render channel from background worker disconnected")]
     RenderChannelDisconnected,
     #[error("worker thread died unexpectedly")]
-    WorkerThreadDied,
+    WorkerKeepsDying,
     #[error("failed to spawn thread for BgWorker")]
     WorkerSpawnFailed(#[from] std::io::Error),
 }
@@ -37,6 +43,7 @@ pub(crate) struct Integration {
     msg_rx: flume::Receiver<MessageToUi>,
     render_rx: flume::Receiver<Render<ColorImage>>,
     worker_thread: JoinHandle<()>,
+    thread_death_throttle: Mutex<Throttle>,
 }
 
 impl Integration {
@@ -64,6 +71,11 @@ impl Integration {
             msg_rx: main_rx,
             render_rx: rend_rx,
             worker_thread: thread,
+            // Max 10 errors, 1 expiring per second
+            thread_death_throttle: Mutex::new(Throttle::new(
+                THREAD_DEATH_DURATION,
+                THREAD_DEATH_THRESHOLD,
+            )),
         })
     }
 
@@ -71,10 +83,20 @@ impl Integration {
         puffin::profile_function!();
 
         if self.worker_thread.is_finished() {
-            Err(IntegrationError::WorkerThreadDied)
-        } else {
-            Ok(())
+            debug!(target: INTEGRATION, "worker thread died");
+            if self
+                .thread_death_throttle
+                .lock()
+                .expect("throttle mutex poisoned")
+                .accept()
+                .is_err()
+            {
+                debug!(target: INTEGRATION, "worker keeps dying");
+                return Err(IntegrationError::WorkerKeepsDying);
+            }
         }
+
+        Ok(())
     }
 
     // region ===== SENDING =====

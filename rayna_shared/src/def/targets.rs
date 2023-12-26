@@ -14,6 +14,7 @@ macro_rules! tracing_targets {
 tracing_targets! {
     MAIN = "main",
     BG_WORKER = "bg_worker",
+    INTEGRATION = "integration",
     UI = "ui",
     RENDERER = "renderer"
 }

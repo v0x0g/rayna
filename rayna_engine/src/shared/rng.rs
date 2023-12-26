@@ -12,6 +12,15 @@ impl<R: SeedableRng> opool::PoolAllocator<R> for RngPoolAllocator {
     }
 }
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
+pub struct RecycledRngWrapper<R: SeedableRng>(pub R);
+impl<R: SeedableRng> lifeguard::Recycleable for RecycledRngWrapper<R> {
+    fn new() -> Self {
+        Self(R::from_entropy())
+    }
+
+    fn reset(&mut self) {}
+}
 // region 3D
 
 /// Returns a random vector in a unit cube (-1..=1)

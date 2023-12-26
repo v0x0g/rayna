@@ -5,6 +5,7 @@ use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
+use crate::shared::rng::RecycledRngWrapper;
 use crate::shared::scene::Scene;
 use crate::shared::validate;
 use crate::skybox::Skybox;
@@ -13,6 +14,7 @@ use image::Pixel as _;
 use puffin::profile_function;
 use rand::rngs::SmallRng;
 use rand::Rng;
+use rand_core::SeedableRng;
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel};
 use rayna_shared::profiler;
@@ -31,7 +33,7 @@ pub struct Renderer {
     /// A thread pool used to distribute the workload
     thread_pool: ThreadPool,
     #[derivative(Debug = "ignore")]
-    rng_pool: lockfree_object_pool::MutexObjectPool<SmallRng>,
+    rng_pool: lifeguard::Pool<RecycledRngWrapper<SmallRng>>,
 }
 
 #[derive(Error, Debug)]
@@ -60,8 +62,12 @@ impl Renderer {
         // Create a pool that should have enough RNGs stored for all of our threads
         // We pool randoms so we don't have to init in hot paths
         // `SmallRng` is the (slightly) fastest of all RNGs tested
-        let rng_pool =
-            lockfree_object_pool::MutexObjectPool::new(rand::SeedableRng::from_entropy, |_| {});
+        let rng_pool = lifeguard::PoolBuilder {
+            max_size: 256,
+            starting_size: 256,
+            supplier: Some(Box::new(|| RecycledRngWrapper(SmallRng::from_entropy()))),
+        }
+        .build();
 
         Ok(Self {
             thread_pool,
@@ -156,8 +162,9 @@ impl Renderer {
                             let p = Pixel::from_slice_mut(chans);
                             (x, y, p)
                         });
+                let pool = &self.rng_pool;
                 pixels.for_each_init(
-                    || {
+                    move || {
                         // Can't use macro because of macro hygiene :(
                         let profiler_scope = if puffin::are_scopes_on() {
                             static LOCATION: OnceLock<String> = OnceLock::new();
@@ -168,8 +175,8 @@ impl Renderer {
                         } else {
                             None
                         };
-                        let rng_1 = self.rng_pool.pull();
-                        let rng_2 = self.rng_pool.pull();
+                        let rng_1 = pool.new();
+                        let rng_2 = pool.new();
                         (rng_1, rng_2, profiler_scope)
                     },
                     // Process each pixel
@@ -181,8 +188,8 @@ impl Renderer {
                             bounds,
                             x,
                             y,
-                            rng_1.deref_mut(),
-                            rng_2.deref_mut(),
+                            &mut rng_1.as_mut().0,
+                            &mut rng_2.as_mut().0,
                         );
                     },
                 );

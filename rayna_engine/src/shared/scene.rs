@@ -3,7 +3,7 @@ use crate::mat::lambertian::LambertianMaterial;
 use crate::mat::metal::MetalMaterial;
 use crate::mat::MaterialType;
 use crate::obj::sphere::Sphere;
-use crate::obj::Object;
+use crate::obj::ObjectType;
 use crate::shared::camera::Camera;
 use crate::skybox::default_skybox::DefaultSkybox;
 use crate::skybox::SkyboxType;
@@ -20,7 +20,7 @@ macro_rules! scene {
             $crate::shared::scene::Scene {
                 camera: $cam,
                 objects: vec![$(
-                    std::boxed::Box::new($value) as std::boxed::Box<dyn $crate::obj::Object>
+                     ($value).into()
                 ),*],
                 skybox: SkyboxType::Default(DefaultSkybox {})
             }
@@ -29,8 +29,7 @@ macro_rules! scene {
 
 #[derive(Clone, Debug)]
 pub struct Scene {
-    // TODO: Maybe use [std::boxed::ThinBox] instead of [Box], might be better for perf
-    pub objects: Vec<Box<dyn Object>>,
+    pub objects: Vec<ObjectType>,
     pub camera: Camera,
     pub skybox: SkyboxType,
 }
@@ -112,47 +111,59 @@ impl Scene {
             defocus_angle: Angle::from_degrees(10.),
         };
 
-        let mut objects = Vec::<Box<dyn Object>>::new();
+        let mut objects = Vec::<ObjectType>::new();
 
         // Ground
-        objects.push(Box::new(Sphere {
-            pos: Point3::new(0., -100.5, -1.),
-            radius: 100.,
-            material: (LambertianMaterial {
-                albedo: [0.8, 0.8, 0.0].into(),
+        objects.push(
+            (Sphere {
+                pos: Point3::new(0., -100.5, -1.),
+                radius: 100.,
+                material: (LambertianMaterial {
+                    albedo: [0.8, 0.8, 0.0].into(),
+                })
+                .into(),
             })
             .into(),
-        }));
+        );
 
         // Left
-        objects.push(Box::new(Sphere {
-            pos: Point3::new(-1., 0., -1.),
-            radius: 0.5,
-            material: (DielectricMaterial {
-                albedo: [1.; 3].into(),
-                refractive_index: 1.5,
+        objects.push(
+            (Sphere {
+                pos: Point3::new(-1., 0., -1.),
+                radius: 0.5,
+                material: (DielectricMaterial {
+                    albedo: [1.; 3].into(),
+                    refractive_index: 1.5,
+                })
+                .into(),
             })
             .into(),
-        }));
+        );
         // Mid
-        objects.push(Box::new(Sphere {
-            pos: Point3::new(0., 0., -1.),
-            radius: 0.5,
-            material: (LambertianMaterial {
-                albedo: [0.1, 0.2, 0.5].into(),
+        objects.push(
+            (Sphere {
+                pos: Point3::new(0., 0., -1.),
+                radius: 0.5,
+                material: (LambertianMaterial {
+                    albedo: [0.1, 0.2, 0.5].into(),
+                })
+                .into(),
             })
             .into(),
-        }));
+        );
         // Right
-        objects.push(Box::new(Sphere {
-            pos: Point3::new(1., 0., -1.),
-            radius: 0.5,
-            material: (MetalMaterial {
-                albedo: [0.8, 0.6, 0.2].into(),
-                fuzz: 0.,
+        objects.push(
+            (Sphere {
+                pos: Point3::new(1., 0., -1.),
+                radius: 0.5,
+                material: (MetalMaterial {
+                    albedo: [0.8, 0.6, 0.2].into(),
+                    fuzz: 0.,
+                })
+                .into(),
             })
             .into(),
-        }));
+        );
 
         Scene {
             camera,
@@ -170,34 +181,43 @@ impl Scene {
             defocus_angle: Angle::from_degrees(10.),
         };
 
-        let mut objects = Vec::<Box<dyn Object>>::new();
+        let mut objects = Vec::<ObjectType>::new();
 
-        objects.push(Box::new(Sphere {
-            pos: Point3::new(0., 1., 0.),
-            radius: 1.,
-            material: (DielectricMaterial {
-                refractive_index: 1.5,
-                albedo: [1.; 3].into(),
+        objects.push(
+            (Sphere {
+                pos: Point3::new(0., 1., 0.),
+                radius: 1.,
+                material: (DielectricMaterial {
+                    refractive_index: 1.5,
+                    albedo: [1.; 3].into(),
+                })
+                .into(),
             })
             .into(),
-        }));
-        objects.push(Box::new(Sphere {
-            pos: Point3::new(-4., 1., 0.),
-            radius: 1.,
-            material: (LambertianMaterial {
-                albedo: [0.7, 0.6, 0.5].into(),
+        );
+        objects.push(
+            (Sphere {
+                pos: Point3::new(-4., 1., 0.),
+                radius: 1.,
+                material: (LambertianMaterial {
+                    albedo: [0.7, 0.6, 0.5].into(),
+                })
+                .into(),
             })
             .into(),
-        }));
-        objects.push(Box::new(Sphere {
-            pos: Point3::new(4., 1., 0.),
-            radius: 1.,
-            material: (MetalMaterial {
-                albedo: [0.7, 0.6, 0.5].into(),
-                fuzz: 0.,
+        );
+        objects.push(
+            (Sphere {
+                pos: Point3::new(4., 1., 0.),
+                radius: 1.,
+                material: (MetalMaterial {
+                    albedo: [0.7, 0.6, 0.5].into(),
+                    fuzz: 0.,
+                })
+                .into(),
             })
             .into(),
-        }));
+        );
 
         Scene {
             camera,

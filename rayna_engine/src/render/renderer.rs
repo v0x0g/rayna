@@ -1,4 +1,5 @@
 use crate::mat::Material;
+use crate::obj::Object;
 use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::{RenderMode, RenderOpts};
 use crate::shared::bounds::Bounds;
@@ -273,7 +274,7 @@ impl Renderer {
                 intersect
                     .ray_normal
                     .as_array()
-                    .map(|f| (f / 2.) as f32 + 0.5),
+                    .map(|f| (f / 2.) as Channel + 0.5),
             ),
             RenderMode::PBR => unreachable!("mode == RenderMode::PBR already checked"),
             RenderMode::Scatter => Pixel::from(
@@ -282,7 +283,7 @@ impl Renderer {
                     .scatter(&ray, &intersect, rng)
                     .unwrap_or_default()
                     .as_array()
-                    .map(|f| (f / 2.) as f32 + 0.5),
+                    .map(|f| (f / 2.) as Channel + 0.5),
             ),
         };
     }

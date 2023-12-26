@@ -1,4 +1,4 @@
-use crate::mat::MaterialType;
+use crate::material::MaterialType;
 use derivative::Derivative;
 use rayna_shared::def::types::{Number, Point3, Vector3};
 

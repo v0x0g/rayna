@@ -1,5 +1,5 @@
-use crate::mat::MaterialType;
-use crate::obj::Object;
+use crate::material::MaterialType;
+use crate::object::Object;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;

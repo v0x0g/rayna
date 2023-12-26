@@ -1,4 +1,4 @@
-use crate::mat::Material;
+use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::{math, rng};

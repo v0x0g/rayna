@@ -39,7 +39,7 @@ pub trait Object: RtRequirement {
 
 /// An optimised implementation of [Object].
 ///
-/// See [crate::mat::MaterialType] for an explanation of the [enum_dispatch] macro usage
+/// See [crate::material::MaterialType] for an explanation of the [enum_dispatch] macro usage
 #[enum_dispatch(Object)]
 #[derive(Clone, Debug)]
 pub enum ObjectType {

@@ -1,5 +1,5 @@
-use crate::mat::Material;
-use crate::obj::Object;
+use crate::material::Material;
+use crate::object::Object;
 use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::{RenderMode, RenderOpts};
 use crate::shared::bounds::Bounds;

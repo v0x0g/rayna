@@ -1,9 +1,9 @@
-use crate::mat::dielectric::DielectricMaterial;
-use crate::mat::lambertian::LambertianMaterial;
-use crate::mat::metal::MetalMaterial;
-use crate::mat::MaterialType;
-use crate::obj::sphere::Sphere;
-use crate::obj::ObjectType;
+use crate::material::dielectric::DielectricMaterial;
+use crate::material::lambertian::LambertianMaterial;
+use crate::material::metal::MetalMaterial;
+use crate::material::MaterialType;
+use crate::object::sphere::Sphere;
+use crate::object::ObjectType;
 use crate::shared::camera::Camera;
 use crate::skybox::SkyboxType;
 use rayna_shared::def::types::{Angle, Pixel, Point3, Vector3};

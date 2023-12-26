@@ -75,7 +75,9 @@ impl Camera {
         let img_width = render_opts.width.get() as Number;
         let img_height = render_opts.height.get() as Number;
         let aspect_ratio = img_width / img_height;
-        let focal_length = self.focus_dist; // Not normally same in real cameras, but in our fake cam it is
+        // Not normally same in real cameras, but in our fake cam it is
+        // Also seems to always be off by one
+        let focal_length = self.focus_dist + 1.;
 
         if self.v_fov.radians == 0. {
             return Err(CamInvalidError::FovInvalid);

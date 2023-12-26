@@ -5,13 +5,11 @@ use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use crate::shared::rng::RngPoolAllocator;
 use crate::shared::scene::Scene;
 use crate::shared::validate;
 use crate::skybox::Skybox;
 use derivative::Derivative;
 use image::Pixel as _;
-use opool::Pool;
 use puffin::profile_function;
 use rand::rngs::SmallRng;
 use rand::Rng;
@@ -33,7 +31,7 @@ pub struct Renderer {
     /// A thread pool used to distribute the workload
     thread_pool: ThreadPool,
     #[derivative(Debug = "ignore")]
-    rng_pool: Pool<RngPoolAllocator, SmallRng>,
+    rng_pool: lockfree_object_pool::LinearObjectPool<SmallRng>,
 }
 
 #[derive(Error, Debug)]
@@ -62,7 +60,8 @@ impl Renderer {
         // Create a pool that should have enough RNGs stored for all of our threads
         // We pool randoms so we don't have to init in hot paths
         // `SmallRng` is the (slightly) fastest of all RNGs tested
-        let rng_pool = Pool::new_prefilled(256, RngPoolAllocator);
+        let rng_pool =
+            lockfree_object_pool::LinearObjectPool::new(rand::SeedableRng::from_entropy, |_| {});
 
         Ok(Self {
             thread_pool,
@@ -169,8 +168,8 @@ impl Renderer {
                         } else {
                             None
                         };
-                        let rng_1 = self.rng_pool.get();
-                        let rng_2 = self.rng_pool.get();
+                        let rng_1 = self.rng_pool.pull();
+                        let rng_2 = self.rng_pool.pull();
                         (rng_1, rng_2, profiler_scope)
                     },
                     // Process each pixel

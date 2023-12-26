@@ -5,7 +5,6 @@ use crate::mat::MaterialType;
 use crate::obj::sphere::Sphere;
 use crate::obj::ObjectType;
 use crate::shared::camera::Camera;
-use crate::skybox::default_skybox::DefaultSkybox;
 use crate::skybox::SkyboxType;
 use rayna_shared::def::types::{Angle, Pixel, Point3, Vector3};
 
@@ -22,7 +21,7 @@ macro_rules! scene {
                 objects: vec![$(
                      ($value).into()
                 ),*],
-                skybox: SkyboxType::Default(DefaultSkybox {})
+                skybox: SkyboxType::default()
             }
         };
 }
@@ -168,7 +167,7 @@ impl Scene {
         Scene {
             camera,
             objects,
-            skybox: SkyboxType::Default(DefaultSkybox {}),
+            skybox: SkyboxType::default(),
         }
     }
 
@@ -222,7 +221,7 @@ impl Scene {
         Scene {
             camera,
             objects,
-            skybox: SkyboxType::Default(DefaultSkybox {}),
+            skybox: SkyboxType::default(),
         }
     }
 }

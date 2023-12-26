@@ -1,33 +1,27 @@
-pub mod default_skybox;
+pub mod default;
+pub mod dynamic;
 
+use self::{default::DefaultSkybox, dynamic::DynamicSkybox};
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
-use crate::skybox::default_skybox::DefaultSkybox;
+use enum_dispatch::enum_dispatch;
 use rayna_shared::def::types::Pixel;
-use std::sync::Arc;
 
 dyn_clone::clone_trait_object!(Skybox);
+#[enum_dispatch(SkyboxType)]
 pub trait Skybox: RtRequirement {
     fn sky_colour(&self, ray: &Ray) -> Pixel;
 }
 
+#[enum_dispatch]
 #[derive(Clone, Debug)]
 pub enum SkyboxType {
-    Default(DefaultSkybox),
-    Other(Arc<dyn Skybox>),
-}
-
-impl Skybox for SkyboxType {
-    fn sky_colour(&self, ray: &Ray) -> Pixel {
-        match self {
-            Self::Default(sky) => sky.sky_colour(ray),
-            Self::Other(sky) => sky.sky_colour(ray),
-        }
-    }
+    DefaultSkybox,
+    DynamicSkybox,
 }
 
 impl Default for SkyboxType {
     fn default() -> Self {
-        Self::Default(DefaultSkybox::default())
+        DefaultSkybox::default().into()
     }
 }

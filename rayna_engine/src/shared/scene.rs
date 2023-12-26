@@ -38,37 +38,38 @@ pub struct Scene {
 impl Scene {
     pub fn simple() -> Self {
         scene! {
-            camera: Camera {
-                pos: Point3::new(0., 0.5, -3.),
-                fwd: Vector3::Z,
-                v_fov: Angle::from_degrees(45.),
-            focus_dist: 3.,
-            defocus_angle: Angle::from_degrees(10.)
-            },
-            objects: [
-                Sphere { // Small, top
-                    pos: Point3::new(0., 0., 1.),
-                    radius: 0.5,
-                    material: MaterialType::Metal(MetalMaterial {
-                        albedo: Pixel::from([0.8; 3]),
-                        fuzz: 1.
-                    })
-                },
-                Sphere { // Ground
-                    pos: Point3::new(0., -100.5, -1.),
-                    radius: 100.,
-                    material: MaterialType::Lambertian(LambertianMaterial {
-                        albedo: Pixel::from([0.5;3]),
-                    })
+                    camera: Camera {
+                        pos: Point3::new(0., 0.5, -3.),
+                        fwd: Vector3::Z,
+                        v_fov: Angle::from_degrees(45.),
+                    focus_dist: 3.,
+                    defocus_angle: Angle::from_degrees(10.)
+                    },
+                    objects: [
+                        Sphere { // Small, top
+                            pos: Point3::new(0., 0., 1.),
+                            radius: 0.5,
+                            material: (MetalMaterial {
+                                albedo: Pixel::from([0.8; 3]),
+                                fuzz: 1.
+                            })
+        .into()                },
+                        Sphere { // Ground
+                            pos: Point3::new(0., -100.5, -1.),
+                            radius: 100.,
+                            material: (LambertianMaterial {
+                                albedo: Pixel::from([0.5;3]),
+                            })
+        .into()                }
+                    ]
                 }
-            ]
-        }
     }
 
     pub fn trio() -> Self {
-        let material = MaterialType::Lambertian(LambertianMaterial {
+        let material: MaterialType = (LambertianMaterial {
             albedo: Pixel::from([1.; 3]),
-        });
+        })
+        .into();
         scene! {
             camera: Camera {
                 pos: Point3::new(0., 0., -3.),
@@ -117,36 +118,40 @@ impl Scene {
         objects.push(Box::new(Sphere {
             pos: Point3::new(0., -100.5, -1.),
             radius: 100.,
-            material: MaterialType::Lambertian(LambertianMaterial {
+            material: (LambertianMaterial {
                 albedo: [0.8, 0.8, 0.0].into(),
-            }),
+            })
+            .into(),
         }));
 
         // Left
         objects.push(Box::new(Sphere {
             pos: Point3::new(-1., 0., -1.),
             radius: 0.5,
-            material: MaterialType::Dielectric(DielectricMaterial {
+            material: (DielectricMaterial {
                 albedo: [1.; 3].into(),
                 refractive_index: 1.5,
-            }),
+            })
+            .into(),
         }));
         // Mid
         objects.push(Box::new(Sphere {
             pos: Point3::new(0., 0., -1.),
             radius: 0.5,
-            material: MaterialType::Lambertian(LambertianMaterial {
+            material: (LambertianMaterial {
                 albedo: [0.1, 0.2, 0.5].into(),
-            }),
+            })
+            .into(),
         }));
         // Right
         objects.push(Box::new(Sphere {
             pos: Point3::new(1., 0., -1.),
             radius: 0.5,
-            material: MaterialType::Metal(MetalMaterial {
+            material: (MetalMaterial {
                 albedo: [0.8, 0.6, 0.2].into(),
                 fuzz: 0.,
-            }),
+            })
+            .into(),
         }));
 
         Scene {
@@ -170,25 +175,28 @@ impl Scene {
         objects.push(Box::new(Sphere {
             pos: Point3::new(0., 1., 0.),
             radius: 1.,
-            material: MaterialType::Dielectric(DielectricMaterial {
+            material: (DielectricMaterial {
                 refractive_index: 1.5,
                 albedo: [1.; 3].into(),
-            }),
+            })
+            .into(),
         }));
         objects.push(Box::new(Sphere {
             pos: Point3::new(-4., 1., 0.),
             radius: 1.,
-            material: MaterialType::Lambertian(LambertianMaterial {
+            material: (LambertianMaterial {
                 albedo: [0.7, 0.6, 0.5].into(),
-            }),
+            })
+            .into(),
         }));
         objects.push(Box::new(Sphere {
             pos: Point3::new(4., 1., 0.),
             radius: 1.,
-            material: MaterialType::Metal(MetalMaterial {
+            material: (MetalMaterial {
                 albedo: [0.7, 0.6, 0.5].into(),
                 fuzz: 0.,
-            }),
+            })
+            .into(),
         }));
 
         Scene {

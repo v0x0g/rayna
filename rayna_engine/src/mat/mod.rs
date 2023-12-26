@@ -1,14 +1,17 @@
-use crate::mat::dielectric::DielectricMaterial;
-use crate::mat::lambertian::LambertianMaterial;
-use crate::mat::metal::MetalMaterial;
+//noinspection ALL
+use crate::mat::{
+    dielectric::DielectricMaterial, dynamic::DynamicMaterial, lambertian::LambertianMaterial,
+    metal::MetalMaterial,
+};
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
+use enum_dispatch::enum_dispatch;
 use rand::RngCore;
 use rayna_shared::def::types::{Pixel, Vector3};
-use std::sync::Arc;
 
 pub mod dielectric;
+pub mod dynamic;
 pub mod lambertian;
 pub mod metal;
 
@@ -17,48 +20,18 @@ pub mod metal;
 /// By using an enum, we can replace dynamic-dispatch with static dispatch.
 /// Just in case we do require dynamic dispatch for some reason, there is a
 /// [MaterialType::Other] variant, which wraps a generic material in an [Arc]
+#[enum_dispatch(Material)]
 #[derive(Clone, Debug)]
 pub enum MaterialType {
-    Lambertian(LambertianMaterial),
-    Metal(MetalMaterial),
-    Dielectric(DielectricMaterial),
-    Other(Arc<dyn Material>),
+    LambertianMaterial,
+    MetalMaterial,
+    DielectricMaterial,
+    DynamicMaterial,
 }
-
 impl RtRequirement for MaterialType {}
 
-impl Material for MaterialType {
-    fn scatter(
-        &self,
-        ray: &Ray,
-        intersection: &Intersection,
-        rng: &mut dyn RngCore,
-    ) -> Option<Vector3> {
-        match self {
-            Self::Lambertian(m) => m.scatter(ray, intersection, rng),
-            Self::Metal(m) => m.scatter(ray, intersection, rng),
-            Self::Dielectric(m) => m.scatter(ray, intersection, rng),
-            Self::Other(m) => m.scatter(ray, intersection, rng),
-        }
-    }
-
-    fn calculate_colour(
-        &self,
-        ray: &Ray,
-        intersection: &Intersection,
-        future_ray: &Ray,
-        future_col: &Pixel,
-    ) -> Pixel {
-        match self {
-            Self::Lambertian(m) => m.calculate_colour(ray, intersection, future_ray, future_col),
-            Self::Metal(m) => m.calculate_colour(ray, intersection, future_ray, future_col),
-            Self::Dielectric(m) => m.calculate_colour(ray, intersection, future_ray, future_col),
-            Self::Other(m) => m.calculate_colour(ray, intersection, future_ray, future_col),
-        }
-    }
-}
-
 /// The trait that defines what properties a material has
+#[enum_dispatch]
 pub trait Material: RtRequirement {
     // TODO: Should `scatter()` return a ray?
 

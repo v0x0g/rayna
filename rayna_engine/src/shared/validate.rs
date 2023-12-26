@@ -62,7 +62,7 @@ pub fn number(x: impl Borrow<Number>) {
     debug_assert_only!();
 
     let x = x.borrow();
-    assert!(!x.is_nan(), "x = {x}");
+    assert!(!x.is_nan(), " [nan check] {x}");
 }
 
 #[inline(always)]
@@ -71,7 +71,11 @@ pub fn normal3(n: impl Borrow<Vector3>) {
     debug_assert_only!();
     let n = n.borrow();
     vector3(n);
-    assert!(n.is_normalized(), "{n:?} ({:?})", n.length());
+    assert!(
+        n.is_normalized(),
+        "[normalised] {n:?} (len: {:?})",
+        n.length()
+    );
 }
 
 #[inline(always)]
@@ -79,7 +83,7 @@ pub fn normal3(n: impl Borrow<Vector3>) {
 pub fn point3(v: impl Borrow<Point3>) {
     debug_assert_only!();
     let v = v.borrow();
-    assert!(!v.is_nan(), "{v:?}");
+    assert!(!v.is_nan(), "[nan] {v:?}");
 }
 
 #[inline(always)]
@@ -87,7 +91,7 @@ pub fn point3(v: impl Borrow<Point3>) {
 pub fn vector3(v: impl Borrow<Vector3>) {
     debug_assert_only!();
     let v = v.borrow();
-    assert!(!v.is_nan(), "{v:?}");
+    assert!(!v.is_nan(), "[nan] {v:?}");
 }
 
 #[inline(always)]
@@ -103,8 +107,5 @@ pub fn ray(r: impl Borrow<Ray>) {
 pub fn colour(c: impl Borrow<Pixel>) {
     debug_assert_only!();
     let c = c.borrow();
-    assert!(
-        c.0.iter().all(|&chan| chan >= 0.0),
-        "channels >= 0 for {c:?}"
-    )
+    assert!(c.0.iter().all(|&chan| chan >= 0.0), "[channels >= 0] {c:?}")
 }

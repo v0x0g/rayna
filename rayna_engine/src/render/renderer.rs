@@ -5,7 +5,7 @@ use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use crate::shared::rng::RecycledRngWrapper;
+use crate::shared::rng::RngPoolAllocator;
 use crate::shared::scene::Scene;
 use crate::shared::validate;
 use crate::skybox::Skybox;
@@ -14,7 +14,6 @@ use image::Pixel as _;
 use puffin::profile_function;
 use rand::rngs::SmallRng;
 use rand::Rng;
-use rand_core::SeedableRng;
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel};
 use rayna_shared::profiler;
@@ -33,7 +32,7 @@ pub struct Renderer {
     /// A thread pool used to distribute the workload
     thread_pool: ThreadPool,
     #[derivative(Debug = "ignore")]
-    rng_pool: lifeguard::Pool<RecycledRngWrapper<SmallRng>>,
+    rng_pool: opool::Pool<RngPoolAllocator, SmallRng>,
 }
 
 #[derive(Error, Debug)]
@@ -60,14 +59,9 @@ impl Renderer {
             .map_err(RendererCreateError::from)?;
 
         // Create a pool that should have enough RNGs stored for all of our threads
-        // We pool randoms so we don't have to init in hot paths
+        // We pool randoms so we don't have to init/create them in hot paths
         // `SmallRng` is the (slightly) fastest of all RNGs tested
-        let rng_pool = lifeguard::PoolBuilder {
-            max_size: 256,
-            starting_size: 256,
-            supplier: Some(Box::new(|| RecycledRngWrapper(SmallRng::from_entropy()))),
-        }
-        .build();
+        let rng_pool = opool::Pool::new_prefilled(256, RngPoolAllocator);
 
         Ok(Self {
             thread_pool,
@@ -175,8 +169,8 @@ impl Renderer {
                         } else {
                             None
                         };
-                        let rng_1 = pool.new();
-                        let rng_2 = pool.new();
+                        let rng_1 = pool.get();
+                        let rng_2 = pool.get();
                         (rng_1, rng_2, profiler_scope)
                     },
                     // Process each pixel
@@ -188,8 +182,8 @@ impl Renderer {
                             bounds,
                             x,
                             y,
-                            &mut rng_1.as_mut().0,
-                            &mut rng_2.as_mut().0,
+                            rng_1.deref_mut(),
+                            rng_2.deref_mut(),
                         );
                     },
                 );

@@ -4,7 +4,9 @@ use rand::Rng;
 use rand_core::SeedableRng;
 use rayna_shared::def::types::{Vector2, Vector3};
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
+/// A struct that can be used in [opool] to allocate RNGs
+/// using the [SeedableRng::from_entropy] method
+#[derive(Copy, Clone, Debug, Default)]
 pub struct RngPoolAllocator;
 impl<R: SeedableRng> opool::PoolAllocator<R> for RngPoolAllocator {
     fn allocate(&self) -> R {
@@ -12,15 +14,6 @@ impl<R: SeedableRng> opool::PoolAllocator<R> for RngPoolAllocator {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
-pub struct RecycledRngWrapper<R: SeedableRng>(pub R);
-impl<R: SeedableRng> lifeguard::Recycleable for RecycledRngWrapper<R> {
-    fn new() -> Self {
-        Self(R::from_entropy())
-    }
-
-    fn reset(&mut self) {}
-}
 // region 3D
 
 /// Returns a random vector in a unit cube (-1..=1)

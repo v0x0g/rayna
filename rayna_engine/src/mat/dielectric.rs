@@ -1,7 +1,7 @@
 use crate::mat::Material;
 use crate::shared::intersect::Intersection;
+use crate::shared::math;
 use crate::shared::ray::Ray;
-use crate::shared::{math, RtRequirement};
 use image::Pixel as _;
 use num_traits::Pow;
 use rand::{Rng, RngCore};
@@ -12,8 +12,6 @@ pub struct DielectricMaterial {
     pub albedo: Pixel,
     pub refractive_index: Number,
 }
-
-impl RtRequirement for DielectricMaterial {}
 
 impl Material for DielectricMaterial {
     fn scatter(

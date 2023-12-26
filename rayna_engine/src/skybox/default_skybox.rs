@@ -1,13 +1,10 @@
 use crate::shared::math;
 use crate::shared::ray::Ray;
-use crate::shared::RtRequirement;
 use crate::skybox::Skybox;
 use rayna_shared::def::types::Pixel;
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct DefaultSkybox;
-
-impl RtRequirement for DefaultSkybox {}
 
 impl Skybox for DefaultSkybox {
     fn sky_colour(&self, ray: &Ray) -> Pixel {

@@ -17,4 +17,4 @@ dyn_clone::clone_trait_object!(RtRequirement);
 /// A simple marker trait that enforces a few other traits we need
 /// in the engine
 pub trait RtRequirement: DynClone + Debug + Send + Sync {}
-// impl<T: DynClone + Debug + Send + Sync> RtRequirement for T{}
+impl<T: DynClone + Debug + Send + Sync> RtRequirement for T {}

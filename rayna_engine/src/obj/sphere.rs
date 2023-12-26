@@ -3,7 +3,6 @@ use crate::obj::Object;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use crate::shared::RtRequirement;
 use rayna_shared::def::types::{Number, Point3, Vector3};
 
 #[derive(Clone, Debug)]
@@ -12,8 +11,6 @@ pub struct Sphere {
     pub radius: Number,
     pub material: MaterialType,
 }
-
-impl RtRequirement for Sphere {}
 
 impl Object for Sphere {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {

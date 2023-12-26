@@ -1,7 +1,6 @@
 use crate::mat::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use crate::shared::RtRequirement;
 use rand_core::RngCore;
 use rayna_shared::def::types::{Pixel, Vector3};
 use std::sync::Arc;
@@ -10,8 +9,6 @@ use std::sync::Arc;
 pub struct DynamicMaterial {
     pub inner: Arc<dyn Material>,
 }
-
-impl RtRequirement for DynamicMaterial {}
 
 impl Material for DynamicMaterial {
     fn scatter(

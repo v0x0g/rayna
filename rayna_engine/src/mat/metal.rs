@@ -1,7 +1,7 @@
 use crate::mat::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use crate::shared::{math, rng, RtRequirement};
+use crate::shared::{math, rng};
 use image::Pixel as _;
 use rand::RngCore;
 use rayna_shared::def::types::{Number, Pixel, Vector3};
@@ -11,8 +11,6 @@ pub struct MetalMaterial {
     pub albedo: Pixel,
     pub fuzz: Number,
 }
-
-impl RtRequirement for MetalMaterial {}
 
 impl Material for MetalMaterial {
     fn scatter(

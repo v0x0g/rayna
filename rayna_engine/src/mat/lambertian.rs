@@ -2,7 +2,6 @@ use crate::mat::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::rng;
-use crate::shared::RtRequirement;
 use image::Pixel as _;
 use rand::RngCore;
 use rayna_shared::def::types::{Pixel, Vector3};
@@ -11,8 +10,6 @@ use rayna_shared::def::types::{Pixel, Vector3};
 pub struct LambertianMaterial {
     pub albedo: Pixel,
 }
-
-impl RtRequirement for LambertianMaterial {}
 
 impl Material for LambertianMaterial {
     fn scatter(

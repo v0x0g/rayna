@@ -17,8 +17,6 @@ pub enum SkyboxType {
     Other(Arc<dyn Skybox>),
 }
 
-impl RtRequirement for SkyboxType {}
-
 impl Skybox for SkyboxType {
     fn sky_colour(&self, ray: &Ray) -> Pixel {
         match self {

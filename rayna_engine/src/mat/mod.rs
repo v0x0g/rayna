@@ -28,7 +28,6 @@ pub enum MaterialType {
     DielectricMaterial,
     DynamicMaterial,
 }
-impl RtRequirement for MaterialType {}
 
 /// The trait that defines what properties a material has
 #[enum_dispatch]
@@ -57,8 +56,7 @@ pub trait Material: RtRequirement {
     /// #
     /// # #[derive(Copy, Clone, Eq, PartialEq, Debug)]
     /// pub struct Test;
-    /// # impl RtRequirement for Test {}
-    /// #
+    /// #     /// #
     /// impl Material for Test {
     ///     fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Vector3 {
     ///         let diffuse = false;
@@ -106,8 +104,7 @@ pub trait Material: RtRequirement {
     /// #
     /// # #[derive(Copy, Clone, Eq, PartialEq, Debug)]
     /// pub struct Test;
-    /// # impl RtRequirement for Test {}
-    /// #
+    /// #     /// #
     /// impl Material for Test {
     /// #   fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Vector3 { todo!() }
     ///     fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel) -> Pixel {

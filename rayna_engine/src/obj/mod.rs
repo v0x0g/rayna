@@ -6,8 +6,9 @@ use enum_dispatch::enum_dispatch;
 use rayna_shared::def::types::Number;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
-use self::sphere::Sphere;
+use self::{dynamic::DynamicObject, sphere::Sphere};
 
+pub mod dynamic;
 pub mod sphere;
 
 dyn_clone::clone_trait_object!(Object);
@@ -43,4 +44,5 @@ pub trait Object: RtRequirement {
 #[derive(Clone, Debug)]
 pub enum ObjectType {
     Sphere,
+    DynamicObject,
 }

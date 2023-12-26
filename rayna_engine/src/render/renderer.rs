@@ -31,7 +31,7 @@ pub struct Renderer {
     /// A thread pool used to distribute the workload
     thread_pool: ThreadPool,
     #[derivative(Debug = "ignore")]
-    rng_pool: lockfree_object_pool::SpinLockObjectPool<SmallRng>,
+    rng_pool: lockfree_object_pool::MutexObjectPool<SmallRng>,
 }
 
 #[derive(Error, Debug)]
@@ -61,7 +61,7 @@ impl Renderer {
         // We pool randoms so we don't have to init in hot paths
         // `SmallRng` is the (slightly) fastest of all RNGs tested
         let rng_pool =
-            lockfree_object_pool::SpinLockObjectPool::new(rand::SeedableRng::from_entropy, |_| {});
+            lockfree_object_pool::MutexObjectPool::new(rand::SeedableRng::from_entropy, |_| {});
 
         Ok(Self {
             thread_pool,

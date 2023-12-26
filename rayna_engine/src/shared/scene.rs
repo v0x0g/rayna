@@ -105,7 +105,7 @@ impl Scene {
 
     pub fn glass() -> Self {
         let camera = Camera {
-            pos: Point3::new(0., 0.3, 4.),
+            pos: Point3::new(0., 0., 4.),
             fwd: Vector3::new(0., 0., -1.).normalize(),
             v_fov: Angle::from_degrees(45.),
             focus_dist: 3.,
@@ -117,7 +117,7 @@ impl Scene {
         // Ground
         objects.push(
             Sphere {
-                pos: Point3::new(0., -100.5, -1.),
+                pos: Point3::new(0., -100.5, 0.),
                 radius: 100.,
                 material: LambertianMaterial {
                     albedo: [0.8, 0.8, 0.0].into(),
@@ -130,7 +130,7 @@ impl Scene {
         // Left
         objects.push(
             Sphere {
-                pos: Point3::new(-1., 0., -1.),
+                pos: Point3::new(-1., 0., 0.),
                 radius: 0.5,
                 material: DielectricMaterial {
                     albedo: [1.; 3].into(),
@@ -143,7 +143,7 @@ impl Scene {
         // Mid
         objects.push(
             Sphere {
-                pos: Point3::new(0., 0., -1.),
+                pos: Point3::new(0., 0., 0.),
                 radius: 0.5,
                 material: LambertianMaterial {
                     albedo: [0.1, 0.2, 0.5].into(),
@@ -155,7 +155,7 @@ impl Scene {
         // Right
         objects.push(
             Sphere {
-                pos: Point3::new(1., 0., -1.),
+                pos: Point3::new(1., 0., 0.),
                 radius: 0.5,
                 material: MetalMaterial {
                     albedo: [0.8, 0.6, 0.2].into(),

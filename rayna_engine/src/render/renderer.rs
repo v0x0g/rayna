@@ -25,7 +25,7 @@ use std::ops::{Add, DerefMut};
 use std::sync::OnceLock;
 use std::time::Duration;
 use thiserror::Error;
-use tracing::trace;
+use tracing::{error, trace};
 
 #[derive(Derivative)]
 #[derivative(Debug)]
@@ -148,16 +148,21 @@ impl Renderer {
             num_threads = self.thread_pool.current_num_threads();
 
             self.thread_pool.install(|| {
-                let pixels =
-                    img.deref_mut()
-                        .par_chunks_exact_mut(3)
-                        .enumerate()
-                        .map(|(idx, chans)| {
-                            let (y, x) = num_integer::Integer::div_rem(&idx, &(w as usize));
-                            let p = Pixel::from_slice_mut(chans);
-                            (x, y, p)
-                        });
-                let pool = &self.rng_pool;
+                let rng_pool = &self.rng_pool;
+
+                let pixels = img
+                    .deref_mut()
+                    .par_chunks_exact_mut(3)
+                    .enumerate()
+                    .map(|(idx, chans)| {
+                        let (y, x) = num_integer::Integer::div_rem(&idx, &(w as usize));
+                        let p = Pixel::from_slice_mut(chans);
+                        (x, y, p)
+                    })
+                    // Return on panic as fast as possible; don't keep processing all the pixels on panic
+                    // Otherwise we get (literally) millions of panics (1 per pixel) which just hangs the renderer as it prints
+                    .panic_fuse();
+
                 pixels.for_each_init(
                     move || {
                         // Can't use macro because of macro hygiene :(
@@ -170,8 +175,8 @@ impl Renderer {
                         } else {
                             None
                         };
-                        let rng_1 = pool.get();
-                        let rng_2 = pool.get();
+                        let rng_1 = rng_pool.get();
+                        let rng_2 = rng_pool.get();
                         (rng_1, rng_2, profiler_scope)
                     },
                     // Process each pixel

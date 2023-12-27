@@ -208,7 +208,7 @@ impl Scene {
                     continue;
                 }
 
-                if material_choice < 0.8 {
+                if material_choice < 0.7 {
                     // Diffuse (lambertian)
                     let albedo =
                         Pixel::map2(&rng::colour_rgb(rng), &rng::colour_rgb(rng), |a, b| a * b);
@@ -220,7 +220,7 @@ impl Scene {
                         }
                         .into(),
                     );
-                } else if material_choice <= 0.95 {
+                } else if material_choice <= 0.9 {
                     //Metal
                     let albedo = rng::colour_rgb_range(rng, 0.5..=1.0);
                     let fuzz = rng.gen_range(0.0..=0.5);

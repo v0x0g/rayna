@@ -1,8 +1,10 @@
 //! Helper module for RNG-related functions
 
+use image::Pixel as _;
+use rand::distributions::uniform::SampleRange;
 use rand::Rng;
 use rand_core::SeedableRng;
-use rayna_shared::def::types::{Vector2, Vector3};
+use rayna_shared::def::types::{Channel, Pixel, Vector2, Vector3};
 
 /// A struct that can be used in [opool] to allocate RNGs
 /// using the [SeedableRng::from_entropy] method
@@ -147,3 +149,34 @@ pub fn vector_on_unit_semicircle<R: Rng + ?Sized>(rng: &mut R, normal: Vector2) 
 }
 
 //endregion 2D
+
+// region Colours
+
+/// Returns a random RGB colour
+pub fn colour_rgb<R: Rng + ?Sized>(rng: &mut R) -> Pixel {
+    let mut arr: [Channel; Pixel::CHANNEL_COUNT as usize] = Default::default();
+    arr.fill_with(|| rng.gen_range(0.0..=1.0));
+    arr.into()
+}
+/// Returns a random RGB colour with a given range for the channels
+pub fn colour_rgb_range<R: Rng + ?Sized, Ra: SampleRange<Channel> + Clone>(
+    rng: &mut R,
+    range: Ra,
+) -> Pixel {
+    let mut arr: [Channel; Pixel::CHANNEL_COUNT as usize] = Default::default();
+    arr.fill_with(|| rng.gen_range(range.clone()));
+    arr.into()
+}
+
+/// Returns a random black and white colour
+pub fn colour_bw<R: Rng + ?Sized>(rng: &mut R) -> Pixel {
+    let val = rng.gen_range(0.0..=1.0);
+    [val; Pixel::CHANNEL_COUNT as usize].into()
+}
+/// Returns a random black and white colour with a given range for the channels
+pub fn colour_bw_range<R: Rng + ?Sized, Ra: SampleRange<Channel>>(rng: &mut R, range: Ra) -> Pixel {
+    let val = rng.gen_range(range);
+    [val; Pixel::CHANNEL_COUNT as usize].into()
+}
+
+// endregion

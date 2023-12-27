@@ -275,7 +275,7 @@ impl crate::backend::app::App for RaynaApp {
                 move_dirs.y -= ui.input(|i| i.modifiers.ctrl) as u8 as Number;
                 move_dirs.z += ui.input(|i| i.key_down(Key::W)) as u8 as Number;
                 move_dirs.z -= ui.input(|i| i.key_down(Key::S)) as u8 as Number;
-                move_dirs *= ui.input(|i| i.stable_dt as Number) * 0.4;
+                move_dirs *= ui.input(|i| i.stable_dt as Number) * 3.0;
             }
 
             if img_resp.hovered() {

@@ -1,6 +1,6 @@
 use crate::render::render_opts::RenderOpts;
 use crate::shared::ray::Ray;
-use crate::shared::rng;
+use crate::shared::{rng, validate};
 use puffin::profile_function;
 use rand::Rng;
 use rayna_shared::def::types::{Angle, Number, Point3, Transform3, Vector3};
@@ -31,6 +31,9 @@ pub enum CamInvalidError {
     /// The calculated field-of-view was not valid.
     #[error("the provided FOV was not valid")]
     FovInvalid,
+    /// The calculated focal length was not valid. Try checking the focus distance is `> 0`
+    #[error("the provided focal length was not valid")]
+    FocalLengthInvalid,
 }
 
 impl Camera {
@@ -82,6 +85,10 @@ impl Camera {
         if self.v_fov.radians == 0. {
             return Err(CamInvalidError::FovInvalid);
         }
+        if focal_length == 0. {
+            return Err(CamInvalidError::FocalLengthInvalid);
+        }
+
         let theta = self.v_fov;
         let h = (theta / 2.).tan();
         let viewport_height = 2. * h * focal_length;
@@ -105,9 +112,10 @@ impl Camera {
         let pixel_delta_u = viewport_u / img_width;
         let pixel_delta_v = viewport_v / img_height;
 
+        let pos = self.pos;
+
         // Calculate the location of the upper left pixel.
-        let viewport_upper_left =
-            self.pos - (w * focal_length) - (viewport_u / 2.) - (viewport_v / 2.);
+        let viewport_upper_left = pos - (w * focal_length) - (viewport_u / 2.) - (viewport_v / 2.);
         let pixel_0_0_pos = viewport_upper_left + (pixel_delta_u + pixel_delta_v) * 0.5;
 
         // Calculate the camera defocus disk basis vectors.
@@ -115,8 +123,15 @@ impl Camera {
         let defocus_disk_u = u * defocus_radius;
         let defocus_disk_v = v * defocus_radius;
 
+        validate::point3(pos);
+        validate::point3(pixel_0_0_pos);
+        validate::vector3(pixel_delta_u);
+        validate::vector3(pixel_delta_v);
+        validate::vector3(defocus_disk_u);
+        validate::vector3(defocus_disk_v);
+
         Ok(Viewport {
-            pos: self.pos,
+            pos,
             pixel_0_0_pos,
             pixel_delta_u,
             pixel_delta_v,

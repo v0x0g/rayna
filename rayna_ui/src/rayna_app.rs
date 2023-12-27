@@ -14,7 +14,9 @@ use rayna_engine::shared::scene::Scene;
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Angle, Number, Vector3};
 use std::num::NonZeroUsize;
+use std::time::Duration;
 use strum::IntoEnumIterator;
+use throttle::Throttle;
 use tracing::{error, info, trace, warn};
 
 pub struct RaynaApp {
@@ -33,6 +35,7 @@ pub struct RaynaApp {
 
     // The rest
     integration: Integration,
+    worker_death_throttle: Throttle,
 }
 
 impl RaynaApp {
@@ -49,6 +52,8 @@ impl RaynaApp {
                 .expect("couldn't create integration"),
             scene,
             render_stats: Default::default(),
+            // Max ten failures in a row, once per second
+            worker_death_throttle: Throttle::new(Duration::from_secs(1), 10),
         }
     }
 }
@@ -339,7 +344,7 @@ impl RaynaApp {
             return;
         };
         let Ok(render) = res else {
-            warn!(target: UI, ?res);
+            // warn!(target: UI, ?res);
             return;
         };
 
@@ -380,9 +385,18 @@ impl RaynaApp {
             trace!(target: UI, ?res, "got message from worker");
 
             match res {
-                Err(IntegrationError::WorkerKeepsDying) => {
-                    warn!(target: UI, "worker died too many times too fast");
-                    panic!("worker keeps dying too fast");
+                Err(IntegrationError::WorkerDied) => {
+                    if self.worker_death_throttle.accept().is_ok() {
+                        warn!(target: UI, "worker thread died");
+                        // Try restarting integration
+                        self.integration = Integration::new(&self.render_opts, &self.scene)
+                            .expect("failed to re-initialise integration");
+                    } else {
+                        trace!(target: UI, "(repeatedly) worker thread died")
+                    }
+                    // Prevents endless loops if it keeps crashing
+                    // Logs will still get spammed though
+                    break;
                 }
 
                 Err(err) => {

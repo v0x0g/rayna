@@ -10,20 +10,14 @@ use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
 use rayna_engine::shared::scene::Scene;
 use rayna_shared::def::targets::INTEGRATION;
-use std::sync::Mutex;
 use std::thread::JoinHandle;
-use std::time::Duration;
 use thiserror::Error;
-use throttle::Throttle;
-use tracing::{debug, error};
+use tracing::{debug, error, trace};
 
 pub mod message;
 mod worker;
 
 pub type Result<T> = core::result::Result<T, IntegrationError>;
-pub const THREAD_DEATH_THRESHOLD: usize = 10;
-pub const THREAD_DEATH_DURATION: Duration = Duration::from_secs(1);
-
 #[derive(Error, Debug)]
 pub enum IntegrationError {
     #[error("message channel to background worker disconnected")]
@@ -33,7 +27,7 @@ pub enum IntegrationError {
     #[error("render channel from background worker disconnected")]
     RenderChannelDisconnected,
     #[error("worker thread died unexpectedly")]
-    WorkerKeepsDying,
+    WorkerDied,
     #[error("failed to spawn thread for BgWorker")]
     WorkerSpawnFailed(#[from] std::io::Error),
 }
@@ -43,11 +37,13 @@ pub(crate) struct Integration {
     msg_rx: flume::Receiver<MessageToUi>,
     render_rx: flume::Receiver<Render<ColorImage>>,
     worker_thread: JoinHandle<()>,
-    thread_death_throttle: Mutex<Throttle>,
 }
 
 impl Integration {
     pub(crate) fn new(initial_render_opts: &RenderOpts, initial_scene: &Scene) -> Result<Self> {
+        debug!(target: INTEGRATION, "creating new integration instance");
+
+        trace!(target: INTEGRATION, "creating channels");
         // Main thread -> Worker
         let (main_tx, work_rx) = flume::unbounded::<MessageToWorker>();
         // Worker -> Main thread
@@ -55,6 +51,7 @@ impl Integration {
         // Worker  -> Main thread (renders)
         let (rend_tx, rend_rx) = flume::bounded::<Render<ColorImage>>(1);
 
+        trace!(target: INTEGRATION, "creating worker");
         let worker = BgWorker {
             msg_rx: work_rx,
             msg_tx: work_tx,
@@ -63,7 +60,6 @@ impl Integration {
             scene: initial_scene.clone(),
             renderer: Renderer::new().expect("failed to create renderer"),
         };
-
         let thread = worker.start_bg_thread().map_err(IntegrationError::from)?;
 
         Ok(Self {
@@ -71,11 +67,6 @@ impl Integration {
             msg_rx: main_rx,
             render_rx: rend_rx,
             worker_thread: thread,
-            // Max 10 errors, 1 expiring per second
-            thread_death_throttle: Mutex::new(Throttle::new(
-                THREAD_DEATH_DURATION,
-                THREAD_DEATH_THRESHOLD,
-            )),
         })
     }
 
@@ -83,17 +74,8 @@ impl Integration {
         puffin::profile_function!();
 
         if self.worker_thread.is_finished() {
-            debug!(target: INTEGRATION, "worker thread died");
-            if self
-                .thread_death_throttle
-                .lock()
-                .expect("throttle mutex poisoned")
-                .accept()
-                .is_err()
-            {
-                debug!(target: INTEGRATION, "worker keeps dying");
-                return Err(IntegrationError::WorkerKeepsDying);
-            }
+            trace!(target: INTEGRATION, "worker thread died");
+            return Err(IntegrationError::WorkerDied);
         }
 
         Ok(())

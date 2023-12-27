@@ -14,6 +14,7 @@ use rayna_engine::shared::scene::Scene;
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Angle, Number, Vector3};
 use std::num::NonZeroUsize;
+use std::ops::Deref;
 use std::time::Duration;
 use strum::IntoEnumIterator;
 use throttle::Throttle;
@@ -385,14 +386,14 @@ impl RaynaApp {
             trace!(target: UI, ?res, "got message from worker");
 
             match res {
-                Err(IntegrationError::WorkerDied) => {
+                Err(IntegrationError::WorkerDied(err)) => {
                     if self.worker_death_throttle.accept().is_ok() {
-                        warn!(target: UI, "worker thread died");
+                        warn!(target: UI, err = ? err.deref(), "worker thread died");
                         // Try restarting integration
                         self.integration = Integration::new(&self.render_opts, &self.scene)
                             .expect("failed to re-initialise integration");
                     } else {
-                        trace!(target: UI, "(repeatedly) worker thread died")
+                        trace!(target: UI, "worker thread died again... sigh")
                     }
                     // Prevents endless loops if it keeps crashing
                     // Logs will still get spammed though

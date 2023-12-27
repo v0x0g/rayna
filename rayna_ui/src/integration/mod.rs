@@ -10,6 +10,8 @@ use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
 use rayna_engine::shared::scene::Scene;
 use rayna_shared::def::targets::INTEGRATION;
+use std::any::Any;
+use std::sync::Arc;
 use std::thread::JoinHandle;
 use thiserror::Error;
 use tracing::{debug, error, trace};
@@ -17,7 +19,8 @@ use tracing::{debug, error, trace};
 pub mod message;
 mod worker;
 
-pub type Result<T> = core::result::Result<T, IntegrationError>;
+pub type IResult<T> = Result<T, IntegrationError>;
+
 #[derive(Error, Debug)]
 pub enum IntegrationError {
     #[error("message channel to background worker disconnected")]
@@ -27,7 +30,7 @@ pub enum IntegrationError {
     #[error("render channel from background worker disconnected")]
     RenderChannelDisconnected,
     #[error("worker thread died unexpectedly")]
-    WorkerDied,
+    WorkerDied(Arc<Box<dyn Any + Send + 'static>>),
     #[error("failed to spawn thread for BgWorker")]
     WorkerSpawnFailed(#[from] std::io::Error),
 }
@@ -36,11 +39,25 @@ pub(crate) struct Integration {
     msg_tx: flume::Sender<MessageToWorker>,
     msg_rx: flume::Receiver<MessageToUi>,
     render_rx: flume::Receiver<Render<ColorImage>>,
-    worker_thread: JoinHandle<()>,
+    worker_handle: WorkerHandle,
+}
+
+enum WorkerHandle {
+    /// Worker thread is still running
+    Running(JoinHandle<()>),
+    // Temporary value used while converting a [WorkerHandle::Running] state that has completed,
+    /// into a [WorkerHandle::Errored] state
+    ///
+    /// # See
+    /// https://i.imgflip.com/15ifk6.jpg
+    #[allow(non_camel_case_types)]
+    TechnicalDifficulties_PleaseStandBy,
+    /// The worker thread had an oopsie, and pooped it's pants. Here's the error message, nicely double-wrapped up for christmas
+    Errored(Arc<Box<dyn Any + Send + 'static>>),
 }
 
 impl Integration {
-    pub(crate) fn new(initial_render_opts: &RenderOpts, initial_scene: &Scene) -> Result<Self> {
+    pub(crate) fn new(initial_render_opts: &RenderOpts, initial_scene: &Scene) -> IResult<Self> {
         debug!(target: INTEGRATION, "creating new integration instance");
 
         trace!(target: INTEGRATION, "creating channels");
@@ -66,16 +83,32 @@ impl Integration {
             msg_tx: main_tx,
             msg_rx: main_rx,
             render_rx: rend_rx,
-            worker_thread: thread,
+            worker_handle: WorkerHandle::Running(thread),
         })
     }
 
-    fn ensure_worker_alive(&self) -> Result<()> {
+    fn ensure_worker_alive(&mut self) -> IResult<()> {
         puffin::profile_function!();
 
-        if self.worker_thread.is_finished() {
-            trace!(target: INTEGRATION, "worker thread died");
-            return Err(IntegrationError::WorkerDied);
+        if let WorkerHandle::Running(ref h_join) = self.worker_handle {
+            if h_join.is_finished() {
+                trace!(target: INTEGRATION, "worker thread died");
+                let WorkerHandle::Running(worker_handle) = std::mem::replace(
+                    &mut self.worker_handle,
+                    WorkerHandle::TechnicalDifficulties_PleaseStandBy,
+                ) else {
+                    unreachable!("already matched that worker_handle is `Running`")
+                };
+                let ret_value = worker_handle.join();
+                let err: Arc<Box<dyn Any + Send + 'static>> = match ret_value {
+                    Ok(()) => Arc::new(Box::new(())),
+                    Err(e) => Arc::new(e),
+                };
+                self.worker_handle = WorkerHandle::Errored(err.clone());
+                return Err(IntegrationError::WorkerDied(err.clone()));
+            }
+        } else if let WorkerHandle::Errored(ref e) = self.worker_handle {
+            return Err(IntegrationError::WorkerDied(e.clone()));
         }
 
         Ok(())
@@ -84,7 +117,7 @@ impl Integration {
     // region ===== SENDING =====
 
     /// Sends a message to the worker
-    pub fn send_message(&self, message: MessageToWorker) -> Result<()> {
+    pub fn send_message(&mut self, message: MessageToWorker) -> IResult<()> {
         puffin::profile_function!();
 
         self.ensure_worker_alive()?;
@@ -103,7 +136,7 @@ impl Integration {
     ///
     /// # Return Value
     /// See [Self::try_recv_message]
-    pub fn try_recv_render(&self) -> Option<Result<Render<ColorImage>>> {
+    pub fn try_recv_render(&mut self) -> Option<IResult<Render<ColorImage>>> {
         puffin::profile_function!();
 
         if let Err(e) = self.ensure_worker_alive() {
@@ -123,9 +156,9 @@ impl Integration {
     /// Tries to receive the next message from the worker
     ///
     /// # Return Value
-    /// The outer [`Result`] corresponds to whether there was an error during message reception,
+    /// The outer [`IResult`] corresponds to whether there was an error during message reception,
     /// or all messages were received successfully. The inner [`Option`] corresponds to whether or not there was
-    pub fn try_recv_message(&self) -> Option<Result<MessageToUi>> {
+    pub fn try_recv_message(&mut self) -> Option<IResult<MessageToUi>> {
         puffin::profile_function!();
 
         if let Err(e) = self.ensure_worker_alive() {

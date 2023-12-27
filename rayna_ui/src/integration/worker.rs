@@ -1,7 +1,7 @@
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::profiler;
 use egui::{Color32, ColorImage};
-use image::RgbaImage;
+use image::{ImageFormat, RgbaImage};
 use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
@@ -95,6 +95,11 @@ impl BgWorker {
             let render_result = {
                 profile_scope!("make_render");
                 let render = renderer.render(&scene, &render_opts);
+
+                // TODO: REMOVE THIS IT'S TESTING ONLY
+                // save image
+                info!(target: "TESTING", "saved render to disk: {:#?}", image::DynamicImage::from(render.img.clone()).save_with_format("./render.exr", ImageFormat::OpenExr));
+
                 Render {
                     img: Self::convert_img(render.img),
                     stats: render.stats,

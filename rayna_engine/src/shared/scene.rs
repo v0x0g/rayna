@@ -199,7 +199,7 @@ pub mod stored {
 
         let mut objects = Vec::<ObjectType>::new();
 
-        let grid_dims = -11..=11;
+        let grid_dims = -15..=15;
         let rng = &mut thread_rng();
         for a in grid_dims.clone() {
             for b in grid_dims.clone() {

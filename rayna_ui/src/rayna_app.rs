@@ -10,7 +10,7 @@ use egui::{
 use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
-use rayna_engine::shared::scene::Scene;
+use rayna_engine::shared::scene::{self, Scene};
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Angle, Number, Vector3};
 use std::num::NonZeroUsize;
@@ -43,7 +43,7 @@ impl RaynaApp {
     /// Creates a new app instance, with an [`Context`] for configuring the app
     pub fn new_ctx(_ctx: &Context) -> Self {
         info!(target: UI, "ui app init");
-        let scene = Scene::ballz();
+        let scene = scene::stored::BALLZ.clone();
         let render_opts = Default::default();
         Self {
             render_opts,

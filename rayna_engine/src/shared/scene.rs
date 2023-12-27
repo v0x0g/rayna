@@ -1,15 +1,6 @@
-use crate::material::dielectric::DielectricMaterial;
-use crate::material::lambertian::LambertianMaterial;
-use crate::material::metal::MetalMaterial;
-use crate::material::MaterialType;
-use crate::object::sphere::Sphere;
 use crate::object::ObjectType;
 use crate::shared::camera::Camera;
-use crate::shared::rng;
 use crate::skybox::SkyboxType;
-use image::Pixel as _;
-use rand::{thread_rng, Rng};
-use rayna_shared::def::types::{Angle, Number, Pixel, Point3, Vector3};
 
 #[macro_export]
 #[rustfmt::skip] // rustfmt is shit with macros
@@ -37,8 +28,24 @@ pub struct Scene {
     pub skybox: SkyboxType,
 }
 
-impl Scene {
-    pub fn simple() -> Self {
+pub mod stored {
+    use super::Scene;
+    use crate::material::dielectric::DielectricMaterial;
+    use crate::material::lambertian::LambertianMaterial;
+    use crate::material::metal::MetalMaterial;
+    use crate::material::MaterialType;
+    use crate::object::sphere::Sphere;
+    use crate::object::ObjectType;
+    use crate::shared::camera::Camera;
+    use crate::shared::rng;
+    use crate::skybox::SkyboxType;
+    use image::Pixel as _;
+    use rand::{thread_rng, Rng};
+    use rayna_shared::def::types::{Angle, Number, Pixel, Point3, Vector3};
+    use static_init::*;
+
+    #[dynamic]
+    pub static SIMPLE: Scene = {
         #[rustfmt::skip]
         scene! {
             camera: Camera {
@@ -66,13 +73,15 @@ impl Scene {
                 }
             ]
         }
-    }
+    };
 
-    pub fn trio() -> Self {
+    #[dynamic]
+    pub static TRIO: Scene = {
         let material: MaterialType = LambertianMaterial {
             albedo: Pixel::from([1.; 3]),
         }
         .into();
+        #[rustfmt::skip]
         scene! {
             camera: Camera {
                 pos: Point3::new(0., 0., -3.),
@@ -104,9 +113,10 @@ impl Scene {
                 }
             ]
         }
-    }
+    };
 
-    pub fn glass() -> Self {
+    #[dynamic]
+    pub static GLASS: Scene = {
         let camera = Camera {
             pos: Point3::new(0., 0., 4.),
             fwd: Vector3::new(0., 0., -1.).normalize(),
@@ -174,10 +184,11 @@ impl Scene {
             objects,
             skybox: SkyboxType::default(),
         }
-    }
+    };
 
     //noinspection SpellCheckingInspection
-    pub fn ballz() -> Self {
+    #[dynamic]
+    pub static BALLZ: Scene = {
         let camera = Camera {
             pos: Point3::new(13., 2., 3.),
             fwd: Vector3::new(-13., -2., -3.).normalize(),
@@ -208,46 +219,36 @@ impl Scene {
                     continue;
                 }
 
-                if material_choice < 0.7 {
-                    // Diffuse (lambertian)
-                    let albedo =
-                        Pixel::map2(&rng::colour_rgb(rng), &rng::colour_rgb(rng), |a, b| a * b);
-                    objects.push(
-                        Sphere {
-                            pos: centre,
-                            material: LambertianMaterial { albedo }.into(),
-                            radius: 0.2,
-                        }
-                        .into(),
-                    );
+                let material: MaterialType = if material_choice < 0.7 {
+                    LambertianMaterial {
+                        albedo: Pixel::map2(
+                            &rng::colour_rgb(rng),
+                            &rng::colour_rgb(rng),
+                            |a, b| a * b,
+                        ),
+                    }
+                    .into()
                 } else if material_choice <= 0.9 {
-                    //Metal
-                    let albedo = rng::colour_rgb_range(rng, 0.5..=1.0);
-                    let fuzz = rng.gen_range(0.0..=0.5);
-                    objects.push(
-                        Sphere {
-                            pos: centre,
-                            material: MetalMaterial { albedo, fuzz }.into(),
-                            radius: 0.2,
-                        }
-                        .into(),
-                    );
+                    MetalMaterial {
+                        albedo: rng::colour_rgb_range(rng, 0.5..=1.0),
+                        fuzz: rng.gen_range(0.0..=0.5),
+                    }
+                    .into()
                 } else {
-                    // Glass
-                    let refractive_index = rng.gen_range(1.0..=10.0);
-                    objects.push(
-                        Sphere {
-                            pos: centre,
-                            material: DielectricMaterial {
-                                albedo: [1.; 3].into(),
-                                refractive_index,
-                            }
-                            .into(),
-                            radius: 0.2,
-                        }
-                        .into(),
-                    );
-                }
+                    DielectricMaterial {
+                        albedo: [1.; 3].into(),
+                        refractive_index: rng.gen_range(1.0..=10.0),
+                    }
+                    .into()
+                };
+                objects.push(
+                    Sphere {
+                        pos: centre,
+                        material,
+                        radius: 0.2,
+                    }
+                    .into(),
+                );
             }
         }
 
@@ -304,5 +305,5 @@ impl Scene {
             objects,
             skybox: SkyboxType::default(),
         }
-    }
+    };
 }

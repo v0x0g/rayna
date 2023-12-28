@@ -10,7 +10,7 @@ use egui::{
 use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
-use rayna_engine::scene::{self, SceneBuilder};
+use rayna_engine::scene::{self, Scene};
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Angle, Number, Vector3};
 use std::num::NonZeroUsize;
@@ -23,7 +23,7 @@ use tracing::{error, info, trace, warn};
 pub struct RaynaApp {
     // Engine things
     render_opts: RenderOpts,
-    scene: SceneBuilder,
+    scene: Scene,
 
     // Display things
     /// A handle to the texture that holds the current render buffer

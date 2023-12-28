@@ -2,7 +2,7 @@ use crate::material::Material;
 use crate::object::Object;
 use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::{RenderMode, RenderOpts};
-use crate::scene::SceneBuilder;
+use crate::scene::Scene;
 use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
 use crate::shared::intersect::Intersection;
@@ -71,7 +71,7 @@ impl Renderer {
     }
 
     // TODO: Should `render()` be fallible?
-    pub fn render(&mut self, scene: &SceneBuilder, render_opts: &RenderOpts) -> Render<ImgBuf> {
+    pub fn render(&mut self, scene: &Scene, render_opts: &RenderOpts) -> Render<ImgBuf> {
         profile_function!();
 
         let viewport = match scene.camera.calculate_viewport(render_opts) {
@@ -130,7 +130,7 @@ impl Renderer {
     /// This is only called when the viewport is valid, and therefore an image can be rendered
     fn render_actual(
         &mut self,
-        scene: &SceneBuilder,
+        scene: &Scene,
         render_opts: &RenderOpts,
         viewport: &Viewport,
         bounds: &Bounds<Number>,
@@ -213,7 +213,7 @@ impl Renderer {
     ///
     /// Takes into account [`RenderOpts::msaa`]
     fn render_px(
-        scene: &SceneBuilder,
+        scene: &Scene,
         opts: &RenderOpts,
         viewport: &Viewport,
         bounds: &Bounds<Number>,
@@ -250,7 +250,7 @@ impl Renderer {
 
     /// Renders a given pixel a single time
     fn render_px_once(
-        scene: &SceneBuilder,
+        scene: &Scene,
         viewport: &Viewport,
         opts: &RenderOpts,
         bounds: &Bounds<Number>,
@@ -295,7 +295,7 @@ impl Renderer {
 
     /// Calculates the nearest intersection in the scene for the given ray
     fn calculate_intersection(
-        scene: &SceneBuilder,
+        scene: &Scene,
         ray: &Ray,
         bounds: &Bounds<Number>,
     ) -> Option<Intersection> {
@@ -310,7 +310,7 @@ impl Renderer {
     }
 
     fn ray_colour_recursive(
-        scene: &SceneBuilder,
+        scene: &Scene,
         ray: &Ray,
         opts: &RenderOpts,
         bounds: &Bounds<Number>,

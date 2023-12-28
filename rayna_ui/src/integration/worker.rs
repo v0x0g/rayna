@@ -6,7 +6,7 @@ use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
-use rayna_engine::scene::SceneBuilder;
+use rayna_engine::scene::Scene;
 use rayna_shared::def::targets::BG_WORKER;
 use rayna_shared::def::types::{Channel, ImgBuf};
 use rayon::iter::IntoParallelIterator;
@@ -19,7 +19,7 @@ use tracing::{info, instrument, trace, warn};
 #[derive(Clone, Debug)]
 pub(super) struct BgWorker {
     pub render_opts: RenderOpts,
-    pub scene: SceneBuilder,
+    pub scene: Scene,
     /// Sender for messages from the worker, back to the UI
     pub msg_tx: flume::Sender<MessageToUi>,
     /// Receiver for messages from the UI, to the worker

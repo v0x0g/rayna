@@ -1,4 +1,4 @@
-use super::SceneBuilder;
+use super::Scene;
 use crate::material::dielectric::DielectricMaterial;
 use crate::material::lambertian::LambertianMaterial;
 use crate::material::metal::MetalMaterial;
@@ -14,8 +14,8 @@ use rayna_shared::def::types::{Angle, Number, Pixel, Point3, Vector3};
 use static_init::*;
 
 #[dynamic]
-pub static SIMPLE: SceneBuilder = {
-    SceneBuilder {
+pub static SIMPLE: Scene = {
+    Scene {
         camera: Camera {
             pos: Point3::new(0., 0.5, -3.),
             fwd: Vector3::Z,
@@ -51,12 +51,12 @@ pub static SIMPLE: SceneBuilder = {
 };
 
 #[dynamic]
-pub static TRIO: SceneBuilder = {
+pub static TRIO: Scene = {
     let material: MaterialType = LambertianMaterial {
         albedo: Pixel::from([1.; 3]),
     }
     .into();
-    SceneBuilder {
+    Scene {
         camera: Camera {
             pos: Point3::new(0., 0., -3.),
             fwd: Vector3::Z,
@@ -99,7 +99,7 @@ pub static TRIO: SceneBuilder = {
 };
 
 #[dynamic]
-pub static GLASS: SceneBuilder = {
+pub static GLASS: Scene = {
     let camera = Camera {
         pos: Point3::new(0., 0., 4.),
         fwd: Vector3::new(0., 0., -1.).normalize(),
@@ -162,7 +162,7 @@ pub static GLASS: SceneBuilder = {
         .into(),
     );
 
-    SceneBuilder {
+    Scene {
         camera,
         objects,
         skybox: SkyboxType::default(),
@@ -171,7 +171,7 @@ pub static GLASS: SceneBuilder = {
 
 //noinspection SpellCheckingInspection
 #[dynamic]
-pub static BALLZ: SceneBuilder = {
+pub static BALLZ: Scene = {
     let camera = Camera {
         pos: Point3::new(13., 2., 3.),
         fwd: Vector3::new(-13., -2., -3.).normalize(),
@@ -278,7 +278,7 @@ pub static BALLZ: SceneBuilder = {
         .into(),
     );
 
-    SceneBuilder {
+    Scene {
         camera,
         objects,
         skybox: SkyboxType::default(),

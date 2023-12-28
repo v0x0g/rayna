@@ -5,8 +5,11 @@ use crate::skybox::SkyboxType;
 pub mod stored;
 
 #[derive(Clone, Debug)]
-pub struct Scene {
+pub struct SceneBuilder {
     pub objects: Vec<ObjectType>,
     pub camera: Camera,
     pub skybox: SkyboxType,
 }
+
+#[derive(Clone, Debug)]
+pub struct Scene {}

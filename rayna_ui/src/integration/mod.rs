@@ -8,7 +8,7 @@ use egui::ColorImage;
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
-use rayna_engine::scene::Scene;
+use rayna_engine::scene::SceneBuilder;
 use rayna_shared::def::targets::INTEGRATION;
 use std::any::Any;
 use std::sync::Arc;
@@ -57,7 +57,10 @@ enum WorkerHandle {
 }
 
 impl Integration {
-    pub(crate) fn new(initial_render_opts: &RenderOpts, initial_scene: &Scene) -> IResult<Self> {
+    pub(crate) fn new(
+        initial_render_opts: &RenderOpts,
+        initial_scene: &SceneBuilder,
+    ) -> IResult<Self> {
         debug!(target: INTEGRATION, "creating new integration instance");
 
         trace!(target: INTEGRATION, "creating channels");

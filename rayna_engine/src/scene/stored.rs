@@ -1,4 +1,4 @@
-use super::Scene;
+use super::SceneBuilder;
 use crate::material::dielectric::DielectricMaterial;
 use crate::material::lambertian::LambertianMaterial;
 use crate::material::metal::MetalMaterial;
@@ -22,7 +22,7 @@ macro_rules! scene {
                 $value:expr
         ),* $(,)? ]
     } => {
-            $crate::scene::Scene {
+            $crate::scene::SceneBuilder {
                 camera: $cam,
                 objects: vec![$(
                      ($value).into()
@@ -33,7 +33,7 @@ macro_rules! scene {
 }
 
 #[dynamic]
-pub static SIMPLE: Scene = {
+pub static SIMPLE: SceneBuilder = {
     #[rustfmt::skip]
     scene! {
         camera: Camera {
@@ -64,7 +64,7 @@ pub static SIMPLE: Scene = {
 };
 
 #[dynamic]
-pub static TRIO: Scene = {
+pub static TRIO: SceneBuilder = {
     let material: MaterialType = LambertianMaterial {
         albedo: Pixel::from([1.; 3]),
     }
@@ -104,7 +104,7 @@ pub static TRIO: Scene = {
 };
 
 #[dynamic]
-pub static GLASS: Scene = {
+pub static GLASS: SceneBuilder = {
     let camera = Camera {
         pos: Point3::new(0., 0., 4.),
         fwd: Vector3::new(0., 0., -1.).normalize(),
@@ -167,7 +167,7 @@ pub static GLASS: Scene = {
         .into(),
     );
 
-    Scene {
+    SceneBuilder {
         camera,
         objects,
         skybox: SkyboxType::default(),
@@ -176,7 +176,7 @@ pub static GLASS: Scene = {
 
 //noinspection SpellCheckingInspection
 #[dynamic]
-pub static BALLZ: Scene = {
+pub static BALLZ: SceneBuilder = {
     let camera = Camera {
         pos: Point3::new(13., 2., 3.),
         fwd: Vector3::new(-13., -2., -3.).normalize(),
@@ -283,7 +283,7 @@ pub static BALLZ: Scene = {
         .into(),
     );
 
-    Scene {
+    SceneBuilder {
         camera,
         objects,
         skybox: SkyboxType::default(),

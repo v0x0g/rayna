@@ -48,12 +48,42 @@ impl<T: PartialOrd> Bounds<T> {
     pub fn contains(&self, val: &T) -> bool {
         match self {
             Self::Full(r) => r.contains(val),
-            Bounds::Inclusive(r) => r.contains(val),
-            Bounds::To(r) => r.contains(val),
-            Bounds::ToInclusive(r) => r.contains(val),
-            Bounds::From(r) => r.contains(val),
-            Bounds::Normal(r) => r.contains(val),
+            Self::Inclusive(r) => r.contains(val),
+            Self::To(r) => r.contains(val),
+            Self::ToInclusive(r) => r.contains(val),
+            Self::From(r) => r.contains(val),
+            Self::Normal(r) => r.contains(val),
         }
+    }
+
+    // TODO: Expand this to cover two full `Bounds<T>` objects, overlapping with each other
+    /// Checks if the given range `min..max` overlaps with the bounds (`self`)
+    pub fn range_overlaps(&self, min: &T, max: &T) -> bool {
+        return match self {
+            Self::Full(_) => true,
+            Self::Inclusive(r) => {
+                let low = if min > r.start() { min } else { r.start() };
+                let high = if max < r.end() { max } else { r.end() };
+                low <= high
+            }
+            Self::To(r) => {
+                let high = if max < &r.end { max } else { &r.end };
+                min < high
+            }
+            Self::ToInclusive(r) => {
+                let high = if max < &r.end { max } else { &r.end };
+                min <= high
+            }
+            Self::From(r) => {
+                let low = if min > &r.start { min } else { &r.start };
+                low <= max
+            }
+            Self::Normal(r) => {
+                let low = if min > &r.start { min } else { &r.start };
+                let high = if max < &r.end { max } else { &r.end };
+                low < high
+            }
+        };
     }
 }
 
@@ -61,11 +91,11 @@ impl<T: Display> Display for Bounds<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Full(_) => write!(f, ".."),
-            Bounds::Inclusive(r) => write!(f, "{}..={}", r.start(), r.end()),
-            Bounds::To(r) => write!(f, "..{}", r.end),
-            Bounds::ToInclusive(r) => write!(f, "..={}", r.end),
-            Bounds::From(r) => write!(f, "{}..", r.start),
-            Bounds::Normal(r) => write!(f, "{}..{}", r.start, r.end),
+            Self::Inclusive(r) => write!(f, "{}..={}", r.start(), r.end()),
+            Self::To(r) => write!(f, "..{}", r.end),
+            Self::ToInclusive(r) => write!(f, "..={}", r.end),
+            Self::From(r) => write!(f, "{}..", r.start),
+            Self::Normal(r) => write!(f, "{}..{}", r.start, r.end),
         }
     }
 }

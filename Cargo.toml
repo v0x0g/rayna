@@ -53,6 +53,7 @@ enum2str = "0.1.10"
 strum = "0.25.0"
 strum_macros = "0.25.0"
 static_init = "1.0.3"
+getset = "0.1.2"
 
 # Performance
 

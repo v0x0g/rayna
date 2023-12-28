@@ -1,3 +1,4 @@
+use crate::accel::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -34,7 +35,9 @@ pub trait Object: RtRequirement {
     ///     unbounded by distance.
     fn intersect_all(&self, ray: &Ray) -> Option<Box<dyn Iterator<Item = Intersection> + '_>>;
 
-    // TODO: A fast method that simply checks if an intersection occurred at all, with no more info
+    // fn bounding_box(&self) -> Aabb;
+
+    // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
 }
 
 /// An optimised implementation of [Object].

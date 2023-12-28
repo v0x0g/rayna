@@ -1,8 +1,12 @@
-use crate::shared::bounds::Bounds;
-use crate::shared::ray::Ray;
+use std::borrow::Borrow;
+
 use getset::*;
 use itertools::multizip;
+
 use rayna_shared::def::types::{Number, Point3};
+
+use crate::shared::bounds::Bounds;
+use crate::shared::ray::Ray;
 
 /// An **Axis-Aligned Bounding Box** (AABB)
 ///
@@ -25,25 +29,32 @@ impl Aabb {
     }
 
     /// Returns an [Aabb] that surrounds the two given boxes
-    pub fn encompass(a: Self, b: Self) -> Self {
+    pub fn encompass<B: Borrow<Self>>(a: B, b: B) -> Self {
+        let (a, b) = (a.borrow(), b.borrow());
         let min = Point3::min(a.min, b.min);
         let max = Point3::max(a.max, b.max);
         Self { min, max }
     }
 
     /// [Self::encompass] but for an arbitrary number of boxes
-    pub fn encompass_iter(iter: impl IntoIterator<Item = Aabb>) -> Self {
-        iter.into_iter().reduce(Self::encompass).unwrap_or_default()
+    pub fn encompass_iter<B: Borrow<Self>, I: Into<B>>(iter: impl IntoIterator<Item = I>) -> Self {
+        iter.into_iter()
+            .map(I::into)
+            .map(|b| b.borrow())
+            .fold(Self::default(), |a: Self, b: &Self| Self::encompass(&a, b))
     }
 
     //noinspection RsBorrowChecker - it's just plain wrong, doesn't recognise `p: Point3` and is `Copy`
     /// [Self::encompass] but for an arbitrary number of points
-    pub fn encompass_points(iter: impl IntoIterator<Item = Point3>) -> Self {
+    pub fn encompass_points<B: Borrow<Point3>, I: Into<B>>(
+        iter: impl IntoIterator<Item = I>,
+    ) -> Self {
         let mut min = Point3::ZERO;
         let mut max = Point3::ZERO;
         for p in iter.into_iter() {
-            min = min.min(p);
-            max = max.max(p);
+            let p = p.into().borrow();
+            min = min.min(*p);
+            max = max.max(*p);
         }
         Self { min, max }
     }

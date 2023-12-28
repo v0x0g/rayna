@@ -13,53 +13,40 @@ use rand::{thread_rng, Rng};
 use rayna_shared::def::types::{Angle, Number, Pixel, Point3, Vector3};
 use static_init::*;
 
-#[macro_export]
-#[rustfmt::skip] // rustfmt is shit with macros
-macro_rules! scene {
-    {
-        camera: $cam:expr,
-        objects: [ $(
-                $value:expr
-        ),* $(,)? ]
-    } => {
-            $crate::scene::SceneBuilder {
-                camera: $cam,
-                objects: vec![$(
-                     ($value).into()
-                ),*],
-                skybox: SkyboxType::default()
-            }
-        };
-}
-
 #[dynamic]
 pub static SIMPLE: SceneBuilder = {
-    #[rustfmt::skip]
-    scene! {
+    SceneBuilder {
         camera: Camera {
             pos: Point3::new(0., 0.5, -3.),
             fwd: Vector3::Z,
             v_fov: Angle::from_degrees(45.),
             focus_dist: 3.,
-            defocus_angle: Angle::from_degrees(10.)
+            defocus_angle: Angle::from_degrees(10.),
         },
-        objects: [
-            SphereBuilder { // Small, top
+        objects: vec![
+            SphereBuilder {
+                // Small, top
                 pos: Point3::new(0., 0., 1.),
                 radius: 0.5,
                 material: MetalMaterial {
                     albedo: Pixel::from([0.8; 3]),
-                    fuzz: 1.
-                }.into()
-            },
-            SphereBuilder { // Ground
+                    fuzz: 1.,
+                }
+                .into(),
+            }
+            .into(),
+            SphereBuilder {
+                // Ground
                 pos: Point3::new(0., -100.5, -1.),
                 radius: 100.,
                 material: LambertianMaterial {
-                    albedo: Pixel::from([0.5;3]),
-                }.into()
+                    albedo: Pixel::from([0.5; 3]),
+                }
+                .into(),
             }
-        ]
+            .into(),
+        ],
+        skybox: SkyboxType::default(),
     }
 };
 
@@ -69,37 +56,45 @@ pub static TRIO: SceneBuilder = {
         albedo: Pixel::from([1.; 3]),
     }
     .into();
-    #[rustfmt::skip]
-    scene! {
+    SceneBuilder {
         camera: Camera {
             pos: Point3::new(0., 0., -3.),
             fwd: Vector3::Z,
             v_fov: Angle::from_degrees(45.),
             focus_dist: 3.,
-            defocus_angle: Angle::from_degrees(3.)
+            defocus_angle: Angle::from_degrees(3.),
         },
-        objects: [
-            SphereBuilder { // Left, big
+        objects: vec![
+            SphereBuilder {
+                // Left, big
                 pos: Point3::new(-0.2, 0., 0.),
                 radius: 0.25,
-                material: material.clone()
-            },
-            SphereBuilder { // Right, mid
+                material: material.clone(),
+            }
+            .into(),
+            SphereBuilder {
+                // Right, mid
                 pos: Point3::new(0.2, 0., 0.),
                 radius: 0.15,
-                material: material.clone()
-            },
-            SphereBuilder { // Small, top
+                material: material.clone(),
+            }
+            .into(),
+            SphereBuilder {
+                // Small, top
                 pos: Point3::new(0., 0.5, 0.),
                 radius: 0.1,
-                material: material.clone()
-            },
-            SphereBuilder { // Ground
+                material: material.clone(),
+            }
+            .into(),
+            SphereBuilder {
+                // Ground
                 pos: Point3::new(0., -100.5, -1.),
                 radius: 100.,
-                material: material.clone()
+                material: material.clone(),
             }
-        ]
+            .into(),
+        ],
+        skybox: SkyboxType::default(),
     }
 };
 

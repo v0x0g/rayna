@@ -8,7 +8,7 @@ use rayna_shared::def::types::{Number, Point3};
 ///
 /// The box spans between the two corners `min` and `max`'
 #[derive(CopyGetters, Copy, Clone, Debug, PartialEq, Default)]
-#[getset(get_copy)]
+#[getset(get_copy = "pub")]
 pub struct Aabb {
     /// The lower corner of the [Aabb]; the corner with the smallest coordinates
     min: Point3,

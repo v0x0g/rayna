@@ -345,6 +345,8 @@ impl Renderer {
     }
 
     /// Calculates a random pixel shift (for MSAA), and applies it to the (pixel) coordinates
+
+    #[inline /* Hot path */]
     fn apply_msaa_shift(px: Number, py: Number, rng: &mut impl Rng) -> [Number; 2] {
         [
             px + rng.gen_range(-0.5..=0.5),

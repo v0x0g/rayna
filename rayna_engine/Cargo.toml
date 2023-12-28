@@ -47,6 +47,7 @@ enum_dispatch = "0.3.12"
 static_init = { workspace =  true }
 getset = { workspace = true }
 itertools = { workspace = true }
+slab_tree = "0.3.2"
 
 # Perf
 puffin = { workspace = true }

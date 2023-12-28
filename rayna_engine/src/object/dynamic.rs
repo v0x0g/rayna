@@ -1,3 +1,4 @@
+use crate::accel::aabb::Aabb;
 use crate::object::Object;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -17,5 +18,9 @@ impl Object for DynamicObject {
 
     fn intersect_all(&self, ray: &Ray) -> Option<Box<dyn Iterator<Item = Intersection> + '_>> {
         self.inner.intersect_all(ray)
+    }
+
+    fn bounding_box(&self) -> Aabb {
+        self.inner.bounding_box()
     }
 }

@@ -1,9 +1,11 @@
+use crate::accel::aabb::Aabb;
 use crate::material::MaterialType;
 use crate::object::Object;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use rayna_shared::def::types::{Number, Point3, Vector3};
+use std::ops::RangeBounds;
 
 #[derive(Clone, Debug)]
 pub struct Sphere {
@@ -113,5 +115,13 @@ impl Object for Sphere {
         });
 
         Some(Box::new(intersections.into_iter()))
+    }
+
+    fn bounding_box(&self) -> Aabb {
+        // Cube centred around self
+        Aabb::new(
+            self.pos - Vector3::splat(self.radius),
+            self.pos + Vector3::splat(self.radius),
+        )
     }
 }

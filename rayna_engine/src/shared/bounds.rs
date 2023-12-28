@@ -100,6 +100,7 @@ impl<T: PartialOrd> Bounds<T> {
         };
     }
 
+    //noinspection DuplicatedCode - it is duplicated but variables are swapped so it's not the same
     /// Checks if the given bounds overlap with self
     pub fn bounds_overlap(&self, other: &Self) -> bool {
         let self_lower = self.start_bound();
@@ -107,120 +108,79 @@ impl<T: PartialOrd> Bounds<T> {
         let other_lower = other.start_bound();
         let other_upper = other.end_bound();
 
-        // Find the largest (total) lowest bound, aka the lower bound that's inside both bounds
-        // This is equivalent to finding `max(self_lower, other_lower)`
-        let lower = match (self_lower, other_lower) {
-            (Bound::Unbounded, Bound::Unbounded) => Bound::Unbounded,
-            (Bound::Unbounded, b) | (b, Bound::Unbounded) => b,
-            (Bound::Included(a), Bound::Included(b)) => match T::partial_cmp(a, b) {
-                // a < b
-                Some(Ordering::Less) => Bound::Included(b),
-                // a >= b
-                Some(Ordering::Greater) | Some(Ordering::Equal) => Bound::Included(a),
-                // ???
-                None => panic!("couldn't compare bounds a and b"),
-            },
-            (Bound::Excluded(a), Bound::Excluded(b)) => match T::partial_cmp(a, b) {
-                // a < b
-                Some(Ordering::Less) => Bound::Excluded(b),
-                // a >= b
-                Some(Ordering::Greater) | Some(Ordering::Equal) => Bound::Excluded(a),
-                // ???
-                None => panic!("couldn't compare bounds a and b"),
-            },
-            (Bound::Included(a), Bound::Excluded(b)) => match T::partial_cmp(a, b) {
-                // a <= b
-                Some(Ordering::Less) | Some(Ordering::Equal) => Bound::Excluded(b),
-                // a > b
-                Some(Ordering::Greater) => Bound::Included(a),
-                // ???
-                None => panic!("couldn't compare bounds a and b"),
-            },
-            (Bound::Excluded(a), Bound::Included(b)) => match T::partial_cmp(a, b) {
-                // a <= b
-                Some(Ordering::Less) | Some(Ordering::Equal) => Bound::Included(b),
-                // a > b
-                Some(Ordering::Greater) => Bound::Excluded(a),
-                // ???
-                None => panic!("couldn't compare bounds a and b"),
-            },
-        };
+        // `lower`: Find the largest (total) lowest bound, aka the lower bound that's inside both bounds
+        // `upper`: Find the smallest (total) upper bound, aka the upper bound that's inside both bounds
+        // This is equivalent to finding `lower = max(self_lower, other_lower), upper = min(self_upper, other_upper)`
+        // If the bounds overlap, then lower must be <= upper
+        // We ignore if bounds are inclusive/exclusive since that would be unnecessary complication
 
-        // Find the smallest (total) upper bound, aka the upper bound that's inside both bounds
-        // This is equivalent to finding `min(self_upper, other_upper)`
-        let upper = match (self_upper, other_upper) {
-            (Bound::Unbounded, Bound::Unbounded) => Bound::Unbounded,
-            (Bound::Unbounded, b) | (b, Bound::Unbounded) => b,
-            (Bound::Included(a), Bound::Included(b)) => match T::partial_cmp(a, b) {
-                // a < b
-                Some(Ordering::Less) => Bound::Included(a),
-                // a >= b
-                Some(Ordering::Greater) | Some(Ordering::Equal) => Bound::Included(b),
-                // ???
-                None => panic!("couldn't compare bounds a and b"),
-            },
-            (Bound::Excluded(a), Bound::Excluded(b)) => match T::partial_cmp(a, b) {
-                // a < b
-                Some(Ordering::Less) => Bound::Excluded(a),
-                // a >= b
-                Some(Ordering::Greater) | Some(Ordering::Equal) => Bound::Excluded(b),
-                // ???
-                None => panic!("couldn't compare bounds a and b"),
-            },
-            (Bound::Included(a), Bound::Excluded(b)) => match T::partial_cmp(a, b) {
-                // a <= b
-                Some(Ordering::Less) | Some(Ordering::Equal) => Bound::Excluded(a),
-                // a > b
-                Some(Ordering::Greater) => Bound::Included(b),
-                // ???
-                None => panic!("couldn't compare bounds a and b"),
-            },
-            (Bound::Excluded(a), Bound::Included(b)) => match T::partial_cmp(a, b) {
-                // a <= b
-                Some(Ordering::Less) | Some(Ordering::Equal) => Bound::Included(a),
-                // a > b
-                Some(Ordering::Greater) => Bound::Excluded(b),
-                // ???
-                None => panic!("couldn't compare bounds a and b"),
-            },
-        };
+        let lower =
+            match (self_lower, other_lower) {
+                (Bound::Unbounded, Bound::Unbounded) => return true,
 
-        match (lower, upper) {
-            // Completely infinite range, or infinite on one side
-            (Bound::Unbounded, _) | (_, Bound::Unbounded) => true,
-            (Bound::Included(low), Bound::Included(up)) => match T::partial_cmp(low, up) {
-                // low <= up
-                Some(Ordering::Less) | Some(Ordering::Equal) => true,
-                // low > up
-                Some(Ordering::Greater) => false,
-                // ???
-                None => panic!("couldn't compare bounds low and up"),
-            },
-            (Bound::Excluded(low), Bound::Excluded(up)) => match T::partial_cmp(low, up) {
-                // low < up
-                Some(Ordering::Less) => Bound::Excluded(low),
-                // low >= up
-                Some(Ordering::Greater) | Some(Ordering::Equal) => Bound::Excluded(up),
-                // ???
-                None => panic!("couldn't compare bounds low and up"),
-            },
-            (Bound::Included(low), Bound::Excluded(up)) => match T::partial_cmp(low, up) {
-                // low <= up
-                Some(Ordering::Less) | Some(Ordering::Equal) => Bound::Excluded(low),
-                // low > up
-                Some(Ordering::Greater) => Bound::Included(up),
-                // ???
-                None => panic!("couldn't compare bounds low and up"),
-            },
-            (Bound::Excluded(low), Bound::Included(up)) => match T::partial_cmp(low, up) {
-                // low <= up
-                Some(Ordering::Less) | Some(Ordering::Equal) => Bound::Included(low),
-                // low > up
-                Some(Ordering::Greater) => Bound::Excluded(up),
-                // ???
-                None => panic!("couldn't compare bounds low and up"),
-            },
-        }
+                (Bound::Unbounded, Bound::Included(val))
+                | (Bound::Unbounded, Bound::Excluded(val))
+                | (Bound::Included(val), Bound::Unbounded)
+                | (Bound::Excluded(val), Bound::Unbounded) => val,
+
+                (Bound::Included(a), Bound::Included(b))
+                | (Bound::Excluded(a), Bound::Excluded(b)) => match T::partial_cmp(a, b) {
+                    // a < b
+                    Some(Ordering::Less) => b,
+                    // a >= b
+                    Some(Ordering::Greater) | Some(Ordering::Equal) => a,
+                    // ???
+                    None => panic!("couldn't compare bounds a and b"),
+                },
+                (Bound::Included(a), Bound::Excluded(b))
+                | (Bound::Excluded(a), Bound::Included(b)) => match T::partial_cmp(a, b) {
+                    // a <= b
+                    Some(Ordering::Less) | Some(Ordering::Equal) => b,
+                    // a > b
+                    Some(Ordering::Greater) => a,
+                    // ???
+                    None => panic!("couldn't compare bounds a and b"),
+                },
+            };
+
+        let upper =
+            match (self_upper, other_upper) {
+                (Bound::Unbounded, Bound::Unbounded) => return true,
+
+                (Bound::Unbounded, Bound::Included(val))
+                | (Bound::Unbounded, Bound::Excluded(val))
+                | (Bound::Included(val), Bound::Unbounded)
+                | (Bound::Excluded(val), Bound::Unbounded) => val,
+
+                (Bound::Included(a), Bound::Included(b))
+                | (Bound::Excluded(a), Bound::Excluded(b)) => match T::partial_cmp(a, b) {
+                    // a < b
+                    Some(Ordering::Less) => a,
+                    // a >= b
+                    Some(Ordering::Greater) | Some(Ordering::Equal) => b,
+                    // ???
+                    None => panic!("couldn't compare bounds a and b"),
+                },
+                (Bound::Included(a), Bound::Excluded(b))
+                | (Bound::Excluded(a), Bound::Included(b)) => match T::partial_cmp(a, b) {
+                    // a <= b
+                    Some(Ordering::Less) | Some(Ordering::Equal) => a,
+                    // a > b
+                    Some(Ordering::Greater) => b,
+                    // ???
+                    None => panic!("couldn't compare bounds a and b"),
+                },
+            };
+
+        // If ranges overlap, we need
+        return match T::partial_cmp(lower, upper) {
+            // lower <= upper
+            Some(Ordering::Less) | Some(Ordering::Equal) => true,
+            // lower > upper
+            Some(Ordering::Greater) => false,
+            // ???
+            None => panic!("couldn't compare bounds a and b"),
+        };
     }
 }
 

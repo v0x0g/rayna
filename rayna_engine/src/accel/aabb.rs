@@ -1,9 +1,7 @@
-use crate::object::Object;
 use crate::shared::bounds::Bounds;
-use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use itertools::multizip;
 use getset::*;
+use itertools::multizip;
 use rayna_shared::def::types::{Number, Point3};
 
 /// An **Axis-Aligned Bounding Box** (AABB)
@@ -34,20 +32,18 @@ impl Aabb {
         let min = self.min.to_array();
         let max = self.max.to_array();
 
-        for (ro_i, rd_i, min_i, max_i) in multizip((ro,rd,min,max)){
+        for (ro_i, rd_i, min_i, max_i) in multizip((ro, rd, min, max)) {
             let inv_d = 1. / rd_i;
             let t0 = (min_i - ro_i) * inv_d;
             let t1 = (max_i - ro_i) * inv_d;
             if inv_d < 0. {
                 (t1, t0) = (t0, t1);
             }
-            
-            if !bounds.contains(&t0)
-                
-                
-            let kMin = if t0 > kMin ? t0 : kMin;
-            let kMax = t1 < kMax ? t1 : kMax;
-            if (kMax <= kMin) {
+
+            // The range in which the ray is 'inside' the AABB
+            // Is not within the valid range for the ray,
+            // so there is no valid intersection
+            if !bounds.range_overlaps(&t0, &t1) {
                 return false;
             }
         }

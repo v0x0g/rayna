@@ -8,7 +8,7 @@ use rayna_shared::def::types::Number;
 use std::ops::RangeBounds;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
-use self::{dynamic::DynamicObject, sphere::Sphere};
+use self::{dynamic::DynamicObject, sphere::SphereObject};
 
 pub mod dynamic;
 pub mod sphere;
@@ -36,7 +36,7 @@ pub trait Object: RtRequirement {
     ///     unbounded by distance.
     fn intersect_all(&self, ray: &Ray) -> Option<Box<dyn Iterator<Item = Intersection> + '_>>;
 
-    fn bounding_box(&self) -> Aabb;
+    fn bounding_box(&self) -> &Aabb;
 
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
 }
@@ -47,6 +47,6 @@ pub trait Object: RtRequirement {
 #[enum_dispatch(Object)]
 #[derive(Clone, Debug)]
 pub enum ObjectType {
-    Sphere,
+    SphereObject,
     DynamicObject,
 }

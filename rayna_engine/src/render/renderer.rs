@@ -299,9 +299,11 @@ impl Renderer {
         ray: &Ray,
         bounds: &Bounds<Number>,
     ) -> Option<Intersection> {
+        // prev: 818 ms
         scene
             .objects
             .iter()
+            .filter(|&obj| obj.bounding_box().hit(ray, bounds))
             // Intersect all and only include hits not misses
             .filter_map(|obj| obj.intersect(ray, bounds))
             .inspect(|i| validate::intersection(ray, i, bounds))

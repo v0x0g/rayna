@@ -48,7 +48,7 @@ impl Aabb {
         Self { min, max }
     }
 
-    pub fn hit(&self, ray: Ray, bounds: Bounds<Number>) -> bool {
+    pub fn hit(&self, ray: &Ray, bounds: &Bounds<Number>) -> bool {
         let ro = ray.pos().to_array();
         let rd = ray.dir().to_array();
         let min = self.min.to_array();

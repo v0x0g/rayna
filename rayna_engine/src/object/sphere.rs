@@ -1,6 +1,6 @@
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialType;
-use crate::object::Object;
+use crate::object::{Object, ObjectType};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -8,13 +8,46 @@ use rayna_shared::def::types::{Number, Point3, Vector3};
 use std::ops::RangeBounds;
 
 #[derive(Clone, Debug)]
-pub struct Sphere {
+pub struct SphereBuilder {
     pub pos: Point3,
     pub radius: Number,
     pub material: MaterialType,
 }
 
-impl Object for Sphere {
+#[derive(Clone, Debug)]
+pub struct SphereObject {
+    pos: Point3,
+    radius: Number,
+    pub material: MaterialType,
+
+    // TODO: is `radius_sqr` a perf improvement?
+    radius_sqr: Number,
+    aabb: Aabb,
+}
+
+impl From<SphereBuilder> for SphereObject {
+    fn from(value: SphereBuilder) -> Self {
+        Self {
+            pos: value.pos,
+            radius: value.radius,
+            radius_sqr: value.radius * value.radius,
+            material: value.material,
+            // Cube centred around self
+            aabb: Aabb::new(
+                value.pos - Vector3::splat(value.radius),
+                value.pos + Vector3::splat(value.radius),
+            ),
+        }
+    }
+}
+
+impl From<SphereBuilder> for ObjectType {
+    fn from(value: SphereBuilder) -> ObjectType {
+        SphereObject::from(value).into()
+    }
+}
+
+impl Object for SphereObject {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
@@ -24,7 +57,7 @@ impl Object for Sphere {
         // Quadratic formula variables
         let a = ray_dir.length_squared();
         let half_b = Vector3::dot(ray_rel_pos, ray_dir);
-        let c = ray_rel_pos.length_squared() - (self.radius * self.radius);
+        let c = ray_rel_pos.length_squared() - self.radius_sqr;
 
         let discriminant = (half_b * half_b) - (a * c);
         if discriminant < 0. {
@@ -117,11 +150,7 @@ impl Object for Sphere {
         Some(Box::new(intersections.into_iter()))
     }
 
-    fn bounding_box(&self) -> Aabb {
-        // Cube centred around self
-        Aabb::new(
-            self.pos - Vector3::splat(self.radius),
-            self.pos + Vector3::splat(self.radius),
-        )
+    fn bounding_box(&self) -> &Aabb {
+        &self.aabb
     }
 }

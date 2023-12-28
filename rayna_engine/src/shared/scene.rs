@@ -34,7 +34,7 @@ pub mod stored {
     use crate::material::lambertian::LambertianMaterial;
     use crate::material::metal::MetalMaterial;
     use crate::material::MaterialType;
-    use crate::object::sphere::Sphere;
+    use crate::object::sphere::SphereBuilder;
     use crate::object::ObjectType;
     use crate::shared::camera::Camera;
     use crate::shared::rng;
@@ -56,7 +56,7 @@ pub mod stored {
                 defocus_angle: Angle::from_degrees(10.)
             },
             objects: [
-                Sphere { // Small, top
+                SphereBuilder { // Small, top
                     pos: Point3::new(0., 0., 1.),
                     radius: 0.5,
                     material: MetalMaterial {
@@ -64,7 +64,7 @@ pub mod stored {
                         fuzz: 1.
                     }.into()
                 },
-                Sphere { // Ground
+                SphereBuilder { // Ground
                     pos: Point3::new(0., -100.5, -1.),
                     radius: 100.,
                     material: LambertianMaterial {
@@ -91,22 +91,22 @@ pub mod stored {
                 defocus_angle: Angle::from_degrees(3.)
             },
             objects: [
-                Sphere { // Left, big
+                SphereBuilder { // Left, big
                     pos: Point3::new(-0.2, 0., 0.),
                     radius: 0.25,
                     material: material.clone()
                 },
-                Sphere { // Right, mid
+                SphereBuilder { // Right, mid
                     pos: Point3::new(0.2, 0., 0.),
                     radius: 0.15,
                     material: material.clone()
                 },
-                Sphere { // Small, top
+                SphereBuilder { // Small, top
                     pos: Point3::new(0., 0.5, 0.),
                     radius: 0.1,
                     material: material.clone()
                 },
-                Sphere { // Ground
+                SphereBuilder { // Ground
                     pos: Point3::new(0., -100.5, -1.),
                     radius: 100.,
                     material: material.clone()
@@ -129,7 +129,7 @@ pub mod stored {
 
         // Ground
         objects.push(
-            Sphere {
+            SphereBuilder {
                 pos: Point3::new(0., -100.5, 0.),
                 radius: 100.,
                 material: LambertianMaterial {
@@ -142,7 +142,7 @@ pub mod stored {
 
         // Left
         objects.push(
-            Sphere {
+            SphereBuilder {
                 pos: Point3::new(-1., 0., 0.),
                 radius: 0.5,
                 material: DielectricMaterial {
@@ -155,7 +155,7 @@ pub mod stored {
         );
         // Mid
         objects.push(
-            Sphere {
+            SphereBuilder {
                 pos: Point3::new(0., 0., 0.),
                 radius: 0.5,
                 material: LambertianMaterial {
@@ -167,7 +167,7 @@ pub mod stored {
         );
         // Right
         objects.push(
-            Sphere {
+            SphereBuilder {
                 pos: Point3::new(1., 0., 0.),
                 radius: 0.5,
                 material: MetalMaterial {
@@ -242,7 +242,7 @@ pub mod stored {
                     .into()
                 };
                 objects.push(
-                    Sphere {
+                    SphereBuilder {
                         pos: centre,
                         material,
                         radius: 0.2,
@@ -253,7 +253,7 @@ pub mod stored {
         }
 
         objects.push(
-            Sphere {
+            SphereBuilder {
                 pos: Point3::new(0., 1., 0.),
                 radius: 1.,
                 material: DielectricMaterial {
@@ -265,7 +265,7 @@ pub mod stored {
             .into(),
         );
         objects.push(
-            Sphere {
+            SphereBuilder {
                 pos: Point3::new(-4., 1., 0.),
                 radius: 1.,
                 material: LambertianMaterial {
@@ -276,7 +276,7 @@ pub mod stored {
             .into(),
         );
         objects.push(
-            Sphere {
+            SphereBuilder {
                 pos: Point3::new(4., 1., 0.),
                 radius: 1.,
                 material: MetalMaterial {
@@ -289,7 +289,7 @@ pub mod stored {
         );
 
         objects.push(
-            Sphere {
+            SphereBuilder {
                 pos: Point3::new(0., -1000., 0.),
                 radius: 1000.,
                 material: LambertianMaterial {

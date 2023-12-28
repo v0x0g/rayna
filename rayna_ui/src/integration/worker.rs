@@ -1,7 +1,7 @@
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::profiler;
 use egui::{Color32, ColorImage};
-use image::{ImageFormat, RgbaImage};
+use image::RgbaImage;
 use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;

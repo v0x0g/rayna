@@ -134,3 +134,27 @@ Cargo.lock
 
 .idea/*
 !.idea/vcs.xml
+/lib/rtbvh-0.6.2/.github/workflows/rust.yml
+/lib/rtbvh-0.6.2/examples/benchmark.rs
+/lib/rtbvh-0.6.2/examples/visualizer.rs
+/lib/rtbvh-0.6.2/src/builders/binned_sah.rs
+/lib/rtbvh-0.6.2/src/builders/locb.rs
+/lib/rtbvh-0.6.2/src/builders/mod.rs
+/lib/rtbvh-0.6.2/src/builders/spatial_sah.rs
+/lib/rtbvh-0.6.2/src/aabb.rs
+/lib/rtbvh-0.6.2/src/bvh.rs
+/lib/rtbvh-0.6.2/src/bvh_node.rs
+/lib/rtbvh-0.6.2/src/iter.rs
+/lib/rtbvh-0.6.2/src/iter_indices.rs
+/lib/rtbvh-0.6.2/src/lib.rs
+/lib/rtbvh-0.6.2/src/mbvh_node.rs
+/lib/rtbvh-0.6.2/src/morton.rs
+/lib/rtbvh-0.6.2/src/ray.rs
+/lib/rtbvh-0.6.2/src/utils.rs
+/lib/rtbvh-0.6.2/.cargo-ok
+/lib/rtbvh-0.6.2/.cargo_vcs_info.json
+/lib/rtbvh-0.6.2/.gitignore
+/lib/rtbvh-0.6.2/Cargo.toml
+/lib/rtbvh-0.6.2/Cargo.toml.orig
+/lib/rtbvh-0.6.2/LICENSE.txt
+/lib/rtbvh-0.6.2/README.md

@@ -11,7 +11,7 @@ macro_rules! scene {
                 $value:expr
         ),* $(,)? ]
     } => {
-            $crate::shared::scene::Scene {
+            $crate::scene::Scene {
                 camera: $cam,
                 objects: vec![$(
                      ($value).into()

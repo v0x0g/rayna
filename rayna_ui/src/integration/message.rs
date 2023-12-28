@@ -1,5 +1,5 @@
 use rayna_engine::render::render_opts::RenderOpts;
-use rayna_engine::shared::scene::Scene;
+use rayna_engine::scene::Scene;
 
 /// A message sent by the UI to the worker
 #[derive(Debug, Clone)]

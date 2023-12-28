@@ -10,7 +10,7 @@ use egui::{
 use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
-use rayna_engine::shared::scene::{self, Scene};
+use rayna_engine::scene::{self, Scene};
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Angle, Number, Vector3};
 use std::num::NonZeroUsize;

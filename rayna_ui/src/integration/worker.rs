@@ -6,7 +6,7 @@ use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
-use rayna_engine::shared::scene::Scene;
+use rayna_engine::scene::Scene;
 use rayna_shared::def::targets::BG_WORKER;
 use rayna_shared::def::types::{Channel, ImgBuf};
 use rayon::iter::IntoParallelIterator;

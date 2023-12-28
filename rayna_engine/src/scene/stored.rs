@@ -33,8 +33,7 @@ pub static SIMPLE: Scene = {
                     fuzz: 1.,
                 }
                 .into(),
-            }
-            .into(),
+            },
             SphereBuilder {
                 // Ground
                 pos: Point3::new(0., -100.5, -1.),
@@ -43,9 +42,9 @@ pub static SIMPLE: Scene = {
                     albedo: Pixel::from([0.5; 3]),
                 }
                 .into(),
-            }
-            .into(),
-        ],
+            },
+        ]
+        .into(),
         skybox: SkyboxType::default(),
     }
 };
@@ -70,30 +69,27 @@ pub static TRIO: Scene = {
                 pos: Point3::new(-0.2, 0., 0.),
                 radius: 0.25,
                 material: material.clone(),
-            }
-            .into(),
+            },
             SphereBuilder {
                 // Right, mid
                 pos: Point3::new(0.2, 0., 0.),
                 radius: 0.15,
                 material: material.clone(),
-            }
-            .into(),
+            },
             SphereBuilder {
                 // Small, top
                 pos: Point3::new(0., 0.5, 0.),
                 radius: 0.1,
                 material: material.clone(),
-            }
-            .into(),
+            },
             SphereBuilder {
                 // Ground
                 pos: Point3::new(0., -100.5, -1.),
                 radius: 100.,
                 material: material.clone(),
-            }
-            .into(),
-        ],
+            },
+        ]
+        .into(),
         skybox: SkyboxType::default(),
     }
 };
@@ -164,7 +160,7 @@ pub static GLASS: Scene = {
 
     Scene {
         camera,
-        objects,
+        objects: objects.into(),
         skybox: SkyboxType::default(),
     }
 };
@@ -280,7 +276,7 @@ pub static BALLZ: Scene = {
 
     Scene {
         camera,
-        objects,
+        objects: objects.into(),
         skybox: SkyboxType::default(),
     }
 };

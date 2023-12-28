@@ -301,6 +301,7 @@ impl Renderer {
     ) -> Option<Intersection> {
         scene
             .objects
+            .raw()
             .iter()
             // Intersect all and only include hits not misses
             .filter_map(|obj| obj.intersect(ray, bounds))

@@ -96,9 +96,9 @@ impl BgWorker {
                 profile_scope!("make_render");
                 let render = renderer.render(&scene, &render_opts);
 
-                // TODO: REMOVE THIS IT'S TESTING ONLY
-                // save image
-                info!(target: "TESTING", "saved render to disk: {:#?}", image::DynamicImage::from(render.img.clone()).save_with_format("./render.exr", ImageFormat::OpenExr));
+                // // TODO: REMOVE THIS IT'S TESTING ONLY
+                // // save image
+                // info!(target: "TESTING", "saved render to disk: {:#?}", image::DynamicImage::from(render.img.clone()).save_with_format("./render.exr", ImageFormat::OpenExr));
 
                 Render {
                     img: Self::convert_img(render.img),

@@ -25,17 +25,15 @@ impl Aabb {
     }
 
     pub fn hit(&self, ray: Ray, bounds: Bounds<Number>) -> bool {
-        let Ray { pos: ro, dir: rd } = ray;
-
-        let ro = ro.to_array();
-        let rd = rd.to_array();
+        let ro = ray.pos().to_array();
+        let rd = ray.dir().to_array();
         let min = self.min.to_array();
         let max = self.max.to_array();
 
         for (ro_i, rd_i, min_i, max_i) in multizip((ro, rd, min, max)) {
             let inv_d = 1. / rd_i;
-            let t0 = (min_i - ro_i) * inv_d;
-            let t1 = (max_i - ro_i) * inv_d;
+            let mut t0 = (min_i - ro_i) * inv_d;
+            let mut t1 = (max_i - ro_i) * inv_d;
             if inv_d < 0. {
                 (t1, t0) = (t0, t1);
             }

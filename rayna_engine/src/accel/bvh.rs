@@ -40,7 +40,9 @@ impl Bvh {
             tree.root_mut().expect("we just set the root"),
         );
 
-        eprintln!("TREE: {:#?}", tree);
+        let mut s = String::new();
+        let _ = tree.write_formatted(&mut s);
+        eprintln!("{}", s);
 
         todo!()
     }

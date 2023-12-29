@@ -158,6 +158,9 @@ impl Bvh {
                 // TODO: maybe choose the axis that gives the smallest overlap between the left & right splits?
                 //  This means why try `product_of(all 3 axes, all split positions)` and find the optimal by `left.len()^2 + right.len()^2`
 
+                // TODO: Sometimes this seems to generate a node with a single object.
+                //  It creates an (AABB->Object) node, which does double ray-aabb intersects (this is slow)
+
                 {
                     let max_side = match main_aabb
                         .size()
@@ -233,7 +236,15 @@ impl Bvh {
     }
 }
 
-fn intersect_bvh_node(
+/// Given a [BvhNode] on the [Arena] tree, calculates the nearest intersection for the given `ray` and `bounds`
+///
+/// If the node is a [BvhNode::Object], it passes on the check to the object.
+/// Otherwise, if it's a [BvhNode::Aabb], it:
+///     - Tries to bail early if the [Aabb] is missed
+///     - Collects all the child nodes
+///     - Intersects on all those children (by calling itself recursively)
+///     - Returns the closest intersection
+fn bvh_node_intersect(
     ray: &Ray,
     bounds: &Bounds<Number>,
     node_id: NodeId,
@@ -242,8 +253,8 @@ fn intersect_bvh_node(
 ) -> Option<Intersection> {
     match node.get() {
         BvhNode::TempNode => unreachable!("asserted that tree has no temp nodes"),
+        // An aabb will need to delegate to child nodes if not missed
         BvhNode::Aabb(aabb) => {
-            // An aabb will need to delegate to child nodes if not missed
             if !aabb.hit(ray, bounds) {
                 return None;
             }
@@ -251,52 +262,109 @@ fn intersect_bvh_node(
             let children = node_id
                 .descendants(tree)
                 .map(|node_id| tree[node_id].clone())
-                .collect_vec();
+                // .collect_vec()
+                ;
 
+            // TODO: Rework this to use the new Bounds::bitor API to shrink the next child's search range
+            //  So keep track of the bounds, and each iteration shrink with `bounds = bounds | ..intersection.dist`
+            //  And if an intersect was found in that shrunk range then we know that
             let intersects = children.into_iter().filter_map(|child| {
-                intersect_bvh_node(ray, bounds, tree.get_node_id(&child).unwrap(), child, tree)
+                bvh_node_intersect(ray, bounds, tree.get_node_id(&child).unwrap(), child, tree)
             });
 
-            // Get intersections of children
-            match children.deref() {
-                [] => return None,
-                [child] => {
-                    return intersect_bvh_node(
-                        ray,
-                        bounds,
-                        tree.get_node_id(child).unwrap(),
-                        child.clone(),
-                        tree,
-                    )
-                }
-            }
+            intersects.min_by(|a, b| Number::total_cmp(&a.dist, &b.dist))
         }
-        BvhNode::Object(o) => o.bounding_box(),
-    };
+        // Objects can be delegated directly
+        BvhNode::Object(obj) => {
+            assert!(
+                node_id.children(tree).next().is_none(),
+                "a node with an object attached should have no children"
+            );
+            obj.intersect(ray, bounds)
+        }
+    }
+}
+
+/// Given a [BvhNode] on the [Arena] tree, calculates the intersection for the given `ray`
+///
+/// If the node is a [BvhNode::Object], it passes on the check to the object.
+/// Otherwise, if it's a [BvhNode::Aabb], it:
+///     - Tries to bail early if the [Aabb] is missed
+///     - Collects all the child nodes
+///     - Intersects on all those children (by calling itself recursively)
+///     - Returns the closest intersection
+fn bvh_node_intersect_all<'a>(
+    ray: &'a Ray,
+    node_id: NodeId,
+    node: &'a Node<BvhNode>,
+    tree: &'a Arena<BvhNode>,
+) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>> {
+    match node.get() {
+        BvhNode::TempNode => unreachable!("asserted that tree has no temp nodes"),
+        // An aabb will need to delegate to child nodes if not missed
+        BvhNode::Aabb(aabb) => {
+            if !aabb.hit(ray, &Bounds::Full(..)) {
+                return None;
+            }
+
+            let children = node_id
+                .descendants(tree)
+                .map(|node_id| &tree[node_id])
+                // .collect_vec()
+                ;
+
+            // TODO: Rework this to use the new Bounds::bitor API to shrink the next child's search range
+            //  So keep track of the bounds, and each iteration shrink with `bounds = bounds | ..intersection.dist`
+            //  And if an intersect was found in that shrunk range then we know that
+            let mut intersects = children
+                .into_iter()
+                .filter_map(|child| {
+                    bvh_node_intersect_all(ray, tree.get_node_id(&child).unwrap(), child, tree)
+                })
+                .flatten()
+                .peekable();
+
+            // Optimise if no elements
+            intersects.peek()?;
+
+            Some(Box::new(intersects))
+        }
+        // Objects can be delegated directly
+        BvhNode::Object(obj) => {
+            assert!(
+                node_id.children(tree).next().is_none(),
+                "a node with an object attached should have no children"
+            );
+
+            obj.intersect_all(ray)
+        }
+    }
 }
 
 impl Object for Bvh {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
-        // Misses AABB
-        if !self.bounding_box().hit(ray, bounds) {
-            return None;
-        }
-
-        let tree = &self.tree;
-
-        let root_node = tree[self.root_id].clone();
-
-        intersect_bvh_node(ray, bounds, self.root_id, root_node, tree)
+        // Pass everything on to our magical function
+        bvh_node_intersect(
+            ray,
+            bounds,
+            self.root_id,
+            self.tree[self.root_id].clone(),
+            &self.tree,
+        )
     }
 
     fn intersect_all<'a>(
         &'a self,
         ray: &'a Ray,
     ) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>> {
-        todo!()
+        bvh_node_intersect_all(ray, self.root_id, &self.tree[self.root_id], &self.tree)
     }
 
     fn bounding_box(&self) -> &Aabb {
-        self.tree[self.root_id].get().bounding_box()
+        match self.tree[self.root_id].get() {
+            BvhNode::TempNode => unreachable!(),
+            BvhNode::Aabb(a) => a,
+            BvhNode::Object(o) => o.bounding_box(),
+        }
     }
 }

@@ -44,12 +44,15 @@ impl Object for ObjectList {
         &'a self,
         ray: &'a Ray,
     ) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>> {
-        Some(Box::new(
-            self.raw
-                .iter()
-                .filter_map(|obj| obj.intersect_all(ray)) // Iterator<Box<dyn Iterator>>
-                .flatten(),
-        ))
+        let mut iter = self
+            .raw
+            .iter()
+            .filter_map(|obj| obj.intersect_all(ray)) // Iterator<Box<dyn Iterator>>
+            .flatten()
+            .peekable();
+        // Ensure we have at least one item in the iter
+        iter.peek()?;
+        Some(Box::new(iter))
     }
 
     fn bounding_box(&self) -> &Aabb {

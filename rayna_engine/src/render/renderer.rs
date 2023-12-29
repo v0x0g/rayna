@@ -299,15 +299,7 @@ impl Renderer {
         ray: &Ray,
         bounds: &Bounds<Number>,
     ) -> Option<Intersection> {
-        scene
-            .objects
-            .raw()
-            .iter()
-            // Intersect all and only include hits not misses
-            .filter_map(|obj| obj.intersect(ray, bounds))
-            .inspect(|i| validate::intersection(ray, i, bounds))
-            // Choose closest intersect
-            .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist))
+        scene.objects.intersect(ray, bounds)
     }
 
     fn ray_colour_recursive(

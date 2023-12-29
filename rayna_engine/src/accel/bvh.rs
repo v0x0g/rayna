@@ -247,7 +247,7 @@ fn bvh_node_intersect(
     ray: &Ray,
     bounds: &Bounds<Number>,
     node_id: NodeId,
-    node: Node<BvhNode>,
+    node: &Node<BvhNode>,
     tree: &Arena<BvhNode>,
 ) -> Option<Intersection> {
     match node.get() {
@@ -261,7 +261,7 @@ fn bvh_node_intersect(
             let children = node_id
                 .descendants(tree)
                 .skip(1 /*skip self */)
-                .map(|node_id| (node_id, tree[node_id].clone()))
+                .map(|node_id| (node_id, &tree[node_id]))
                 // .collect_vec()
                 ;
 
@@ -346,7 +346,7 @@ impl Object for Bvh {
             ray,
             bounds,
             self.root_id,
-            self.tree[self.root_id].clone(),
+            &self.tree[self.root_id],
             &self.tree,
         )
     }

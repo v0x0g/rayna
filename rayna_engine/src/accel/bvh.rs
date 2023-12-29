@@ -53,6 +53,7 @@ impl Bvh {
                 .all(|n| !matches!(n.get(), BvhNode::TempNode)),
             "should not be any temp nodes in tree"
         );
+
         // eprintln!("\n\n{:?}\n\n", root_id.debug_pretty_print(&tree));
 
         Self { tree, root_id }
@@ -88,15 +89,8 @@ impl Bvh {
         let bvh_data = match objects {
             [obj] => BvhNode::Object(obj.clone()),
             [a, b] => {
-                // "Smaller" node goes on the left (first)
-                // TODO: Is sorting for a bi-node necessary?
-                if comparator(&a, &b) == Ordering::Less {
-                    node_id.append(tree.new_node(BvhNode::Object(a.clone())), tree);
-                    node_id.append(tree.new_node(BvhNode::Object(b.clone())), tree);
-                } else {
-                    node_id.append(tree.new_node(BvhNode::Object(b.clone())), tree);
-                    node_id.append(tree.new_node(BvhNode::Object(a.clone())), tree);
-                };
+                node_id.append(tree.new_node(BvhNode::Object(a.clone())), tree);
+                node_id.append(tree.new_node(BvhNode::Object(b.clone())), tree);
                 BvhNode::Aabb(Aabb::encompass(a.bounding_box(), b.bounding_box()))
             }
             objects => {
@@ -259,7 +253,7 @@ fn bvh_node_intersect(
             }
 
             let children = node_id
-                .descendants(tree)
+                .children(tree)
                 .skip(1 /*skip self */)
                 .map(|node_id| (node_id, &tree[node_id]))
                 // .collect_vec()
@@ -308,7 +302,7 @@ fn bvh_node_intersect_all<'a>(
             }
 
             let children = node_id
-                .descendants(tree)
+                .children(tree)
                 .map(|node_id| (node_id, &tree[node_id]))
                 // .collect_vec()
                 ;

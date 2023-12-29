@@ -37,22 +37,19 @@ impl Aabb {
     }
 
     /// [Self::encompass] but for an arbitrary number of boxes
-    pub fn encompass_iter<B: Borrow<Self>, I: Into<B>>(iter: impl IntoIterator<Item = I>) -> Self {
-        iter.into_iter()
-            .map(I::into)
-            .map(|b| b.borrow())
-            .fold(Self::default(), |a: Self, b: &Self| Self::encompass(&a, b))
+    pub fn encompass_iter<B: Borrow<Self>>(iter: impl IntoIterator<Item = B>) -> Self {
+        iter.into_iter().fold(Self::default(), |a: Self, b: B| {
+            Self::encompass(&a, b.borrow())
+        })
     }
 
     //noinspection RsBorrowChecker - it's just plain wrong, doesn't recognise `p: Point3` and is `Copy`
     /// [Self::encompass] but for an arbitrary number of points
-    pub fn encompass_points<B: Borrow<Point3>, I: Into<B>>(
-        iter: impl IntoIterator<Item = I>,
-    ) -> Self {
+    pub fn encompass_points<B: Borrow<Point3>>(iter: impl IntoIterator<Item = B>) -> Self {
         let mut min = Point3::ZERO;
         let mut max = Point3::ZERO;
         for p in iter.into_iter() {
-            let p = p.into().borrow();
+            let p = p.borrow();
             min = min.min(*p);
             max = max.max(*p);
         }

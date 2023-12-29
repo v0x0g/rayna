@@ -5,6 +5,7 @@
 
 use std::cmp::Ordering;
 
+use crate::accel::aabb::Aabb;
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
 use slab_tree::{NodeMut, TreeBuilder};
@@ -21,11 +22,19 @@ enum SplitAxis {
     Z,
 }
 
+#[derive(Clone, Debug)]
+enum BvhNode {
+    Aabb(Aabb),
+    Object(ObjectType),
+    /// Marker for a temporary node, should not be present in the final tree
+    TempNode,
+}
+
 impl Bvh {
     pub fn new(objects: &[ObjectType]) -> Self {
         let mut tree = TreeBuilder::new().with_capacity(objects.len()).build();
-        tree.set_root(None);
-        Self::new_node(
+        tree.set_root(BvhNode::TempNode);
+        Self::new_node_recursive(
             objects,
             SplitAxis::X,
             tree.root_mut().expect("we just set the root"),
@@ -33,11 +42,13 @@ impl Bvh {
         todo!()
     }
 
+    /// Recursively processes the slice of `objects`, adding them to the `node` recursively until
+    /// the tree is exhausted
     ///
     /// # Note:
     /// Since the tree structure doesn't have a concept of leaves/nodes being different, we use
-    /// [Option::None] to be nodes/branches, and [Option::Some] to be leaves
-    fn new_node(objects: &[ObjectType], axis: SplitAxis, mut node: NodeMut<Option<ObjectType>>) {
+    /// [None] to be nodes/branches, and [Some] to be leaves
+    fn new_node_recursive(objects: &[ObjectType], axis: SplitAxis, mut node: NodeMut<BvhNode>) {
         let comparator: fn(&ObjectType, &ObjectType) -> Ordering = match axis {
             SplitAxis::X => |a, b| {
                 PartialOrd::partial_cmp(&a.bounding_box().min().x, &b.bounding_box().min().x)
@@ -53,19 +64,19 @@ impl Bvh {
             },
         };
 
-        match objects {
-            [obj] => {
-                *node.data() = Some(obj.clone());
-            }
+        let bvh_data = match objects {
+            [obj] => BvhNode::Object(obj.clone()),
             [a, b] => {
                 // "Smaller" node goes on the left (first)
+                // TODO: Is sorting for a bi-node necessary?
                 if comparator(&a, &b) == Ordering::Less {
-                    node.append(Some(a.clone()));
-                    node.append(Some(b.clone()));
+                    node.append(BvhNode::Object(a.clone()));
+                    node.append(BvhNode::Object(b.clone()));
                 } else {
-                    node.append(Some(b.clone()));
-                    node.append(Some(a.clone()));
+                    node.append(BvhNode::Object(b.clone()));
+                    node.append(BvhNode::Object(a.clone()));
                 };
+                BvhNode::Aabb(Aabb::encompass(a.bounding_box(), b.bounding_box()))
             }
             objects => {
                 let mut objects = Vec::from(objects);
@@ -79,13 +90,21 @@ impl Bvh {
                 // split in half and repeat tree
                 let (left, right) = objects.split_at(objects.len() / 2);
 
-                let left_node = node.append(None);
-                Self::new_node(left, *split_axis, left_node);
+                let left_aabb =
+                    Aabb::encompass_iter::<&Aabb>(left.iter().map(Object::bounding_box));
+                let left_node = node.append(BvhNode::Aabb(left_aabb));
+                Self::new_node_recursive(left, *split_axis, left_node);
 
-                let right_node = node.append(None);
-                Self::new_node(right, *split_axis, right_node);
+                let right_aabb =
+                    Aabb::encompass_iter::<&Aabb>(right.iter().map(Object::bounding_box));
+                let right_node = node.append(BvhNode::Aabb(right_aabb));
+                Self::new_node_recursive(right, *split_axis, right_node);
+
+                BvhNode::Aabb(Aabb::encompass(left_aabb, right_aabb))
             }
         };
+
+        *node.data() = bvh_data;
     }
 
     pub fn new_sah(objects: &[ObjectType]) -> Self {

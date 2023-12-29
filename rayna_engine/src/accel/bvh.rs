@@ -39,7 +39,8 @@ impl Bvh {
     pub fn new(objects: &[ObjectType]) -> Self {
         let mut tree = Arena::with_capacity(objects.len());
         let root_id = tree.new_node(BvhNode::TempNode);
-        Self::generate_nodes(objects, SplitAxis::X, &mut tree, root_id);
+
+        Self::generate_nodes_sah(objects, &mut tree, root_id);
 
         // Ensure there are no temp nodes left in the tree
         assert!(
@@ -48,7 +49,7 @@ impl Bvh {
                 .all(|n| !matches!(n.get(), BvhNode::TempNode)),
             "should not be any temp nodes in tree"
         );
-        // eprintln!("\n\n{:?}\n\n", root_id.debug_pretty_print(&tree));
+        eprintln!("\n\n{:?}\n\n", root_id.debug_pretty_print(&tree));
 
         Self { tree }
     }

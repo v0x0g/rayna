@@ -14,7 +14,7 @@ pub struct ObjectList {
 impl<Obj: Into<ObjectType>, Iter: IntoIterator<Item = Obj>> From<Iter> for ObjectList {
     fn from(value: Iter) -> Self {
         let raw = value.into_iter().map(Into::into).collect_vec();
-        let bvh = Bvh {};
+        let bvh = Bvh::new(&raw);
         Self { raw, bvh }
     }
 }

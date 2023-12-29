@@ -39,6 +39,9 @@ impl Bvh {
             SplitAxis::X,
             tree.root_mut().expect("we just set the root"),
         );
+
+        eprintln!("TREE: {:#?}", tree);
+
         todo!()
     }
 

@@ -69,6 +69,37 @@ impl<T: PartialOrd> RangeBounds<T> for Bounds<T> {
     }
 }
 
+impl<T> Bounds<T> {
+    pub fn from_bounds(lower: Bound<T>, upper: Bound<T>) -> Self {
+        match (lower, upper) {
+            (Bound::Unbounded, Bound::Unbounded) => Self::from(..),
+            (Bound::Unbounded, Bound::Included(u)) => Self::from(..=u),
+            (Bound::Unbounded, Bound::Excluded(u)) => Self::from(..u),
+            (Bound::Included(l), Bound::Unbounded) => Self::from(l..),
+            (Bound::Included(l), Bound::Included(u)) => Self::from(l..=u),
+            (Bound::Included(l), Bound::Excluded(u)) => Self::from(l..u),
+            // TODO: Should these be considered valid bounds?
+            (Bound::Excluded(l), Bound::Unbounded) => Self::from(l..),
+            (Bound::Excluded(l), Bound::Included(u)) => Self::from(l..=u),
+            (Bound::Excluded(l), Bound::Excluded(u)) => Self::from(l..u),
+        }
+    }
+
+    pub fn to_bounds(self) -> (Bound<T>, Bound<T>) {
+        match self {
+            Self::Full(..) => (Bound::Unbounded, Bound::Unbounded),
+            Self::To(r) => (Bound::Unbounded, Bound::Excluded(r.end)),
+            Self::ToInclusive(r) => (Bound::Unbounded, Bound::Included(r.end)),
+            Self::From(r) => (Bound::Included(r.start), Bound::Unbounded),
+            Self::Inclusive(r) => {
+                let (start, end) = r.into_inner();
+                (Bound::Included(start), Bound::Included(end))
+            }
+            Self::Normal(r) => (Bound::Included(r.start), Bound::Excluded(r.end)),
+        }
+    }
+}
+
 impl<T: PartialOrd> Bounds<T> {
     // TODO: Expand this to cover two full `Bounds<T>` objects, overlapping with each other
     /// Checks if the given range `min..max` overlaps with the bounds (`self`)
@@ -102,93 +133,108 @@ impl<T: PartialOrd> Bounds<T> {
 
     //noinspection DuplicatedCode - it is duplicated but variables are swapped so it's not the same
     /// Checks if the given bounds overlap with self
-    pub fn bounds_overlap(&self, other: &Self) -> bool {
-        let self_lower = self.start_bound();
-        let self_upper = self.end_bound();
-        let other_lower = other.start_bound();
-        let other_upper = other.end_bound();
+    pub fn bounds_overlap(self, other: Self) -> bool {
+        // Calculate overlap and check it's not empty
+        match self | other {
+            Self::Full(..) | Self::From(..) | Self::To(..) | Self::ToInclusive(..) => true,
+            Self::Inclusive(r) => !r.is_empty(),
+            Self::Normal(r) => !r.is_empty(),
+        }
+    }
+}
+
+impl<T: PartialOrd> std::ops::BitOr for Bounds<T> {
+    type Output = Bounds<T>;
+
+    fn bitor(self, other: Self) -> Self::Output {
+        let (self_lower, self_upper) = self.to_bounds();
+        let (other_lower, other_upper) = other.to_bounds();
 
         // `lower`: Find the largest (total) lowest bound, aka the lower bound that's inside both bounds
         // `upper`: Find the smallest (total) upper bound, aka the upper bound that's inside both bounds
         // This is equivalent to finding `lower = max(self_lower, other_lower), upper = min(self_upper, other_upper)`
         // If the bounds overlap, then lower must be <= upper
-        // We ignore if bounds are inclusive/exclusive since that would be unnecessary complication
+        // This does take into account priority of inclusive/exclusive bounds
 
-        let lower =
-            match (self_lower, other_lower) {
-                (Bound::Unbounded, Bound::Unbounded) => return true,
+        let lower_bound = match (self_lower, other_lower) {
+            (Bound::Unbounded, Bound::Unbounded) => Bound::Unbounded,
 
-                (Bound::Unbounded, Bound::Included(val))
-                | (Bound::Unbounded, Bound::Excluded(val))
-                | (Bound::Included(val), Bound::Unbounded)
-                | (Bound::Excluded(val), Bound::Unbounded) => val,
+            (Bound::Unbounded, Bound::Included(val)) | (Bound::Included(val), Bound::Unbounded) => {
+                Bound::Included(val)
+            }
 
-                (Bound::Included(a), Bound::Included(b))
-                | (Bound::Excluded(a), Bound::Excluded(b)) => match T::partial_cmp(a, b) {
+            (Bound::Unbounded, Bound::Excluded(val)) | (Bound::Excluded(val), Bound::Unbounded) => {
+                Bound::Excluded(val)
+            }
+
+            (Bound::Included(a), Bound::Included(b)) => {
+                match T::partial_cmp(&a, &b).expect("can't compare bounds") {
                     // a < b
-                    Some(Ordering::Less) => b,
+                    Ordering::Less => Bound::Included(b),
                     // a >= b
-                    Some(Ordering::Greater) | Some(Ordering::Equal) => a,
-                    // ???
-                    None => panic!("couldn't compare bounds a and b"),
-                },
-                (Bound::Included(a), Bound::Excluded(b))
-                | (Bound::Excluded(a), Bound::Included(b)) => match T::partial_cmp(a, b) {
-                    // a <= b
-                    Some(Ordering::Less) | Some(Ordering::Equal) => b,
-                    // a > b
-                    Some(Ordering::Greater) => a,
-                    // ???
-                    None => panic!("couldn't compare bounds a and b"),
-                },
-            };
+                    Ordering::Greater | Ordering::Equal => Bound::Included(a),
+                }
+            }
 
-        let upper =
-            match (self_upper, other_upper) {
-                (Bound::Unbounded, Bound::Unbounded) => return true,
-
-                (Bound::Unbounded, Bound::Included(val))
-                | (Bound::Unbounded, Bound::Excluded(val))
-                | (Bound::Included(val), Bound::Unbounded)
-                | (Bound::Excluded(val), Bound::Unbounded) => val,
-
-                (Bound::Included(a), Bound::Included(b))
-                | (Bound::Excluded(a), Bound::Excluded(b)) => match T::partial_cmp(a, b) {
+            (Bound::Excluded(a), Bound::Excluded(b)) => {
+                match T::partial_cmp(&a, &b).expect("can't compare bounds") {
                     // a < b
-                    Some(Ordering::Less) => a,
+                    Ordering::Less => Bound::Excluded(b),
                     // a >= b
-                    Some(Ordering::Greater) | Some(Ordering::Equal) => b,
-                    // ???
-                    None => panic!("couldn't compare bounds a and b"),
-                },
-                (Bound::Included(a), Bound::Excluded(b))
-                | (Bound::Excluded(a), Bound::Included(b)) => match T::partial_cmp(a, b) {
-                    // a <= b
-                    Some(Ordering::Less) | Some(Ordering::Equal) => a,
-                    // a > b
-                    Some(Ordering::Greater) => b,
-                    // ???
-                    None => panic!("couldn't compare bounds a and b"),
-                },
-            };
+                    Ordering::Greater | Ordering::Equal => Bound::Excluded(a),
+                }
+            }
 
-        // If ranges overlap, we need
-        return match T::partial_cmp(lower, upper) {
-            // lower <= upper
-            Some(Ordering::Less) | Some(Ordering::Equal) => true,
-            // lower > upper
-            Some(Ordering::Greater) => false,
-            // ???
-            None => panic!("couldn't compare bounds a and b"),
+            (Bound::Included(i), Bound::Excluded(e)) | (Bound::Excluded(e), Bound::Included(i)) => {
+                match T::partial_cmp(&i, &e).expect("can't compare bounds") {
+                    // i <= e
+                    Ordering::Less | Ordering::Equal => Bound::Excluded(e),
+                    // i > e
+                    Ordering::Greater => Bound::Included(i),
+                }
+            }
         };
-    }
-}
 
-impl<T: PartialOrd> std::ops::BitOr for Bounds<T> {
-    type Output = Self;
+        let upper_bound = match (self_upper, other_upper) {
+            (Bound::Unbounded, Bound::Unbounded) => Bound::Unbounded,
 
-    fn bitor(self, rhs: Self) -> Self::Output {
-        todo!()
+            (Bound::Unbounded, Bound::Included(val)) | (Bound::Included(val), Bound::Unbounded) => {
+                Bound::Included(val)
+            }
+
+            (Bound::Unbounded, Bound::Excluded(val)) | (Bound::Excluded(val), Bound::Unbounded) => {
+                Bound::Excluded(val)
+            }
+
+            (Bound::Included(a), Bound::Included(b)) => {
+                match T::partial_cmp(&a, &b).expect("can't compare bounds") {
+                    // a < b
+                    Ordering::Less => Bound::Included(a),
+                    // a >= b
+                    Ordering::Greater | Ordering::Equal => Bound::Included(b),
+                }
+            }
+
+            (Bound::Excluded(a), Bound::Excluded(b)) => {
+                match T::partial_cmp(&a, &b).expect("can't compare bounds") {
+                    // a < b
+                    Ordering::Less => Bound::Excluded(a),
+                    // a >= b
+                    Ordering::Greater | Ordering::Equal => Bound::Excluded(b),
+                }
+            }
+
+            (Bound::Included(i), Bound::Excluded(e)) | (Bound::Excluded(e), Bound::Included(i)) => {
+                match T::partial_cmp(&i, &e).expect("can't compare bounds") {
+                    // i < e
+                    Ordering::Less => Bound::Included(i),
+                    // i >= e
+                    Ordering::Greater | Ordering::Equal => Bound::Excluded(e),
+                }
+            }
+        };
+
+        Bounds::from_bounds(lower_bound, upper_bound)
     }
 }
 

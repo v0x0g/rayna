@@ -8,12 +8,14 @@ use std::cmp::Ordering;
 use crate::accel::aabb::Aabb;
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
-use slab_tree::{NodeMut, TreeBuilder};
+use slab_tree::{NodeMut, Tree, TreeBuilder};
 
 use crate::object::{Object, ObjectType};
 
 #[derive(Clone, Debug)]
-pub struct Bvh {}
+pub struct Bvh {
+    tree: Tree<BvhNode>,
+}
 
 #[derive(Copy, Clone, Debug)]
 enum SplitAxis {
@@ -42,9 +44,9 @@ impl Bvh {
 
         let mut s = String::new();
         let _ = tree.write_formatted(&mut s);
-        eprintln!("{}", s);
+        eprintln!("\n\n{}\n\n", s);
 
-        todo!()
+        Self { tree }
     }
 
     /// Recursively processes the slice of `objects`, adding them to the `node` recursively until

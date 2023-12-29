@@ -260,15 +260,16 @@ fn bvh_node_intersect(
 
             let children = node_id
                 .descendants(tree)
-                .map(|node_id| tree[node_id].clone())
+                .skip(1 /*skip self */)
+                .map(|node_id| (node_id, tree[node_id].clone()))
                 // .collect_vec()
                 ;
 
             // TODO: Rework this to use the new Bounds::bitor API to shrink the next child's search range
             //  So keep track of the bounds, and each iteration shrink with `bounds = bounds | ..intersection.dist`
             //  And if an intersect was found in that shrunk range then we know that
-            let intersects = children.into_iter().filter_map(|child| {
-                bvh_node_intersect(ray, bounds, tree.get_node_id(&child).unwrap(), child, tree)
+            let intersects = children.into_iter().filter_map(|(child_id, child)| {
+                bvh_node_intersect(ray, bounds, child_id, child, tree)
             });
 
             intersects.min_by(|a, b| Number::total_cmp(&a.dist, &b.dist))
@@ -308,7 +309,7 @@ fn bvh_node_intersect_all<'a>(
 
             let children = node_id
                 .descendants(tree)
-                .map(|node_id| &tree[node_id])
+                .map(|node_id| (node_id, &tree[node_id]))
                 // .collect_vec()
                 ;
 
@@ -317,9 +318,7 @@ fn bvh_node_intersect_all<'a>(
             //  And if an intersect was found in that shrunk range then we know that
             let mut intersects = children
                 .into_iter()
-                .filter_map(|child| {
-                    bvh_node_intersect_all(ray, tree.get_node_id(&child).unwrap(), child, tree)
-                })
+                .filter_map(|(child_id, child)| bvh_node_intersect_all(ray, child_id, child, tree))
                 .flatten()
                 .peekable();
 

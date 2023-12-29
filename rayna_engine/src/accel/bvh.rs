@@ -171,8 +171,10 @@ impl Bvh {
 
                 // Calculate the areas of the left/right AABBs, for each given split position
                 let (left_areas, right_areas) = {
-                    let mut left_areas = Vec::with_capacity(n);
-                    let mut right_areas = Vec::with_capacity(n);
+                    let mut left_areas = Vec::new();
+                    left_areas.resize(n, 0.);
+                    let mut right_areas = Vec::new();
+                    right_areas.resize(n, 0.);
                     //Calculate the area from the left towards right
                     let mut left_aabb = Aabb::default();
                     for (area, obj_aabb) in zip_eq(left_areas.iter_mut(), aabbs.iter()) {
@@ -194,9 +196,8 @@ impl Bvh {
                 let split_index = {
                     // NOTE: If doing in a for loop this would be `i: 0..n-1`, and `l=left[i], r=right[i+1]`
                     // This way we have non-overlapping left & right areas
-                    let left_trimmed = left_areas.split_last().expect("left_area has >1 elem").1;
-                    let right_trimmed =
-                        right_areas.split_first().expect("right_area has >1 elem").1;
+                    let left_trimmed = left_areas.split_last().expect("left_area is empty").1;
+                    let right_trimmed = right_areas.split_first().expect("right_area is empty").1;
                     let min_sa_idx = zip_eq(left_trimmed, right_trimmed)
                         .enumerate()
                         // calculate SA

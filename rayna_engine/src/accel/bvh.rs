@@ -38,7 +38,7 @@ impl Bvh {
         let root_id = tree.new_node(BvhNode::TempNode);
         Self::new_node_recursive(objects, SplitAxis::X, &mut tree, root_id);
 
-        eprintln!("\n\n{tree:?}\n\n");
+        // eprintln!("\n\n{:?}\n\n", root_id.debug_pretty_print(&tree));
 
         Self { tree }
     }

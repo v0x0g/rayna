@@ -5,6 +5,7 @@ use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
 use rayna_shared::def::types::Number;
+use std::borrow::Borrow;
 use std::ops::RangeBounds;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]

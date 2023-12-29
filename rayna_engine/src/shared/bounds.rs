@@ -7,6 +7,7 @@ use std::ops::{
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum Bounds<T> {
+    // TODO: Optimise this out and remove the inner value
     Full(RangeFull),
     Inclusive(RangeInclusive<T>),
     To(RangeTo<T>),

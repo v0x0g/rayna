@@ -5,16 +5,16 @@
 
 use std::cmp::Ordering;
 
-use crate::accel::aabb::Aabb;
+use indextree::{Arena, NodeId};
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
-use slab_tree::{NodeMut, Tree, TreeBuilder};
 
+use crate::accel::aabb::Aabb;
 use crate::object::{Object, ObjectType};
 
 #[derive(Clone, Debug)]
 pub struct Bvh {
-    tree: Tree<BvhNode>,
+    tree: Arena<BvhNode>,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -34,17 +34,11 @@ enum BvhNode {
 
 impl Bvh {
     pub fn new(objects: &[ObjectType]) -> Self {
-        let mut tree = TreeBuilder::new().with_capacity(objects.len()).build();
-        tree.set_root(BvhNode::TempNode);
-        Self::new_node_recursive(
-            objects,
-            SplitAxis::X,
-            tree.root_mut().expect("we just set the root"),
-        );
+        let mut tree = Arena::with_capacity(objects.len());
+        let root_id = tree.new_node(BvhNode::TempNode);
+        Self::new_node_recursive(objects, SplitAxis::X, &mut tree, root_id);
 
-        let mut s = String::new();
-        let _ = tree.write_formatted(&mut s);
-        eprintln!("\n\n{}\n\n", s);
+        eprintln!("\n\n{tree:?}\n\n");
 
         Self { tree }
     }
@@ -55,7 +49,12 @@ impl Bvh {
     /// # Note:
     /// Since the tree structure doesn't have a concept of leaves/nodes being different, we use
     /// [None] to be nodes/branches, and [Some] to be leaves
-    fn new_node_recursive(objects: &[ObjectType], axis: SplitAxis, mut node: NodeMut<BvhNode>) {
+    fn new_node_recursive(
+        objects: &[ObjectType],
+        axis: SplitAxis,
+        tree: &mut Arena<BvhNode>,
+        node_id: NodeId,
+    ) {
         let comparator: fn(&ObjectType, &ObjectType) -> Ordering = match axis {
             SplitAxis::X => |a, b| {
                 PartialOrd::partial_cmp(&a.bounding_box().min().x, &b.bounding_box().min().x)
@@ -77,11 +76,11 @@ impl Bvh {
                 // "Smaller" node goes on the left (first)
                 // TODO: Is sorting for a bi-node necessary?
                 if comparator(&a, &b) == Ordering::Less {
-                    node.append(BvhNode::Object(a.clone()));
-                    node.append(BvhNode::Object(b.clone()));
+                    node_id.append(tree.new_node(BvhNode::Object(a.clone())), tree);
+                    node_id.append(tree.new_node(BvhNode::Object(b.clone())), tree);
                 } else {
-                    node.append(BvhNode::Object(b.clone()));
-                    node.append(BvhNode::Object(a.clone()));
+                    node_id.append(tree.new_node(BvhNode::Object(b.clone())), tree);
+                    node_id.append(tree.new_node(BvhNode::Object(a.clone())), tree);
                 };
                 BvhNode::Aabb(Aabb::encompass(a.bounding_box(), b.bounding_box()))
             }
@@ -98,18 +97,21 @@ impl Bvh {
                 let (left, right) = objects.split_at(objects.len() / 2);
 
                 let left_aabb = Aabb::encompass_iter(left.iter().map(Object::bounding_box));
-                let left_node = node.append(BvhNode::Aabb(left_aabb));
-                Self::new_node_recursive(left, *split_axis, left_node);
+                let left_node = tree.new_node(BvhNode::Aabb(left_aabb));
+                node_id.append(left_node.clone(), tree);
+                Self::new_node_recursive(left, *split_axis, tree, left_node);
 
                 let right_aabb = Aabb::encompass_iter(right.iter().map(Object::bounding_box));
-                let right_node = node.append(BvhNode::Aabb(right_aabb));
-                Self::new_node_recursive(right, *split_axis, right_node);
+                let right_node = tree.new_node(BvhNode::Aabb(right_aabb));
+                node_id.append(right_node.clone(), tree);
+                Self::new_node_recursive(right, *split_axis, tree, right_node);
 
                 BvhNode::Aabb(Aabb::encompass(left_aabb, right_aabb))
             }
         };
 
-        *node.data() = bvh_data;
+        // Update the current node
+        *tree[node_id].get_mut() = bvh_data;
     }
 
     // pub fn new_sah(objects: &[ObjectType]) -> Self {

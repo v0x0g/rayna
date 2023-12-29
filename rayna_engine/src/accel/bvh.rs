@@ -90,13 +90,11 @@ impl Bvh {
                 // split in half and repeat tree
                 let (left, right) = objects.split_at(objects.len() / 2);
 
-                let left_aabb =
-                    Aabb::encompass_iter::<&Aabb>(left.iter().map(Object::bounding_box));
+                let left_aabb = Aabb::encompass_iter(left.iter().map(Object::bounding_box));
                 let left_node = node.append(BvhNode::Aabb(left_aabb));
                 Self::new_node_recursive(left, *split_axis, left_node);
 
-                let right_aabb =
-                    Aabb::encompass_iter::<&Aabb>(right.iter().map(Object::bounding_box));
+                let right_aabb = Aabb::encompass_iter(right.iter().map(Object::bounding_box));
                 let right_node = node.append(BvhNode::Aabb(right_aabb));
                 Self::new_node_recursive(right, *split_axis, right_node);
 
@@ -107,11 +105,11 @@ impl Bvh {
         *node.data() = bvh_data;
     }
 
-    pub fn new_sah(objects: &[ObjectType]) -> Self {
-        // let mut tree = TreeBuilder::new().with_capacity(objects.len()).build();
-        // tree.root_id();
-        todo!()
-    }
+    // pub fn new_sah(objects: &[ObjectType]) -> Self {
+    //     // let mut tree = TreeBuilder::new().with_capacity(objects.len()).build();
+    //     // tree.root_id();
+    //     todo!()
+    // }
 }
 
 // TODO: impl<O: Object> Object for NodeRef<O>

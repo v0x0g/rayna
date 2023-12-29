@@ -254,7 +254,6 @@ fn bvh_node_intersect(
 
             let children = node_id
                 .children(tree)
-                .skip(1 /*skip self */)
                 .map(|node_id| (node_id, &tree[node_id]))
                 // .collect_vec()
                 ;

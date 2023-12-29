@@ -21,7 +21,7 @@ pub static SIMPLE: Scene = {
             fwd: Vector3::Z,
             v_fov: Angle::from_degrees(45.),
             focus_dist: 3.,
-            defocus_angle: Angle::from_degrees(10.),
+            defocus_angle: Angle::from_degrees(0.),
         },
         objects: vec![
             SphereBuilder {

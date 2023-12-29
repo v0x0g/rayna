@@ -184,6 +184,14 @@ impl<T: PartialOrd> Bounds<T> {
     }
 }
 
+impl<T: PartialOrd> std::ops::BitOr for Bounds<T> {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        todo!()
+    }
+}
+
 impl<T: Display> Display for Bounds<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {

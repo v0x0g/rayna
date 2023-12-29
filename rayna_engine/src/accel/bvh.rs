@@ -4,8 +4,9 @@
 //! by skipping objects that obviously can't be intersected.
 
 use std::cmp::Ordering;
+use std::ops::Deref;
 
-use indextree::{Arena, NodeId};
+use indextree::{Arena, Node, NodeId};
 use itertools::{zip_eq, Itertools};
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
@@ -14,10 +15,14 @@ use rayna_shared::def::types::Number;
 
 use crate::accel::aabb::Aabb;
 use crate::object::{Object, ObjectType};
+use crate::shared::bounds::Bounds;
+use crate::shared::intersect::Intersection;
+use crate::shared::ray::Ray;
 
 #[derive(Clone, Debug)]
 pub struct Bvh {
     tree: Arena<BvhNode>,
+    root_id: NodeId,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -51,7 +56,7 @@ impl Bvh {
         );
         eprintln!("\n\n{:?}\n\n", root_id.debug_pretty_print(&tree));
 
-        Self { tree }
+        Self { tree, root_id }
     }
 
     fn aabb_axis_comparator(axis: SplitAxis) -> fn(&ObjectType, &ObjectType) -> Ordering {
@@ -228,4 +233,70 @@ impl Bvh {
     }
 }
 
-// TODO: impl<O: Object> Object for NodeRef<O>
+fn intersect_bvh_node(
+    ray: &Ray,
+    bounds: &Bounds<Number>,
+    node_id: NodeId,
+    node: Node<BvhNode>,
+    tree: &Arena<BvhNode>,
+) -> Option<Intersection> {
+    match node.get() {
+        BvhNode::TempNode => unreachable!("asserted that tree has no temp nodes"),
+        BvhNode::Aabb(aabb) => {
+            // An aabb will need to delegate to child nodes if not missed
+            if !aabb.hit(ray, bounds) {
+                return None;
+            }
+
+            let children = node_id
+                .descendants(tree)
+                .map(|node_id| tree[node_id].clone())
+                .collect_vec();
+
+            let intersects = children.into_iter().filter_map(|child| {
+                intersect_bvh_node(ray, bounds, tree.get_node_id(&child).unwrap(), child, tree)
+            });
+
+            // Get intersections of children
+            match children.deref() {
+                [] => return None,
+                [child] => {
+                    return intersect_bvh_node(
+                        ray,
+                        bounds,
+                        tree.get_node_id(child).unwrap(),
+                        child.clone(),
+                        tree,
+                    )
+                }
+            }
+        }
+        BvhNode::Object(o) => o.bounding_box(),
+    };
+}
+
+impl Object for Bvh {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
+        // Misses AABB
+        if !self.bounding_box().hit(ray, bounds) {
+            return None;
+        }
+
+        let tree = &self.tree;
+
+        let root_node = tree[self.root_id].clone();
+
+        intersect_bvh_node(ray, bounds, self.root_id, root_node, tree)
+    }
+
+    fn intersect_all<'a>(
+        &'a self,
+        ray: &'a Ray,
+    ) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>> {
+        todo!()
+    }
+
+    fn bounding_box(&self) -> &Aabb {
+        self.tree[self.root_id].get().bounding_box()
+    }
+}

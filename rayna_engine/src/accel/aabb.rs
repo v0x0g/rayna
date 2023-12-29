@@ -43,7 +43,6 @@ impl Aabb {
         })
     }
 
-    //noinspection RsBorrowChecker - it's just plain wrong, doesn't recognise `p: Point3` and is `Copy`
     /// [Self::encompass] but for an arbitrary number of points
     pub fn encompass_points<B: Borrow<Point3>>(iter: impl IntoIterator<Item = B>) -> Self {
         let mut min = Point3::ZERO;

@@ -3,6 +3,7 @@ use crate::integration::message::MessageToWorker;
 use crate::integration::{Integration, IntegrationError};
 use crate::profiler;
 use crate::ui_val::{DRAG_SLOW, UNIT_DEG, UNIT_LEN, UNIT_PX};
+use eframe::epaint::textures::TextureFilter;
 use egui::load::SizedTexture;
 use egui::{
     Context, CursorIcon, Key, RichText, Sense, TextureHandle, TextureOptions, Vec2, Widget,
@@ -361,7 +362,10 @@ impl RaynaApp {
 
         {
             profile_scope!("update_tex");
-            let opts = TextureOptions::NEAREST;
+            let opts = TextureOptions {
+                magnification: TextureFilter::Nearest,
+                minification: TextureFilter::Linear,
+            };
             match &mut self.render_buf_tex {
                 None => {
                     profile_scope!("tex_load");

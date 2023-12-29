@@ -219,7 +219,7 @@ impl Bvh {
 ///     - Intersects on all those children (by calling itself recursively)
 ///     - Returns the closest intersection
 fn bvh_node_intersect(ray: &Ray, bounds: &Bounds<Number>, node: &BvhNode) -> Option<Intersection> {
-    match node {
+    return match node {
         // An aabb will need to delegate to child nodes if not missed
         BvhNode::Nested { left, right, aabb } => {
             if !aabb.hit(ray, bounds) {
@@ -229,15 +229,24 @@ fn bvh_node_intersect(ray: &Ray, bounds: &Bounds<Number>, node: &BvhNode) -> Opt
             // TODO: Rework this to use the new Bounds::bitor API to shrink the next child's search range
             //  So keep track of the bounds, and each iteration shrink with `bounds = bounds | ..intersection.dist`
             //  And if an intersect was found in that shrunk range then we know that
-            let intersects = [left, right]
-                .into_iter()
-                .filter_map(|child| bvh_node_intersect(ray, bounds, child));
 
-            intersects.min_by(|a, b| Number::total_cmp(&a.dist, &b.dist))
+            if let Some(left_int) = bvh_node_intersect(ray, bounds, left) {
+                if let Some(right_int) = bvh_node_intersect(ray, bounds, right) {
+                    if left_int.dist < right_int.dist {
+                        Some(left_int)
+                    } else {
+                        Some(right_int)
+                    }
+                } else {
+                    Some(left_int)
+                }
+            } else {
+                bvh_node_intersect(ray, bounds, right)
+            }
         }
         // Objects can be delegated directly
         BvhNode::Object(obj) => obj.intersect(ray, bounds),
-    }
+    };
 }
 
 /// Given a [BvhNode] on the [Arena] tree, calculates the intersection for the given `ray`
@@ -262,6 +271,7 @@ fn bvh_node_intersect_all<'a>(
             // TODO: Rework this to use the new Bounds::bitor API to shrink the next child's search range
             //  So keep track of the bounds, and each iteration shrink with `bounds = bounds | ..intersection.dist`
             //  And if an intersect was found in that shrunk range then we know that
+
             let mut intersects = [left, right]
                 .into_iter()
                 .filter_map(|child| bvh_node_intersect_all(ray, child))

@@ -3,7 +3,7 @@ use std::borrow::Borrow;
 use getset::*;
 use itertools::multizip;
 
-use rayna_shared::def::types::{Number, Point3};
+use rayna_shared::def::types::{Number, Point3, Vector3};
 
 use crate::shared::bounds::Bounds;
 use crate::shared::ray::Ray;
@@ -18,14 +18,27 @@ pub struct Aabb {
     min: Point3,
     /// The upper corner of the [Aabb]; the corner with the largest coordinates
     max: Point3,
+    size: Vector3,
+    area: Number,
+    volume: Number,
 }
 
+// region Constructors
 impl Aabb {
     /// Creates a new [Aabb] from two points, which do *not* have to be sorted by min/max
     pub fn new(a: Point3, b: Point3) -> Self {
         let min = Point3::min(a, b);
         let max = Point3::max(a, b);
-        Self { min, max }
+        let size = max - min;
+        let area = ((size.x * size.y) + (size.y * size.z) + (size.z * size.x)) * 2.;
+        let volume = size.x * size.y * size.z;
+        Self {
+            min,
+            max,
+            size,
+            area,
+            volume,
+        }
     }
 
     /// Returns an [Aabb] that surrounds the two given boxes
@@ -33,7 +46,7 @@ impl Aabb {
         let (a, b) = (a.borrow(), b.borrow());
         let min = Point3::min(a.min, b.min);
         let max = Point3::max(a.max, b.max);
-        Self { min, max }
+        Self::new(min, max)
     }
 
     /// [Self::encompass] but for an arbitrary number of boxes
@@ -52,9 +65,15 @@ impl Aabb {
             min = min.min(*p);
             max = max.max(*p);
         }
-        Self { min, max }
+        Self::new(min, max)
     }
+}
 
+// endregion Constructors
+
+// region Impl
+impl Aabb {
+    /// Checks whether the given ray intersects with the AABB at any point within the given distance bounds
     pub fn hit(&self, ray: &Ray, bounds: &Bounds<Number>) -> bool {
         let ro = ray.pos().to_array();
         let rd = ray.dir().to_array();
@@ -79,3 +98,4 @@ impl Aabb {
         return true;
     }
 }
+// endregion Impl

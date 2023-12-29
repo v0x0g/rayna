@@ -40,7 +40,10 @@ impl Object for ObjectList {
             .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist))
     }
 
-    fn intersect_all(&self, ray: &Ray) -> Option<Box<dyn Iterator<Item = Intersection> + '_>> {
+    fn intersect_all<'a>(
+        &'a self,
+        ray: &'a Ray,
+    ) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>> {
         Some(Box::new(
             self.raw
                 .iter()

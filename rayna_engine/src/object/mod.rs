@@ -5,7 +5,6 @@ use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
 use rayna_shared::def::types::Number;
-use std::borrow::Borrow;
 use std::ops::RangeBounds;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
@@ -35,7 +34,10 @@ pub trait Object: RtRequirement {
     /// # Return Value
     ///     This should return a (boxed) iterator that iterates over all the (unbounded) intersections,
     ///     unbounded by distance.
-    fn intersect_all(&self, ray: &Ray) -> Option<Box<dyn Iterator<Item = Intersection> + '_>>;
+    fn intersect_all<'a>(
+        &'a self,
+        ray: &'a Ray,
+    ) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>>;
 
     fn bounding_box(&self) -> &Aabb;
 

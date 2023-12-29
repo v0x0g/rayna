@@ -16,7 +16,10 @@ impl Object for DynamicObject {
         self.inner.intersect(ray, bounds)
     }
 
-    fn intersect_all(&self, ray: &Ray) -> Option<Box<dyn Iterator<Item = Intersection> + '_>> {
+    fn intersect_all<'a>(
+        &'a self,
+        ray: &'a Ray,
+    ) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>> {
         self.inner.intersect_all(ray)
     }
 

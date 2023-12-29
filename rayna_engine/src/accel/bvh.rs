@@ -207,7 +207,7 @@ impl Bvh {
                     min_sa_idx
                 };
 
-                let (left_split, right_split) = objects.split_at(split_index);
+                let (left_split, right_split) = objects.split_at(split_index + 1);
 
                 let left_aabb = Aabb::encompass_iter(left_split.iter().map(Object::bounding_box));
                 let left_node = tree.new_node(BvhNode::Aabb(left_aabb));

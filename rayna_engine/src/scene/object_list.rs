@@ -31,13 +31,15 @@ impl<Obj: Into<ObjectType>, Iter: IntoIterator<Item = Obj>> From<Iter> for Objec
 
 impl Object for ObjectList {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
-        self.raw
-            .iter()
-            // Intersect all and only include hits not misses
-            .filter_map(|obj| obj.intersect(ray, bounds))
-            .inspect(|i| validate::intersection(ray, i, bounds))
-            // Choose closest intersect
-            .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist))
+        // self.raw
+        //     .iter()
+        //     // Intersect all and only include hits not misses
+        //     .filter_map(|obj| obj.intersect(ray, bounds))
+        //     .inspect(|i| validate::intersection(ray, i, bounds))
+        //     // Choose closest intersect
+        //     .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist))
+
+        self.bvh.intersect(ray, bounds)
     }
 
     fn intersect_all<'a>(

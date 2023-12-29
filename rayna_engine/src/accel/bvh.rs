@@ -53,7 +53,7 @@ impl Bvh {
                 .all(|n| !matches!(n.get(), BvhNode::TempNode)),
             "should not be any temp nodes in tree"
         );
-        eprintln!("\n\n{:?}\n\n", root_id.debug_pretty_print(&tree));
+        // eprintln!("\n\n{:?}\n\n", root_id.debug_pretty_print(&tree));
 
         Self { tree, root_id }
     }

@@ -4,7 +4,6 @@
 //! by skipping objects that obviously can't be intersected.
 
 use std::cmp::Ordering;
-use std::ops::Deref;
 
 use indextree::{Arena, Node, NodeId};
 use itertools::{zip_eq, Itertools};

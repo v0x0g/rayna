@@ -3,16 +3,19 @@
 //! These are used to accelerate ray-object intersection tests by narrowing the search space,
 //! by skipping objects that obviously can't be intersected.
 
+use std::cmp::Ordering;
+
+use itertools::{zip_eq, Itertools};
+use rand::prelude::SliceRandom;
+use rand::thread_rng;
+
+use rayna_shared::def::types::Number;
+
 use crate::accel::aabb::Aabb;
 use crate::object::{Object, ObjectType};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use itertools::{zip_eq, Itertools};
-use rand::prelude::SliceRandom;
-use rand::thread_rng;
-use rayna_shared::def::types::Number;
-use std::cmp::Ordering;
 
 #[derive(Clone, Debug)]
 pub struct Bvh {
@@ -247,7 +250,13 @@ fn bvh_node_intersect(ray: &Ray, bounds: &Bounds<Number>, node: &BvhNode) -> Opt
             }
         }
         // Objects can be delegated directly
-        BvhNode::Object(obj) => obj.intersect(ray, bounds),
+        BvhNode::Object(obj) => {
+            if !obj.bounding_box().hit(ray, bounds) {
+                None
+            } else {
+                obj.intersect(ray, bounds)
+            }
+        }
     };
 }
 

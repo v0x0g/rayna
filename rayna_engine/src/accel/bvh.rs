@@ -53,20 +53,27 @@ impl Bvh {
         Self { root }
     }
 
-    fn aabb_axis_comparator(axis: SplitAxis) -> fn(&ObjectType, &ObjectType) -> Ordering {
+    /// Sorts the given slice of objects along the chosen `axis`
+    /// This sort is *unstable* (see [sort_unstable_by](https://doc.rust-lang.org/std/primitive.slice.html#method.sort_unstable_by))
+    fn sort_along_aabb_axis(axis: SplitAxis, objects: &mut [ObjectType]) {
+        fn sort_x(a: &ObjectType, b: &ObjectType) -> Ordering {
+            PartialOrd::partial_cmp(&a.bounding_box().min().x, &b.bounding_box().min().x)
+                .expect("should be able to cmp AABB x-bounds: should not be nan")
+        }
+
+        fn sort_y(a: &ObjectType, b: &ObjectType) -> Ordering {
+            PartialOrd::partial_cmp(&a.bounding_box().min().y, &b.bounding_box().min().y)
+                .expect("should be able to cmp AABB y-bounds: should not be nan")
+        }
+        fn sort_z(a: &ObjectType, b: &ObjectType) -> Ordering {
+            PartialOrd::partial_cmp(&a.bounding_box().min().z, &b.bounding_box().min().z)
+                .expect("should be able to cmp AABB z-bounds: should not be nan")
+        }
+
         match axis {
-            SplitAxis::X => |a, b| {
-                PartialOrd::partial_cmp(&a.bounding_box().min().x, &b.bounding_box().min().x)
-                    .expect("should be able to cmp AABB bounds: should not be nan")
-            },
-            SplitAxis::Y => |a, b| {
-                PartialOrd::partial_cmp(&a.bounding_box().min().y, &b.bounding_box().min().y)
-                    .expect("should be able to cmp AABB bounds: should not be nan")
-            },
-            SplitAxis::Z => |a, b| {
-                PartialOrd::partial_cmp(&a.bounding_box().min().z, &b.bounding_box().min().z)
-                    .expect("should be able to cmp AABB bounds: should not be nan")
-            },
+            SplitAxis::X => objects.sort_unstable_by(sort_x),
+            SplitAxis::Y => objects.sort_unstable_by(sort_y),
+            SplitAxis::Z => objects.sort_unstable_by(sort_z),
         }
     }
 
@@ -87,8 +94,7 @@ impl Bvh {
                 let &split_axis = [SplitAxis::X, SplitAxis::Y, SplitAxis::Z]
                     .choose(rng)
                     .unwrap();
-                let comparator = Self::aabb_axis_comparator(split_axis);
-                objects.sort_by(comparator);
+                Self::sort_along_aabb_axis(split_axis, &mut objects);
 
                 // split in half and repeat tree
                 let (left_split, right_split) = objects.split_at(objects.len() / 2);
@@ -156,8 +162,7 @@ impl Bvh {
                         None => unreachable!("Vector3::into_iter() cannot be empty iterator"),
                         Some(x) => unreachable!("invalid axis {}", x),
                     };
-                    let comparator = Self::aabb_axis_comparator(max_side);
-                    objects.sort_unstable_by(comparator);
+                    Self::sort_along_aabb_axis(max_side, &mut objects);
                 }
 
                 // Calculate the areas of the left/right AABBs, for each given split position

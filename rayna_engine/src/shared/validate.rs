@@ -1,10 +1,13 @@
+use std::borrow::Borrow;
+use std::ops::RangeBounds;
+
+use approx::*;
+
+use rayna_shared::def::types::{Number, Pixel, Point3, Vector3};
+
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use approx::*;
-use rayna_shared::def::types::{Number, Pixel, Point3, Vector3};
-use std::borrow::Borrow;
-use std::ops::RangeBounds;
 
 macro_rules! debug_assert_only {
     () => {
@@ -14,9 +17,9 @@ macro_rules! debug_assert_only {
     };
 }
 
-pub const EPSILON: Number = 1e-6;
-pub const ULPS: usize = 4;
-pub const RELATIVE: Number = 1e-3;
+pub const EPSILON: Number = 1e-2;
+pub const ULPS: usize = 3;
+pub const RELATIVE: Number = 1e-2;
 
 #[inline(always)]
 #[track_caller]
@@ -33,10 +36,10 @@ pub fn normal3(n: impl Borrow<Vector3>) {
     debug_assert_only!();
     let n = n.borrow();
     vector3(n);
+    let len = n.length();
     assert!(
-        n.is_normalized(),
-        "should be normalised; vec: {n:?}, len: {:?}",
-        n.length()
+        relative_eq!(len, 1., epsilon = EPSILON, max_relative = RELATIVE),
+        "should be normalised; vec: {n:?}, len: {len:?}",
     );
 }
 

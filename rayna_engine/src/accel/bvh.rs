@@ -280,7 +280,7 @@ fn bvh_node_intersect_all<'a>(
     match node {
         // An aabb will need to delegate to child nodes if not missed
         BvhNode::Nested { left, right, aabb } => {
-            if !aabb.hit(ray, &Bounds::Full(..)) {
+            if !aabb.hit(ray, &Bounds::FULL) {
                 return None;
             }
 

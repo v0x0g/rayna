@@ -58,6 +58,13 @@ impl<T> From<Range<T>> for Bounds<T> {
     }
 }
 
+impl<T> Bounds<T> {
+    pub const FULL: Self = Self {
+        start: None,
+        end: None,
+    };
+}
+
 impl<T: PartialOrd> Bounds<T> {
     // TODO: Expand this to cover two full `Bounds<T>` objects, overlapping with each other
     /// Checks if the given range `min..max` overlaps with the bounds (`self`)

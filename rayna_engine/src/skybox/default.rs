@@ -13,6 +13,6 @@ impl Skybox for DefaultSkybox {
         let white = Pixel::from([1., 1., 1.]);
         let blue = Pixel::from([0.5, 0.7, 1.]);
 
-        math::lerp(white, blue, a)
+        math::lerp_px(white, blue, a)
     }
 }

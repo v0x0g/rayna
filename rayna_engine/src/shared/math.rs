@@ -1,16 +1,23 @@
-use rayna_shared::def::types::Pixel;
-use rayna_shared::def::types::{Number, Vector3};
+use std::ops::{Add, Mul, Sub};
+
+use rayna_shared::def::types::{Channel, Number, Pixel, Vector3};
 
 /// Your standard linear interpolation function
-pub fn lerp(a: Pixel, b: Pixel, t: Number) -> Pixel {
-    glam::DVec3::lerp(
-        glam::DVec3::from(a.0.map(Number::from)),
-        glam::DVec3::from(b.0.map(Number::from)),
-        t,
-    )
-    .as_vec3()
-    .to_array()
-    .into()
+pub fn lerp<T>(a: T, b: T, t: Number) -> T
+where
+    T: Add<Output = T> + Mul<Number, Output = T> + Sub<Output = T> + Clone,
+{
+    a.clone() + ((b.clone() - a.clone()) * t)
+}
+
+pub fn lerp_px(a: Pixel, b: Pixel, t: Number) -> Pixel {
+    let [ra, ga, ba] = a.0;
+    let [rb, gb, bb] = b.0;
+    Pixel::from([
+        lerp(ra as Number, rb as Number, t) as Channel,
+        lerp(ga as Number, gb as Number, t) as Channel,
+        lerp(ba as Number, bb as Number, t) as Channel,
+    ])
 }
 
 /// Calculates the vector reflection of vector `d` across the surface normal `n`

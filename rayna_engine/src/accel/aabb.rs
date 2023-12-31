@@ -80,6 +80,10 @@ impl Aabb {
         let min = self.min.to_array();
         let max = self.max.to_array();
 
+        let Bounds::Normal(mut b) = bounds.clone() else {
+            panic!()
+        };
+
         for i in 0..3_usize {
             let (ro_i, rd_i, min_i, max_i) = (ro[i], rd[i], min[i], max[i]);
             let inv_d = 1. / rd_i;
@@ -89,10 +93,17 @@ impl Aabb {
                 std::mem::swap(&mut t0, &mut t1);
             }
 
+            if (t0 > b.start) {
+                b.start = t0;
+            }
+            if (t1 < b.end) {
+                b.end = t1;
+            }
+
             // The range in which the ray is 'inside' the AABB
             // Is not within the valid range for the ray,
             // so there is no valid intersection
-            if !bounds.range_overlaps(&t0, &t1) {
+            if b.end <= b.start {
                 return false;
             }
         }

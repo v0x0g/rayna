@@ -74,28 +74,66 @@ impl Aabb {
 impl Aabb {
     /// Checks whether the given ray intersects with the AABB at any point within the given distance bounds
     pub fn hit(&self, ray: &Ray, bounds: &Bounds<Number>) -> bool {
-        let ro = ray.pos().to_array();
-        let rd = ray.dir().to_array();
-        let min = self.min.to_array();
-        let max = self.max.to_array();
-
-        for i in 0..3_usize {
-            let (ro_i, rd_i, min_i, max_i) = (ro[i], rd[i], min[i], max[i]);
-            let inv_d = 1. / rd_i;
-            let mut t0 = (min_i - ro_i) * inv_d;
-            let mut t1 = (max_i - ro_i) * inv_d;
-            if inv_d < 0. {
-                std::mem::swap(&mut t0, &mut t1);
-            }
-
-            // The range in which the ray is 'inside' the AABB
-            // Is not within the valid range for the ray,
-            // so there is no valid intersection
-            if !bounds.range_overlaps(&t0, &t1) {
-                return false;
-            }
+        // METHOD 1: Pete Shirley's code
+        {
+            // let ro = ray.pos().to_array();
+            // let rd = ray.dir().to_array();
+            // let ird = ray.inv_dir().to_array();
+            // let min = self.min.to_array();
+            // let max = self.max.to_array();
+            //
+            // for i in 0..3_usize {
+            //     let (ro_i, rd_i, inv_d, min_i, max_i) = (ro[i], rd[i], ird[i], min[i], max[i]);
+            //     let mut t0 = (min_i - ro_i) * inv_d;
+            //     let mut t1 = (max_i - ro_i) * inv_d;
+            //     if inv_d.is_sign_negative() {
+            //         std::mem::swap(&mut t0, &mut t1);
+            //     }
+            //
+            //     // The range in which the ray is 'inside' the AABB
+            //     // Is not within the valid range for the ray,
+            //     // so there is no valid intersection
+            //     if !bounds.range_overlaps(&t0, &t1) {
+            //         return false;
+            //     }
+            // }
+            // return true;
         }
-        return true;
+
+        // METHOD 2: Tavianator
+        // https://tavianator.com/cgit/dimension.git/tree/libdimension/bvh/bvh.c#n196
+        // https://tavianator.com/2011/ray_box.html
+        {
+            // This is actually correct, even though it appears not to handle edge cases
+            // (ray.n.{x,y,z} == 0).  It works because the infinities that result from
+            // dividing by zero will still behave correctly in the comparisons.  Rays
+            // which are parallel to an axis and outside the box will have tmin == inf
+            // or tmax == -inf, while rays inside the box will have tmin and tmax
+            // unchanged.
+
+            let tx1 = (self.min.x - ray.pos().x) * ray.inv_dir().x;
+            let tx2 = (self.max.x - ray.pos().x) * ray.inv_dir().x;
+
+            let mut tmin = Number::min(tx1, tx2);
+            let mut tmax = Number::max(tx1, tx2);
+
+            let ty1 = (self.min.y - ray.pos().y) * ray.inv_dir().y;
+            let ty2 = (self.max.y - ray.pos().y) * ray.inv_dir().y;
+
+            tmin = Number::max(tmin, Number::min(ty1, ty2));
+            tmax = Number::min(tmax, Number::max(ty1, ty2));
+
+            let tz1 = (self.min.z - ray.pos().z) * ray.inv_dir().z;
+            let tz2 = (self.max.z - ray.pos().z) * ray.inv_dir().z;
+
+            tmin = Number::max(tmin, Number::min(tz1, tz2));
+            tmax = Number::min(tmax, Number::max(tz1, tz2));
+
+            // return tmax >= Number::max(0.0, tmin) && tmin < t;
+            // We have: 0.0 => bounds.start, t => bounds.end
+            return bounds.range_overlaps(&tmin, &tmax);
+            // return (max(bounds.start, tmin) <= tmax) && (tmin < bounds.end)
+        }
     }
 }
 // endregion Impl

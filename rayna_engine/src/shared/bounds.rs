@@ -111,6 +111,27 @@ impl<T: PartialOrd> Bounds<T> {
             } => start <= end,
         };
     }
+
+    pub fn contains(&self, item: &T) -> bool {
+        match self {
+            Self {
+                start: Some(start),
+                end: Some(end),
+            } => start <= item && item <= end,
+            Self {
+                start: Some(start),
+                end: None,
+            } => start <= item,
+            Self {
+                start: None,
+                end: Some(end),
+            } => item <= end,
+            Self {
+                start: None,
+                end: None,
+            } => true,
+        }
+    }
 }
 
 impl<T: PartialOrd> std::ops::BitAnd for Bounds<T> {

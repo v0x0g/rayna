@@ -94,7 +94,8 @@ impl<T: PartialOrd> Bounds<T> {
 
     /// Checks if the given bounds overlap with self
     pub fn bounds_overlap(self, other: Self) -> bool {
-        // Calculate overlap and check it's not empty
+        // Calculate overlap and check it's valid
+        // If the bounds overlap, then lower must be <= upper
         return match self & other {
             Self { start: None, .. } | Self { end: None, .. } => true,
             Self {
@@ -112,8 +113,6 @@ impl<T: PartialOrd> std::ops::BitAnd for Bounds<T> {
         // `lower`: Find the largest (total) lowest bound, aka the lower bound that's inside both bounds
         // `upper`: Find the smallest (total) upper bound, aka the upper bound that's inside both bounds
         // This is equivalent to finding `lower = max(self_lower, other_lower), upper = min(self_upper, other_upper)`
-        // If the bounds overlap, then lower must be <= upper
-        // This does take into account priority of inclusive/exclusive bounds
 
         let start = match (self.start, other.start) {
             (None, start) | (start, None) => start,

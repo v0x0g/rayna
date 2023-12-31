@@ -161,9 +161,9 @@ impl crate::backend::app::App for RaynaApp {
                     .add(
                         egui::DragValue::from_get_set(|o| {
                             if let Some(val) = o {
-                                cam.v_fov = Angle::from_degrees(val as Number);
+                                cam.v_fov = Angle::from_degrees(val);
                             }
-                            cam.v_fov.to_degrees() as f64
+                            cam.v_fov.to_degrees()
                         })
                         .suffix(UNIT_DEG)
                         .clamp_range(0.0..=180.0)
@@ -182,9 +182,9 @@ impl crate::backend::app::App for RaynaApp {
                     .add(
                         egui::DragValue::from_get_set(|o| {
                             if let Some(val) = o {
-                                cam.defocus_angle = Angle::from_degrees(val as Number);
+                                cam.defocus_angle = Angle::from_degrees(val);
                             }
-                            cam.defocus_angle.to_degrees() as f64
+                            cam.defocus_angle.to_degrees()
                         })
                         .suffix(UNIT_DEG)
                         .clamp_range(0.0..=180.0)

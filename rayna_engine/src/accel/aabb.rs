@@ -3,7 +3,7 @@ use std::ops::Mul;
 
 use getset::*;
 
-use rayna_shared::def::types::{Number, Point3, Vector3};
+use rayna_shared::def::types::{Number, Point3, Point4, Vector3, Vector4};
 
 use crate::shared::bounds::Bounds;
 use crate::shared::ray::Ray;
@@ -75,7 +75,7 @@ impl Aabb {
 impl Aabb {
     /// Checks whether the given ray intersects with the AABB at any point within the given distance bounds
     pub fn hit(&self, ray: &Ray, bounds: &Bounds<Number>) -> bool {
-        const MODE: usize = 3;
+        const MODE: usize = 5;
 
         // METHOD 1: Pete Shirley's code
         if MODE == 1 {
@@ -149,7 +149,7 @@ impl Aabb {
 
             return bounds.range_overlaps(&tmin, &tmax);
         }
-        // METHOD 4: Tavianator (Vectors + SafeSIMD)
+        // METHOD 4: Tavianator (Vectors + Safe SIMD)
         // https://gist.github.com/dubik/4412640#file-bbox-cpp-L14
         else if MODE == 4 {
             use std::simd::prelude::*;
@@ -173,29 +173,37 @@ impl Aabb {
         }
         // METHOD 5: Tavianator (Vectors + Unsafe SIMD)
         else if MODE == 5 {
+            use std::mem::transmute;
             use std::simd::prelude::*;
             use std::simd::*;
 
-            type SimdVec = Simd<Number, 4>;
+            unsafe {
+                type SVec = Simd<Number, 4>;
 
-            #[repr(align(8))]
-            struct S(Vector3);
+                #[repr(align(32))]
+                struct S([Number; 4]);
 
-            let min = SimdVec::from(self.min.extend(0.).to_array());
-            let max = SimdVec::from(self.max.extend(0.).to_array());
-            let ray_pos = SimdVec::from(ray.pos().extend(0.).to_array());
-            let inv_dir = SimdVec::from(ray.inv_dir().extend(0.).to_array());
+                let min = S(self.min.extend(0.).to_array());
+                let max = S(self.max.extend(0.).to_array());
+                let ray_pos = S(ray.pos().extend(0.).to_array());
+                let inv_dir = S(ray.inv_dir().extend(0.).to_array());
 
-            let t1_v = SimdVec::mul(min - ray_pos, inv_dir);
-            let t2_v = SimdVec::mul(max - ray_pos, inv_dir);
+                let min: SVec = transmute(min);
+                let max: SVec = transmute(max);
+                let ray_pos: SVec = transmute(ray_pos);
+                let inv_dir: SVec = transmute(inv_dir);
 
-            let tmin_v = SimdVec::simd_min(t1_v, t2_v);
-            let tmax_v = SimdVec::simd_max(t1_v, t2_v);
+                let t1_v = SVec::mul(min - ray_pos, inv_dir);
+                let t2_v = SVec::mul(max - ray_pos, inv_dir);
 
-            let tmin = SimdVec::reduce_min(tmin_v);
-            let tmax = SimdVec::reduce_max(tmax_v);
+                let tmin_v = SVec::simd_min(t1_v, t2_v);
+                let tmax_v = SVec::simd_max(t1_v, t2_v);
 
-            return bounds.range_overlaps(&tmin, &tmax);
+                let tmin = SVec::reduce_min(tmin_v);
+                let tmax = SVec::reduce_max(tmax_v);
+
+                return bounds.range_overlaps(&tmin, &tmax);
+            }
         }
 
         unreachable!()

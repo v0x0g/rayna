@@ -9,7 +9,6 @@ use crate::object::{Object, ObjectType};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use crate::shared::validate;
 
 #[derive(Clone, Debug, Getters)]
 #[get = "pub"]

@@ -5,7 +5,6 @@ use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use rayna_shared::def::types::{Number, Point3, Vector3};
-use std::ops::RangeBounds;
 
 #[derive(Clone, Debug)]
 pub struct SphereBuilder {

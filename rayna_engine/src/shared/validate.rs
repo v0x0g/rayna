@@ -4,7 +4,6 @@ use crate::shared::ray::Ray;
 use approx::*;
 use rayna_shared::def::types::{Number, Pixel, Point3, Vector3};
 use std::borrow::Borrow;
-use std::ops::RangeBounds;
 
 macro_rules! debug_assert_only {
     () => {

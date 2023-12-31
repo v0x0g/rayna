@@ -259,24 +259,24 @@ impl crate::backend::app::App for RaynaApp {
             });
 
             if img_resp.dragged() {
-                cam_changed = true;
                 let [x, y] = img_resp.drag_delta().into();
                 rot_dirs = Vector3::new(x as Number, y as Number, 0.);
                 rot_dirs.z += ui.input(|i| i.key_down(Key::Q)) as u8 as Number;
                 rot_dirs.z -= ui.input(|i| i.key_down(Key::E)) as u8 as Number;
                 rot_dirs *= ui.input(|i| i.stable_dt as Number) * 5.;
+                cam_changed |= rot_dirs != Vector3::ZERO;
             }
 
             // Now also detect key presses if the mouse button is help
             if img_resp.is_pointer_button_down_on() {
-                cam_changed = true;
                 move_dirs.x += ui.input(|i| i.key_down(Key::D)) as u8 as Number;
                 move_dirs.x -= ui.input(|i| i.key_down(Key::A)) as u8 as Number;
                 move_dirs.y += ui.input(|i| i.key_down(Key::Space)) as u8 as Number;
                 move_dirs.y -= ui.input(|i| i.modifiers.ctrl) as u8 as Number;
                 move_dirs.z += ui.input(|i| i.key_down(Key::W)) as u8 as Number;
                 move_dirs.z -= ui.input(|i| i.key_down(Key::S)) as u8 as Number;
-                move_dirs *= ui.input(|i| i.stable_dt as Number) * 3.0;
+                move_dirs *= ui.input(|i| i.stable_dt as Number) * 0.5;
+                cam_changed |= move_dirs != Vector3::ZERO;
             }
 
             if img_resp.hovered() {
@@ -318,7 +318,7 @@ impl crate::backend::app::App for RaynaApp {
 
         if scene_dirty {
             profile_scope!("update_scene");
-            info!(target: UI, scene = ?self.scene, "scene dirty, sending to worker");
+            trace!(target: UI, /*scene = ?self.scene, */ "scene dirty, sending to worker");
 
             if let Err(err) = self
                 .integration

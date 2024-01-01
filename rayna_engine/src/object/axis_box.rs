@@ -22,8 +22,7 @@ pub struct AxisBoxBuilder {
 ///
 #[derive(Clone, Debug)]
 pub struct AxisBoxObject {
-    min: Point3,
-    max: Point3,
+    centre: Point3,
     size: Vector3,
     aabb: Aabb,
     material: MaterialType,
@@ -33,8 +32,7 @@ impl From<AxisBoxBuilder> for AxisBoxObject {
     fn from(value: AxisBoxBuilder) -> Self {
         let aabb = Aabb::new(value.corner_1, value.corner_2);
         Self {
-            max: aabb.max(),
-            min: aabb.min(),
+            centre: Point3::from((aabb.min().to_vector() + aabb.max().to_vector()) / 2.),
             size: aabb.size(),
             aabb,
             material: value.material,
@@ -49,7 +47,7 @@ impl Object for AxisBoxObject {
         // https://iquilezles.org/articles/intersectors/
 
         let m = ray.inv_dir();
-        let n = m * (ray.pos() - self.min);
+        let n = m * (ray.pos() - self.centre);
         let k = m.abs() * self.size;
         let t1 = -n - k;
         let t2 = -n + k;
@@ -76,19 +74,19 @@ impl Object for AxisBoxObject {
             arr.into()
         }
 
-        // let t = (bounds.clone()
-        //     & Bounds {
-        //         start: Some(t_near),
-        //         end: Some(t_far),
-        //     })
-        // .start
-        // .expect("bounds were validated");
+        let t = (bounds.clone()
+            & Bounds {
+                start: Some(t_near),
+                end: Some(t_far),
+            })
+        .start
+        .expect("bounds were validated");
 
-        let t = if bounds.contains(&t_near) {
-            t_near
-        } else {
-            t_far
-        };
+        // let t = if bounds.contains(&t_near) {
+        //     t_near
+        // } else {
+        //     t_far
+        // };
 
         out_normal *= -ray.dir().signum();
 
@@ -96,7 +94,7 @@ impl Object for AxisBoxObject {
             pos: ray.at(t),
             dist: t,
             material: self.material.clone(),
-            ray_normal: if inside { -out_normal } else { out_normal },
+            ray_normal: out_normal,
             normal: out_normal,
             front_face: !inside,
         })

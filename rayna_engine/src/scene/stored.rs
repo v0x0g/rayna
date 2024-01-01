@@ -1,17 +1,21 @@
-use super::Scene;
+use image::Pixel as _;
+use rand::{thread_rng, Rng};
+use static_init::*;
+
+use rayna_shared::def::types::{Angle, Number, Pixel, Point3, Vector3};
+
 use crate::material::dielectric::DielectricMaterial;
 use crate::material::lambertian::LambertianMaterial;
 use crate::material::metal::MetalMaterial;
 use crate::material::MaterialType;
-use crate::object::sphere::SphereBuilder;
+use crate::object::axis_box::{AxisBoxBuilder, AxisBoxObject};
+use crate::object::sphere::{SphereBuilder, SphereObject};
 use crate::object::ObjectType;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
 use crate::skybox::SkyboxType;
-use image::Pixel as _;
-use rand::{thread_rng, Rng};
-use rayna_shared::def::types::{Angle, Number, Pixel, Point3, Vector3};
-use static_init::*;
+
+use super::Scene;
 
 #[dynamic]
 pub static SIMPLE: Scene = {
@@ -45,6 +49,58 @@ pub static SIMPLE: Scene = {
             },
         ]
         .into(),
+        skybox: SkyboxType::default(),
+    }
+};
+
+#[dynamic]
+pub static BOX: Scene = {
+    let mut objects = Vec::<ObjectType>::new();
+    objects.push(
+        SphereObject::from(SphereBuilder {
+            // Small, top
+            pos: Point3::new(0., 1., 1.),
+            radius: 0.5,
+            material: MetalMaterial {
+                albedo: Pixel::from([0.8; 3]),
+                fuzz: 1.,
+            }
+            .into(),
+        })
+        .into(),
+    );
+    objects.push(
+        AxisBoxObject::from(AxisBoxBuilder {
+            material: LambertianMaterial {
+                albedo: [1.; 3].into(),
+            }
+            .into(),
+            corner_1: Point3::new(-1., 0., -1.),
+            corner_2: Point3::new(1., 1., 1.),
+        })
+        .into(),
+    );
+    objects.push(
+        SphereObject::from(SphereBuilder {
+            // Ground
+            pos: Point3::new(0., -100.5, -1.),
+            radius: 100.,
+            material: LambertianMaterial {
+                albedo: Pixel::from([0.5; 3]),
+            }
+            .into(),
+        })
+        .into(),
+    );
+    Scene {
+        camera: Camera {
+            pos: Point3::new(0., 0.5, -3.),
+            fwd: Vector3::Z,
+            v_fov: Angle::from_degrees(45.),
+            focus_dist: 3.,
+            defocus_angle: Angle::from_degrees(0.),
+        },
+        objects: objects.into(),
         skybox: SkyboxType::default(),
     }
 };

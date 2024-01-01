@@ -48,6 +48,7 @@ static_init = { workspace =  true }
 getset = { workspace = true }
 itertools = { workspace = true }
 indextree = "4.6.0"
+auto_ops = { workspace = true }
 
 # Perf
 puffin = { workspace = true }

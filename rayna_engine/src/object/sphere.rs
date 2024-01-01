@@ -6,6 +6,9 @@ use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use rayna_shared::def::types::{Number, Point3, Vector3};
 
+/// A builder struct used to create a sphere
+///
+/// Call [Into::into] or [SphereObject::from] to create the actual sphere object
 #[derive(Clone, Debug)]
 pub struct SphereBuilder {
     pub pos: Point3,
@@ -13,12 +16,13 @@ pub struct SphereBuilder {
     pub material: MaterialType,
 }
 
+/// The actual instance of a sphere that can be rendered.
+/// Has precomputed values and therefore cannot be mutated
 #[derive(Clone, Debug)]
 pub struct SphereObject {
+    material: MaterialType,
     pos: Point3,
     radius: Number,
-    pub material: MaterialType,
-
     // TODO: is `radius_sqr` a perf improvement?
     radius_sqr: Number,
     aabb: Aabb,

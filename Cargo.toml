@@ -54,6 +54,7 @@ strum = "0.25.0"
 strum_macros = "0.25.0"
 static_init = "1.0.3"
 getset = "0.1.2"
+auto_ops = "0.3.0"
 
 # Performance
 

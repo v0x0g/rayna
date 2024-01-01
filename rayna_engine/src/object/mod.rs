@@ -9,6 +9,7 @@ use rayna_shared::def::types::Number;
 #[allow(unused_imports)]
 use self::{dynamic::DynamicObject, sphere::SphereObject};
 
+mod r#box;
 pub mod dynamic;
 pub mod sphere;
 

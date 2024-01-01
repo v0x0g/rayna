@@ -9,6 +9,7 @@ use crate::object::Object;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
+use crate::shared::validate;
 
 /// A builder struct used to create a box
 ///
@@ -20,7 +21,7 @@ pub struct AxisBoxBuilder {
     pub material: MaterialType,
 }
 
-///
+/// Built instance of a box object
 #[derive(Clone, Debug)]
 pub struct AxisBoxObject {
     centre: Point3,
@@ -76,17 +77,21 @@ impl Object for AxisBoxObject {
                 // Is there a hit on this axis in front of the origin?
                 bounds.contains(&plane_dist.$u) && {
                     // Is that hit within the face of the box?
-                    let lhs = ray.at(plane_dist.$u).to_raw().$vw().abs();
-                    let rhs = self.size.to_raw().$vw();
-                    (lhs.x < rhs.x) && (lhs.y < rhs.y)
+                    let plane_uvs_from_centre =
+                        (ro.to_raw().$vw() + (rd.to_raw().$vw() * plane_dist.$u)).abs();
+                    let side_dimensions = self.size.to_raw().$vw();
+                    (plane_uvs_from_centre.x < side_dimensions.x)
+                        && (plane_uvs_from_centre.y < side_dimensions.y)
                 }
             };
         }
 
+        validate::vector3(&plane_dist);
+
         // Preserve exactly one element of `sgn`, with the correct sign
         // Also masks the distance by the non-zero axis
         // Dot product is faster than this CMOV chain, but doesn't work when distanceToPlane contains nans or infs.
-        let (distance, sgn) = if test!(x, yz) {
+        let (distance, ray_normal) = if test!(x, yz) {
             (plane_dist.x, Vector3::new(sgn.x, 0., 0.))
         } else if test!(y, zx) {
             (plane_dist.y, Vector3::new(0., sgn.y, 0.))
@@ -101,8 +106,6 @@ impl Object for AxisBoxObject {
         // to know whether we're entering or leaving the box,
         // then just look at the value of winding. If you need
         // texture coordinates, then use box.invDirection * hitPoint.
-
-        let ray_normal = sgn;
 
         Some(Intersection {
             pos: ray.at(distance),

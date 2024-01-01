@@ -122,10 +122,10 @@ impl Object for AxisBoxObject {
         let rd = self.world_to_box.map_vector(ray.dir());
 
         // TODO: RADIUS???
-        let rad = Vector3::ONE;
+        let rad = Vector3::ONE / 2.;
 
         // Ray-box intersection, in box space
-        let inv_d = ray.inv_dir();
+        let inv_d = rd.recip();
         let s = -rd.signum();
         let t1 = (-ro + s * rad) * inv_d;
         let t2 = (-ro - s * rad) * inv_d;
@@ -137,10 +137,12 @@ impl Object for AxisBoxObject {
         // let t_n = t1.max_element();
         // let t_f = t2.min_element();
 
-        if t_n > t_f || t_f < 0.0 {
+        // if t_n > t_f || t_f < 0.0 {
+        //     return None;
+        // }
+        if !bounds.range_overlaps(&t_n, &t_f) {
             return None;
         }
-        // if !bounds.range_overlaps(&t_n, &t_f) {return None;}
 
         // compute normal (in world space), face and UV
         // TODO: implement these
@@ -151,15 +153,15 @@ impl Object for AxisBoxObject {
         let _local: Point3;
 
         if t1.x > t1.y && t1.x > t1.z {
-            normal = (txi.x_axis.as_raw().xyz() * s.x).into();
+            normal = (txi.col(0).as_raw().xyz() * s.x).into();
             _uv = (ro.as_raw().yz() + rd.as_raw().yz() * t1.x).into();
             _face = 1 + (s.x as usize) / 2;
         } else if t1.y > t1.z {
-            normal = (txi.y_axis.as_raw().xyz() * s.y).into();
+            normal = (txi.col(1).as_raw().xyz() * s.y).into();
             _uv = (ro.as_raw().zx() + rd.as_raw().zx() * t1.y).into();
             _face = 5 + (s.y as usize) / 2;
         } else {
-            normal = (txi.z_axis.as_raw().xyz() * s.z).into();
+            normal = (txi.col(2).as_raw().xyz() * s.z).into();
             _uv = (ro.as_raw().xy() + rd.as_raw().xy() * t1.z).into();
             _face = 9 + (s.z as usize) / 2;
         };
@@ -173,8 +175,9 @@ impl Object for AxisBoxObject {
         };
 
         let pos = ray.at(dist);
-        _local = self.box_to_world.map_point(pos);
+        _local = self.world_to_box.map_point(pos);
         let inside = _local.max_element().abs() < 1.;
+        let normal = normal.try_normalize().expect("normal");
 
         Some(Intersection {
             pos,

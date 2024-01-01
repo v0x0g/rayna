@@ -1,4 +1,8 @@
+use glam::swizzles::*;
+use glam::BVec3;
+use glamour::{Swizzle, ToRaw};
 use itertools::multizip;
+use std::ops::Sub;
 
 use rayna_shared::def::types::{Number, Point3, Vector3};
 
@@ -24,6 +28,7 @@ pub struct AxisBoxBuilder {
 pub struct AxisBoxObject {
     centre: Point3,
     size: Vector3,
+    inv_size: Vector3,
     aabb: Aabb,
     material: MaterialType,
 }
@@ -34,6 +39,7 @@ impl From<AxisBoxBuilder> for AxisBoxObject {
         Self {
             centre: Point3::from((aabb.min().to_vector() + aabb.max().to_vector()) / 2.),
             size: aabb.size(),
+            inv_size: aabb.size().recip(),
             aabb,
             material: value.material,
         }
@@ -42,62 +48,62 @@ impl From<AxisBoxBuilder> for AxisBoxObject {
 
 impl Object for AxisBoxObject {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
-        // SOURCE:
-        // Ingio Quilezles
-        // https://iquilezles.org/articles/intersectors/
+        // Move to the box's reference frame. This is unavoidable and un-optimizable.
+        let ro = ray.pos() - self.centre;
+        let rd = ray.dir();
 
-        let m = ray.inv_dir();
-        let n = m * (ray.pos() - self.centre);
-        let k = m.abs() * self.size;
-        let t1 = -n - k;
-        let t2 = -n + k;
-        let t_near = t1.max_element();
-        let t_far = t2.min_element();
+        // Rotation: `rd *= box.rot; ro *= box.rot;`
 
-        // if( tN>tF || tF<0.0) return vec2(-1.0); // no intersection
-        if t_near > t_far || t_far < 0. {
-            return None;
-        }
-        let (mut out_normal, inside) = if t_near > 0. {
-            // Ray originated outside the box
-            (step(Vector3::splat(t_near), t1), false)
+        // Winding direction: -1 if the ray starts inside of the box (i.e., and is leaving), +1 if it is starting outside of the box
+        // let winding = ((ro.abs() * self.inv_size).max_element() - 1.).signum();
+        let winding = if (ro.abs() * self.inv_size).max_element() < 1. {
+            -1.
         } else {
-            // Ray inside box
-            (step(t2, Vector3::splat(t_far)), true)
+            1.
         };
 
-        fn step(edge: Vector3, inputs: Vector3) -> Vector3 {
-            let mut arr = [0.; 3];
-            for (out, e, i) in multizip((&mut arr, edge, inputs)) {
-                *out = if i < e { 0. } else { 1. };
-            }
-            arr.into()
+        // We'll use the negated sign of the ray direction in several places, so precompute it.
+        // The sign() instruction is fast...but surprisingly not so fast that storing the result
+        // temporarily isn't an advantage.
+        let sgn = -rd.signum();
+
+        // Ray-plane intersection. For each pair of planes, choose the one that is front-facing
+        // to the ray and compute the distance to it.
+        let mut plane_dist = self.size * winding * sgn - ro;
+
+        // Rotation: `if oriented {r /= rd} else {d *= ray.inv_dir()};
+
+        plane_dist *= ray.inv_dir();
+
+        // Perform all three ray-box tests and cast to 0 or 1 on each axis.
+        // Use a macro to eliminate the redundant code (no efficiency boost from doing so, of course!)
+        // Could be written with
+        // #   define TEST(U, VW)\
+        // /* Is there a hit on this axis in front of the origin? Use multiplication instead of && for a small speedup */\
+        // (distanceToPlane.U >= 0.0) && \
+        // /* Is that hit within the face of the box? */\
+        // all( lessThan(  abs(ray.origin.VW + ray.direction.VW * distanceToPlane.U), box.radius.VW  ) )
+
+        (ro.to_raw().x >= 0.) &&
+            // Check if LHS of subtract is less than RHS of subtract, in all element positions
+            // But with faster math
+            {
+                let lhs = ((ro.to_raw().yz() + rd.to_raw().yz() * plane_dist.x).abs());
+                let rhs = self.size.to_raw().yz();
+                lhs.x < rhs.x && lhs.y < rhs.y;
+            };
+
+        macro_rules! test {
+            ($u:ident, $vw:ident) => {
+            // Is there a hit on this axis in front of the origin?
+            (plane_dist.x >= 0.)
+            && // Is that hit within the face of the box?math
+            (((ro.to_raw().yz() + rd.to_raw().yz() * plane_dist.x).abs()) - self.size.to_raw().yz())
+                .is_negative_bitmask() == 0b11_u32;
+
+                (d.$u >= 0.) && all(lessThan((ro.to_raw().$vw() + rd.to_raw().$vw() * d.$u).abs(), self.size.$vw))
+            };
         }
-
-        let t = (bounds.clone()
-            & Bounds {
-                start: Some(t_near),
-                end: Some(t_far),
-            })
-        .start
-        .expect("bounds were validated");
-
-        // let t = if bounds.contains(&t_near) {
-        //     t_near
-        // } else {
-        //     t_far
-        // };
-
-        out_normal *= -ray.dir().signum();
-
-        Some(Intersection {
-            pos: ray.at(t),
-            dist: t,
-            material: self.material.clone(),
-            ray_normal: out_normal,
-            normal: out_normal,
-            front_face: !inside,
-        })
     }
 
     fn intersect_all<'a>(

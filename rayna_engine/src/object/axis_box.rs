@@ -1,7 +1,7 @@
-use glam::swizzles::*;
-use glamour::ToRaw;
+use glam::{Vec3Swizzles, Vec4Swizzles};
+use glamour::AsRaw;
 
-use rayna_shared::def::types::{Number, Point3, Vector3};
+use rayna_shared::def::types::{Number, Point3, Transform3, Vector2, Vector3};
 
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialType;
@@ -9,7 +9,6 @@ use crate::object::Object;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use crate::shared::validate;
 
 /// A builder struct used to create a box
 ///
@@ -24,101 +23,168 @@ pub struct AxisBoxBuilder {
 /// Built instance of a box object
 #[derive(Clone, Debug)]
 pub struct AxisBoxObject {
-    centre: Point3,
-    radius: Vector3,
-    inv_radius: Vector3,
+    world_to_box: Transform3,
+    box_to_world: Transform3,
     aabb: Aabb,
     material: MaterialType,
 }
 
+impl AxisBoxObject {
+    pub fn new(transform: Transform3, material: MaterialType) -> Self {
+        // Calculate bounding volume by getting all the corners in box coords,
+        // translating to world coords, and encompassing in an AABB
+        const CORNERS: [Point3; 8] = [
+            Point3 {
+                x: -1.,
+                y: -1.,
+                z: -1.,
+            },
+            Point3 {
+                x: -1.,
+                y: -1.,
+                z: 1.,
+            },
+            Point3 {
+                x: -1.,
+                y: 1.,
+                z: -1.,
+            },
+            Point3 {
+                x: -1.,
+                y: 1.,
+                z: 1.,
+            },
+            Point3 {
+                x: 1.,
+                y: -1.,
+                z: -1.,
+            },
+            Point3 {
+                x: 1.,
+                y: -1.,
+                z: 1.,
+            },
+            Point3 {
+                x: 1.,
+                y: 1.,
+                z: -1.,
+            },
+            Point3 {
+                x: 1.,
+                y: 1.,
+                z: 1.,
+            },
+        ];
+
+        let inverse = transform.inverse();
+        let translated_corners = CORNERS.map(|p| transform.map_point(p));
+        let aabb = Aabb::encompass_points(translated_corners);
+
+        Self {
+            box_to_world: transform,
+            world_to_box: inverse,
+            aabb,
+            material,
+        }
+    }
+}
+
 impl From<AxisBoxBuilder> for AxisBoxObject {
     fn from(value: AxisBoxBuilder) -> Self {
-        let aabb = Aabb::new(value.corner_1, value.corner_2);
-        Self {
-            centre: Point3::from((aabb.min().to_vector() + aabb.max().to_vector()) / 2.),
-            radius: aabb.size() / 2.,
-            inv_radius: (aabb.size() / 2.).recip(),
-            aabb,
-            material: value.material,
-        }
+        let size = value.corner_1 - value.corner_2;
+        let centre = value.corner_1 + size / 2.;
+        let transform = Transform3::from_scale(size)
+            //.then_rotate()
+            .then_translate(centre.into());
+        Self::new(transform, value.material)
     }
 }
 
 impl Object for AxisBoxObject {
     //noinspection RsLiveness
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
-        // Move to the box's reference frame. This is unavoidable and un-optimizable.
-        let ro = ray.pos() - self.centre;
-        let rd = ray.dir();
+        /*
+        CREDITS:
+        Inigo Quilez
+        https://iquilezles.org/articles/boxfunctions/ (Box Intersection Generic)
+        https://www.shadertoy.com/view/ld23DV
 
-        // Rotation: `rd *= box.rot; ro *= box.rot;`
+        MODIFICATIONS:
+            - Rename variables
+            - Refactored to match my API
+            - Replace OpenGL features
+            - Add NaN and range checks
+            - Combine into one matrix: `rad` (half-size) is contained inside it
+        */
 
-        // Winding direction: -1 if the ray starts inside of the box (i.e., and is leaving), +1 if it is starting outside of the box
-        // let winding = ((ro.abs() * self.inv_size).max_element() - 1.).signum();
-        let winding = if (ro.abs() * self.inv_radius).max_element() < 1. {
-            -1.
-        } else {
-            1.
-        };
+        // convert from world to box space
+        let ro = self.world_to_box.map_point(ray.pos()).to_vector();
+        let rd = self.world_to_box.map_vector(ray.dir());
 
-        // We'll use the negated sign of the ray direction in several places, so precompute it.
-        // The sign() instruction is fast...but surprisingly not so fast that storing the result
-        // temporarily isn't an advantage.
-        let sgn = -rd.signum();
+        // TODO: RADIUS???
+        let rad = Vector3::ONE;
 
-        // Ray-plane intersection. For each pair of planes, choose the one that is front-facing
-        // to the ray and compute the distance to it.
-        let mut plane_dist = (self.radius * winding * sgn) - ro;
-        plane_dist *= ray.inv_dir();
+        // Ray-box intersection, in box space
+        let inv_d = ray.inv_dir();
+        let s = -rd.signum();
+        let t1 = (-ro + s * rad) * inv_d;
+        let t2 = (-ro - s * rad) * inv_d;
 
-        // Perform all three ray-box tests and cast to 0 or 1 on each axis.
-        // Use a macro to eliminate the redundant code (no efficiency boost from doing so, of course!)
-        macro_rules! test {
-            ($u:ident, $vw:ident) => {
-                // Is there a hit on this axis in front of the origin?
-                bounds.contains(&plane_dist.$u) && {
-                    // Is that hit within the face of the box?
-                    let plane_uvs_from_centre =
-                        (ro.to_raw().$vw() + (rd.to_raw().$vw() * plane_dist.$u)).abs();
-                    let side_dimensions = self.radius.to_raw().$vw();
-                    (plane_uvs_from_centre.x > side_dimensions.x)
-                        && (plane_uvs_from_centre.y > side_dimensions.y)
-                }
-            };
-        }
+        // Calculate distances
 
-        validate::vector3(&plane_dist);
-        validate::vector3(&sgn);
+        let t_n = t1.x.max(t1.y).max(t1.z);
+        let t_f = t2.x.min(t2.y).min(t2.z);
+        // let t_n = t1.max_element();
+        // let t_f = t2.min_element();
 
-        // Preserve exactly one element of `sgn`, with the correct sign
-        // Also masks the distance by the non-zero axis
-        // Dot product is faster than this CMOV chain, but doesn't work when distanceToPlane contains nans or infs.
-        let (distance, ray_normal) = if test!(x, yz) {
-            (plane_dist.x, Vector3::new(sgn.x, 0., 0.))
-        } else if test!(y, zx) {
-            (plane_dist.y, Vector3::new(0., sgn.y, 0.))
-        } else if test!(z, xy) {
-            (plane_dist.z, Vector3::new(0., 0., sgn.z))
-        } else {
-            // None of the tests matched, so we didn't hit any sides
+        if t_n > t_f || t_f < 0.0 {
             return None;
+        }
+        // if !bounds.range_overlaps(&t_n, &t_f) {return None;}
+
+        // compute normal (in world space), face and UV
+        // TODO: implement these
+        let txi = self.box_to_world.matrix;
+        let normal: Vector3;
+        let _uv: Vector2;
+        let _face: usize;
+        let _local: Point3;
+
+        if t1.x > t1.y && t1.x > t1.z {
+            normal = (txi.x_axis.as_raw().xyz() * s.x).into();
+            _uv = (ro.as_raw().yz() + rd.as_raw().yz() * t1.x).into();
+            _face = 1 + (s.x as usize) / 2;
+        } else if t1.y > t1.z {
+            normal = (txi.y_axis.as_raw().xyz() * s.y).into();
+            _uv = (ro.as_raw().zx() + rd.as_raw().zx() * t1.y).into();
+            _face = 5 + (s.y as usize) / 2;
+        } else {
+            normal = (txi.z_axis.as_raw().xyz() * s.z).into();
+            _uv = (ro.as_raw().xy() + rd.as_raw().xy() * t1.z).into();
+            _face = 9 + (s.z as usize) / 2;
         };
 
-        // Normal must face back along the ray. If you need
-        // to know whether we're entering or leaving the box,
-        // then just look at the value of winding. If you need
-        // texture coordinates, then use box.invDirection * hitPoint.
+        let dist = if bounds.contains(&t_n) {
+            t_n
+        } else if bounds.contains(&t_f) {
+            t_f
+        } else {
+            unreachable!()
+        };
+
+        let pos = ray.at(dist);
+        _local = self.box_to_world.map_point(pos);
+        let inside = _local.max_element().abs() < 1.;
 
         Some(Intersection {
-            pos: ray.at(distance),
-            normal: ray_normal * winding,
-            ray_normal,
-            front_face: winding == 1.,
-            dist: distance,
+            pos,
+            normal,
             material: self.material.clone(),
+            dist,
+            front_face: !inside,
+            ray_normal: if inside { -normal } else { normal },
         })
     }
-
     fn intersect_all<'a>(
         &'a self,
         ray: &'a Ray,

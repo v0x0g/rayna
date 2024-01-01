@@ -1,7 +1,7 @@
 use glam::Vec3Swizzles;
 use glamour::AsRaw;
 
-use rayna_shared::def::types::{Number, Point3, Transform3, Vector2, Vector3};
+use rayna_shared::def::types::{Number, Point3, Size3, Transform3, Vector2, Vector3};
 
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialType;
@@ -23,80 +23,25 @@ pub struct AxisBoxBuilder {
 /// Built instance of a box object
 #[derive(Clone, Debug)]
 pub struct AxisBoxObject {
-    world_to_box: Transform3,
-    box_to_world: Transform3,
+    min: Point3,
+    max: Point3,
+    size: Size3,
     aabb: Aabb,
     material: MaterialType,
 }
 
-impl AxisBoxObject {
-    pub fn new(transform: Transform3, material: MaterialType) -> Self {
-        // Calculate bounding volume by getting all the corners in box coords,
-        // translating to world coords, and encompassing in an AABB
-        const CORNERS: [Point3; 8] = [
-            Point3 {
-                x: -1.,
-                y: -1.,
-                z: -1.,
-            },
-            Point3 {
-                x: -1.,
-                y: -1.,
-                z: 1.,
-            },
-            Point3 {
-                x: -1.,
-                y: 1.,
-                z: -1.,
-            },
-            Point3 {
-                x: -1.,
-                y: 1.,
-                z: 1.,
-            },
-            Point3 {
-                x: 1.,
-                y: -1.,
-                z: -1.,
-            },
-            Point3 {
-                x: 1.,
-                y: -1.,
-                z: 1.,
-            },
-            Point3 {
-                x: 1.,
-                y: 1.,
-                z: -1.,
-            },
-            Point3 {
-                x: 1.,
-                y: 1.,
-                z: 1.,
-            },
-        ];
-
-        let inverse = transform.inverse();
-        let translated_corners = CORNERS.map(|p| transform.map_point(p));
-        let aabb = Aabb::encompass_points(translated_corners);
-
-        Self {
-            box_to_world: transform,
-            world_to_box: inverse,
-            aabb,
-            material,
-        }
-    }
-}
-
 impl From<AxisBoxBuilder> for AxisBoxObject {
     fn from(value: AxisBoxBuilder) -> Self {
-        let size = value.corner_1 - value.corner_2;
-        let centre = value.corner_1 + size / 2.;
-        let transform = Transform3::from_scale(size)
-            //.then_rotate()
-            .then_translate(centre.into());
-        Self::new(transform, value.material)
+        let min = Point3::min(value.corner_1, value.corner_2);
+        let max = Point3::max(value.corner_1, value.corner_2);
+        let size = Size3::from(max - min);
+        Self {
+            aabb: Aabb::new(value.corner_1, value.corner_2),
+            min,
+            max,
+            size,
+            material: value.material.clone(),
+        }
     }
 }
 
@@ -105,91 +50,61 @@ impl Object for AxisBoxObject {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         /*
         CREDITS:
-        Inigo Quilez
-        https://iquilezles.org/articles/boxfunctions/ (Box Intersection Generic)
-        https://www.shadertoy.com/view/ld23DV
+        Tavianator
+        See [aabb.rs]
 
-        MODIFICATIONS:
-            - Rename variables
-            - Refactored to match my API
-            - Replace OpenGL features
-            - Add NaN and range checks
-            - Combine into one matrix: `rad` (half-size) is contained inside it
+        Modified and extended beyond mere boolean checking
         */
+        let tx1 = (self.min.x - ray.pos().x) * ray.inv_dir().x;
+        let tx2 = (self.max.x - ray.pos().x) * ray.inv_dir().x;
 
-        // convert from world to box space
-        let ro = self.world_to_box.map_point(ray.pos()).to_vector();
-        let rd = self.world_to_box.map_vector(ray.dir());
+        let mut tmin = Number::min(tx1, tx2);
+        let mut tmax = Number::max(tx1, tx2);
 
-        // TODO: RADIUS???
-        let rad = Vector3::ONE / 2.;
+        let ty1 = (self.min.y - ray.pos().y) * ray.inv_dir().y;
+        let ty2 = (self.max.y - ray.pos().y) * ray.inv_dir().y;
 
-        // Ray-box intersection, in box space
-        let inv_d = rd.recip();
-        let s = -rd.signum();
-        let t1 = (-ro + s * rad) * inv_d;
-        let t2 = (-ro - s * rad) * inv_d;
+        tmin = Number::max(tmin, Number::min(ty1, ty2));
+        tmax = Number::min(tmax, Number::max(ty1, ty2));
 
-        // Calculate distances
+        let tz1 = (self.min.z - ray.pos().z) * ray.inv_dir().z;
+        let tz2 = (self.max.z - ray.pos().z) * ray.inv_dir().z;
 
-        let t_n = t1.x.max(t1.y).max(t1.z);
-        let t_f = t2.x.min(t2.y).min(t2.z);
-        // let t_n = t1.max_element();
-        // let t_f = t2.min_element();
+        tmin = Number::max(tmin, Number::min(tz1, tz2));
+        tmax = Number::min(tmax, Number::max(tz1, tz2));
 
-        // if t_n > t_f || t_f < 0.0 {
-        //     return None;
-        // }
-        if !bounds.range_overlaps(&t_n, &t_f) {
+        let dist = if bounds.contains(&tmin) {
+            tmin
+        } else if bounds.contains(&tmax) {
+            tmax
+        } else {
             return None;
-        }
-
-        // compute normal (in world space), face and UV
-        // TODO: implement these
-        let txi = self.box_to_world.matrix;
-        let normal: Vector3;
-        let _uv: Vector2;
-        let _face: usize;
-        let _local: Point3;
-
-        if t1.x > t1.y && t1.x > t1.z {
-            normal = self.box_to_world.map_vector(Vector3::X * s.x);
-            // normal = (txi.col(0).as_raw().xyz() * s.x).into();
-            _uv = (ro.as_raw().yz() + rd.as_raw().yz() * t1.x).into();
-            _face = 1 + (s.x as usize) / 2;
-        } else if t1.y > t1.z {
-            normal = self.box_to_world.map_vector(Vector3::Y * s.y);
-            // normal = (txi.col(1).as_raw().xyz() * s.y).into();
-            _uv = (ro.as_raw().zx() + rd.as_raw().zx() * t1.y).into();
-            _face = 5 + (s.y as usize) / 2;
-        } else {
-            normal = self.box_to_world.map_vector(Vector3::Z * s.z);
-            // normal = (txi.col(2).as_raw().xyz() * s.z).into();
-            _uv = (ro.as_raw().xy() + rd.as_raw().xy() * t1.z).into();
-            _face = 9 + (s.z as usize) / 2;
-        };
-
-        let dist = if bounds.contains(&t_n) {
-            t_n
-        } else if bounds.contains(&t_f) {
-            t_f
-        } else {
-            unreachable!()
         };
 
         let pos = ray.at(dist);
-        _local = self.world_to_box.map_point(pos);
-        let inside = _local.max_element().abs() < 1.;
-        // TODO: Can't figure out the normal/ray_normal stuff, it doesn't seem to make a difference
-        let normal = normal.try_normalize().expect("normal");
+        // If clamped doesn't change then was in between `min..max`
+        let inside = pos.clamp(self.min, self.max) == pos;
 
+        // Find most significant element of ray dir,
+        let dir = ray.dir();
+        let dir_max = ray.dir().max_element();
+        // NOTE: Negate so we face against the ray's direction
+        let ray_normal = if dir_max == dir.x {
+            -Vector3::X * dir.x.signum()
+        } else if dir_max == dir.y {
+            -Vector3::Y * dir.y.signum()
+        } else {
+            -Vector3::Z * dir.z.signum()
+        };
+
+        //TODO: Find outer normal not ray normal
         Some(Intersection {
             pos,
-            normal,
-            material: self.material.clone(),
             dist,
             front_face: !inside,
-            ray_normal: if inside { normal } else { -normal },
+            normal: ray_normal,
+            ray_normal,
+            material: self.material.clone(),
         })
     }
     fn intersect_all<'a>(

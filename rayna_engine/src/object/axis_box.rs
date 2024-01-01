@@ -1,8 +1,5 @@
 use glam::swizzles::*;
-use glam::BVec3;
-use glamour::{Swizzle, ToRaw};
-use itertools::multizip;
-use std::ops::Sub;
+use glamour::ToRaw;
 
 use rayna_shared::def::types::{Number, Point3, Vector3};
 
@@ -93,17 +90,30 @@ impl Object for AxisBoxObject {
                 lhs.x < rhs.x && lhs.y < rhs.y;
             };
 
+        // Perform all three ray-box tests and cast to 0 or 1 on each axis.
+        // Use a macro to eliminate the redundant code (no efficiency boost from doing so, of course!)
         macro_rules! test {
             ($u:ident, $vw:ident) => {
-            // Is there a hit on this axis in front of the origin?
-            (plane_dist.x >= 0.)
-            && // Is that hit within the face of the box?math
-            (((ro.to_raw().yz() + rd.to_raw().yz() * plane_dist.x).abs()) - self.size.to_raw().yz())
-                .is_negative_bitmask() == 0b11_u32;
-
-                (d.$u >= 0.) && all(lessThan((ro.to_raw().$vw() + rd.to_raw().$vw() * d.$u).abs(), self.size.$vw))
+                // Is there a hit on this axis in front of the origin?
+                (plane_dist.x >= 0.) && {
+                    // Is that hit within the face of the box?
+                    let lhs = ((ro.to_raw().$vw() + rd.to_raw().$vw() * plane_dist.$u).abs());
+                    let rhs = self.size.to_raw().$vw();
+                    (lhs.x < rhs.x) && (lhs.y < rhs.y);
+                }
             };
         }
+
+        // Preserve exactly one element of `sgn`, with the correct sign
+        sgn = if test!(x, yz) {
+            Vector3::new(sgn.x, 0., 0.)
+        } else if test!(y, zx) {
+            Vector3::new(0., sgn.y, 0.)
+        } else if test!(z, xy) {
+            Vector3::new(0., 0., sgn.z)
+        } else {
+            Vector3::ZERO
+        };
     }
 
     fn intersect_all<'a>(

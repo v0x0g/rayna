@@ -80,9 +80,10 @@ impl Object for AxisBoxObject {
                 (plane_dist.x >= 0.) && {
                     // Is that hit within the face of the box?
                     // TODO: ray.at(plane_dist.$u).to_raw().$vw().abs()
-                    let lhs = (ro.to_raw().$vw() + (rd.to_raw().$vw() * plane_dist.$u)).abs();
+                    let lhs = ray.at(plane_dist.$u).to_raw().$vw().abs();
+                    // let lhs = (ro.to_raw().$vw() + (rd.to_raw().$vw() * plane_dist.$u)).abs();
                     let rhs = self.size.to_raw().$vw();
-                    (lhs.x < rhs.x) && (lhs.y < rhs.y);
+                    (lhs.x < rhs.x) && (lhs.y < rhs.y)
                 }
             };
         }

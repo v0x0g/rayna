@@ -62,14 +62,11 @@ impl Object for AxisBoxObject {
         // We'll use the negated sign of the ray direction in several places, so precompute it.
         // The sign() instruction is fast...but surprisingly not so fast that storing the result
         // temporarily isn't an advantage.
-        let mut sgn = -rd.signum();
+        let sgn = -rd.signum();
 
         // Ray-plane intersection. For each pair of planes, choose the one that is front-facing
         // to the ray and compute the distance to it.
-        let mut plane_dist = self.size * winding * sgn - ro;
-
-        // Rotation: `if oriented {r /= rd} else {d *= ray.inv_dir()};
-
+        let mut plane_dist = (self.size * winding * sgn) - ro;
         plane_dist *= ray.inv_dir();
 
         // Perform all three ray-box tests and cast to 0 or 1 on each axis.
@@ -77,11 +74,9 @@ impl Object for AxisBoxObject {
         macro_rules! test {
             ($u:ident, $vw:ident) => {
                 // Is there a hit on this axis in front of the origin?
-                (plane_dist.x >= 0.) && {
+                bounds.contains(&plane_dist.$u) && {
                     // Is that hit within the face of the box?
-                    // TODO: ray.at(plane_dist.$u).to_raw().$vw().abs()
                     let lhs = ray.at(plane_dist.$u).to_raw().$vw().abs();
-                    // let lhs = (ro.to_raw().$vw() + (rd.to_raw().$vw() * plane_dist.$u)).abs();
                     let rhs = self.size.to_raw().$vw();
                     (lhs.x < rhs.x) && (lhs.y < rhs.y)
                 }
@@ -99,12 +94,8 @@ impl Object for AxisBoxObject {
             (plane_dist.z, Vector3::new(0., 0., sgn.z))
         } else {
             // None of the tests matched, so we didn't hit any sides
-            (0., Vector3::ZERO)
-        };
-
-        if sgn == Vector3::ZERO || !bounds.contains(&distance) {
             return None;
-        }
+        };
 
         // Normal must face back along the ray. If you need
         // to know whether we're entering or leaving the box,

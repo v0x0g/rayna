@@ -62,7 +62,7 @@ impl Object for AxisBoxObject {
         // We'll use the negated sign of the ray direction in several places, so precompute it.
         // The sign() instruction is fast...but surprisingly not so fast that storing the result
         // temporarily isn't an advantage.
-        let sgn = -rd.signum();
+        let mut sgn = -rd.signum();
 
         // Ray-plane intersection. For each pair of planes, choose the one that is front-facing
         // to the ray and compute the distance to it.
@@ -79,7 +79,8 @@ impl Object for AxisBoxObject {
                 // Is there a hit on this axis in front of the origin?
                 (plane_dist.x >= 0.) && {
                     // Is that hit within the face of the box?
-                    let lhs = ((ro.to_raw().$vw() + rd.to_raw().$vw() * plane_dist.$u).abs());
+                    // TODO: ray.at(plane_dist.$u).to_raw().$vw().abs()
+                    let lhs = (ro.to_raw().$vw() + (rd.to_raw().$vw() * plane_dist.$u)).abs();
                     let rhs = self.size.to_raw().$vw();
                     (lhs.x < rhs.x) && (lhs.y < rhs.y);
                 }
@@ -96,6 +97,25 @@ impl Object for AxisBoxObject {
         } else {
             Vector3::ZERO
         };
+
+        // Mask the distance by the non-zero axis
+        // Dot product is faster than this CMOV chain, but doesn't work when distanceToPlane contains nans or infs.
+        let distance = if sgn.x != 0. {
+            plane_dist.x
+        } else if sgn.y != 0. {
+            plane_dist.y
+        } else {
+            plane_dist.z
+        };
+
+        // Normal must face back along the ray. If you need
+        // to know whether we're entering or leaving the box,
+        // then just look at the value of winding. If you need
+        // texture coordinates, then use box.invDirection * hitPoint.
+
+        let normal = sgn;
+
+        return (sgn.x != 0) || (sgn.y != 0) || (sgn.z != 0);
     }
 
     fn intersect_all<'a>(

@@ -25,8 +25,8 @@ pub struct AxisBoxBuilder {
 #[derive(Clone, Debug)]
 pub struct AxisBoxObject {
     centre: Point3,
-    size: Vector3,
-    inv_size: Vector3,
+    radius: Vector3,
+    inv_radius: Vector3,
     aabb: Aabb,
     material: MaterialType,
 }
@@ -36,8 +36,8 @@ impl From<AxisBoxBuilder> for AxisBoxObject {
         let aabb = Aabb::new(value.corner_1, value.corner_2);
         Self {
             centre: Point3::from((aabb.min().to_vector() + aabb.max().to_vector()) / 2.),
-            size: aabb.size(),
-            inv_size: aabb.size().recip(),
+            radius: aabb.size() / 2.,
+            inv_radius: (aabb.size() / 2.).recip(),
             aabb,
             material: value.material,
         }
@@ -55,7 +55,7 @@ impl Object for AxisBoxObject {
 
         // Winding direction: -1 if the ray starts inside of the box (i.e., and is leaving), +1 if it is starting outside of the box
         // let winding = ((ro.abs() * self.inv_size).max_element() - 1.).signum();
-        let winding = if (ro.abs() * self.inv_size).max_element() < 1. {
+        let winding = if (ro.abs() * self.inv_radius).max_element() < 1. {
             -1.
         } else {
             1.
@@ -68,7 +68,7 @@ impl Object for AxisBoxObject {
 
         // Ray-plane intersection. For each pair of planes, choose the one that is front-facing
         // to the ray and compute the distance to it.
-        let mut plane_dist = (self.size * winding * sgn) - ro;
+        let mut plane_dist = (self.radius * winding * sgn) - ro;
         plane_dist *= ray.inv_dir();
 
         // Perform all three ray-box tests and cast to 0 or 1 on each axis.
@@ -80,7 +80,7 @@ impl Object for AxisBoxObject {
                     // Is that hit within the face of the box?
                     let plane_uvs_from_centre =
                         (ro.to_raw().$vw() + (rd.to_raw().$vw() * plane_dist.$u)).abs();
-                    let side_dimensions = self.size.to_raw().$vw();
+                    let side_dimensions = self.radius.to_raw().$vw();
                     (plane_uvs_from_centre.x > side_dimensions.x)
                         && (plane_uvs_from_centre.y > side_dimensions.y)
                 }

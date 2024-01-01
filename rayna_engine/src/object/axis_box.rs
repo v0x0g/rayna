@@ -102,12 +102,12 @@ impl Object for AxisBoxObject {
         // then just look at the value of winding. If you need
         // texture coordinates, then use box.invDirection * hitPoint.
 
-        let normal = sgn;
+        let ray_normal = sgn;
 
         Some(Intersection {
             pos: ray.at(distance),
-            normal,
-            ray_normal: normal * winding,
+            normal: ray_normal * winding,
+            ray_normal,
             front_face: winding == 1.,
             dist: distance,
             material: self.material.clone(),

@@ -1,4 +1,4 @@
-use glam::{Vec3Swizzles, Vec4Swizzles};
+use glam::Vec3Swizzles;
 use glamour::AsRaw;
 
 use rayna_shared::def::types::{Number, Point3, Transform3, Vector2, Vector3};
@@ -153,15 +153,18 @@ impl Object for AxisBoxObject {
         let _local: Point3;
 
         if t1.x > t1.y && t1.x > t1.z {
-            normal = (txi.col(0).as_raw().xyz() * s.x).into();
+            normal = self.box_to_world.map_vector(Vector3::X * s.x);
+            // normal = (txi.col(0).as_raw().xyz() * s.x).into();
             _uv = (ro.as_raw().yz() + rd.as_raw().yz() * t1.x).into();
             _face = 1 + (s.x as usize) / 2;
         } else if t1.y > t1.z {
-            normal = (txi.col(1).as_raw().xyz() * s.y).into();
+            normal = self.box_to_world.map_vector(Vector3::Y * s.y);
+            // normal = (txi.col(1).as_raw().xyz() * s.y).into();
             _uv = (ro.as_raw().zx() + rd.as_raw().zx() * t1.y).into();
             _face = 5 + (s.y as usize) / 2;
         } else {
-            normal = (txi.col(2).as_raw().xyz() * s.z).into();
+            normal = self.box_to_world.map_vector(Vector3::Z * s.z);
+            // normal = (txi.col(2).as_raw().xyz() * s.z).into();
             _uv = (ro.as_raw().xy() + rd.as_raw().xy() * t1.z).into();
             _face = 9 + (s.z as usize) / 2;
         };
@@ -177,6 +180,7 @@ impl Object for AxisBoxObject {
         let pos = ray.at(dist);
         _local = self.world_to_box.map_point(pos);
         let inside = _local.max_element().abs() < 1.;
+        // TODO: Can't figure out the normal/ray_normal stuff, it doesn't seem to make a difference
         let normal = normal.try_normalize().expect("normal");
 
         Some(Intersection {
@@ -185,7 +189,7 @@ impl Object for AxisBoxObject {
             material: self.material.clone(),
             dist,
             front_face: !inside,
-            ray_normal: if inside { -normal } else { normal },
+            ray_normal: if inside { normal } else { -normal },
         })
     }
     fn intersect_all<'a>(

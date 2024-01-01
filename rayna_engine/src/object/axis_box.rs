@@ -45,6 +45,7 @@ impl From<AxisBoxBuilder> for AxisBoxObject {
 }
 
 impl Object for AxisBoxObject {
+    //noinspection RsLiveness
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         // Move to the box's reference frame. This is unavoidable and un-optimizable.
         let ro = ray.pos() - self.centre;
@@ -80,13 +81,14 @@ impl Object for AxisBoxObject {
                     let plane_uvs_from_centre =
                         (ro.to_raw().$vw() + (rd.to_raw().$vw() * plane_dist.$u)).abs();
                     let side_dimensions = self.size.to_raw().$vw();
-                    (plane_uvs_from_centre.x < side_dimensions.x)
-                        && (plane_uvs_from_centre.y < side_dimensions.y)
+                    (plane_uvs_from_centre.x > side_dimensions.x)
+                        && (plane_uvs_from_centre.y > side_dimensions.y)
                 }
             };
         }
 
         validate::vector3(&plane_dist);
+        validate::vector3(&sgn);
 
         // Preserve exactly one element of `sgn`, with the correct sign
         // Also masks the distance by the non-zero axis

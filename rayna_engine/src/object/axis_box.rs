@@ -74,24 +74,6 @@ impl Object for AxisBoxObject {
 
         // Perform all three ray-box tests and cast to 0 or 1 on each axis.
         // Use a macro to eliminate the redundant code (no efficiency boost from doing so, of course!)
-        // Could be written with
-        // #   define TEST(U, VW)\
-        // /* Is there a hit on this axis in front of the origin? Use multiplication instead of && for a small speedup */\
-        // (distanceToPlane.U >= 0.0) && \
-        // /* Is that hit within the face of the box? */\
-        // all( lessThan(  abs(ray.origin.VW + ray.direction.VW * distanceToPlane.U), box.radius.VW  ) )
-
-        (ro.to_raw().x >= 0.) &&
-            // Check if LHS of subtract is less than RHS of subtract, in all element positions
-            // But with faster math
-            {
-                let lhs = ((ro.to_raw().yz() + rd.to_raw().yz() * plane_dist.x).abs());
-                let rhs = self.size.to_raw().yz();
-                lhs.x < rhs.x && lhs.y < rhs.y;
-            };
-
-        // Perform all three ray-box tests and cast to 0 or 1 on each axis.
-        // Use a macro to eliminate the redundant code (no efficiency boost from doing so, of course!)
         macro_rules! test {
             ($u:ident, $vw:ident) => {
                 // Is there a hit on this axis in front of the origin?

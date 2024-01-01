@@ -46,7 +46,7 @@ enum BvhNode {
 
 impl Bvh {
     pub fn new(objects: &[ObjectType]) -> Self {
-        let root = *Self::generate_nodes(objects);
+        let root = *Self::generate_nodes_sah(objects);
 
         // eprintln!("\n\n{:?}\n\n", root_id.debug_pretty_print(&tree));
 

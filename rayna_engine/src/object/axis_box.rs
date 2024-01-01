@@ -88,25 +88,22 @@ impl Object for AxisBoxObject {
         }
 
         // Preserve exactly one element of `sgn`, with the correct sign
-        sgn = if test!(x, yz) {
-            Vector3::new(sgn.x, 0., 0.)
+        // Also masks the distance by the non-zero axis
+        // Dot product is faster than this CMOV chain, but doesn't work when distanceToPlane contains nans or infs.
+        let (distance, sgn) = if test!(x, yz) {
+            (plane_dist.x, Vector3::new(sgn.x, 0., 0.))
         } else if test!(y, zx) {
-            Vector3::new(0., sgn.y, 0.)
+            (plane_dist.y, Vector3::new(0., sgn.y, 0.))
         } else if test!(z, xy) {
-            Vector3::new(0., 0., sgn.z)
+            (plane_dist.z, Vector3::new(0., 0., sgn.z))
         } else {
-            Vector3::ZERO
+            // None of the tests matched, so we didn't hit any sides
+            (0., Vector3::ZERO)
         };
 
-        // Mask the distance by the non-zero axis
-        // Dot product is faster than this CMOV chain, but doesn't work when distanceToPlane contains nans or infs.
-        let distance = if sgn.x != 0. {
-            plane_dist.x
-        } else if sgn.y != 0. {
-            plane_dist.y
-        } else {
-            plane_dist.z
-        };
+        if sgn == Vector3::ZERO || !bounds.contains(&distance) {
+            return None;
+        }
 
         // Normal must face back along the ray. If you need
         // to know whether we're entering or leaving the box,
@@ -115,7 +112,14 @@ impl Object for AxisBoxObject {
 
         let normal = sgn;
 
-        return (sgn.x != 0) || (sgn.y != 0) || (sgn.z != 0);
+        Some(Intersection {
+            pos: ray.at(distance),
+            normal,
+            ray_normal: normal * winding,
+            front_face: winding == 1.,
+            dist: distance,
+            material: self.material.clone(),
+        })
     }
 
     fn intersect_all<'a>(

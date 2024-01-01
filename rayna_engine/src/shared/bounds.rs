@@ -99,37 +99,6 @@ impl<T: PartialOrd> Bounds<T> {
         };
     }
 
-    pub fn find_nearest(&self, min: &T, max: &T) -> Option<&T> {
-        return match self {
-            Self { start: None, .. } => Some(min),
-            Self {
-                start: Some(start),
-                end: Some(end),
-            } => {
-                let low = if min > start { min } else { start };
-                let high = if max < end { max } else { end };
-                low <= high
-            }
-            Self {
-                start: Some(start),
-                end: None,
-            } => {
-                if min >= start {
-                    Some(min)
-                } else
-                /* min < start */
-                {
-                    if max < start {
-                        // min, max both < start
-                        None
-                    } else {
-                        Some(start)
-                    }
-                }
-            }
-        };
-    }
-
     /// Checks if the given bounds overlap with self
     pub fn bounds_overlap(self, other: Self) -> bool {
         // Calculate overlap and check it's valid

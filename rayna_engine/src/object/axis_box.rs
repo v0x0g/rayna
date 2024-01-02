@@ -57,23 +57,19 @@ impl Object for AxisBoxObject {
         Modified and extended beyond mere boolean checking
         */
 
-        let inv_dir = ray.inv_dir();
-        let ray_pos = ray.pos();
-        let dir_sign = ray.dir().signum();
+        let m = ray.inv_dir();
+        let n = m * (ray.pos() - self.min);
+        let k = m.abs() * self.size;
 
-        // m * (-ro +- s*rad); rad = size/2, -ro = centre-ro
-        let v_dist_1 = inv_dir * ((self.centre - ray_pos) - (dir_sign * self.size / 2.));
-        let v_dist_2 = inv_dir * ((self.centre - ray_pos) + (dir_sign * self.size / 2.));
-
-        let v_dist_min = Vector3::min(v_dist_1, v_dist_2);
-        let v_dist_max = Vector3::max(v_dist_1, v_dist_2);
+        let t1 = -n - k;
+        let t2 = -n + k;
 
         // NOTE: tmin will be negative, so `max_elem` gives closest to zero (nearest)
-        let dist_min = v_dist_min.max_element();
-        let dist_max = v_dist_max.min_element();
+        let t_near = t1.max_element();
+        let t_far = t2.min_element();
 
         // Closest intersection in bounds
-        let dist = [dist_min, dist_max]
+        let dist = [t_near, t_far]
             .into_iter()
             .filter(|d| bounds.contains(d))
             .min_by(Number::total_cmp)?;
@@ -81,29 +77,26 @@ impl Object for AxisBoxObject {
         let pos = ray.at(dist);
         // If clamped doesn't change then was in between `min..max`
         let inside = pos.clamp(self.min, self.max) == pos;
-        let out_normal = if !inside {
-            // Ray originated outside the box
-            step(Vector3::splat(dist_min), v_dist_1)
-        } else {
-            // Ray inside box
-            step(v_dist_2, Vector3::splat(dist_max))
-        };
 
-        fn step(edge: Vector3, inputs: Vector3) -> Vector3 {
-            let mut arr = [0.; 3];
-            for (out, e, i) in multizip((&mut arr, edge, inputs)) {
-                *out = if i < e { 0. } else { 1. };
-            }
-            arr.into()
-        }
+        // Find most significant element of ray dir,
+        let dir = ray.dir();
+        let dir_max = ray.dir().max_element();
+        // NOTE: Negate so we face against the ray's direction
+        let ray_normal = if dir_max == dir.x {
+            -Vector3::X * dir.x.signum()
+        } else if dir_max == dir.y {
+            -Vector3::Y * dir.y.signum()
+        } else {
+            -Vector3::Z * dir.z.signum()
+        };
 
         //TODO: Find outer normal not ray normal
         Some(Intersection {
             pos,
             dist,
             front_face: !inside,
-            normal: out_normal,
-            ray_normal: out_normal,
+            normal: ray_normal,
+            ray_normal: ray_normal,
             material: self.material.clone(),
         })
     }

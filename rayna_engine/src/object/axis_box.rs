@@ -52,10 +52,10 @@ impl Object for AxisBoxObject {
 
         Title: "A Ray-Box Intersection Algorithm and Efficient Dynamic Voxel Rendering"
         Authors:
-         - Alexander Majercik
-         - Cyril Crassin
-         - Peter Shirley
-         - Morgan McGuire
+            - Alexander Majercik
+            - Cyril Crassin
+            - Peter Shirley
+            - Morgan McGuire
         URL: <https://jcgt.org/published/0007/03/04/>
         Publisher: Journal of Computer Graphics Techniques (JCGT)
         Version: vol. 7, no. 3, 66-81, 2018

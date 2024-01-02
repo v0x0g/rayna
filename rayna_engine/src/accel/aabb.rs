@@ -79,14 +79,13 @@ impl Aabb {
 
         Author: Tavianator
         URL:
-         - <https://tavianator.com/cgit/dimension.git/tree/libdimension/bvh/bvh.c#n196>
-         - <https://tavianator.com/2011/ray_box.html>
-
+            - <https://tavianator.com/cgit/dimension.git/tree/libdimension/bvh/bvh.c#n196>
+            - <https://tavianator.com/2011/ray_box.html>
         */
 
         // This is actually correct, even though it appears not to handle edge cases
-        // (ray.n.{x,y,z} == 0).  It works because the infinities that result from
-        // dividing by zero will still behave correctly in the comparisons.  Rays
+        // (ray.n.{x,y,z} == 0). It works because the infinities that result from
+        // dividing by zero will still behave correctly in the comparisons. Rays
         // which are parallel to an axis and outside the box will have tmin == inf
         // or tmax == -inf, while rays inside the box will have tmin and tmax
         // unchanged.
@@ -109,10 +108,7 @@ impl Aabb {
         tmin = Number::max(tmin, Number::min(tz1, tz2));
         tmax = Number::min(tmax, Number::max(tz1, tz2));
 
-        // return tmax >= Number::max(0.0, tmin) && tmin < t;
-        // We have: 0.0 => bounds.start, t => bounds.end
         return bounds.range_overlaps(&tmin, &tmax);
-        // return (max(bounds.start, tmin) <= tmax) && (tmin < bounds.end)
     }
 }
 // endregion Impl

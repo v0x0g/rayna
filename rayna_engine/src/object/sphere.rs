@@ -60,11 +60,12 @@ impl Object for SphereObject {
         let a = ray_dir.length_squared();
         let half_b = Vector3::dot(ray_rel_pos, ray_dir);
         let c = ray_rel_pos.length_squared() - self.radius_sqr;
-
         let discriminant = (half_b * half_b) - (a * c);
+
+        //No solutions to where ray intersects with sphere because of negative square root
         if discriminant < 0. {
             return None;
-        }; //No solutions to where ray intersects with sphere because of negative square root
+        };
 
         let sqrt_d = discriminant.sqrt();
 

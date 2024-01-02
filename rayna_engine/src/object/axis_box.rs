@@ -68,23 +68,14 @@ impl Object for AxisBoxObject {
         let v_dist_max = Vector3::max(v_dist_1, v_dist_2);
 
         // NOTE: tmin will be negative, so `max_elem` gives closest to zero (nearest)
-        let tmin = v_dist_min.max_element();
-        let tmax = v_dist_max.min_element();
+        let dist_min_max = v_dist_min.max_element();
+        let dist_max_min = v_dist_max.min_element();
 
-        let dist = [tmin, tmax]
+        // Closest intersection in bounds
+        let dist = [dist_min_max, dist_max_min]
             .into_iter()
             .filter(|d| bounds.contains(d))
             .min_by(Number::total_cmp)?;
-
-        // let dist = if tmin >= tmax {
-        //     return None;
-        // } else if bounds.contains(&tmin) {
-        //     tmin
-        // } else if bounds.contains(&tmax) {
-        //     tmax
-        // } else {
-        //     return None;
-        // };
 
         let pos = ray.at(dist);
         // If clamped doesn't change then was in between `min..max`

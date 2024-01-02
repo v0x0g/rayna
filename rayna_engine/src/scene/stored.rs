@@ -80,18 +80,18 @@ pub static BOX: Scene = {
         })
         .into(),
     );
-    objects.push(
-        SphereObject::from(SphereBuilder {
-            // Ground
-            pos: Point3::new(0., -100.5, -1.),
-            radius: 100.,
-            material: LambertianMaterial {
-                albedo: Pixel::from([0.5; 3]),
-            }
-            .into(),
-        })
-        .into(),
-    );
+    // objects.push(
+    //     SphereObject::from(SphereBuilder {
+    //         // Ground
+    //         pos: Point3::new(0., -100.5, -1.),
+    //         radius: 100.,
+    //         material: LambertianMaterial {
+    //             albedo: Pixel::from([0.5; 3]),
+    //         }
+    //         .into(),
+    //     })
+    //     .into(),
+    // );
     Scene {
         camera: Camera {
             pos: Point3::new(0., 0.5, -3.),

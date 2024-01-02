@@ -1,7 +1,4 @@
-use glam::Vec3Swizzles;
-use glamour::AsRaw;
-
-use rayna_shared::def::types::{Number, Point3, Size3, Transform3, Vector2, Vector3};
+use rayna_shared::def::types::{Number, Point3, Size3, Vector3};
 
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialType;
@@ -59,27 +56,18 @@ impl Object for AxisBoxObject {
         let v_dist_1 = (self.min - ray.pos()) * ray.inv_dir();
         let v_dist_2 = (self.max - ray.pos()) * ray.inv_dir();
 
-        // let mut tmin;
-        // let mut tmax;
-        //
-        // tmin = Number::min(t1.x, t2.x);
-        // tmax = Number::max(t1.x, t2.x);
-        //
-        // tmin = Number::max(tmin, Number::min(t1.y, t2.y));
-        // tmax = Number::min(tmax, Number::max(t1.y, t2.y));
-        //
-        // tmin = Number::max(tmin, Number::min(t1.z, t2.z));
-        // tmax = Number::min(tmax, Number::max(t1.z, t2.z));
-
         let v_dist_min = Vector3::min(v_dist_1, v_dist_2);
         let v_dist_max = Vector3::max(v_dist_1, v_dist_2);
 
+        // NOTE: tmin will be negative, so `max_elem` gives closest to zero (nearest)
         let tmin = v_dist_min.max_element();
         let tmax = v_dist_max.min_element();
 
-        let dist = if tmin < tmax && bounds.contains(&tmin) {
+        let dist = if tmin >= tmax {
+            return None;
+        } else if bounds.contains(&tmin) {
             tmin
-        } else if tmin < tmax && bounds.contains(&tmax) {
+        } else if bounds.contains(&tmax) {
             tmax
         } else {
             return None;

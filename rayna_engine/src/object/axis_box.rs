@@ -1,6 +1,7 @@
-use itertools::multizip;
-use rayna_shared::def::types::{Number, Point3, Size3, Vector3};
-use std::array::IntoIter;
+use glam::swizzles::*;
+use glamour::ToRaw;
+
+use rayna_shared::def::types::{Number, Point3, Vector3};
 
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialType;
@@ -8,6 +9,7 @@ use crate::object::Object;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
+use crate::shared::validate;
 
 /// A builder struct used to create a box
 ///
@@ -22,26 +24,22 @@ pub struct AxisBoxBuilder {
 /// Built instance of a box object
 #[derive(Clone, Debug)]
 pub struct AxisBoxObject {
-    min: Point3,
-    max: Point3,
     centre: Point3,
-    size: Vector3,
+    radius: Vector3,
+    inv_radius: Vector3,
     aabb: Aabb,
     material: MaterialType,
 }
 
 impl From<AxisBoxBuilder> for AxisBoxObject {
     fn from(value: AxisBoxBuilder) -> Self {
-        let min = Point3::min(value.corner_1, value.corner_2);
-        let max = Point3::max(value.corner_1, value.corner_2);
-        let size = max - min;
+        let aabb = Aabb::new(value.corner_1, value.corner_2);
         Self {
-            aabb: Aabb::new(value.corner_1, value.corner_2),
-            min,
-            max,
-            centre: min + (size / 2.).into(),
-            size,
-            material: value.material.clone(),
+            centre: Point3::from((aabb.min().to_vector() + aabb.max().to_vector()) / 2.),
+            radius: aabb.size() / 2.,
+            inv_radius: (aabb.size() / 2.).recip(),
+            aabb,
+            material: value.material,
         }
     }
 }
@@ -49,115 +47,78 @@ impl From<AxisBoxBuilder> for AxisBoxObject {
 impl Object for AxisBoxObject {
     //noinspection RsLiveness
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
-        /*
-        CREDITS:
-        Tavianator
-        See [aabb.rs]
+        // Move to the box's reference frame. This is unavoidable and un-optimizable.
+        let ro = ray.pos() - self.centre;
+        let rd = ray.dir();
 
-        Modified and extended beyond mere boolean checking
-        */
+        // Rotation: `rd *= box.rot; ro *= box.rot;`
 
-        let m = ray.inv_dir();
-        let n = m * (ray.pos() - self.min);
-        let k = m.abs() * self.size;
-
-        let t1 = -n - k;
-        let t2 = -n + k;
-
-        // NOTE: tmin will be negative, so `max_elem` gives closest to zero (nearest)
-        let t_near = t1.max_element();
-        let t_far = t2.min_element();
-
-        // Closest intersection in bounds
-        let dist = [t_near, t_far]
-            .into_iter()
-            .filter(|d| bounds.contains(d))
-            .min_by(Number::total_cmp)?;
-
-        let pos = ray.at(dist);
-        // If clamped doesn't change then was in between `min..max`
-        let inside = pos.clamp(self.min, self.max) == pos;
-
-        // Find most significant element of ray dir,
-        let dir = ray.dir();
-        let dir_max = ray.dir().max_element();
-        // NOTE: Negate so we face against the ray's direction
-        let ray_normal = if dir_max == dir.x {
-            -Vector3::X * dir.x.signum()
-        } else if dir_max == dir.y {
-            -Vector3::Y * dir.y.signum()
+        // Winding direction: -1 if the ray starts inside of the box (i.e., and is leaving), +1 if it is starting outside of the box
+        // let winding = ((ro.abs() * self.inv_size).max_element() - 1.).signum();
+        let winding = if (ro.abs() * self.inv_radius).max_element() < 1. {
+            -1.
         } else {
-            -Vector3::Z * dir.z.signum()
+            1.
         };
 
-        //TODO: Find outer normal not ray normal
+        // We'll use the negated sign of the ray direction in several places, so precompute it.
+        // The sign() instruction is fast...but surprisingly not so fast that storing the result
+        // temporarily isn't an advantage.
+        let sgn = -rd.signum();
+
+        // Ray-plane intersection. For each pair of planes, choose the one that is front-facing
+        // to the ray and compute the distance to it.
+        let mut plane_dist = (self.radius * winding * sgn) - ro;
+        plane_dist *= ray.inv_dir();
+
+        // Perform all three ray-box tests and cast to 0 or 1 on each axis.
+        // Use a macro to eliminate the redundant code (no efficiency boost from doing so, of course!)
+        macro_rules! test {
+            ($u:ident, $vw:ident) => {
+                // Is there a hit on this axis in front of the origin?
+                bounds.contains(&plane_dist.$u) && {
+                    // Is that hit within the face of the box?
+                    let plane_uvs_from_centre =
+                        (ro.to_raw().$vw() + (rd.to_raw().$vw() * plane_dist.$u)).abs();
+                    let side_dimensions = self.radius.to_raw().$vw();
+                    (plane_uvs_from_centre.x > side_dimensions.x)
+                        && (plane_uvs_from_centre.y > side_dimensions.y)
+                }
+            };
+        }
+
+        validate::vector3(&plane_dist);
+        validate::vector3(&sgn);
+
+        // Preserve exactly one element of `sgn`, with the correct sign
+        // Also masks the distance by the non-zero axis
+        // Dot product is faster than this CMOV chain, but doesn't work when distanceToPlane contains nans or infs.
+        let (distance, ray_normal) = if test!(x, yz) {
+            (plane_dist.x, Vector3::new(sgn.x, 0., 0.))
+        } else if test!(y, zx) {
+            (plane_dist.y, Vector3::new(0., sgn.y, 0.))
+        } else if test!(z, xy) {
+            (plane_dist.z, Vector3::new(0., 0., sgn.z))
+        } else {
+            // None of the tests matched, so we didn't hit any sides
+            return None;
+        };
+
+        // Normal must face back along the ray. If you need
+        // to know whether we're entering or leaving the box,
+        // then just look at the value of winding. If you need
+        // texture coordinates, then use box.invDirection * hitPoint.
+
         Some(Intersection {
-            pos,
-            dist,
-            front_face: !inside,
-            normal: ray_normal,
-            ray_normal: ray_normal,
+            pos: ray.at(distance),
+            normal: ray_normal * winding,
+            ray_normal,
+            front_face: winding == 1.,
+            dist: distance,
             material: self.material.clone(),
         })
     }
 
-    // noinspection RsLiveness
-    // fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
-    //     /*
-    //     CREDITS:
-    //     Tavianator
-    //     See [aabb.rs]
-    //
-    //     Modified and extended beyond mere boolean checking
-    //     */
-    //
-    //     let inv_dir = ray.inv_dir();
-    //     let ray_pos = ray.pos();
-    //     let dir_sign = ray.dir().signum();
-    //
-    //     // m * (-ro +- s*rad); rad = size/2, -ro = centre-ro
-    //     let v_dist_1 = inv_dir * ((self.centre - ray_pos) + (dir_sign * self.size / 2.));
-    //     let v_dist_2 = inv_dir * ((self.centre - ray_pos) - (dir_sign * self.size / 2.));
-    //
-    //     let v_dist_min = Vector3::min(v_dist_1, v_dist_2);
-    //     let v_dist_max = Vector3::max(v_dist_1, v_dist_2);
-    //
-    //     // NOTE: tmin will be negative, so `max_elem` gives closest to zero (nearest)
-    //     let dist_min_max = v_dist_min.max_element();
-    //     let dist_max_min = v_dist_max.min_element();
-    //
-    //     // Closest intersection in bounds
-    //     let dist = [dist_min_max, dist_max_min]
-    //         .into_iter()
-    //         .filter(|d| bounds.contains(d))
-    //         .min_by(Number::total_cmp)?;
-    //
-    //     let pos = ray.at(dist);
-    //     // If clamped doesn't change then was in between `min..max`
-    //     let inside = pos.clamp(self.min, self.max) == pos;
-    //
-    //     // Find most significant element of ray dir,
-    //     let dir = ray.dir();
-    //     let dir_max = ray.dir().max_element();
-    //     // NOTE: Negate so we face against the ray's direction
-    //     let ray_normal = if dir_max == dir.x {
-    //         -Vector3::X * dir.x.signum()
-    //     } else if dir_max == dir.y {
-    //         -Vector3::Y * dir.y.signum()
-    //     } else {
-    //         -Vector3::Z * dir.z.signum()
-    //     };
-    //
-    //     //TODO: Find outer normal not ray normal
-    //     Some(Intersection {
-    //         pos,
-    //         dist,
-    //         front_face: !inside,
-    //         normal: ray_normal,
-    //         ray_normal,
-    //         material: self.material.clone(),
-    //     })
-    // }
     fn intersect_all<'a>(
         &'a self,
         ray: &'a Ray,

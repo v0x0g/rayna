@@ -11,9 +11,10 @@ pub struct Ray {
 
 impl Ray {
     pub fn new(pos: Point3, dir: Vector3) -> Self {
+        let dir = dir.normalize();
         Self {
             pos,
-            dir: dir.normalize(),
+            dir,
             inv_dir: dir.recip(),
         }
     }

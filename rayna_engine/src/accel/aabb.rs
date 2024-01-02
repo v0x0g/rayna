@@ -74,6 +74,8 @@ impl Aabb {
 impl Aabb {
     /// Checks whether the given ray intersects with the AABB at any point within the given distance bounds
     pub fn hit(&self, ray: &Ray, bounds: &Bounds<Number>) -> bool {
+        // TODO: This appears to be reporting incorrect distances for some reason, same issue as in [axis_box.rs]
+
         // SOURCE:
         // Tavianator
         // https://tavianator.com/cgit/dimension.git/tree/libdimension/bvh/bvh.c#n196

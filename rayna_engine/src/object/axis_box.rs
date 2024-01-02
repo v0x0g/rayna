@@ -55,26 +55,30 @@ impl Object for AxisBoxObject {
 
         Modified and extended beyond mere boolean checking
         */
-        let tx1 = (self.min.x - ray.pos().x) * ray.inv_dir().x;
-        let tx2 = (self.max.x - ray.pos().x) * ray.inv_dir().x;
 
-        let tz1 = (self.min.z - ray.pos().z) * ray.inv_dir().z;
-        let tz2 = (self.max.z - ray.pos().z) * ray.inv_dir().z;
+        // let tx1 = (self.min.x - ray.pos().x) * ray.inv_dir().x;
+        // let tx2 = (self.max.x - ray.pos().x) * ray.inv_dir().x;
+        //
+        // let ty1 = (self.min.y - ray.pos().y) * ray.inv_dir().y;
+        // let ty2 = (self.max.y - ray.pos().y) * ray.inv_dir().y;
+        //
+        // let tz1 = (self.min.z - ray.pos().z) * ray.inv_dir().z;
+        // let tz2 = (self.max.z - ray.pos().z) * ray.inv_dir().z;
 
-        let ty1 = (self.min.y - ray.pos().y) * ray.inv_dir().y;
-        let ty2 = (self.max.y - ray.pos().y) * ray.inv_dir().y;
+        let t1 = (self.min - ray.pos()) * ray.inv_dir();
+        let t2 = (self.max - ray.pos()) * ray.inv_dir();
 
         let mut tmin;
         let mut tmax;
 
-        tmin = Number::min(tx1, tx2);
-        tmax = Number::max(tx1, tx2);
+        tmin = Number::min(t1.x, t2.x);
+        tmax = Number::max(t1.x, t2.x);
 
-        tmin = Number::max(tmin, Number::min(ty1, ty2));
-        tmax = Number::min(tmax, Number::max(ty1, ty2));
+        tmin = Number::max(tmin, Number::min(t1.y, t2.y));
+        tmax = Number::min(tmax, Number::max(t1.y, t2.y));
 
-        tmin = Number::max(tmin, Number::min(tz1, tz2));
-        tmax = Number::min(tmax, Number::max(tz1, tz2));
+        tmin = Number::max(tmin, Number::min(t1.z, t2.z));
+        tmax = Number::min(tmax, Number::max(t1.z, t2.z));
 
         let dist = if tmin < tmax && bounds.contains(&tmin) {
             tmin

@@ -56,29 +56,26 @@ impl Object for AxisBoxObject {
         Modified and extended beyond mere boolean checking
         */
 
-        // let tx1 = (self.min.x - ray.pos().x) * ray.inv_dir().x;
-        // let tx2 = (self.max.x - ray.pos().x) * ray.inv_dir().x;
+        let v_dist_1 = (self.min - ray.pos()) * ray.inv_dir();
+        let v_dist_2 = (self.max - ray.pos()) * ray.inv_dir();
+
+        // let mut tmin;
+        // let mut tmax;
         //
-        // let ty1 = (self.min.y - ray.pos().y) * ray.inv_dir().y;
-        // let ty2 = (self.max.y - ray.pos().y) * ray.inv_dir().y;
+        // tmin = Number::min(t1.x, t2.x);
+        // tmax = Number::max(t1.x, t2.x);
         //
-        // let tz1 = (self.min.z - ray.pos().z) * ray.inv_dir().z;
-        // let tz2 = (self.max.z - ray.pos().z) * ray.inv_dir().z;
+        // tmin = Number::max(tmin, Number::min(t1.y, t2.y));
+        // tmax = Number::min(tmax, Number::max(t1.y, t2.y));
+        //
+        // tmin = Number::max(tmin, Number::min(t1.z, t2.z));
+        // tmax = Number::min(tmax, Number::max(t1.z, t2.z));
 
-        let t1 = (self.min - ray.pos()) * ray.inv_dir();
-        let t2 = (self.max - ray.pos()) * ray.inv_dir();
+        let v_dist_min = Vector3::min(v_dist_1, v_dist_2);
+        let v_dist_max = Vector3::max(v_dist_1, v_dist_2);
 
-        let mut tmin;
-        let mut tmax;
-
-        tmin = Number::min(t1.x, t2.x);
-        tmax = Number::max(t1.x, t2.x);
-
-        tmin = Number::max(tmin, Number::min(t1.y, t2.y));
-        tmax = Number::min(tmax, Number::max(t1.y, t2.y));
-
-        tmin = Number::max(tmin, Number::min(t1.z, t2.z));
-        tmax = Number::min(tmax, Number::max(t1.z, t2.z));
+        let tmin = v_dist_min.max_element();
+        let tmax = v_dist_max.min_element();
 
         let dist = if tmin < tmax && bounds.contains(&tmin) {
             tmin

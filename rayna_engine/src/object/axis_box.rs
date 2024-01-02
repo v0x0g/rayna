@@ -71,7 +71,8 @@ impl Object for AxisBoxObject {
         let tmin = v_dist_min.max_element();
         let tmax = v_dist_max.min_element();
 
-        let dist = IntoIter::chain(v_dist_1.into_iter(), v_dist_2.into_iter())
+        let dist = [tmin, tmax]
+            .into_iter()
             .filter(|d| bounds.contains(d))
             .min_by(Number::total_cmp)?;
 
@@ -100,7 +101,6 @@ impl Object for AxisBoxObject {
         } else {
             -Vector3::Z * dir.z.signum()
         };
-        let ray_normal = Vector3::Y;
 
         //TODO: Find outer normal not ray normal
         Some(Intersection {

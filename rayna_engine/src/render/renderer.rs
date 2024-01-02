@@ -8,7 +8,7 @@ use crate::shared::camera::Viewport;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::rng::RngPoolAllocator;
-use crate::shared::validate;
+use crate::shared::{math, validate};
 use crate::skybox::Skybox;
 use derivative::Derivative;
 use image::Pixel as _;
@@ -272,6 +272,7 @@ impl Renderer {
         validate::intersection(ray, &intersect, bounds);
 
         return match mode {
+            RenderMode::PBR => unreachable!("mode == RenderMode::PBR already checked"),
             RenderMode::OutwardNormal => {
                 Pixel::from(intersect.normal.as_array().map(|f| (f / 2.) as f32 + 0.5))
             }
@@ -281,7 +282,6 @@ impl Renderer {
                     .as_array()
                     .map(|f| (f / 2.) as Channel + 0.5),
             ),
-            RenderMode::PBR => unreachable!("mode == RenderMode::PBR already checked"),
             RenderMode::Scatter => Pixel::from(
                 intersect
                     .material
@@ -290,6 +290,33 @@ impl Renderer {
                     .as_array()
                     .map(|f| (f / 2.) as Channel + 0.5),
             ),
+            RenderMode::Distance => {
+                let dist = intersect.dist;
+                // let val = (dist + 1.).log2();
+                let val = 2. * dist.cbrt();
+
+                const N: usize = 9;
+                const COLOURS: [Pixel; N] = [
+                    Pixel { 0: [1.0, 1.0, 1.0] },
+                    Pixel { 0: [1.0, 0.0, 0.0] },
+                    Pixel { 0: [1.0, 0.5, 0.0] },
+                    Pixel { 0: [1.0, 1.0, 0.0] },
+                    Pixel { 0: [0.5, 1.0, 0.0] },
+                    Pixel { 0: [0.0, 1.0, 0.0] },
+                    Pixel { 0: [0.0, 1.0, 0.5] },
+                    Pixel { 0: [0.0, 1.0, 1.0] },
+                    Pixel { 0: [0.0, 0.0, 0.0] },
+                ];
+
+                let floor = val.floor().clamp(0., (N - 1) as _);
+                let ceil = val.ceil().clamp(0., (N - 1) as _);
+                let frac = val - floor;
+
+                let a = COLOURS[floor as usize];
+                let b = COLOURS[ceil as usize];
+                let lerp = math::lerp_px(a, b, frac);
+                lerp
+            }
         };
     }
 

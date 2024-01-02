@@ -295,7 +295,7 @@ impl Renderer {
                 // let val = (dist + 1.).log2();
                 let val = 2. * dist.cbrt();
 
-                const N: usize = 9;
+                const N: usize = 13;
                 const COLOURS: [Pixel; N] = [
                     Pixel { 0: [1.0, 1.0, 1.0] },
                     Pixel { 0: [1.0, 0.0, 0.0] },
@@ -305,6 +305,10 @@ impl Renderer {
                     Pixel { 0: [0.0, 1.0, 0.0] },
                     Pixel { 0: [0.0, 1.0, 0.5] },
                     Pixel { 0: [0.0, 1.0, 1.0] },
+                    Pixel { 0: [0.0, 0.5, 1.0] },
+                    Pixel { 0: [0.0, 0.0, 1.0] },
+                    Pixel { 0: [0.5, 0.0, 1.0] },
+                    Pixel { 0: [1.0, 0.0, 1.0] },
                     Pixel { 0: [0.0, 0.0, 0.0] },
                 ];
 

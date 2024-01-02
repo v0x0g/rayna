@@ -1,4 +1,5 @@
 use rayna_shared::def::types::{Number, Point3, Size3, Vector3};
+use std::array::IntoIter;
 
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialType;
@@ -23,7 +24,7 @@ pub struct AxisBoxObject {
     min: Point3,
     max: Point3,
     centre: Point3,
-    size: Size3,
+    size: Vector3,
     aabb: Aabb,
     material: MaterialType,
 }
@@ -32,7 +33,7 @@ impl From<AxisBoxBuilder> for AxisBoxObject {
     fn from(value: AxisBoxBuilder) -> Self {
         let min = Point3::min(value.corner_1, value.corner_2);
         let max = Point3::max(value.corner_1, value.corner_2);
-        let size = Size3::from(max - min);
+        let size = max - min;
         Self {
             aabb: Aabb::new(value.corner_1, value.corner_2),
             min,
@@ -55,8 +56,13 @@ impl Object for AxisBoxObject {
         Modified and extended beyond mere boolean checking
         */
 
-        let v_dist_1 = (self.min - ray.pos()) * ray.inv_dir();
-        let v_dist_2 = (self.max - ray.pos()) * ray.inv_dir();
+        let inv_dir = ray.inv_dir();
+        let ray_pos = ray.pos();
+        let dir_sign = ray.dir().signum();
+
+        // m * (-ro +- s*rad); rad = size/2, -ro = centre-ro
+        let v_dist_1 = inv_dir * ((self.centre - ray_pos) + (dir_sign * self.size / 2.));
+        let v_dist_2 = inv_dir * ((self.centre - ray_pos) - (dir_sign * self.size / 2.));
 
         let v_dist_min = Vector3::min(v_dist_1, v_dist_2);
         let v_dist_max = Vector3::max(v_dist_1, v_dist_2);
@@ -65,15 +71,19 @@ impl Object for AxisBoxObject {
         let tmin = v_dist_min.max_element();
         let tmax = v_dist_max.min_element();
 
-        let dist = if tmin >= tmax {
-            return None;
-        } else if bounds.contains(&tmin) {
-            tmin
-        } else if bounds.contains(&tmax) {
-            tmax
-        } else {
-            return None;
-        };
+        let dist = IntoIter::chain(v_dist_1.into_iter(), v_dist_2.into_iter())
+            .filter(|d| bounds.contains(d))
+            .min_by(Number::total_cmp)?;
+
+        // let dist = if tmin >= tmax {
+        //     return None;
+        // } else if bounds.contains(&tmin) {
+        //     tmin
+        // } else if bounds.contains(&tmax) {
+        //     tmax
+        // } else {
+        //     return None;
+        // };
 
         let pos = ray.at(dist);
         // If clamped doesn't change then was in between `min..max`

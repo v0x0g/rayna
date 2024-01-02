@@ -81,8 +81,8 @@ impl Object for AxisBoxObject {
                     let plane_uvs_from_centre =
                         (ro.to_raw().$vw() + (rd.to_raw().$vw() * plane_dist.$u)).abs();
                     let side_dimensions = self.radius.to_raw().$vw();
-                    (plane_uvs_from_centre.x > side_dimensions.x)
-                        && (plane_uvs_from_centre.y > side_dimensions.y)
+                    (plane_uvs_from_centre.x < side_dimensions.x)
+                        && (plane_uvs_from_centre.y < side_dimensions.y)
                 }
             };
         }

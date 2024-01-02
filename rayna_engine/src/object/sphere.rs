@@ -49,12 +49,6 @@ impl From<SphereBuilder> for ObjectType {
         SphereObject::from(value).into()
     }
 }
-
-// TODO: Is it possible to check `Vector3::dot(ray.dir(), ray.pos() - self.pos)
-//  If the dot product is <=0, the ray points away from the sphere.
-//  Then, if `ray.pos() - self.pos` is longer than `self.radius`, the ray is outside self, and cannot intersect
-//  (We can also make an optimisation to skip if inside, but this might be an issue with non-opaque geometry)
-
 impl Object for SphereObject {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         //Do some ray-sphere intersection math to find if the ray intersects

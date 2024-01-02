@@ -22,6 +22,7 @@ pub struct AxisBoxBuilder {
 pub struct AxisBoxObject {
     min: Point3,
     max: Point3,
+    centre: Point3,
     size: Size3,
     aabb: Aabb,
     material: MaterialType,
@@ -36,6 +37,7 @@ impl From<AxisBoxBuilder> for AxisBoxObject {
             aabb: Aabb::new(value.corner_1, value.corner_2),
             min,
             max,
+            centre: min + (size / 2.).into(),
             size,
             material: value.material.clone(),
         }

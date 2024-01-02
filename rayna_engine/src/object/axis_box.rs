@@ -47,6 +47,20 @@ impl From<AxisBoxBuilder> for AxisBoxObject {
 impl Object for AxisBoxObject {
     //noinspection RsLiveness
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
+        /*
+        CREDITS:
+
+        Title: "A Ray-Box Intersection Algorithm and Efficient Dynamic Voxel Rendering"
+        Authors:
+         - Alexander Majercik
+         - Cyril Crassin
+         - Peter Shirley
+         - Morgan McGuire
+        URL: <https://jcgt.org/published/0007/03/04/>
+        Publisher: Journal of Computer Graphics Techniques (JCGT)
+        Version: vol. 7, no. 3, 66-81, 2018
+        */
+
         // Move to the box's reference frame. This is unavoidable and un-optimizable.
         let ro = ray.pos() - self.centre;
         let rd = ray.dir();
@@ -54,12 +68,7 @@ impl Object for AxisBoxObject {
         // Rotation: `rd *= box.rot; ro *= box.rot;`
 
         // Winding direction: -1 if the ray starts inside of the box (i.e., and is leaving), +1 if it is starting outside of the box
-        // let winding = ((ro.abs() * self.inv_size).max_element() - 1.).signum();
-        let winding = if (ro.abs() * self.inv_radius).max_element() < 1. {
-            -1.
-        } else {
-            1.
-        };
+        let winding = ((ro.abs() * self.inv_radius).max_element() - 1.).signum();
 
         // We'll use the negated sign of the ray direction in several places, so precompute it.
         // The sign() instruction is fast...but surprisingly not so fast that storing the result
@@ -71,11 +80,11 @@ impl Object for AxisBoxObject {
         let mut plane_dist = (self.radius * winding * sgn) - ro;
         plane_dist *= ray.inv_dir();
 
-        // Perform all three ray-box tests and cast to 0 or 1 on each axis.
+        // Perform all three ray-box tests on each axis.
         // Use a macro to eliminate the redundant code (no efficiency boost from doing so, of course!)
         macro_rules! test {
             ($u:ident, $vw:ident) => {
-                // Is there a hit on this axis in front of the origin?
+                // Is there a hit on this axis in the valid distance bounds?
                 bounds.contains(&plane_dist.$u) && {
                     // Is that hit within the face of the box?
                     let plane_uvs_from_centre =
@@ -113,7 +122,7 @@ impl Object for AxisBoxObject {
             pos: ray.at(distance),
             normal: ray_normal * winding,
             ray_normal,
-            front_face: winding == 1.,
+            front_face: winding.is_sign_positive(),
             dist: distance,
             material: self.material.clone(),
         })

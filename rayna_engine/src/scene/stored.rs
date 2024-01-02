@@ -59,7 +59,7 @@ pub static BOX: Scene = {
     objects.push(
         SphereObject::from(SphereBuilder {
             // Small, top
-            pos: Point3::new(0., 1., 1.),
+            pos: Point3::new(0., 2., 0.),
             radius: 0.5,
             material: MetalMaterial {
                 albedo: Pixel::from([0.8; 3]),

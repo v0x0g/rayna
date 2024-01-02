@@ -58,24 +58,27 @@ impl Object for AxisBoxObject {
         let tx1 = (self.min.x - ray.pos().x) * ray.inv_dir().x;
         let tx2 = (self.max.x - ray.pos().x) * ray.inv_dir().x;
 
-        let mut tmin = Number::min(tx1, tx2);
-        let mut tmax = Number::max(tx1, tx2);
+        let tz1 = (self.min.z - ray.pos().z) * ray.inv_dir().z;
+        let tz2 = (self.max.z - ray.pos().z) * ray.inv_dir().z;
 
         let ty1 = (self.min.y - ray.pos().y) * ray.inv_dir().y;
         let ty2 = (self.max.y - ray.pos().y) * ray.inv_dir().y;
 
+        let mut tmin;
+        let mut tmax;
+
+        tmin = Number::min(tx1, tx2);
+        tmax = Number::max(tx1, tx2);
+
         tmin = Number::max(tmin, Number::min(ty1, ty2));
         tmax = Number::min(tmax, Number::max(ty1, ty2));
-
-        let tz1 = (self.min.z - ray.pos().z) * ray.inv_dir().z;
-        let tz2 = (self.max.z - ray.pos().z) * ray.inv_dir().z;
 
         tmin = Number::max(tmin, Number::min(tz1, tz2));
         tmax = Number::min(tmax, Number::max(tz1, tz2));
 
-        let dist = if bounds.contains(&tmin) {
+        let dist = if tmin < tmax && bounds.contains(&tmin) {
             tmin
-        } else if bounds.contains(&tmax) {
+        } else if tmin < tmax && bounds.contains(&tmax) {
             tmax
         } else {
             return None;
@@ -96,6 +99,7 @@ impl Object for AxisBoxObject {
         } else {
             -Vector3::Z * dir.z.signum()
         };
+        let ray_normal = Vector3::Y;
 
         //TODO: Find outer normal not ray normal
         Some(Intersection {

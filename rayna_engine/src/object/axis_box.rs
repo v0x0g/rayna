@@ -5,7 +5,8 @@ use rayna_shared::def::types::{Number, Point3, Vector3};
 
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialType;
-use crate::object::Object;
+use crate::object::sphere::{SphereBuilder, SphereObject};
+use crate::object::{Object, ObjectType};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -19,6 +20,23 @@ pub struct AxisBoxBuilder {
     pub corner_1: Point3,
     pub corner_2: Point3,
     pub material: MaterialType,
+}
+
+impl AxisBoxBuilder {
+    pub fn new_corners(corner_1: Point3, corner_2: Point3, material: MaterialType) -> Self {
+        Self {
+            corner_1,
+            corner_2,
+            material,
+        }
+    }
+    pub fn new_centred(centre: Point3, size: Vector3, material: MaterialType) -> Self {
+        Self {
+            corner_1: centre + size / 2.,
+            corner_2: centre - size / 2.,
+            material,
+        }
+    }
 }
 
 /// Built instance of a box object
@@ -41,6 +59,12 @@ impl From<AxisBoxBuilder> for AxisBoxObject {
             aabb,
             material: value.material,
         }
+    }
+}
+
+impl From<AxisBoxBuilder> for ObjectType {
+    fn from(value: AxisBoxBuilder) -> ObjectType {
+        AxisBoxObject::from(value).into()
     }
 }
 

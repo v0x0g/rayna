@@ -49,6 +49,7 @@ impl From<SphereBuilder> for ObjectType {
         SphereObject::from(value).into()
     }
 }
+
 impl Object for SphereObject {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         //Do some ray-sphere intersection math to find if the ray intersects

@@ -266,19 +266,29 @@ pub static BALLZ: Scene = {
                 .into()
             } else {
                 DielectricMaterial {
-                    albedo: [1.; 3].into(),
+                    albedo: rng::colour_rgb_range(rng, 0.5..1.0),
                     refractive_index: rng.gen_range(1.0..=10.0),
                 }
                 .into()
             };
-            objects.push(
+
+            let obj_choice = rng.gen::<Number>();
+            let obj = if obj_choice < 0.7 {
                 SphereBuilder {
                     pos: centre,
                     material,
                     radius: 0.2,
                 }
-                .into(),
-            );
+                .into()
+            } else {
+                AxisBoxBuilder::new_centred(
+                    centre,
+                    rng::vector_in_unit_cube_01(rng) * 0.8,
+                    material,
+                )
+                .into()
+            };
+            objects.push(obj);
         }
     }
 

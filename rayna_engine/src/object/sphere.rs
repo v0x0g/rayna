@@ -28,6 +28,7 @@ pub struct SphereObject {
     aabb: Aabb,
 }
 
+/// Builds the sphere
 impl From<SphereBuilder> for SphereObject {
     fn from(value: SphereBuilder) -> Self {
         Self {
@@ -44,6 +45,7 @@ impl From<SphereBuilder> for SphereObject {
     }
 }
 
+/// Converts the sphere builder into an [ObjectType]
 impl From<SphereBuilder> for ObjectType {
     fn from(value: SphereBuilder) -> ObjectType {
         SphereObject::from(value).into()

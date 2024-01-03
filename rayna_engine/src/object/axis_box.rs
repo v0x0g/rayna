@@ -5,7 +5,6 @@ use rayna_shared::def::types::{Number, Point3, Vector3};
 
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialType;
-use crate::object::sphere::{SphereBuilder, SphereObject};
 use crate::object::{Object, ObjectType};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;

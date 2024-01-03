@@ -1,3 +1,29 @@
+//! # Module [object]
+//!
+//! This module contains the submodules for different object (see [Object] and [ObjectType]) types.
+//!
+//! # Related
+//! - [Object]
+//! - [ObjectType]
+//! - [sphere]
+//!
+//! # DEV: Code Structure
+//!
+//! ## Object Modules
+//! Objects (and their corresponding types) are placed into named submodules, and those submodules
+//! are publicly exported. Objects should be split into a "Builder" struct, which contains the publicly accessible properties
+//! for the type, and an "Object" struct which contains the 'built' object (which may contain cached values for performance, and
+//! should be immutable/private fields)
+//!
+//! ### Example
+//! Considering a "Sphere" object:
+//!
+//! - File: `./sphere.rs`
+//! - Add module: `pub mod sphere;`
+//! - Structs: `SphereBuilder`, which is translated into `SphereObject`, where `SphereObject: Object`
+//! - Add an entry to [ObjectType] to correspond to the `SphereObject` for static-dispatch
+//! - See [sphere] for an example
+
 use crate::accel::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -11,6 +37,7 @@ use self::{axis_box::AxisBoxObject, dynamic::DynamicObject, sphere::SphereObject
 
 pub mod axis_box;
 pub mod dynamic;
+pub mod quad;
 pub mod sphere;
 
 dyn_clone::clone_trait_object!(Object);

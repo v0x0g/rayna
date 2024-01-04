@@ -58,7 +58,7 @@ pub trait Material: RtRequirement {
     ///             r
     ///         }
     ///     }
-    /// #   fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel) -> Pixel { todo!() }
+    /// #   fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel) -> Pixel { unimplemented!() }
     /// }
     /// ```
     fn scatter(
@@ -92,7 +92,7 @@ pub trait Material: RtRequirement {
     /// pub struct Test;
     /// #     /// #
     /// impl Material for Test {
-    /// #   fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Vector3 { todo!() }
+    /// #   fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Vector3 { unimplemented!() }
     ///     fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel) -> Pixel {
     ///         // Pure reflection
     ///         return *future_col;

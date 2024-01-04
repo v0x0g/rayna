@@ -111,7 +111,11 @@ impl Object for ParallelogramObject {
         &'a self,
         ray: &'a Ray,
     ) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>> {
-        todo!()
+        // Planes won't intersect more than once, except in the parallel case
+        // That's infinite intersections but we ignore that case
+
+        self.intersect(ray, &Bounds::FULL)
+            .map(|i| Box::new([i].into_iter()) as Box<dyn Iterator<Item = Intersection>>)
     }
 
     fn bounding_box(&self) -> &Aabb {

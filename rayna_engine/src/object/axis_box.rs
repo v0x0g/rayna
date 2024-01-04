@@ -1,4 +1,5 @@
 use glam::swizzles::*;
+use glam::DVec2;
 use glamour::ToRaw;
 
 use rayna_shared::def::types::{Number, Point3, Vector3};

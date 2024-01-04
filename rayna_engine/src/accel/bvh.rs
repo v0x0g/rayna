@@ -6,8 +6,6 @@
 use std::cmp::Ordering;
 
 use itertools::{zip_eq, Itertools};
-use rand::prelude::SliceRandom;
-use rand::thread_rng;
 
 use rayna_shared::def::types::Number;
 

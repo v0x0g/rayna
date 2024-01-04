@@ -77,47 +77,6 @@ impl Bvh {
         }
     }
 
-    /// Recursively processes the slice of `objects`, adding them to the `node` recursively until
-    /// the tree is exhausted
-    fn generate_nodes(objects: &[ObjectType]) -> Box<BvhNode> {
-        let bvh_data = match objects {
-            [obj] => BvhNode::Object(obj.clone()),
-            [a, b] => {
-                let left = Box::new(BvhNode::Object(a.clone()));
-                let right = Box::new(BvhNode::Object(b.clone()));
-                let aabb = Aabb::encompass(a.bounding_box(), b.bounding_box());
-                BvhNode::Nested { left, right, aabb }
-            }
-            objects => {
-                let mut objects = Vec::from(objects);
-                let rng = &mut thread_rng();
-                let &split_axis = [SplitAxis::X, SplitAxis::Y, SplitAxis::Z]
-                    .choose(rng)
-                    .unwrap();
-                Self::sort_along_aabb_axis(split_axis, &mut objects);
-
-                // split in half and repeat tree
-                let (left_split, right_split) = objects.split_at(objects.len() / 2);
-
-                let left_aabb = Aabb::encompass_iter(left_split.iter().map(Object::bounding_box));
-                let left_node = Self::generate_nodes(left_split);
-
-                let right_aabb = Aabb::encompass_iter(right_split.iter().map(Object::bounding_box));
-                let right_node = Self::generate_nodes(right_split);
-
-                let aabb = Aabb::encompass(left_aabb, right_aabb);
-
-                BvhNode::Nested {
-                    left: left_node,
-                    right: right_node,
-                    aabb,
-                }
-            }
-        };
-
-        Box::new(bvh_data)
-    }
-
     /// Recursively processes the slice of `objects`, processing recursively until
     /// the objects are exhausted and the tree is created
     ///

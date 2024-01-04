@@ -8,8 +8,9 @@ use crate::material::dielectric::DielectricMaterial;
 use crate::material::lambertian::LambertianMaterial;
 use crate::material::metal::MetalMaterial;
 use crate::material::MaterialType;
-use crate::object::axis_box::{AxisBoxBuilder, AxisBoxObject};
-use crate::object::sphere::{SphereBuilder, SphereObject};
+use crate::object::axis_box::*;
+use crate::object::parallelogram::*;
+use crate::object::sphere::*;
 use crate::object::ObjectType;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
@@ -54,7 +55,7 @@ pub static SIMPLE: Scene = {
 };
 
 #[dynamic]
-pub static BOX: Scene = {
+pub static TESTING: Scene = {
     let mut objects = Vec::<ObjectType>::new();
     objects.push(
         SphereObject::from(SphereBuilder {
@@ -69,14 +70,26 @@ pub static BOX: Scene = {
         })
         .into(),
     );
+    // objects.push(
+    //     AxisBoxObject::from(AxisBoxBuilder {
+    //         material: LambertianMaterial {
+    //             albedo: [1.; 3].into(),
+    //         }
+    //         .into(),
+    //         corner_1: Point3::new(-1., 0., -1.),
+    //         corner_2: Point3::new(1., 1., 1.),
+    //     })
+    //     .into(),
+    // );
     objects.push(
-        AxisBoxObject::from(AxisBoxBuilder {
+        ParallelogramObject::from(ParallelogramBuilder {
             material: LambertianMaterial {
                 albedo: [1.; 3].into(),
             }
             .into(),
-            corner_1: Point3::new(-1., 0., -1.),
-            corner_2: Point3::new(1., 1., 1.),
+            corner_origin: Point3::new(0., 0., 0.),
+            corner_upper: Point3::new(0., 1., 0.),
+            corner_right: Point3::new(0., 0., 1.),
         })
         .into(),
     );

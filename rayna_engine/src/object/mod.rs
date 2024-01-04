@@ -37,7 +37,7 @@ use self::{axis_box::AxisBoxObject, dynamic::DynamicObject, sphere::SphereObject
 
 pub mod axis_box;
 pub mod dynamic;
-pub mod quad;
+pub mod parallelogram;
 pub mod sphere;
 
 dyn_clone::clone_trait_object!(Object);

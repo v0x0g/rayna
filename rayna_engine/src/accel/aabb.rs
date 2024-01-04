@@ -17,6 +17,7 @@ pub struct Aabb {
     min: Point3,
     /// The upper corner of the [Aabb]; the corner with the largest coordinates
     max: Point3,
+    /// The difference between [min](fn@Self::min) and [max](fn@Self::max); how large the [Aabb] is
     size: Vector3,
     area: Number,
     volume: Number,
@@ -38,6 +39,12 @@ impl Aabb {
             area,
             volume,
         }
+    }
+
+    pub fn new_centred(centre: Point3, size: Vector3) -> Self {
+        let min = centre - size;
+        let max = centre + size;
+        Self::new(min, max)
     }
 
     /// Returns an [Aabb] that surrounds the two given boxes
@@ -65,6 +72,18 @@ impl Aabb {
             max = max.max(*p);
         }
         Self::new(min, max)
+    }
+
+    /// Ensures that an AABB has all sides of at least `thresh` thickness.
+    /// If any side widths between corners are less than this threshold, the [Aabb] will
+    /// be expanded (away from the centre) to fit.
+    pub fn min_padded(&self, thresh: Number) -> Self {
+        let mut dims = self.size();
+        let centre = self.min + dims / 2.;
+        dims.as_array_mut()
+            .iter_mut()
+            .for_each(|d| *d = d.min(thresh));
+        return Self::new_centred(centre, dims);
     }
 }
 

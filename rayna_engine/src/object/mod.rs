@@ -33,7 +33,10 @@ use enum_dispatch::enum_dispatch;
 use rayna_shared::def::types::Number;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
-use self::{axis_box::AxisBoxObject, dynamic::DynamicObject, sphere::SphereObject};
+use self::{
+    axis_box::AxisBoxObject, dynamic::DynamicObject, parallelogram::ParallelogramObject,
+    sphere::SphereObject,
+};
 
 pub mod axis_box;
 pub mod dynamic;
@@ -79,5 +82,6 @@ pub trait Object: RtRequirement {
 pub enum ObjectType {
     SphereObject,
     AxisBoxObject,
+    ParallelogramObject,
     DynamicObject,
 }

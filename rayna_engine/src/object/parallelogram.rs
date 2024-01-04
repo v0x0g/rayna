@@ -1,11 +1,13 @@
+use num_traits::Zero;
+
+use rayna_shared::def::types::{Number, Point3, Vector3};
+
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialType;
 use crate::object::{Object, ObjectType};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use num_traits::Zero;
-use rayna_shared::def::types::{Number, Point3, Vector3};
 
 #[derive(Clone, Debug)]
 pub struct ParallelogramBuilder {
@@ -38,7 +40,9 @@ impl From<ParallelogramBuilder> for ParallelogramObject {
         let q = p.corner_origin;
         let u = p.corner_right - q;
         let v = p.corner_upper - q;
-        let aabb = Aabb::new(p.corner_origin, q + u + v).min_padded(1e-10);
+        let aabb =
+            Aabb::encompass_points([p.corner_origin, q + u + v, p.corner_right, p.corner_upper])
+                .min_padded(1e-6);
         let n_raw = Vector3::cross(u, v);
         let n = n_raw
             .try_normalize()

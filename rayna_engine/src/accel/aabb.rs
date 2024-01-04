@@ -82,7 +82,7 @@ impl Aabb {
         let centre = self.min + dims / 2.;
         dims.as_array_mut()
             .iter_mut()
-            .for_each(|d| *d = d.min(thresh));
+            .for_each(|d| *d = d.max(thresh));
         return Self::new_centred(centre, dims);
     }
 }

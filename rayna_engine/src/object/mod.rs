@@ -1,8 +1,8 @@
-//! # Module [object]
+//! # Module [crate::object]
 //!
 //! This module contains the submodules for different object (see [Object] and [ObjectType]) types.
 //!
-//! # Related
+//! ## Related
 //! - [Object]
 //! - [ObjectType]
 //! - [sphere]
@@ -15,7 +15,7 @@
 //! for the type, and an "Object" struct which contains the 'built' object (which may contain cached values for performance, and
 //! should be immutable/private fields)
 //!
-//! ### Example
+//! ## Example
 //! Considering a "Sphere" object:
 //!
 //! - File: `./sphere.rs`
@@ -49,7 +49,7 @@ pub trait Object: RtRequirement {
     /// Attempts to perform an intersection between the given ray and the target object
     ///
     /// # Return Value
-    ///     This should return the *first* intersection that is within the given range, else [`None`]
+    /// This should return the *first* intersection that is within the given range, else [None]
     ///
     /// # Parameters
     ///     - ray: The
@@ -76,7 +76,7 @@ pub trait Object: RtRequirement {
 
 /// An optimised implementation of [Object].
 ///
-/// See [crate::material::MaterialType] for an explanation of the [enum_dispatch] macro usage
+/// See [crate::material::MaterialType] for an explanation of the [macro@enum_dispatch] macro usage
 #[enum_dispatch(Object)]
 #[derive(Clone, Debug)]
 pub enum ObjectType {

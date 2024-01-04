@@ -63,10 +63,10 @@ impl Camera {
     /// # Note
     /// Once created, the viewport should be used for a single frame only, and is only valid given that the
     /// state of the renderer system does not mutate.
-    /// This is because it depends on variables such as rendering image dimensions ([RenderOpts.width])
+    /// This is because it depends on variables such as rendering image dimensions (e.g. [RenderOpts::width])
     ///
     /// # Errors
-    /// This will return [`Option::Err`] if the `up_vector` points in the same direction as
+    /// This will return [Option::None] if the `up_vector` points in the same direction as
     /// the forward vector (`look_from -> look_towards`),
     /// equivalent to the case where `cross(look_direction, up_vector) == Vec3::Zero`
     pub fn calculate_viewport(

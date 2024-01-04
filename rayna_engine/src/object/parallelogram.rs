@@ -19,8 +19,6 @@ pub struct ParallelogramBuilder {
 
 #[derive(Clone, Debug)]
 pub struct ParallelogramObject {
-    /// The point at which the parallelogram starts, aka the origin
-    q: Point3,
     /// The vector for the `U` direction, typically the 'right' direction
     u: Vector3,
     /// The vector for the `V` direction, typically the 'up' direction
@@ -52,7 +50,6 @@ impl From<ParallelogramBuilder> for ParallelogramObject {
         let w = n_raw / n_raw.length_squared();
 
         Self {
-            q,
             u,
             v,
             n,

@@ -114,7 +114,7 @@ pub trait Material: RtRequirement {
 ///
 /// By using an enum, we can replace dynamic-dispatch with static dispatch.
 /// Just in case we do require dynamic dispatch for some reason, there is a
-/// [crate::material::MaterialType::Other] variant, which wraps a generic material in an [Arc]
+/// [crate::material::MaterialType::DynamicMaterial] variant, which wraps a generic material in an [std::sync::Arc]
 #[enum_dispatch(Material)]
 #[derive(Clone, Debug)]
 pub enum MaterialType {

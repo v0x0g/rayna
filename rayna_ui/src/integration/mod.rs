@@ -1,5 +1,6 @@
-//! # [rayna_engine::integration]
-//! This module acts as the integration ("glue") between the rendering backend for [rayna],
+//! # Module [crate::integration]
+//!
+//! This module acts as the integration ("glue") between the rendering backend for **rayna**,
 //! and the UI frontend.
 
 use crate::integration::message::{MessageToUi, MessageToWorker};
@@ -49,7 +50,7 @@ enum WorkerHandle {
     /// into a [WorkerHandle::Errored] state
     ///
     /// # See
-    /// https://i.imgflip.com/15ifk6.jpg
+    /// <https://i.imgflip.com/15ifk6.jpg>
     #[allow(non_camel_case_types)]
     TechnicalDifficulties_PleaseStandBy,
     /// The worker thread had an oopsie, and pooped it's pants. Here's the error message, nicely double-wrapped up for christmas

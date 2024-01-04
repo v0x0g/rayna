@@ -37,7 +37,7 @@ impl BgWorker {
     }
 
     /// Actually runs the thread
-    /// This should be called inside [thread::spawn], it will block
+    /// This should be called inside [std::thread::spawn], it will block
     #[instrument(level = tracing::Level::DEBUG, skip(self), parent = None)]
     pub fn thread_run(self) {
         info!(target: BG_WORKER, "BgWorker thread start");

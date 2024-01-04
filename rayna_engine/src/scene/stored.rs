@@ -89,7 +89,7 @@ pub static TESTING: Scene = {
             .into(),
             corner_origin: Point3::new(0., 0., 0.),
             corner_upper: Point3::new(0., 1., 0.),
-            corner_right: Point3::new(0., 0., 1.),
+            corner_right: Point3::new(1., 0., 0.),
         })
         .into(),
     );

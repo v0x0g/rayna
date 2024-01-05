@@ -155,7 +155,127 @@ impl Object for AxisBoxObject {
         &'a self,
         ray: &'a Ray,
     ) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>> {
-        todo!()
+        // Move to the box's reference frame. This is unavoidable and un-optimizable.
+        let ro = ray.pos() - self.centre;
+        let rd = ray.dir();
+
+        // Rotation: `rd *= box.rot; ro *= box.rot;`
+
+        // We'll use the negated sign of the ray direction in several places, so precompute it.
+        // The sign() instruction is fast...but surprisingly not so fast that storing the result
+        // temporarily isn't an advantage.
+        let sgn = -rd.signum();
+
+        // Winding direction: -1 if the ray starts inside of the box (i.e., and is leaving), +1 if it is starting outside of the box
+        let winding = ((ro.abs() * self.inv_radius).max_element() - 1.).signum();
+
+        // Ray-plane intersection. For each pair of planes, choose the one that is front-facing
+        // to the ray and compute the distance to it.
+        let plane_dist_1 = ((self.radius * winding * sgn) - ro) * ray.inv_dir();
+        let plane_dist_2 = ((self.radius * -winding * sgn) - ro) * ray.inv_dir();
+
+        // Perform all three ray-box tests on each axis.
+        // Use a macro to eliminate the redundant code (no efficiency boost from doing so, of course!)
+        macro_rules! test {
+            (1: $u:ident, $vw:ident) => {{
+                // Is that hit within the face of the box?
+                let plane_uvs_from_centre =
+                    (ro.to_raw().$vw() + (rd.to_raw().$vw() * plane_dist_1.$u)).abs();
+                let side_dimensions = self.radius.to_raw().$vw();
+                (plane_uvs_from_centre.x < side_dimensions.x)
+                    && (plane_uvs_from_centre.y < side_dimensions.y)
+            }};
+            (2: $u:ident, $vw:ident) => {{
+                // Is that hit within the face of the box?
+                let plane_uvs_from_centre =
+                    (ro.to_raw().$vw() + (rd.to_raw().$vw() * plane_dist_2.$u)).abs();
+                let side_dimensions = self.radius.to_raw().$vw();
+                (plane_uvs_from_centre.x < side_dimensions.x)
+                    && (plane_uvs_from_centre.y < side_dimensions.y)
+            }};
+        }
+
+        validate::vector3(&plane_dist_1);
+        validate::vector3(&plane_dist_2);
+        validate::vector3(&sgn);
+
+        let mut intersections = smallvec::SmallVec::<[Intersection; 4]>::new();
+
+        // Preserve exactly one element of `sgn`, with the correct sign
+        // Also masks the distance by the non-zero axis
+        // Dot product is faster than this CMOV chain, but doesn't work when distanceToPlane contains nans or infs.
+        if test!(1: x, yz) {
+            let (distance, ray_normal) = (plane_dist_1.x, Vector3::new(sgn.x, 0., 0.));
+            intersections.push(Intersection {
+                pos: ray.at(distance),
+                normal: ray_normal * winding,
+                ray_normal,
+                front_face: winding.is_sign_positive(),
+                dist: distance,
+                material: self.material.clone(),
+            });
+        }
+        if test!(1: y, zx) {
+            let (distance, ray_normal) = (plane_dist_1.y, Vector3::new(0., sgn.y, 0.));
+            intersections.push(Intersection {
+                pos: ray.at(distance),
+                normal: ray_normal * winding,
+                ray_normal,
+                front_face: winding.is_sign_positive(),
+                dist: distance,
+                material: self.material.clone(),
+            });
+        }
+        if test!(1: z, xy) {
+            let (distance, ray_normal) = (plane_dist_1.z, Vector3::new(0., 0., sgn.z));
+            intersections.push(Intersection {
+                pos: ray.at(distance),
+                normal: ray_normal * winding,
+                ray_normal,
+                front_face: winding.is_sign_positive(),
+                dist: distance,
+                material: self.material.clone(),
+            });
+        }
+        if test!(2: x, yz) {
+            let (distance, ray_normal) = (plane_dist_2.x, Vector3::new(sgn.x, 0., 0.));
+            intersections.push(Intersection {
+                pos: ray.at(distance),
+                normal: ray_normal * winding,
+                ray_normal,
+                front_face: winding.is_sign_positive(),
+                dist: distance,
+                material: self.material.clone(),
+            });
+        }
+        if test!(2: y, zx) {
+            let (distance, ray_normal) = (plane_dist_2.y, Vector3::new(0., sgn.y, 0.));
+            intersections.push(Intersection {
+                pos: ray.at(distance),
+                normal: ray_normal * winding,
+                ray_normal,
+                front_face: winding.is_sign_positive(),
+                dist: distance,
+                material: self.material.clone(),
+            });
+        }
+        if test!(2: z, xy) {
+            let (distance, ray_normal) = (plane_dist_2.z, Vector3::new(0., 0., sgn.z));
+            intersections.push(Intersection {
+                pos: ray.at(distance),
+                normal: ray_normal * winding,
+                ray_normal,
+                front_face: winding.is_sign_positive(),
+                dist: distance,
+                material: self.material.clone(),
+            });
+        }
+
+        return if intersections.is_empty() {
+            None
+        } else {
+            Some(Box::new(intersections.into_iter()))
+        };
     }
 
     fn bounding_box(&self) -> &Aabb {

@@ -1,7 +1,8 @@
 //! This module is not an object module per-se, but a helper module that provides abstractions for
 //! planar types (such as planes, quads, triangles, etc)
 //!
-//! You should store an instance of [Planar] inside your object struct, and
+//! You should store an instance of [Planar] inside your object struct, and then simply validate the UV coordinates
+//! of the planar intersection for whichever shape your dreams do so desire...
 
 use crate::material::MaterialType;
 use crate::shared::bounds::Bounds;

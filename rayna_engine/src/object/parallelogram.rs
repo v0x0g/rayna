@@ -48,11 +48,10 @@ impl Object for ParallelogramObject {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         let i = self.plane.intersect_bounded(ray, bounds, &self.material);
         // Check in bounds for our segment of the plane: `uv in [0, 1]`
-        if i.is_some_and(|i| (i.uv.cmple(Point2::ONE) & i.uv.cmpge(Point2::ZERO)).all()) {
-            i
-        } else {
-            None
-        }
+        return match i {
+            Some(i) if (i.uv.cmple(Point2::ONE) & i.uv.cmpge(Point2::ZERO)).all() => Some(i),
+            _ => None,
+        };
     }
 
     fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {

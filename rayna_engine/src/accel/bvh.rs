@@ -259,6 +259,13 @@ fn bvh_node_intersect_all(
             obj.intersect_all(ray, output)
         }
     }
+
+    // // Possibly faster method, doesn't do any tree traversal at all, should be linear
+    // arena
+    //     .iter()
+    //     .filter(|node| !node.is_removed())
+    //     .filter_map(|node| match node.get() {BvhNode::Object(o) => Some(o), _ => None})
+    //     .for_each(|obj| obj.intersect_all(ray, output))
 }
 
 impl Object for Bvh {

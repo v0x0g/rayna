@@ -3,6 +3,7 @@
 //! These are used to accelerate ray-object intersection tests by narrowing the search space,
 //! by skipping objects that obviously can't be intersected.
 
+use indextree::{Arena, NodeId};
 use std::cmp::Ordering;
 
 use itertools::{zip_eq, Itertools};
@@ -18,7 +19,8 @@ use crate::shared::ray::Ray;
 
 #[derive(Clone, Debug)]
 pub struct Bvh {
-    root: BvhNode,
+    arena: Arena<BvhNode>,
+    root_id: NodeId,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -30,26 +32,19 @@ enum SplitAxis {
 
 #[derive(Clone, Debug)]
 enum BvhNode {
-    Nested {
-        aabb: Aabb,
-        left: Box<BvhNode>,
-        right: Box<BvhNode>,
-    },
-    // TODO: Dual {
-    //     aabb: Aabb,
-    //     left: ObjectType,
-    //     right: ObjectType,
-    // },
+    // Don't need to keep track of children since the tree does that for us
+    Nested(Aabb),
     Object(ObjectType),
 }
 
 impl Bvh {
     pub fn new(objects: &[ObjectType]) -> Self {
-        let root = *Self::generate_nodes_sah(objects);
+        let mut arena = Arena::with_capacity(objects.len());
+        let root_id = Self::generate_nodes_sah(objects, &mut arena);
 
         // eprintln!("\n\n{:?}\n\n", root_id.debug_pretty_print(&tree));
 
-        Self { root }
+        Self { arena, root_id }
     }
 
     /// Sorts the given slice of objects along the chosen `axis`
@@ -80,16 +75,18 @@ impl Bvh {
     /// the objects are exhausted and the tree is created
     ///
     /// # **Surface-Area Heuristics** (SAH)
-    /// This method is very similar to [Self::generate_nodes], however it uses SAH to optimise the choice
-    /// of split axis, as well as split position. It does this by choosing the longest axis,
-    fn generate_nodes_sah(objects: &[ObjectType]) -> Box<BvhNode> {
-        let bvh_data = match objects {
-            [obj] => BvhNode::Object(obj.clone()),
+    /// This method uses SAH to optimise the choice of split axis, as well as split position.
+    /// It does this by choosing the longest axis, and splitting at the point where the overall surface areas are optimal
+    fn generate_nodes_sah(objects: &[ObjectType], arena: &mut Arena<BvhNode>) -> NodeId {
+        return match objects {
+            [obj] => arena.new_node(BvhNode::Object(obj.clone())),
             [a, b] => {
-                let left = Box::new(BvhNode::Object(a.clone()));
-                let right = Box::new(BvhNode::Object(b.clone()));
                 let aabb = Aabb::encompass(a.bounding_box(), b.bounding_box());
-                BvhNode::Nested { aabb, left, right }
+
+                let node = arena.new_node(BvhNode::Nested(aabb));
+                node.append_value(BvhNode::Object(a.clone()), arena);
+                node.append_value(BvhNode::Object(b.clone()), arena);
+                node
             }
             objects => {
                 // This is a port of [my C# port of] [Pete Shirley's code]
@@ -108,6 +105,7 @@ impl Bvh {
                 // TODO: Sometimes this seems to generate a node with a single object.
                 //  It creates an (AABB->Object) node, which does double ray-aabb intersects (this is slow)
 
+                // Sort along longest axis
                 {
                     let max_side = match main_aabb
                         .size()
@@ -163,33 +161,35 @@ impl Bvh {
 
                 let (left_split, right_split) = objects.split_at(split_index + 1);
 
-                let left = Self::generate_nodes_sah(left_split);
-                let right = Self::generate_nodes_sah(right_split);
+                let left_node = Self::generate_nodes_sah(left_split, arena);
+                let right_node = Self::generate_nodes_sah(right_split, arena);
 
-                BvhNode::Nested {
-                    aabb: main_aabb,
-                    left,
-                    right,
-                }
+                let node = arena.new_node(BvhNode::Nested(main_aabb));
+                node.append(left_node, arena);
+                node.append(right_node, arena);
+                node
             }
         };
-
-        return Box::new(bvh_data);
     }
 }
 
-/// Given a [BvhNode] on the [Arena] tree, calculates the nearest intersection for the given `ray` and `bounds`
+/// Given a [NodeId] on the [Arena] tree, calculates the nearest intersection for the given `ray` and `bounds`
 ///
 /// If the node is a [BvhNode::Object], it passes on the check to the object.
 /// Otherwise, if it's a [BvhNode::Aabb], it:
 ///     - Tries to bail early if the [Aabb] is missed
 ///     - Collects all the child nodes
 ///     - Intersects on all those children (by calling itself recursively)
-///     - Returns the closest intersection
-fn bvh_node_intersect(ray: &Ray, bounds: &Bounds<Number>, node: &BvhNode) -> Option<Intersection> {
-    return match node {
+///     - Returns the closest intersection of the above
+fn bvh_node_intersect(
+    ray: &Ray,
+    bounds: &Bounds<Number>,
+    node: NodeId,
+    arena: &Arena<BvhNode>,
+) -> Option<Intersection> {
+    return match arena.get(node).expect("node should exist in arena").get() {
         // An aabb will need to delegate to child nodes if not missed
-        BvhNode::Nested { left, right, aabb } => {
+        BvhNode::Nested(aabb) => {
             if !aabb.hit(ray, bounds) {
                 return None;
             }
@@ -198,19 +198,9 @@ fn bvh_node_intersect(ray: &Ray, bounds: &Bounds<Number>, node: &BvhNode) -> Opt
             //  So keep track of the bounds, and each iteration shrink with `bounds = bounds | ..intersection.dist`
             //  And if an intersect was found in that shrunk range then we know that
 
-            if let Some(left_int) = bvh_node_intersect(ray, bounds, left) {
-                if let Some(right_int) = bvh_node_intersect(ray, bounds, right) {
-                    if left_int.dist < right_int.dist {
-                        Some(left_int)
-                    } else {
-                        Some(right_int)
-                    }
-                } else {
-                    Some(left_int)
-                }
-            } else {
-                bvh_node_intersect(ray, bounds, right)
-            }
+            node.children(arena)
+                .filter_map(|child| bvh_node_intersect(ray, bounds, child, arena))
+                .min()
         }
         // Objects can be delegated directly
         BvhNode::Object(obj) => {
@@ -223,24 +213,28 @@ fn bvh_node_intersect(ray: &Ray, bounds: &Bounds<Number>, node: &BvhNode) -> Opt
     };
 }
 
-/// Given a [BvhNode] on the [Arena] tree, calculates the intersection for the given `ray`
+/// Given a [NodeId] on the [Arena] tree, calculates the ALL intersection for the given `ray`
 ///
 /// If the node is a [BvhNode::Object], it passes on the check to the object.
 /// Otherwise, if it's a [BvhNode::Aabb], it:
-///     - Tries to bail early if the [Aabb] is missed
-///     - Collects all the child nodes
-///     - Intersects on all those children (by calling itself recursively)
-///     - Returns the closest intersection
-fn bvh_node_intersect_all(ray: &Ray, node: &BvhNode, output: &mut SmallVec<[Intersection; 32]>) {
-    match node {
+///  - Tries to bail early if the [Aabb] is missed
+///  - Collects all the child nodes
+///  - Intersects on all those children (by calling itself recursively)
+fn bvh_node_intersect_all(
+    ray: &Ray,
+    node: NodeId,
+    arena: &Arena<BvhNode>,
+    output: &mut SmallVec<[Intersection; 32]>,
+) {
+    match arena.get(node).expect("node should exist in arena").get() {
         // An aabb will need to delegate to child nodes if not missed
-        BvhNode::Nested { left, right, aabb } => {
+        BvhNode::Nested(aabb) => {
             if !aabb.hit(ray, &Bounds::FULL) {
                 return;
             }
 
-            bvh_node_intersect_all(ray, left, output);
-            bvh_node_intersect_all(ray, right, output);
+            node.children(arena)
+                .for_each(|child| bvh_node_intersect_all(ray, child, arena, output));
         }
         // Objects can be delegated directly
         BvhNode::Object(obj) => {
@@ -255,16 +249,21 @@ fn bvh_node_intersect_all(ray: &Ray, node: &BvhNode, output: &mut SmallVec<[Inte
 impl Object for Bvh {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         // Pass everything on to our magical function
-        bvh_node_intersect(ray, bounds, &self.root)
+        bvh_node_intersect(ray, bounds, self.root_id, &self.arena)
     }
 
     fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
-        bvh_node_intersect_all(ray, &self.root, output)
+        bvh_node_intersect_all(ray, self.root_id, &self.arena, output)
     }
 
     fn bounding_box(&self) -> &Aabb {
-        match &self.root {
-            BvhNode::Nested { aabb, .. } => aabb,
+        match self
+            .arena
+            .get(self.root_id)
+            .expect("TODO: Allow empty tree in Bvh and Option<&Aabb> for `Object::bounding_box`")
+            .get()
+        {
+            BvhNode::Nested(aabb) => aabb,
             BvhNode::Object(o) => o.bounding_box(),
         }
     }

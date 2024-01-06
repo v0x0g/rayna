@@ -355,7 +355,7 @@ impl Renderer {
             return Pixel::from([0.; 3]);
         };
         validate::normal3(&scatter_dir);
-        let future_ray = Ray::new(intersect.pos, scatter_dir);
+        let future_ray = Ray::new(intersect.pos_w, scatter_dir);
         validate::ray(future_ray);
 
         let future_col =

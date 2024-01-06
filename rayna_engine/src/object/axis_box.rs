@@ -143,7 +143,7 @@ impl Object for AxisBoxObject {
         // texture coordinates, then use box.invDirection * hitPoint.
 
         Some(Intersection {
-            pos: ray.at(distance),
+            pos_w: ray.at(distance),
             normal: ray_normal * winding,
             ray_normal,
             front_face: winding.is_sign_positive(),
@@ -203,7 +203,7 @@ impl Object for AxisBoxObject {
         if test!(1: x, yz) {
             let (distance, ray_normal) = (plane_dist_1.x, Vector3::new(sgn.x, 0., 0.));
             output.push(Intersection {
-                pos: ray.at(distance),
+                pos_w: ray.at(distance),
                 normal: ray_normal * winding,
                 ray_normal,
                 front_face: winding.is_sign_positive(),
@@ -214,7 +214,7 @@ impl Object for AxisBoxObject {
         if test!(1: y, zx) {
             let (distance, ray_normal) = (plane_dist_1.y, Vector3::new(0., sgn.y, 0.));
             output.push(Intersection {
-                pos: ray.at(distance),
+                pos_w: ray.at(distance),
                 normal: ray_normal * winding,
                 ray_normal,
                 front_face: winding.is_sign_positive(),
@@ -225,7 +225,7 @@ impl Object for AxisBoxObject {
         if test!(1: z, xy) {
             let (distance, ray_normal) = (plane_dist_1.z, Vector3::new(0., 0., sgn.z));
             output.push(Intersection {
-                pos: ray.at(distance),
+                pos_w: ray.at(distance),
                 normal: ray_normal * winding,
                 ray_normal,
                 front_face: winding.is_sign_positive(),
@@ -236,7 +236,7 @@ impl Object for AxisBoxObject {
         if test!(2: x, yz) {
             let (distance, ray_normal) = (plane_dist_2.x, Vector3::new(sgn.x, 0., 0.));
             output.push(Intersection {
-                pos: ray.at(distance),
+                pos_w: ray.at(distance),
                 normal: ray_normal * winding,
                 ray_normal,
                 front_face: winding.is_sign_positive(),
@@ -247,7 +247,7 @@ impl Object for AxisBoxObject {
         if test!(2: y, zx) {
             let (distance, ray_normal) = (plane_dist_2.y, Vector3::new(0., sgn.y, 0.));
             output.push(Intersection {
-                pos: ray.at(distance),
+                pos_w: ray.at(distance),
                 normal: ray_normal * winding,
                 ray_normal,
                 front_face: winding.is_sign_positive(),
@@ -258,7 +258,7 @@ impl Object for AxisBoxObject {
         if test!(2: z, xy) {
             let (distance, ray_normal) = (plane_dist_2.z, Vector3::new(0., 0., sgn.z));
             output.push(Intersection {
-                pos: ray.at(distance),
+                pos_w: ray.at(distance),
                 normal: ray_normal * winding,
                 ray_normal,
                 front_face: winding.is_sign_positive(),

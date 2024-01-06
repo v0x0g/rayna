@@ -4,7 +4,8 @@ use crate::object::{Object, ObjectType};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use rayna_shared::def::types::{Number, Point3, Vector3};
+use glamour::AngleConsts;
+use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 use smallvec::SmallVec;
 
 /// A builder struct used to create a sphere
@@ -86,8 +87,8 @@ impl Object for SphereObject {
 
         let dist = root;
         let world_point = ray.at(dist);
-        let local_point = world_point - self.pos;
-        let outward_normal = local_point / self.radius;
+        let local_point = (world_point - self.pos).to_point();
+        let outward_normal = local_point.to_vector() / self.radius;
         let ray_pos_inside = Vector3::dot(ray_dir, outward_normal) > 0.;
         //This flips the normal if the ray is inside the sphere
         //This forces the normal to always be going against the ray
@@ -98,12 +99,14 @@ impl Object for SphereObject {
         };
 
         return Some(Intersection {
-            pos: world_point,
+            pos_w: world_point,
+            pos_l: local_point,
             dist,
             normal: outward_normal,
             ray_normal,
             front_face: !ray_pos_inside,
             material: self.material.clone(),
+            uv: sphere_uv(local_point),
         });
     }
 
@@ -131,8 +134,8 @@ impl Object for SphereObject {
 
         output.extend([root_1, root_2].map(|k| {
             let world_point = ray.at(k);
-            let local_point = world_point - self.pos;
-            let outward_normal = local_point / self.radius;
+            let local_point = (world_point - self.pos).to_point();
+            let outward_normal = local_point.to_vector() / self.radius;
             let inside = Vector3::dot(ray_dir, outward_normal) > 0.;
             //This flips the normal if the ray is inside the sphere
             //This forces the normal to always be going against the ray
@@ -143,12 +146,14 @@ impl Object for SphereObject {
             };
 
             Intersection {
-                pos: world_point,
+                pos_w: world_point,
+                pos_l: local_point,
                 dist: k,
                 normal: outward_normal,
                 ray_normal,
                 front_face: !inside,
                 material: self.material.clone(),
+                uv: sphere_uv(local_point),
             }
         }));
     }
@@ -156,4 +161,14 @@ impl Object for SphereObject {
     fn aabb(&self) -> Option<&Aabb> {
         Some(&self.aabb)
     }
+}
+
+/// Converts a point on a sphere (centred at [Point3::ZERO], radius `>0.`), into a UV coordinate
+pub fn sphere_uv(p: Point3) -> Point2 {
+    let theta = Number::acos(-p.y);
+    let phi = Number::atan2(-p.z, p.x) + Number::PI;
+
+    let u = phi / (2. * Number::PI);
+    let v = theta / Number::PI;
+    return Point2::new(u, v);
 }

@@ -1,6 +1,6 @@
 use smallvec::SmallVec;
 
-use rayna_shared::def::types::{Number, Point3};
+use rayna_shared::def::types::{Number, Point2, Point3};
 
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialType;
@@ -46,11 +46,13 @@ impl From<ParallelogramBuilder> for ObjectType {
 
 impl Object for ParallelogramObject {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
-        fn validate(alpha: Number, beta: Number) -> bool {
-            alpha >= 0. && alpha <= 1. && beta >= 0. && beta <= 1.
+        let i = self.plane.intersect_bounded(ray, bounds, &self.material);
+        // Check in bounds for our segment of the plane: `uv in [0, 1]`
+        if i.is_some_and(|i| (i.uv.cmple(Point2::ONE) & i.uv.cmpge(Point2::ZERO)).all()) {
+            i
+        } else {
+            None
         }
-        self.plane
-            .intersect_bounded(ray, bounds, &self.material, validate)
     }
 
     fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {

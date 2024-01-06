@@ -9,13 +9,14 @@ use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use num_traits::Zero;
-use rayna_shared::def::types::{Number, Point3, Vector3};
+use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 
 /// The recommended amount of padding around AABB's for planar objects
 pub const AABB_PADDING: Number = 1e-6;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Planar {
+    q: Point3,
     /// The vector for the `U` direction, typically the 'right' direction
     u: Vector3,
     /// The vector for the `V` direction, typically the 'up' direction
@@ -49,7 +50,7 @@ impl Planar {
         let d = n.dot(q.to_vector());
         // NOTE: using non-normalised normal here
         let w = n_raw / n_raw.length_squared();
-        Self { u, v, n, d, w }
+        Self { q, u, v, n, d, w }
     }
 }
 
@@ -75,7 +76,6 @@ impl Planar {
         ray: &Ray,
         bounds: &Bounds<Number>,
         material: &MaterialType,
-        validate_coords: impl Fn(Number, Number) -> bool,
     ) -> Option<Intersection> {
         let denominator = Vector3::dot(self.n, ray.dir());
 
@@ -98,18 +98,15 @@ impl Planar {
         let alpha = Vector3::dot(self.w, Vector3::cross(pos_v, self.v));
         let beta = Vector3::dot(self.w, Vector3::cross(self.u, pos_v));
 
-        // Check in bounds for our segment of the plane
-        if !validate_coords(alpha, beta) {
-            return None;
-        }
-
         Some(Intersection {
-            pos,
+            pos_w: pos,
+            pos_l: pos - self.q.to_vector(),
             material: material.clone(),
             dist: t,
             normal: self.n,
             front_face: true,
             ray_normal: -self.n * denominator.signum(),
+            uv: Point2::new(alpha, beta),
         })
     }
 }

@@ -88,7 +88,7 @@ pub fn intersection(
     let bounds = bounds.borrow();
     let ray = ray.borrow();
 
-    point3(intersect.pos);
+    point3(intersect.pos_w);
     number(intersect.dist);
 
     assert!(
@@ -99,7 +99,7 @@ pub fn intersection(
     );
 
     // Dist between start and end should match `.dist` field
-    let ray_len = (ray.pos() - intersect.pos).length();
+    let ray_len = (ray.pos() - intersect.pos_w).length();
     assert_relative_eq!(
         ray_len,
         intersect.dist,
@@ -109,13 +109,13 @@ pub fn intersection(
 
     assert!(
         Point3::relative_eq(
-            &intersect.pos,
+            &intersect.pos_w,
             &ray.at(intersect.dist),
             EPSILON,
             RELATIVE
         ),
         "intersect position doesn't match ray at intersection dist; intersect_pos: {i_pos:?}, dist: {dist}, ray: {ray:?}, ray_pos: {r_pos:?}",
-        i_pos = intersect.pos,
+        i_pos = intersect.pos_w,
         dist = intersect.dist,
         ray = ray,
         r_pos = ray.at(intersect.dist)

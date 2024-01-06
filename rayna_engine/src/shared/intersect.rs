@@ -1,6 +1,6 @@
 use crate::material::MaterialType;
 use derivative::Derivative;
-use rayna_shared::def::types::{Number, Point3, Vector3};
+use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 use std::cmp::Ordering;
 
 /// A struct representing a ray-object intersection
@@ -8,7 +8,9 @@ use std::cmp::Ordering;
 #[derivative(PartialEq)]
 pub struct Intersection {
     /// The position in world coordinates of the intersection
-    pub pos: Point3,
+    pub pos_w: Point3,
+    /// The position in object-local coordinates of the intersection
+    pub pos_l: Point3,
     /// Surface normal at intersection.
     /// This should point in the *outwards* direction, irrespective of the
     /// incident ray
@@ -29,6 +31,8 @@ pub struct Intersection {
     ///
     ///
     pub dist: Number,
+    /// The UV coordinates for the point on the object's surface. Normally used for texture mapping
+    pub uv: Point2,
     #[derivative(PartialEq = "ignore", PartialOrd = "ignore")]
     pub material: MaterialType,
 }

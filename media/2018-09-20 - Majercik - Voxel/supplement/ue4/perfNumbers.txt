@@ -1,0 +1,38 @@
+UE4 Performance Numbers
+
+Model: rockies, 1852272 voxels
+UE4 Development mode, equivalent to "Release". Description of modes here: https://docs.unrealengine.com/en-us/Programming/Development/BuildConfigurations
+
+| Model Copies | Voxels | FPS |
+|	1      |1852272	|  120   |
+2, 3704544 (3.7M), 120
+4, 7409088 (7.4M), 120
+6, 11113632 (11.1M), 105
+8, 14818176 (14.8M), 78
+10, 18522720 (18.5M), 62
+12, 22227264 (22.2M), 52
+14, 25931808 (25.9M)), 45
+16, 29636352 (29.6M), 36
+24, 44454528 (44.4M), 25
+
+But, keep in mind, those are voxel framerates with *full simulation*.
+Optimization: do not simulate the particles, just write back position/velocity/color.
+Another possible optimization: Get rid of either color or velocity texture, reducing simulation state size by 33%.
+
+6, 11113632, 120
+8, 14818176, 90
+10, 18522720, 74
+12, 22227264, 61
+14, 25931808, 54
+16, 29636352, 48
+24, 44454528, 31
+
+
+
+
+
+
+
+
+
+

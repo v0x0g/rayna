@@ -114,7 +114,7 @@ impl Object for ParallelogramObject {
         self.intersect(ray, &Bounds::FULL).map(|i| output.push(i));
     }
 
-    fn bounding_box(&self) -> &Aabb {
-        &self.aabb
+    fn aabb(&self) -> Option<&Aabb> {
+        Some(&self.aabb)
     }
 }

@@ -24,7 +24,7 @@ impl Object for DynamicObject {
         self.inner.intersect_all(ray, output)
     }
 
-    fn bounding_box(&self) -> &Aabb {
-        self.inner.bounding_box()
+    fn aabb(&self) -> Option<&Aabb> {
+        self.inner.aabb()
     }
 }

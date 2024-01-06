@@ -63,8 +63,8 @@ pub trait Object: RtRequirement {
     /// It can be assumed this vector will be empty.
     fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>);
 
-    // TODO: This should be allowed to return Option<&Aabb>
-    fn bounding_box(&self) -> &Aabb;
+    /// Gets the bounding box for this object. If the object can't be bounded (e.g. infinite plane), return [None]
+    fn aabb(&self) -> Option<&Aabb>;
 
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
 }

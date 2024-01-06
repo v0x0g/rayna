@@ -267,8 +267,7 @@ impl Object for AxisBoxObject {
             });
         }
     }
-
-    fn bounding_box(&self) -> &Aabb {
-        &self.aabb
+    fn aabb(&self) -> Option<&Aabb> {
+        Some(&self.aabb)
     }
 }

@@ -24,21 +24,13 @@ impl<Obj: Into<ObjectType>, Iter: IntoIterator<Item = Obj>> From<Iter> for Objec
     fn from(value: Iter) -> Self {
         let raw = value.into_iter().map(Into::into).collect_vec();
         let bvh = Bvh::new(&raw);
-        let aabb = Aabb::encompass_iter(raw.iter().map(Object::bounding_box));
+        let aabb = Aabb::encompass_iter(raw.iter().map(Object::aabb));
         Self { raw, bvh, aabb }
     }
 }
 
 impl Object for ObjectList {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
-        // self.raw
-        //     .iter()
-        //     // Intersect all and only include hits not misses
-        //     .filter_map(|obj| obj.intersect(ray, bounds))
-        //     .inspect(|i| validate::intersection(ray, i, bounds))
-        //     // Choose closest intersect
-        //     .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist))
-
         self.bvh.intersect(ray, bounds)
     }
 
@@ -46,7 +38,7 @@ impl Object for ObjectList {
         self.bvh.intersect_all(ray, output);
     }
 
-    fn bounding_box(&self) -> &Aabb {
+    fn aabb(&self) -> &Aabb {
         &self.aabb
     }
 }

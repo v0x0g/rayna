@@ -1,8 +1,9 @@
 use glam::swizzles::*;
+use glamour::FromRaw;
 use glamour::ToRaw;
 use smallvec::SmallVec;
 
-use rayna_shared::def::types::{Number, Point3, Vector3};
+use rayna_shared::def::types::{Number, Point2, Point3, Vector2, Vector3};
 
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialType;
@@ -107,49 +108,50 @@ impl Object for AxisBoxObject {
         // Perform all three ray-box tests on each axis.
         // Use a macro to eliminate the redundant code (no efficiency boost from doing so, of course!)
         macro_rules! test {
-            ($u:ident, $vw:ident) => {
+            // Preserve exactly one element of `sgn`, with the correct sign
+            // Also masks the distance by the non-zero axis
+            // Dot product is faster than this CMOV chain, but doesn't work when distanceToPlane contains nans or infs.
+            ($u:ident, $vw:ident) => {{
+                let dist: Number = plane_dist.$u;
                 // Is there a hit on this axis in the valid distance bounds?
-                bounds.contains(&plane_dist.$u) && {
+                if bounds.contains(&dist) {
+                    let uvs: Point2 =
+                        Vector2::from_raw(ro.to_raw().$vw() + (rd.to_raw().$vw() * dist))
+                            .abs()
+                            .to_point();
+                    let dims = self.radius.to_raw().$vw();
                     // Is that hit within the face of the box?
-                    let plane_uvs_from_centre =
-                        (ro.to_raw().$vw() + (rd.to_raw().$vw() * plane_dist.$u)).abs();
-                    let side_dimensions = self.radius.to_raw().$vw();
-                    (plane_uvs_from_centre.x < side_dimensions.x)
-                        && (plane_uvs_from_centre.y < side_dimensions.y)
+                    if (uvs.x < dims.x) && (uvs.y < dims.y) {
+                        // Mask the sign to be the normal
+                        let ray_normal = Vector3 {
+                            $u: sgn.$u,
+                            ..Vector3::ZERO
+                        };
+                        let pos_w = ray.at(dist);
+                        return Some(Intersection {
+                            pos_w,
+                            pos_l: pos_w - self.centre.to_vector(),
+                            normal: ray_normal * winding,
+                            ray_normal,
+                            front_face: winding.is_sign_positive(),
+                            dist,
+                            material: self.material.clone(),
+                            uv: uvs,
+                        });
+                    }
                 }
-            };
+            }};
         }
 
         validate::vector3(&plane_dist);
         validate::vector3(&sgn);
 
-        // Preserve exactly one element of `sgn`, with the correct sign
-        // Also masks the distance by the non-zero axis
-        // Dot product is faster than this CMOV chain, but doesn't work when distanceToPlane contains nans or infs.
-        let (distance, ray_normal) = if test!(x, yz) {
-            (plane_dist.x, Vector3::new(sgn.x, 0., 0.))
-        } else if test!(y, zx) {
-            (plane_dist.y, Vector3::new(0., sgn.y, 0.))
-        } else if test!(z, xy) {
-            (plane_dist.z, Vector3::new(0., 0., sgn.z))
-        } else {
-            // None of the tests matched, so we didn't hit any sides
-            return None;
-        };
+        test!(x, yz);
+        test!(y, zx);
+        test!(z, xy);
 
-        // Normal must face back along the ray. If you need
-        // to know whether we're entering or leaving the box,
-        // then just look at the value of winding. If you need
-        // texture coordinates, then use box.invDirection * hitPoint.
-
-        Some(Intersection {
-            pos_w: ray.at(distance),
-            normal: ray_normal * winding,
-            ray_normal,
-            front_face: winding.is_sign_positive(),
-            dist: distance,
-            material: self.material.clone(),
-        })
+        // None of the tests matched, so we didn't hit any sides
+        return None;
     }
 
     fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
@@ -175,21 +177,37 @@ impl Object for AxisBoxObject {
         // Perform all three ray-box tests on each axis.
         // Use a macro to eliminate the redundant code (no efficiency boost from doing so, of course!)
         macro_rules! test {
-            (1: $u:ident, $vw:ident) => {{
-                // Is that hit within the face of the box?
-                let plane_uvs_from_centre =
-                    (ro.to_raw().$vw() + (rd.to_raw().$vw() * plane_dist_1.$u)).abs();
-                let side_dimensions = self.radius.to_raw().$vw();
-                (plane_uvs_from_centre.x < side_dimensions.x)
-                    && (plane_uvs_from_centre.y < side_dimensions.y)
+            (front: $u:ident, $vw:ident) => {{
+                test!(@inner plane_dist_1, $u, $vw);
             }};
-            (2: $u:ident, $vw:ident) => {{
+            (back: $u:ident, $vw:ident) => {{
+                test!(@inner plane_dist_2, $u, $vw);
+            }};
+            (@inner $dist:ident, $u:ident, $vw:ident) => {{
+                let dist: Number = $dist.$u;
+                let uvs: Point2 = Vector2::from_raw(ro.to_raw().$vw() + (rd.to_raw().$vw() * dist)).abs().to_point();
+                let dims = self.radius.to_raw().$vw();
                 // Is that hit within the face of the box?
-                let plane_uvs_from_centre =
-                    (ro.to_raw().$vw() + (rd.to_raw().$vw() * plane_dist_2.$u)).abs();
-                let side_dimensions = self.radius.to_raw().$vw();
-                (plane_uvs_from_centre.x < side_dimensions.x)
-                    && (plane_uvs_from_centre.y < side_dimensions.y)
+                if (uvs.x < dims.x) && (uvs.y < dims.y) {
+                    // Preserve exactly one element of `sgn`, with the correct sign
+                    // Also masks the distance by the non-zero axis
+                    // Dot product is faster than this CMOV chain, but doesn't work when distanceToPlane contains nans or infs.
+                    let ray_normal = Vector3 {
+                        $u: sgn.$u,
+                        ..Vector3::ZERO
+                    };
+                    let pos_w = ray.at(dist);
+                    output.push(Intersection {
+                        pos_w,
+                        pos_l: pos_w - self.centre.to_vector(),
+                        normal: ray_normal * winding,
+                        ray_normal,
+                        front_face: winding.is_sign_positive(),
+                        dist,
+                        material: self.material.clone(),
+                        uv: uvs,
+                    });
+                }
             }};
         }
 
@@ -197,75 +215,12 @@ impl Object for AxisBoxObject {
         validate::vector3(&plane_dist_2);
         validate::vector3(&sgn);
 
-        // Preserve exactly one element of `sgn`, with the correct sign
-        // Also masks the distance by the non-zero axis
-        // Dot product is faster than this CMOV chain, but doesn't work when distanceToPlane contains nans or infs.
-        if test!(1: x, yz) {
-            let (distance, ray_normal) = (plane_dist_1.x, Vector3::new(sgn.x, 0., 0.));
-            output.push(Intersection {
-                pos_w: ray.at(distance),
-                normal: ray_normal * winding,
-                ray_normal,
-                front_face: winding.is_sign_positive(),
-                dist: distance,
-                material: self.material.clone(),
-            });
-        }
-        if test!(1: y, zx) {
-            let (distance, ray_normal) = (plane_dist_1.y, Vector3::new(0., sgn.y, 0.));
-            output.push(Intersection {
-                pos_w: ray.at(distance),
-                normal: ray_normal * winding,
-                ray_normal,
-                front_face: winding.is_sign_positive(),
-                dist: distance,
-                material: self.material.clone(),
-            });
-        }
-        if test!(1: z, xy) {
-            let (distance, ray_normal) = (plane_dist_1.z, Vector3::new(0., 0., sgn.z));
-            output.push(Intersection {
-                pos_w: ray.at(distance),
-                normal: ray_normal * winding,
-                ray_normal,
-                front_face: winding.is_sign_positive(),
-                dist: distance,
-                material: self.material.clone(),
-            });
-        }
-        if test!(2: x, yz) {
-            let (distance, ray_normal) = (plane_dist_2.x, Vector3::new(sgn.x, 0., 0.));
-            output.push(Intersection {
-                pos_w: ray.at(distance),
-                normal: ray_normal * winding,
-                ray_normal,
-                front_face: winding.is_sign_positive(),
-                dist: distance,
-                material: self.material.clone(),
-            });
-        }
-        if test!(2: y, zx) {
-            let (distance, ray_normal) = (plane_dist_2.y, Vector3::new(0., sgn.y, 0.));
-            output.push(Intersection {
-                pos_w: ray.at(distance),
-                normal: ray_normal * winding,
-                ray_normal,
-                front_face: winding.is_sign_positive(),
-                dist: distance,
-                material: self.material.clone(),
-            });
-        }
-        if test!(2: z, xy) {
-            let (distance, ray_normal) = (plane_dist_2.z, Vector3::new(0., 0., sgn.z));
-            output.push(Intersection {
-                pos_w: ray.at(distance),
-                normal: ray_normal * winding,
-                ray_normal,
-                front_face: winding.is_sign_positive(),
-                dist: distance,
-                material: self.material.clone(),
-            });
-        }
+        test!(front: x, yz);
+        test!(front: y, zx);
+        test!(front: z, xy);
+        test!(back: x, yz);
+        test!(back: y, zx);
+        test!(back: z, xy);
     }
     fn aabb(&self) -> Option<&Aabb> {
         Some(&self.aabb)

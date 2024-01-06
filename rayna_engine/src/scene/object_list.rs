@@ -1,5 +1,4 @@
 use getset::Getters;
-use itertools::Itertools;
 use smallvec::SmallVec;
 
 use rayna_shared::def::types::Number;
@@ -14,18 +13,37 @@ use crate::shared::ray::Ray;
 #[derive(Clone, Debug, Getters)]
 #[get = "pub"]
 pub struct ObjectList {
-    raw: Vec<ObjectType>,
+    /// BVH-optimised tree of objects
     bvh: Bvh,
+    /// [Aabb] for the bounded collection of objects
     aabb: Aabb,
+    /// All the unbounded objects in the list (objects where [Object::aabb()] returned [None]
+    unbounded: Vec<ObjectType>,
 }
 
 // Iter<Into<ObjType>> => ObjectList
 impl<Obj: Into<ObjectType>, Iter: IntoIterator<Item = Obj>> From<Iter> for ObjectList {
     fn from(value: Iter) -> Self {
-        let raw = value.into_iter().map(Into::into).collect_vec();
-        let bvh = Bvh::new(&raw);
-        let aabb = Aabb::encompass_iter(raw.iter().map(Object::aabb));
-        Self { raw, bvh, aabb }
+        let mut bounded = vec![];
+        let mut unbounded = vec![];
+        for obj in value.into_iter().map(Obj::into) {
+            if let Some(_) = obj.aabb() {
+                bounded.push(obj);
+            } else {
+                unbounded.push(obj);
+            }
+        }
+        let bvh = Bvh::new(&bounded);
+        let aabb = Aabb::encompass_iter(
+            bounded
+                .iter()
+                .map(|o| o.aabb().expect("already filtered out unbounded objects")),
+        );
+        Self {
+            bvh,
+            aabb,
+            unbounded,
+        }
     }
 }
 
@@ -38,7 +56,8 @@ impl Object for ObjectList {
         self.bvh.intersect_all(ray, output);
     }
 
-    fn aabb(&self) -> &Aabb {
-        &self.aabb
+    fn aabb(&self) -> Option<&Aabb> {
+        // List may have unbounded objects, so we can't return Some()
+        None
     }
 }

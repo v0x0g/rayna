@@ -37,8 +37,23 @@ enum BvhNode {
     Object(ObjectType),
 }
 
+/// Helper function to unwrap an AABB with a panic message
+fn expect_aabb(o: &ObjectType) -> &Aabb {
+    o.aabb().expect("aabb required as invariant of `Bvh`")
+}
+
 impl Bvh {
+    /// Creates a new [Bvh] tree from the given slice of objects
+    ///
+    /// # Note
+    /// The given slice of `objects` should only contain *bounded* objects (i.e. [Object::aabb()] returns [`Some(_)`]).
+    /// The exact behaviour is not specified, but will most likely result in a panic during building/accessing the tree
     pub fn new(objects: &[ObjectType]) -> Self {
+        assert!(
+            objects.iter().all(|o| o.aabb().is_some()),
+            "objects should all be bounded"
+        );
+
         let mut arena = Arena::with_capacity(objects.len());
         let root_id = Self::generate_nodes_sah(objects, &mut arena);
 
@@ -51,16 +66,16 @@ impl Bvh {
     /// This sort is *unstable* (see [sort_unstable_by](https://doc.rust-lang.org/std/primitive.slice.html#method.sort_unstable_by))
     fn sort_along_aabb_axis(axis: SplitAxis, objects: &mut [ObjectType]) {
         fn sort_x(a: &ObjectType, b: &ObjectType) -> Ordering {
-            PartialOrd::partial_cmp(&a.aabb().map(|a: &Aabb| a.min().x), &b.aabb().map(|a: &Aabb| a.min().x)
+            PartialOrd::partial_cmp(&expect_aabb(a).min().x, &expect_aabb(b).min().x)
                 .expect("should be able to cmp AABB x-bounds: should not be nan")
         }
 
         fn sort_y(a: &ObjectType, b: &ObjectType) -> Ordering {
-            PartialOrd::partial_cmp(&a.aabb().map(|a: &Aabb| a.min().y), &b.aabb().map(|a: &Aabb| a.min().y)
+            PartialOrd::partial_cmp(&expect_aabb(a).min().y, &expect_aabb(b).min().y)
                 .expect("should be able to cmp AABB y-bounds: should not be nan")
         }
         fn sort_z(a: &ObjectType, b: &ObjectType) -> Ordering {
-            PartialOrd::partial_cmp(&a.aabb().map(|a: &Aabb| a.min().z), &b.aabb().map(|a: &Aabb| a.min().z)
+            PartialOrd::partial_cmp(&expect_aabb(a).min().z, &expect_aabb(b).min().z)
                 .expect("should be able to cmp AABB z-bounds: should not be nan")
         }
 
@@ -81,7 +96,7 @@ impl Bvh {
         return match objects {
             [obj] => arena.new_node(BvhNode::Object(obj.clone())),
             [a, b] => {
-                let aabb = Aabb::encompass(a.aabb(), b.aabb());
+                let aabb = Aabb::encompass(expect_aabb(a), expect_aabb(b));
 
                 let node = arena.new_node(BvhNode::Nested(aabb));
                 node.append_value(BvhNode::Object(a.clone()), arena);
@@ -95,7 +110,7 @@ impl Bvh {
 
                 let n = objects.len();
                 let mut objects = Vec::from(objects);
-                let aabbs = objects.iter().map(|o| *o.aabb()).collect_vec();
+                let aabbs = objects.iter().map(|o| *expect_aabb(o)).collect_vec();
                 let main_aabb = Aabb::encompass_iter(&aabbs);
 
                 // Find the longest axis to split along, and sort for that axis
@@ -204,7 +219,7 @@ fn bvh_node_intersect(
         }
         // Objects can be delegated directly
         BvhNode::Object(obj) => {
-            if !obj.aabb().hit(ray, bounds) {
+            if !obj.aabb().expect("aabb missing").hit(ray, bounds) {
                 None
             } else {
                 obj.intersect(ray, bounds)
@@ -238,7 +253,7 @@ fn bvh_node_intersect_all(
         }
         // Objects can be delegated directly
         BvhNode::Object(obj) => {
-            if !obj.aabb().hit(ray, &Bounds::FULL) {
+            if !expect_aabb(obj).hit(ray, &Bounds::FULL) {
                 return;
             }
             obj.intersect_all(ray, output)
@@ -256,15 +271,15 @@ impl Object for Bvh {
         bvh_node_intersect_all(ray, self.root_id, &self.arena, output)
     }
 
-    fn aabb(&self) -> &Aabb {
+    fn aabb(&self) -> Option<&Aabb> {
         match self
             .arena
             .get(self.root_id)
             .expect("TODO: Allow empty tree in Bvh and Option<&Aabb> for `Object::aabb`")
             .get()
         {
-            BvhNode::Nested(aabb) => aabb,
-            BvhNode::Object(o) => o.aabb(),
+            BvhNode::Nested(aabb) => Some(aabb),
+            BvhNode::Object(o) => Some(expect_aabb(o)),
         }
     }
 }

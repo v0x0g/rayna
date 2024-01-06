@@ -158,6 +158,8 @@ impl Viewport {
     /// # Note
     /// The values `px` and `py` should already have an appropriate pixel shift (+-0.5) applied,
     /// if MSAA is desired
+
+    // PERF: This function is a rendering hotspot
     pub fn calc_ray(&self, px: Number, py: Number, rng: &mut impl Rng) -> Ray {
         // Pixel position
         let pixel_sample =

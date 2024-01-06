@@ -10,6 +10,7 @@ pub struct Ray {
 }
 
 impl Ray {
+    // PERF: This function is pretty slow :(
     pub fn new(pos: Point3, dir: Vector3) -> Self {
         let dir = dir.normalize();
         Self {

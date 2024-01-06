@@ -15,8 +15,6 @@ use crate::shared::ray::Ray;
 pub struct ObjectList {
     /// BVH-optimised tree of objects
     bvh: Bvh,
-    /// [Aabb] for the bounded collection of objects
-    aabb: Aabb,
     /// All the unbounded objects in the list (objects where [Object::aabb()] returned [None]
     unbounded: Vec<ObjectType>,
 }
@@ -34,26 +32,25 @@ impl<Obj: Into<ObjectType>, Iter: IntoIterator<Item = Obj>> From<Iter> for Objec
             }
         }
         let bvh = Bvh::new(&bounded);
-        let aabb = Aabb::encompass_iter(
-            bounded
-                .iter()
-                .map(|o| o.aabb().expect("already filtered out unbounded objects")),
-        );
-        Self {
-            bvh,
-            aabb,
-            unbounded,
-        }
+        Self { bvh, unbounded }
     }
 }
 
 impl Object for ObjectList {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
-        self.bvh.intersect(ray, bounds)
+        let bvh_int = self.bvh.intersect(ray, bounds).into_iter();
+        let unbound_int = self
+            .unbounded
+            .iter()
+            .filter_map(|o| o.intersect(ray, bounds));
+        Iterator::chain(bvh_int, unbound_int).min()
     }
 
     fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
         self.bvh.intersect_all(ray, output);
+        self.unbounded
+            .iter()
+            .for_each(|o| o.intersect_all(ray, output));
     }
 
     fn aabb(&self) -> Option<&Aabb> {

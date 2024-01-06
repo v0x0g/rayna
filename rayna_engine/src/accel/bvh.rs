@@ -6,6 +6,7 @@
 use std::cmp::Ordering;
 
 use itertools::{zip_eq, Itertools};
+use smallvec::SmallVec;
 
 use rayna_shared::def::types::Number;
 
@@ -230,34 +231,24 @@ fn bvh_node_intersect(ray: &Ray, bounds: &Bounds<Number>, node: &BvhNode) -> Opt
 ///     - Collects all the child nodes
 ///     - Intersects on all those children (by calling itself recursively)
 ///     - Returns the closest intersection
-fn bvh_node_intersect_all<'a>(
-    ray: &'a Ray,
-    node: &'a BvhNode,
-) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>> {
+fn bvh_node_intersect_all(ray: &Ray, node: &BvhNode, output: &mut SmallVec<[Intersection; 32]>) {
     match node {
         // An aabb will need to delegate to child nodes if not missed
         BvhNode::Nested { left, right, aabb } => {
             if !aabb.hit(ray, &Bounds::FULL) {
-                return None;
+                return;
             }
 
-            // TODO: Rework this to use the new Bounds::bitor API to shrink the next child's search range
-            //  So keep track of the bounds, and each iteration shrink with `bounds = bounds | ..intersection.dist`
-            //  And if an intersect was found in that shrunk range then we know that
-
-            let mut intersects = [left, right]
-                .into_iter()
-                .filter_map(|child| bvh_node_intersect_all(ray, child))
-                .flatten()
-                .peekable();
-
-            // Optimise if no elements
-            intersects.peek()?;
-
-            Some(Box::new(intersects))
+            bvh_node_intersect_all(ray, left, output);
+            bvh_node_intersect_all(ray, right, output);
         }
         // Objects can be delegated directly
-        BvhNode::Object(obj) => obj.intersect_all(ray),
+        BvhNode::Object(obj) => {
+            if !obj.bounding_box().hit(ray, &Bounds::FULL) {
+                return;
+            }
+            obj.intersect_all(ray, output)
+        }
     }
 }
 
@@ -267,11 +258,8 @@ impl Object for Bvh {
         bvh_node_intersect(ray, bounds, &self.root)
     }
 
-    fn intersect_all<'a>(
-        &'a self,
-        ray: &'a Ray,
-    ) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>> {
-        bvh_node_intersect_all(ray, &self.root)
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
+        bvh_node_intersect_all(ray, &self.root, output)
     }
 
     fn bounding_box(&self) -> &Aabb {
@@ -562,12 +550,12 @@ impl Object for Bvh {
 // ///     - Collects all the child nodes
 // ///     - Intersects on all those children (by calling itself recursively)
 // ///     - Returns the closest intersection
-// fn bvh_node_intersect_all<'a>(
-//     ray: &'a Ray,
+// fn bvh_node_intersect_all<>(
+//     ray: & Ray,
 //     node_id: NodeId,
-//     node: &'a Node<crate::accel::bvh::BvhNode>,
-//     tree: &'a Arena<crate::accel::bvh::BvhNode>,
-// ) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>> {
+//     node: & Node<crate::accel::bvh::BvhNode>,
+//     tree: & Arena<crate::accel::bvh::BvhNode>,
+// ) -> Option<Box<dyn Iterator<Item = Intersection> + >> {
 //     match node.get() {
 //         crate::accel::bvh::BvhNode::TempNode => unreachable!("asserted that tree has no temp nodes"),
 //         // An aabb will need to delegate to child nodes if not missed
@@ -620,10 +608,10 @@ impl Object for Bvh {
 //         )
 //     }
 //
-//     fn intersect_all<'a>(
-//         &'a self,
-//         ray: &'a Ray,
-//     ) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>> {
+//     fn intersect_all<>(
+//         & self,
+//         ray: & Ray,
+//     ) -> Option<Box<dyn Iterator<Item = Intersection> + >> {
 //         crate::accel::bvh::bvh_node_intersect_all(ray, self.root_id, &self.tree[self.root_id], &self.tree)
 //     }
 //

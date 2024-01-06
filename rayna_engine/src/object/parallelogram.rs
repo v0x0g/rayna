@@ -1,4 +1,5 @@
 use num_traits::Zero;
+use smallvec::SmallVec;
 
 use rayna_shared::def::types::{Number, Point3, Vector3};
 
@@ -107,15 +108,10 @@ impl Object for ParallelogramObject {
         })
     }
 
-    fn intersect_all<'a>(
-        &'a self,
-        ray: &'a Ray,
-    ) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>> {
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
         // Planes won't intersect more than once, except in the parallel case
         // That's infinite intersections but we ignore that case
-
-        self.intersect(ray, &Bounds::FULL)
-            .map(|i| Box::new([i].into_iter()) as Box<dyn Iterator<Item = Intersection>>)
+        self.intersect(ray, &Bounds::FULL).map(|i| output.push(i));
     }
 
     fn bounding_box(&self) -> &Aabb {

@@ -5,6 +5,7 @@ use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use rayna_shared::def::types::{Number, Point3, Vector3};
+use smallvec::SmallVec;
 
 /// A builder struct used to create a sphere
 ///
@@ -106,7 +107,7 @@ impl Object for SphereObject {
         });
     }
 
-    fn intersect_all(&self, ray: &Ray) -> Option<Box<dyn Iterator<Item = Intersection> + '_>> {
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();
@@ -118,19 +119,17 @@ impl Object for SphereObject {
         let c = ray_rel_pos.length_squared() - (self.radius * self.radius);
         let discriminant = (half_b * half_b) - (a * c);
 
+        //No solutions to where ray intersects with sphere because of negative square root
         if discriminant < 0. {
-            return None;
-        }; //No solutions to where ray intersects with sphere because of negative square root
+            return;
+        }
 
         let sqrt_d = discriminant.sqrt();
 
         let root_1 = (-half_b - sqrt_d) / a;
         let root_2 = (-half_b + sqrt_d) / a;
 
-        // TODO: Optimisation: if `approx::relative_eq!(root_1, 0.)`, then only one root
-        //  In this case, return just a single boxed slice
-
-        let intersections = [root_1, root_2].map(|k| {
+        output.extend([root_1, root_2].map(|k| {
             let world_point = ray.at(k);
             let local_point = world_point - self.pos;
             let outward_normal = local_point / self.radius;
@@ -151,9 +150,7 @@ impl Object for SphereObject {
                 front_face: !inside,
                 material: self.material.clone(),
             }
-        });
-
-        Some(Box::new(intersections.into_iter()))
+        }));
     }
 
     fn bounding_box(&self) -> &Aabb {

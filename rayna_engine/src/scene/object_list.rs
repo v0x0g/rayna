@@ -1,5 +1,6 @@
 use getset::Getters;
 use itertools::Itertools;
+use smallvec::SmallVec;
 
 use rayna_shared::def::types::Number;
 
@@ -41,19 +42,8 @@ impl Object for ObjectList {
         self.bvh.intersect(ray, bounds)
     }
 
-    fn intersect_all<'a>(
-        &'a self,
-        ray: &'a Ray,
-    ) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>> {
-        let mut iter = self
-            .raw
-            .iter()
-            .filter_map(|obj| obj.intersect_all(ray)) // Iterator<Box<dyn Iterator>>
-            .flatten()
-            .peekable();
-        // Ensure we have at least one item in the iter
-        iter.peek()?;
-        Some(Box::new(iter))
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
+        self.bvh.intersect_all(ray, output);
     }
 
     fn bounding_box(&self) -> &Aabb {

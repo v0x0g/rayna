@@ -31,6 +31,7 @@ use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
 use rayna_shared::def::types::Number;
+use smallvec::SmallVec;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
 use self::{
@@ -53,21 +54,14 @@ pub trait Object: RtRequirement {
     ///
     /// # Parameters
     ///     - ray: The
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
-        self.intersect_all(ray)?
-            .filter(|i| bounds.contains(&i.dist))
-            .min_by(|a, b| Number::total_cmp(&a.dist, &b.dist))
-    }
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection>;
 
     /// Returns (possibly) an iterator over all of the intersections for the given object.
     ///
     /// # Return Value
-    ///     This should return a (boxed) iterator that iterates over all the (unbounded) intersections,
-    ///     unbounded by distance.
-    fn intersect_all<'a>(
-        &'a self,
-        ray: &'a Ray,
-    ) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>>;
+    /// This should place all the (unbounded) intersections, into the vector `output`.
+    /// It can be assumed this vector will be empty. 
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>);
 
     fn bounding_box(&self) -> &Aabb;
 

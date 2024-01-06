@@ -4,6 +4,7 @@ use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use rayna_shared::def::types::Number;
+use smallvec::SmallVec;
 use std::sync::Arc;
 
 /// Object wrapper around a `dyn` [Object]; Delegates everything to the inner object.
@@ -19,11 +20,8 @@ impl Object for DynamicObject {
         self.inner.intersect(ray, bounds)
     }
 
-    fn intersect_all<'a>(
-        &'a self,
-        ray: &'a Ray,
-    ) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>> {
-        self.inner.intersect_all(ray)
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
+        self.inner.intersect_all(ray, output)
     }
 
     fn bounding_box(&self) -> &Aabb {

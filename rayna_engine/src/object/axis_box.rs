@@ -1,5 +1,6 @@
 use glam::swizzles::*;
 use glamour::ToRaw;
+use smallvec::SmallVec;
 
 use rayna_shared::def::types::{Number, Point3, Vector3};
 
@@ -151,10 +152,7 @@ impl Object for AxisBoxObject {
         })
     }
 
-    fn intersect_all<'a>(
-        &'a self,
-        ray: &'a Ray,
-    ) -> Option<Box<dyn Iterator<Item = Intersection> + 'a>> {
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
         // Move to the box's reference frame. This is unavoidable and un-optimizable.
         let ro = ray.pos() - self.centre;
         let rd = ray.dir();
@@ -199,14 +197,12 @@ impl Object for AxisBoxObject {
         validate::vector3(&plane_dist_2);
         validate::vector3(&sgn);
 
-        let mut intersections = smallvec::SmallVec::<[Intersection; 4]>::new();
-
         // Preserve exactly one element of `sgn`, with the correct sign
         // Also masks the distance by the non-zero axis
         // Dot product is faster than this CMOV chain, but doesn't work when distanceToPlane contains nans or infs.
         if test!(1: x, yz) {
             let (distance, ray_normal) = (plane_dist_1.x, Vector3::new(sgn.x, 0., 0.));
-            intersections.push(Intersection {
+            output.push(Intersection {
                 pos: ray.at(distance),
                 normal: ray_normal * winding,
                 ray_normal,
@@ -217,7 +213,7 @@ impl Object for AxisBoxObject {
         }
         if test!(1: y, zx) {
             let (distance, ray_normal) = (plane_dist_1.y, Vector3::new(0., sgn.y, 0.));
-            intersections.push(Intersection {
+            output.push(Intersection {
                 pos: ray.at(distance),
                 normal: ray_normal * winding,
                 ray_normal,
@@ -228,7 +224,7 @@ impl Object for AxisBoxObject {
         }
         if test!(1: z, xy) {
             let (distance, ray_normal) = (plane_dist_1.z, Vector3::new(0., 0., sgn.z));
-            intersections.push(Intersection {
+            output.push(Intersection {
                 pos: ray.at(distance),
                 normal: ray_normal * winding,
                 ray_normal,
@@ -239,7 +235,7 @@ impl Object for AxisBoxObject {
         }
         if test!(2: x, yz) {
             let (distance, ray_normal) = (plane_dist_2.x, Vector3::new(sgn.x, 0., 0.));
-            intersections.push(Intersection {
+            output.push(Intersection {
                 pos: ray.at(distance),
                 normal: ray_normal * winding,
                 ray_normal,
@@ -250,7 +246,7 @@ impl Object for AxisBoxObject {
         }
         if test!(2: y, zx) {
             let (distance, ray_normal) = (plane_dist_2.y, Vector3::new(0., sgn.y, 0.));
-            intersections.push(Intersection {
+            output.push(Intersection {
                 pos: ray.at(distance),
                 normal: ray_normal * winding,
                 ray_normal,
@@ -261,7 +257,7 @@ impl Object for AxisBoxObject {
         }
         if test!(2: z, xy) {
             let (distance, ray_normal) = (plane_dist_2.z, Vector3::new(0., 0., sgn.z));
-            intersections.push(Intersection {
+            output.push(Intersection {
                 pos: ray.at(distance),
                 normal: ray_normal * winding,
                 ray_normal,
@@ -270,12 +266,6 @@ impl Object for AxisBoxObject {
                 material: self.material.clone(),
             });
         }
-
-        return if intersections.is_empty() {
-            None
-        } else {
-            Some(Box::new(intersections.into_iter()))
-        };
     }
 
     fn bounding_box(&self) -> &Aabb {

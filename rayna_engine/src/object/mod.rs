@@ -44,6 +44,7 @@ pub mod dynamic;
 pub mod parallelogram;
 pub mod planar;
 pub mod sphere;
+pub mod triangle;
 
 dyn_clone::clone_trait_object!(Object);
 #[enum_dispatch]

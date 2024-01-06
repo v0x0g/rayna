@@ -42,6 +42,7 @@ use self::{
 pub mod axis_box;
 pub mod dynamic;
 pub mod parallelogram;
+pub mod planar;
 pub mod sphere;
 
 dyn_clone::clone_trait_object!(Object);

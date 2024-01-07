@@ -82,19 +82,19 @@ pub static TESTING: Scene = {
     //     })
     //     .into(),
     // );
-    // objects.push(
-    //     ParallelogramObject::from(ParallelogramBuilder {
-    //         material: LambertianMaterial {
-    //             albedo: [1.; 3].into(),
-    //             emissive: Default::default(),
-    //         }
-    //         .into(),
-    //         corner_origin: Point3::new(0., 0., 0.),
-    //         corner_upper: Point3::new(0., 1., 0.),
-    //         corner_right: Point3::new(1., 0., 0.),
-    //     })
-    //     .into(),
-    // );
+    objects.push(
+        ParallelogramObject::from(ParallelogramBuilder {
+            material: LambertianMaterial {
+                albedo: [1.; 3].into(),
+                emissive: Default::default(),
+            }
+            .into(),
+            corner_origin: Point3::new(0., 0., 0.),
+            corner_upper: Point3::new(0., 1., 0.),
+            corner_right: Point3::new(1., 0., 0.),
+        })
+        .into(),
+    );
     // objects.push(
     //     SphereObject::from(SphereBuilder {
     //         // Ground

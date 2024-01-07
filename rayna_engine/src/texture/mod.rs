@@ -7,7 +7,7 @@ use enum_dispatch::enum_dispatch;
 use rand_core::RngCore;
 use rayna_shared::def::types::Pixel;
 //noinspection ALL
-use self::dynamic::DynamicTexture;
+use self::{dynamic::DynamicTexture, solid::SolidTexture};
 
 /// The trait that defines what properties a texture has
 #[enum_dispatch]
@@ -21,5 +21,12 @@ dyn_clone::clone_trait_object!(Texture);
 #[enum_dispatch(Texture)]
 #[derive(Clone, Debug)]
 pub enum TextureType {
+    SolidTexture,
     DynamicTexture,
+}
+
+impl Default for TextureType {
+    fn default() -> Self {
+        SolidTexture::default().into()
+    }
 }

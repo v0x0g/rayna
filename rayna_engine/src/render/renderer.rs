@@ -362,9 +362,13 @@ impl Renderer {
             Self::ray_colour_recursive(scene, &future_ray, opts, bounds, depth + 1, rng);
         validate::colour(&future_col);
 
-        return intersect
-            .material
-            .calculate_colour(&ray, &intersect, &future_ray, &future_col);
+        return intersect.material.calculate_colour(
+            &ray,
+            &intersect,
+            &future_ray,
+            &future_col,
+            rng,
+        );
     }
 
     /// Calculates a random pixel shift (for MSAA), and applies it to the (pixel) coordinates

@@ -2,6 +2,7 @@
 #![feature(error_generic_member_access)]
 #![feature(const_for)]
 #![feature(portable_simd)]
+#![feature(stdsimd)]
 
 mod accel;
 pub mod material;

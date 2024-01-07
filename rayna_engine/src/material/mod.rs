@@ -107,6 +107,7 @@ pub trait Material: RtRequirement {
         intersection: &Intersection,
         future_ray: &Ray,
         future_col: &Pixel,
+        rng: &mut dyn RngCore,
     ) -> Pixel;
 }
 

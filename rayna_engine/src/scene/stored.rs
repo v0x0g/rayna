@@ -44,7 +44,8 @@ pub static SIMPLE: Scene = {
                 pos: Point3::new(0., -100.5, -1.),
                 radius: 100.,
                 material: LambertianMaterial {
-                    albedo: Pixel::from([0.5; 3]),
+                    albedo: [0.5; 3].into(),
+                    emissive: Default::default(),
                 }
                 .into(),
             },
@@ -63,7 +64,7 @@ pub static TESTING: Scene = {
             pos: Point3::new(0., 2., 0.),
             radius: 0.5,
             material: MetalMaterial {
-                albedo: Pixel::from([0.8; 3]),
+                albedo: [0.8; 3].into(),
                 fuzz: 1.,
             }
             .into(),
@@ -85,6 +86,7 @@ pub static TESTING: Scene = {
         ParallelogramObject::from(ParallelogramBuilder {
             material: LambertianMaterial {
                 albedo: [1.; 3].into(),
+                emissive: Default::default(),
             }
             .into(),
             corner_origin: Point3::new(0., 0., 0.),
@@ -121,7 +123,8 @@ pub static TESTING: Scene = {
 #[dynamic]
 pub static TRIO: Scene = {
     let material: MaterialType = LambertianMaterial {
-        albedo: Pixel::from([1.; 3]),
+        albedo: [1.; 3].into(),
+        emissive: Default::default(),
     }
     .into();
     Scene {
@@ -182,6 +185,7 @@ pub static GLASS: Scene = {
             radius: 100.,
             material: LambertianMaterial {
                 albedo: [0.8, 0.8, 0.0].into(),
+                emissive: Default::default(),
             }
             .into(),
         }
@@ -208,6 +212,7 @@ pub static GLASS: Scene = {
             radius: 0.5,
             material: LambertianMaterial {
                 albedo: [0.1, 0.2, 0.5].into(),
+                emissive: Default::default(),
             }
             .into(),
         }
@@ -268,7 +273,9 @@ pub static BALLZ: Scene = {
 
             let material: MaterialType = if material_choice < 0.7 {
                 LambertianMaterial {
-                    albedo: Pixel::map2(&rng::colour_rgb(rng), &rng::colour_rgb(rng), |a, b| a * b),
+                    albedo: Pixel::map2(&rng::colour_rgb(rng), &rng::colour_rgb(rng), |a, b| a * b)
+                        .into(),
+                    emissive: Default::default(),
                 }
                 .into()
             } else if material_choice <= 0.9 {
@@ -323,6 +330,7 @@ pub static BALLZ: Scene = {
             radius: 1.,
             material: LambertianMaterial {
                 albedo: [0.4, 0.2, 0.1].into(),
+                emissive: Default::default(),
             }
             .into(),
         }
@@ -347,6 +355,7 @@ pub static BALLZ: Scene = {
             radius: 1000.,
             material: LambertianMaterial {
                 albedo: [0.5, 0.5, 0.5].into(),
+                emissive: Default::default(),
             }
             .into(),
         }

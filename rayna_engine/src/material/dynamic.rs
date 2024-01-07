@@ -26,8 +26,9 @@ impl Material for DynamicMaterial {
         intersection: &Intersection,
         future_ray: &Ray,
         future_col: &Pixel,
+        rng: &mut dyn RngCore,
     ) -> Pixel {
         self.inner
-            .calculate_colour(ray, intersection, future_ray, future_col)
+            .calculate_colour(ray, intersection, future_ray, future_col, rng)
     }
 }

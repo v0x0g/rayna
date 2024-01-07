@@ -49,7 +49,7 @@ pub enum RendererCreateError {
 impl Renderer {
     pub fn new() -> Result<Self, RendererCreateError> {
         let thread_pool = ThreadPoolBuilder::new()
-            .num_threads(10)
+            .num_threads(1)
             .thread_name(|id| format!("Renderer::worker_{id}"))
             .start_handler(|id| {
                 trace!(target: RENDERER, "renderer worker {id} start");
@@ -290,6 +290,9 @@ impl Renderer {
                     .as_array()
                     .map(|f| (f / 2.) as Channel + 0.5),
             ),
+            RenderMode::Uv => {
+                Pixel::from([intersect.uv.x as Channel, intersect.uv.y as Channel, 0.])
+            }
             RenderMode::Distance => {
                 let dist = intersect.dist;
                 // let val = (dist + 1.).log2();

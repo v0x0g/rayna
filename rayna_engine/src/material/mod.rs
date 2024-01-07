@@ -1,5 +1,5 @@
 //noinspection ALL
-use crate::material::{
+use self::{
     dielectric::DielectricMaterial, dynamic::DynamicMaterial, lambertian::LambertianMaterial,
     metal::MetalMaterial,
 };

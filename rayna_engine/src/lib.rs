@@ -10,3 +10,4 @@ pub mod render;
 pub mod scene;
 pub mod shared;
 pub mod skybox;
+mod texture;

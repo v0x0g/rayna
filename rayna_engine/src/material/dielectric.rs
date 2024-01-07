@@ -49,7 +49,7 @@ impl Material for DielectricMaterial {
         _intersection: &Intersection,
         _future_ray: &Ray,
         future_col: &Pixel,
-        rng: &mut dyn RngCore,
+        _rng: &mut dyn RngCore,
     ) -> Pixel {
         Pixel::map2(&future_col, &self.albedo, |a, b| a * b)
     }

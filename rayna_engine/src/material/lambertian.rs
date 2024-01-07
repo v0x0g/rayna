@@ -4,7 +4,6 @@ use crate::shared::ray::Ray;
 use crate::shared::rng;
 use crate::texture::Texture;
 use crate::texture::TextureType;
-use image::Pixel as _;
 use rand::RngCore;
 use rayna_shared::def::types::{Channel, Pixel, Vector3};
 
@@ -38,22 +37,22 @@ impl Material for LambertianMaterial {
         future_col: &Pixel,
         rng: &mut dyn RngCore,
     ) -> Pixel {
-        use core::arch::x86_64::*;
-
         let f = future_col.0;
         let a = self.albedo.value(intersect, rng).0;
         let e = self.emissive.value(intersect, rng).0;
 
-        unsafe {
-            const MASK: __mmask8 = 0b1110;
-            let f = _mm_maskz_loadu_ps(MASK, f.as_ptr());
-            let a = _mm_maskz_loadu_ps(MASK, a.as_ptr());
-            let e = _mm_maskz_loadu_ps(MASK, e.as_ptr());
-            let o = _mm_fmadd_ps(f, a, e);
-            let mut p = [0.; 4];
-            _mm_mask_storeu_ps(p.as_mut_ptr(), MASK, o);
-            *Pixel::from_slice(&p)
-        };
+        // unsafe {
+        //     use core::arch::x86_64::*;
+        //     use image::Pixel as _;
+        //     const MASK: __mmask8 = 0b1110;
+        //     let f = _mm_maskz_loadu_ps(MASK, f.as_ptr());
+        //     let a = _mm_maskz_loadu_ps(MASK, a.as_ptr());
+        //     let e = _mm_maskz_loadu_ps(MASK, e.as_ptr());
+        //     let o = _mm_fmadd_ps(f, a, e);
+        //     let mut p = [0.; 4];
+        //     _mm_mask_storeu_ps(p.as_mut_ptr(), MASK, o);
+        //     *Pixel::from_slice(&p)
+        // };
 
         Pixel::from([
             Channel::mul_add(f[0], a[0], e[0]),

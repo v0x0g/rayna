@@ -87,8 +87,8 @@ impl Object for SphereObject {
 
         let dist = root;
         let world_point = ray.at(dist);
-        let local_point = (world_point - self.pos).to_point();
-        let outward_normal = local_point.to_vector() / self.radius;
+        let local_point = (world_point - self.pos) / self.radius;
+        let outward_normal = local_point;
         let ray_pos_inside = Vector3::dot(ray_dir, outward_normal) > 0.;
         //This flips the normal if the ray is inside the sphere
         //This forces the normal to always be going against the ray
@@ -100,7 +100,7 @@ impl Object for SphereObject {
 
         return Some(Intersection {
             pos_w: world_point,
-            pos_l: local_point,
+            pos_l: local_point.to_point(),
             dist,
             normal: outward_normal,
             ray_normal,
@@ -134,8 +134,8 @@ impl Object for SphereObject {
 
         output.extend([root_1, root_2].map(|k| {
             let world_point = ray.at(k);
-            let local_point = (world_point - self.pos).to_point();
-            let outward_normal = local_point.to_vector() / self.radius;
+            let local_point = (world_point - self.pos) / self.radius;
+            let outward_normal = local_point;
             let inside = Vector3::dot(ray_dir, outward_normal) > 0.;
             //This flips the normal if the ray is inside the sphere
             //This forces the normal to always be going against the ray
@@ -147,7 +147,7 @@ impl Object for SphereObject {
 
             Intersection {
                 pos_w: world_point,
-                pos_l: local_point,
+                pos_l: local_point.to_point(),
                 dist: k,
                 normal: outward_normal,
                 ray_normal,
@@ -163,8 +163,8 @@ impl Object for SphereObject {
     }
 }
 
-/// Converts a point on a sphere (centred at [Point3::ZERO], radius `>0.`), into a UV coordinate
-pub fn sphere_uv(p: Point3) -> Point2 {
+/// Converts a point on a sphere (centred at [Point3::ZERO], radius `1`), into a UV coordinate
+pub fn sphere_uv(p: Vector3) -> Point2 {
     let theta = Number::acos(-p.y);
     let phi = Number::atan2(-p.z, p.x) + Number::PI;
 

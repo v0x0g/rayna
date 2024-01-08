@@ -115,19 +115,18 @@ impl Object for AxisBoxObject {
                 let dist: Number = plane_dist.$u;
                 // Is there a hit on this axis in the valid distance bounds?
                 if bounds.contains(&dist) {
-                    let uvs: Point2 =
-                        Vector2::from_raw(ro.to_raw().$vw() + (rd.to_raw().$vw() * dist))
-                            .abs()
-                            .to_point();
-                    let dims = self.radius.to_raw().$vw();
+                    let uvs_raw = Vector2::from_raw(ro.to_raw().$vw() + (rd.to_raw().$vw() * dist));
+                    let radius = Vector2::from_raw(self.radius.to_raw().$vw());
                     // Is that hit within the face of the box?
-                    if (uvs.x < dims.x) && (uvs.y < dims.y) {
+                    if (uvs_raw.x.abs() < radius.x) && (uvs_raw.y.abs() < radius.y) {
                         // Mask the sign to be the normal
                         let ray_normal = Vector3 {
                             $u: sgn.$u,
                             ..Vector3::ZERO
                         };
                         let pos_w = ray.at(dist);
+                        // Remap from [-radius..radius] to [0..1]
+                        let uvs = (uvs_raw / radius + Vector2::ONE) / 2.;
                         return Some(Intersection {
                             pos_w,
                             pos_l: pos_w - self.centre.to_vector(),
@@ -136,7 +135,7 @@ impl Object for AxisBoxObject {
                             front_face: winding.is_sign_positive(),
                             dist,
                             material: self.material.clone(),
-                            uv: uvs,
+                            uv: uvs.to_point(),
                         });
                     }
                 }

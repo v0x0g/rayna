@@ -107,6 +107,7 @@ impl Object for SphereObject {
             front_face: !ray_pos_inside,
             material: self.material.clone(),
             uv: sphere_uv(local_point),
+            face: 0,
         });
     }
 
@@ -154,6 +155,7 @@ impl Object for SphereObject {
                 front_face: !inside,
                 material: self.material.clone(),
                 uv: sphere_uv(local_point),
+                face: 0,
             }
         }));
     }

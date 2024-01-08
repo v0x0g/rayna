@@ -33,6 +33,11 @@ pub struct Intersection {
     pub dist: Number,
     /// The UV coordinates for the point on the object's surface. Normally used for texture mapping
     pub uv: Point2,
+    /// Numeric ID for which "face" was hit
+    ///
+    /// For objects with a single 'surface' (like a [sphere](crate::object::sphere::SphereObject), this would be always [Number::ZERO].
+    /// For an object that may have multiple faces (like a [box](crate::object::axis_box::AxisBoxObject), this would unique per-side.
+    pub face: usize,
     #[derivative(PartialEq = "ignore", PartialOrd = "ignore")]
     pub material: MaterialType,
 }

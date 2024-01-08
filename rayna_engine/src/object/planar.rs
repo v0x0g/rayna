@@ -107,6 +107,7 @@ impl Planar {
             front_face: true,
             ray_normal: -self.n * denominator.signum(),
             uv: Point2::new(alpha, beta),
+            face: 0,
         })
     }
 }

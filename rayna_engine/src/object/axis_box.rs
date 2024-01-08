@@ -137,7 +137,7 @@ impl Object for AxisBoxObject {
                             dist,
                             material: self.material.clone(),
                             uv: uvs.to_point(),
-                            // x: 0,1; y: 2,3; z: 4,5; -ve winding first then positive winding
+                            // x: 0,1; y: 2,3; z: 4,5; -ve sign first then positive sign
                             face: ((glam::uvec3(1, 5, 9).$u + sgn.$u as u32) / 2) as usize,
                         });
                     }

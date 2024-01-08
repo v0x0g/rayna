@@ -271,6 +271,24 @@ impl Renderer {
         };
         validate::intersection(ray, &intersect, bounds);
 
+        // Some colours to help with visualisation
+        const N_COL: usize = 13;
+        const COLOURS: [Pixel; N_COL] = [
+            Pixel { 0: [1.0, 1.0, 1.0] },
+            Pixel { 0: [1.0, 0.0, 0.0] },
+            Pixel { 0: [1.0, 0.5, 0.0] },
+            Pixel { 0: [1.0, 1.0, 0.0] },
+            Pixel { 0: [0.5, 1.0, 0.0] },
+            Pixel { 0: [0.0, 1.0, 0.0] },
+            Pixel { 0: [0.0, 1.0, 0.5] },
+            Pixel { 0: [0.0, 1.0, 1.0] },
+            Pixel { 0: [0.0, 0.5, 1.0] },
+            Pixel { 0: [0.0, 0.0, 1.0] },
+            Pixel { 0: [0.5, 0.0, 1.0] },
+            Pixel { 0: [1.0, 0.0, 1.0] },
+            Pixel { 0: [0.0, 0.0, 0.0] },
+        ];
+
         return match mode {
             RenderMode::PBR => unreachable!("mode == RenderMode::PBR already checked"),
             RenderMode::OutwardNormal => {
@@ -293,30 +311,18 @@ impl Renderer {
             RenderMode::Uv => {
                 Pixel::from([intersect.uv.x as Channel, intersect.uv.y as Channel, 0.])
             }
+            RenderMode::Face => {
+                // TODO: Make `Object: Hash`
+                let hash = intersect.face % (N_COL - 1) + 1;
+                COLOURS[hash]
+            }
             RenderMode::Distance => {
                 let dist = intersect.dist;
                 // let val = (dist + 1.).log2();
                 let val = 2. * dist.cbrt();
 
-                const N: usize = 13;
-                const COLOURS: [Pixel; N] = [
-                    Pixel { 0: [1.0, 1.0, 1.0] },
-                    Pixel { 0: [1.0, 0.0, 0.0] },
-                    Pixel { 0: [1.0, 0.5, 0.0] },
-                    Pixel { 0: [1.0, 1.0, 0.0] },
-                    Pixel { 0: [0.5, 1.0, 0.0] },
-                    Pixel { 0: [0.0, 1.0, 0.0] },
-                    Pixel { 0: [0.0, 1.0, 0.5] },
-                    Pixel { 0: [0.0, 1.0, 1.0] },
-                    Pixel { 0: [0.0, 0.5, 1.0] },
-                    Pixel { 0: [0.0, 0.0, 1.0] },
-                    Pixel { 0: [0.5, 0.0, 1.0] },
-                    Pixel { 0: [1.0, 0.0, 1.0] },
-                    Pixel { 0: [0.0, 0.0, 0.0] },
-                ];
-
-                let floor = val.floor().clamp(0., (N - 1) as _);
-                let ceil = val.ceil().clamp(0., (N - 1) as _);
+                let floor = val.floor().clamp(0., (N_COL - 1) as _);
+                let ceil = val.ceil().clamp(0., (N_COL - 1) as _);
                 let frac = val - floor;
 
                 let a = COLOURS[floor as usize];

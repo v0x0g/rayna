@@ -39,6 +39,7 @@ pub enum RenderMode {
     Scatter,
     Distance,
     Uv,
+    Face,
 }
 
 impl RenderOpts {

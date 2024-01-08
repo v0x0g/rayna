@@ -138,7 +138,7 @@ impl Object for AxisBoxObject {
                             material: self.material.clone(),
                             uv: uvs.to_point(),
                             // x: 0,1; y: 2,3; z: 4,5; -ve winding first then positive winding
-                            face: ((glam::uvec3(1, 5, 9).$u + winding as u32) / 2) as usize,
+                            face: ((glam::uvec3(1, 5, 9).$u + sgn.$u as u32) / 2) as usize,
                         });
                     }
                 }
@@ -209,7 +209,7 @@ impl Object for AxisBoxObject {
                         material: self.material.clone(),
                         uv: uvs,
                         // x: 0,1; y: 2,3; z: 4,5; -ve winding first then positive winding
-                        face: ((glam::uvec3(1, 5, 9).$u + winding as u32) / 2) as usize
+                        face: ((glam::uvec3(1, 5, 9).$u + sgn.$u as u32) / 2) as usize
                     });
                 }
             }};

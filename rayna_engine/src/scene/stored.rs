@@ -3,7 +3,7 @@ use rand::{thread_rng, Rng};
 use static_init::*;
 use std::sync::Arc;
 
-use rayna_shared::def::types::{Angle, Number, Pixel, Point3, Vector3};
+use rayna_shared::def::types::{Angle, Number, Pixel, Point3, Size2, Vector2, Vector3};
 
 use crate::material::dielectric::DielectricMaterial;
 use crate::material::lambertian::LambertianMaterial;
@@ -17,6 +17,7 @@ use crate::shared::camera::Camera;
 use crate::shared::rng;
 use crate::skybox::SkyboxInstance;
 use crate::texture::checker::WorldCheckerTexture;
+use crate::texture::image::ImageTexture;
 
 use super::Scene;
 
@@ -338,13 +339,34 @@ pub static BALLZ: Scene = {
         }
         .into(),
     );
+    // objects.push(
+    //     SphereBuilder {
+    //         pos: Point3::new(4., 1., 0.),
+    //         radius: 1.,
+    //         material: MetalMaterial {
+    //             albedo: [0.7, 0.6, 0.5].into(),
+    //             fuzz: 0.,
+    //         }
+    //         .into(),
+    //     }
+    //     .into(),
+    // );
     objects.push(
         SphereBuilder {
             pos: Point3::new(4., 1., 0.),
             radius: 1.,
-            material: MetalMaterial {
-                albedo: [0.7, 0.6, 0.5].into(),
-                fuzz: 0.,
+            material: LambertianMaterial {
+                albedo: ImageTexture {
+                    scale: Size2::splat(1.),
+                    offset: Vector2::ZERO,
+                    image: Arc::new(
+                        image::open("./media/textures/earthmap.jpg")
+                            .expect("open")
+                            .into_rgb32f(),
+                    ),
+                }
+                .into(),
+                emissive: Default::default(),
             }
             .into(),
         }

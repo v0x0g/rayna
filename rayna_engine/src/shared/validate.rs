@@ -2,7 +2,7 @@ use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use approx::*;
-use rayna_shared::def::types::{Number, Pixel, Point3, Vector3};
+use rayna_shared::def::types::{Number, Pixel, Point2, Point3, Vector3};
 use std::borrow::Borrow;
 
 macro_rules! debug_assert_only {
@@ -74,6 +74,17 @@ pub fn colour(c: impl Borrow<Pixel>) {
     )
 }
 
+#[inline(always)]
+#[track_caller]
+pub fn uv(uv: impl Borrow<Point2>) {
+    debug_assert_only!();
+    let uv = uv.borrow();
+    assert!(
+        (uv.cmpge(Point2::ZERO) & uv.cmple(Point2::ONE)).all(),
+        "uv coordinates should be `0..=1`; uv: {uv:?}"
+    )
+}
+
 /// Asserts that an intersection was valid
 #[inline(always)]
 #[track_caller]
@@ -87,6 +98,8 @@ pub fn intersection(
     let intersect = intersect.borrow();
     let bounds = bounds.borrow();
     let ray = ray.borrow();
+
+    uv(&intersect.uv);
 
     point3(intersect.pos_w);
     number(intersect.dist);

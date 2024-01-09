@@ -1,5 +1,6 @@
 pub mod checker;
 pub mod dynamic;
+pub mod image;
 pub mod solid;
 
 use crate::shared::intersect::Intersection;
@@ -9,7 +10,7 @@ use rand::thread_rng;
 use rand_core::RngCore;
 use rayna_shared::def::types::Pixel;
 //noinspection ALL
-use self::{checker::WorldCheckerTexture, dynamic::DynamicTexture, solid::SolidTexture};
+use self::{checker::WorldCheckerTexture, dynamic::DynamicTexture, solid::SolidTexture, image::ImageTexture};
 
 /// The trait that defines what properties a texture has
 #[enum_dispatch]
@@ -25,6 +26,7 @@ dyn_clone::clone_trait_object!(Texture);
 pub enum TextureInstance {
     SolidTexture,
     WorldCheckerTexture,
+    ImageTexture,
     DynamicTexture,
 }
 

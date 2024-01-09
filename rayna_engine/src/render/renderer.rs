@@ -49,7 +49,7 @@ pub enum RendererCreateError {
 impl Renderer {
     pub fn new() -> Result<Self, RendererCreateError> {
         let thread_pool = ThreadPoolBuilder::new()
-            .num_threads(1)
+            .num_threads(10)
             .thread_name(|id| format!("Renderer::worker_{id}"))
             .start_handler(|id| {
                 trace!(target: RENDERER, "renderer worker {id} start");

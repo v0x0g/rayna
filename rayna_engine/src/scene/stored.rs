@@ -7,14 +7,14 @@ use rayna_shared::def::types::{Angle, Number, Pixel, Point3, Vector3};
 use crate::material::dielectric::DielectricMaterial;
 use crate::material::lambertian::LambertianMaterial;
 use crate::material::metal::MetalMaterial;
-use crate::material::MaterialType;
+use crate::material::MaterialInstance;
 use crate::object::axis_box::*;
 use crate::object::parallelogram::*;
 use crate::object::sphere::*;
-use crate::object::ObjectType;
+use crate::object::ObjectInstance;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
-use crate::skybox::SkyboxType;
+use crate::skybox::SkyboxInstance;
 
 use super::Scene;
 
@@ -51,13 +51,13 @@ pub static SIMPLE: Scene = {
             },
         ]
         .into(),
-        skybox: SkyboxType::default(),
+        skybox: SkyboxInstance::default(),
     }
 };
 
 #[dynamic]
 pub static TESTING: Scene = {
-    let mut objects = Vec::<ObjectType>::new();
+    let mut objects = Vec::<ObjectInstance>::new();
     objects.push(
         SphereObject::from(SphereBuilder {
             // Small, top
@@ -116,13 +116,13 @@ pub static TESTING: Scene = {
             defocus_angle: Angle::from_degrees(0.),
         },
         objects: objects.into(),
-        skybox: SkyboxType::default(),
+        skybox: SkyboxInstance::default(),
     }
 };
 
 #[dynamic]
 pub static TRIO: Scene = {
-    let material: MaterialType = LambertianMaterial {
+    let material: MaterialInstance = LambertianMaterial {
         albedo: [1.; 3].into(),
         emissive: Default::default(),
     }
@@ -162,7 +162,7 @@ pub static TRIO: Scene = {
             },
         ]
         .into(),
-        skybox: SkyboxType::default(),
+        skybox: SkyboxInstance::default(),
     }
 };
 
@@ -176,7 +176,7 @@ pub static GLASS: Scene = {
         defocus_angle: Angle::from_degrees(3.),
     };
 
-    let mut objects = Vec::<ObjectType>::new();
+    let mut objects = Vec::<ObjectInstance>::new();
 
     // Ground
     objects.push(
@@ -235,7 +235,7 @@ pub static GLASS: Scene = {
     Scene {
         camera,
         objects: objects.into(),
-        skybox: SkyboxType::default(),
+        skybox: SkyboxInstance::default(),
     }
 };
 
@@ -250,7 +250,7 @@ pub static BALLZ: Scene = {
         defocus_angle: Angle::from_degrees(0.6),
     };
 
-    let mut objects = Vec::<ObjectType>::new();
+    let mut objects = Vec::<ObjectInstance>::new();
 
     let grid_dims = -15..=15;
     let rng = &mut thread_rng();
@@ -271,7 +271,7 @@ pub static BALLZ: Scene = {
                 continue;
             }
 
-            let material: MaterialType = if material_choice < 0.7 {
+            let material: MaterialInstance = if material_choice < 0.7 {
                 LambertianMaterial {
                     albedo: Pixel::map2(&rng::colour_rgb(rng), &rng::colour_rgb(rng), |a, b| a * b)
                         .into(),
@@ -365,6 +365,6 @@ pub static BALLZ: Scene = {
     Scene {
         camera,
         objects: objects.into(),
-        skybox: SkyboxType::default(),
+        skybox: SkyboxInstance::default(),
     }
 };

@@ -1,6 +1,6 @@
 use crate::accel::aabb::Aabb;
-use crate::material::MaterialType;
-use crate::object::{Object, ObjectType};
+use crate::material::MaterialInstance;
+use crate::object::{Object, ObjectInstance};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -15,14 +15,14 @@ use smallvec::SmallVec;
 pub struct SphereBuilder {
     pub pos: Point3,
     pub radius: Number,
-    pub material: MaterialType,
+    pub material: MaterialInstance,
 }
 
 /// The actual instance of a sphere that can be rendered.
 /// Has precomputed values and therefore cannot be mutated
 #[derive(Clone, Debug)]
 pub struct SphereObject {
-    material: MaterialType,
+    material: MaterialInstance,
     pos: Point3,
     radius: Number,
     // TODO: is `radius_sqr` a perf improvement?
@@ -47,9 +47,9 @@ impl From<SphereBuilder> for SphereObject {
     }
 }
 
-/// Converts the sphere builder into an [ObjectType]
-impl From<SphereBuilder> for ObjectType {
-    fn from(value: SphereBuilder) -> ObjectType {
+/// Converts the sphere builder into an [ObjectInstance]
+impl From<SphereBuilder> for ObjectInstance {
+    fn from(value: SphereBuilder) -> ObjectInstance {
         SphereObject::from(value).into()
     }
 }

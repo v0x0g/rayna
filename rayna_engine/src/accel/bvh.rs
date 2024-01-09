@@ -12,7 +12,7 @@ use smallvec::SmallVec;
 use rayna_shared::def::types::Number;
 
 use crate::accel::aabb::Aabb;
-use crate::object::{Object, ObjectType};
+use crate::object::{Object, ObjectInstance};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -34,11 +34,11 @@ enum SplitAxis {
 enum BvhNode {
     // Don't need to keep track of children since the tree does that for us
     Nested(Aabb),
-    Object(ObjectType),
+    Object(ObjectInstance),
 }
 
 /// Helper function to unwrap an AABB with a panic message
-fn expect_aabb(o: &ObjectType) -> &Aabb {
+fn expect_aabb(o: &ObjectInstance) -> &Aabb {
     o.aabb().expect("aabb required as invariant of `Bvh`")
 }
 
@@ -48,7 +48,7 @@ impl Bvh {
     /// # Note
     /// The given slice of `objects` should only contain *bounded* objects (i.e. [Object::aabb()] returns [`Some(_)`]).
     /// The exact behaviour is not specified, but will most likely result in a panic during building/accessing the tree
-    pub fn new(objects: &[ObjectType]) -> Self {
+    pub fn new(objects: &[ObjectInstance]) -> Self {
         assert!(
             objects.iter().all(|o| o.aabb().is_some()),
             "objects should all be bounded"
@@ -64,17 +64,17 @@ impl Bvh {
 
     /// Sorts the given slice of objects along the chosen `axis`
     /// This sort is *unstable* (see [sort_unstable_by](https://doc.rust-lang.org/std/primitive.slice.html#method.sort_unstable_by))
-    fn sort_along_aabb_axis(axis: SplitAxis, objects: &mut [ObjectType]) {
-        fn sort_x(a: &ObjectType, b: &ObjectType) -> Ordering {
+    fn sort_along_aabb_axis(axis: SplitAxis, objects: &mut [ObjectInstance]) {
+        fn sort_x(a: &ObjectInstance, b: &ObjectInstance) -> Ordering {
             PartialOrd::partial_cmp(&expect_aabb(a).min().x, &expect_aabb(b).min().x)
                 .expect("should be able to cmp AABB x-bounds: should not be nan")
         }
 
-        fn sort_y(a: &ObjectType, b: &ObjectType) -> Ordering {
+        fn sort_y(a: &ObjectInstance, b: &ObjectInstance) -> Ordering {
             PartialOrd::partial_cmp(&expect_aabb(a).min().y, &expect_aabb(b).min().y)
                 .expect("should be able to cmp AABB y-bounds: should not be nan")
         }
-        fn sort_z(a: &ObjectType, b: &ObjectType) -> Ordering {
+        fn sort_z(a: &ObjectInstance, b: &ObjectInstance) -> Ordering {
             PartialOrd::partial_cmp(&expect_aabb(a).min().z, &expect_aabb(b).min().z)
                 .expect("should be able to cmp AABB z-bounds: should not be nan")
         }
@@ -92,7 +92,7 @@ impl Bvh {
     /// # **Surface-Area Heuristics** (SAH)
     /// This method uses SAH to optimise the choice of split axis, as well as split position.
     /// It does this by choosing the longest axis, and splitting at the point where the overall surface areas are optimal
-    fn generate_nodes_sah(objects: &[ObjectType], arena: &mut Arena<BvhNode>) -> NodeId {
+    fn generate_nodes_sah(objects: &[ObjectInstance], arena: &mut Arena<BvhNode>) -> NodeId {
         return match objects {
             [obj] => arena.new_node(BvhNode::Object(obj.clone())),
             [a, b] => {

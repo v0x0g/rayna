@@ -4,7 +4,7 @@
 //! You should store an instance of [Planar] inside your object struct, and then simply validate the UV coordinates
 //! of the planar intersection for whichever shape your dreams do so desire...
 
-use crate::material::MaterialType;
+use crate::material::MaterialInstance;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -75,7 +75,7 @@ impl Planar {
         &self,
         ray: &Ray,
         bounds: &Bounds<Number>,
-        material: &MaterialType,
+        material: &MaterialInstance,
     ) -> Option<Intersection> {
         let denominator = Vector3::dot(self.n, ray.dir());
 

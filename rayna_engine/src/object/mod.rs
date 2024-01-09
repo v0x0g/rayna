@@ -1,10 +1,10 @@
 //! # Module [crate::object]
 //!
-//! This module contains the submodules for different object (see [Object] and [ObjectType]) types.
+//! This module contains the submodules for different object (see [Object] and [ObjectInstance]) types.
 //!
 //! ## Related
 //! - [Object]
-//! - [ObjectType]
+//! - [ObjectInstance]
 //! - [sphere]
 //!
 //! # DEV: Code Structure
@@ -21,7 +21,7 @@
 //! - File: `./sphere.rs`
 //! - Add module: `pub mod sphere;`
 //! - Structs: `SphereBuilder`, which is translated into `SphereObject`, where `SphereObject: Object`
-//! - Add an entry to [ObjectType] to correspond to the `SphereObject` for static-dispatch
+//! - Add an entry to [ObjectInstance] to correspond to the `SphereObject` for static-dispatch
 //! - See [sphere] for an example
 
 use crate::accel::aabb::Aabb;
@@ -73,10 +73,10 @@ pub trait Object: RtRequirement {
 
 /// An optimised implementation of [Object].
 ///
-/// See [crate::material::MaterialType] for an explanation of the [macro@enum_dispatch] macro usage
+/// See [crate::material::MaterialInstance] for an explanation of the [macro@enum_dispatch] macro usage
 #[enum_dispatch(Object)]
 #[derive(Clone, Debug)]
-pub enum ObjectType {
+pub enum ObjectInstance {
     SphereObject,
     AxisBoxObject,
     ParallelogramObject,

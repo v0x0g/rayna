@@ -58,7 +58,7 @@ pub trait Material: RtRequirement {
     ///             r
     ///         }
     ///     }
-    /// #   fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel) -> Pixel { unimplemented!() }
+    /// #   fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel, rng: &mut dyn RngCore) -> Pixel { unimplemented!() }
     /// }
     /// ```
     fn scatter(
@@ -93,7 +93,7 @@ pub trait Material: RtRequirement {
     /// #     /// #
     /// impl Material for Test {
     /// #   fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Vector3 { unimplemented!() }
-    ///     fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel) -> Pixel {
+    ///     fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel, rng: &mut dyn RngCore) -> Pixel {
     ///         // Pure reflection
     ///         return *future_col;
     ///         // Pure absorbtion
@@ -115,10 +115,10 @@ pub trait Material: RtRequirement {
 ///
 /// By using an enum, we can replace dynamic-dispatch with static dispatch.
 /// Just in case we do require dynamic dispatch for some reason, there is a
-/// [crate::material::MaterialType::DynamicMaterial] variant, which wraps a generic material in an [std::sync::Arc]
+/// [crate::material::MaterialInstance::DynamicMaterial] variant, which wraps a generic material in an [std::sync::Arc]
 #[enum_dispatch(Material)]
 #[derive(Clone, Debug)]
-pub enum MaterialType {
+pub enum MaterialInstance {
     LambertianMaterial,
     MetalMaterial,
     DielectricMaterial,

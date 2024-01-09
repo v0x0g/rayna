@@ -8,19 +8,19 @@ use enum_dispatch::enum_dispatch;
 use rayna_shared::def::types::Pixel;
 
 dyn_clone::clone_trait_object!(Skybox);
-#[enum_dispatch(SkyboxType)]
+#[enum_dispatch]
 pub trait Skybox: RtRequirement {
     fn sky_colour(&self, ray: &Ray) -> Pixel;
 }
 
-#[enum_dispatch]
+#[enum_dispatch(Skybox)]
 #[derive(Clone, Debug)]
-pub enum SkyboxType {
+pub enum SkyboxInstance {
     DefaultSkybox,
     DynamicSkybox,
 }
 
-impl Default for SkyboxType {
+impl Default for SkyboxInstance {
     fn default() -> Self {
         DefaultSkybox::default().into()
     }

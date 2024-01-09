@@ -5,7 +5,7 @@ use rayna_shared::def::types::Number;
 
 use crate::accel::aabb::Aabb;
 use crate::accel::bvh::Bvh;
-use crate::object::{Object, ObjectType};
+use crate::object::{Object, ObjectInstance};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -16,11 +16,11 @@ pub struct ObjectList {
     /// BVH-optimised tree of objects
     bvh: Bvh,
     /// All the unbounded objects in the list (objects where [Object::aabb()] returned [None]
-    unbounded: Vec<ObjectType>,
+    unbounded: Vec<ObjectInstance>,
 }
 
 // Iter<Into<ObjType>> => ObjectList
-impl<Obj: Into<ObjectType>, Iter: IntoIterator<Item = Obj>> From<Iter> for ObjectList {
+impl<Obj: Into<ObjectInstance>, Iter: IntoIterator<Item = Obj>> From<Iter> for ObjectList {
     fn from(value: Iter) -> Self {
         let mut bounded = vec![];
         let mut unbounded = vec![];

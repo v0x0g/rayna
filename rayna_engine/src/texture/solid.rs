@@ -3,7 +3,7 @@ use rand_core::RngCore;
 use rayna_shared::def::types::Pixel;
 
 use crate::shared::intersect::Intersection;
-use crate::texture::{Texture, TextureType};
+use crate::texture::{Texture, TextureInstance};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct SolidTexture {
@@ -18,7 +18,7 @@ impl<T: Into<Pixel>> From<T> for SolidTexture {
     }
 }
 
-impl<T: Into<Pixel>> From<T> for TextureType {
+impl<T: Into<Pixel>> From<T> for TextureInstance {
     fn from(value: T) -> Self {
         SolidTexture {
             albedo: value.into(),

@@ -1,4 +1,4 @@
-use crate::material::MaterialType;
+use crate::material::MaterialInstance;
 use derivative::Derivative;
 use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 use std::cmp::Ordering;
@@ -39,7 +39,7 @@ pub struct Intersection {
     /// For an object that may have multiple faces (like a [box](crate::object::axis_box::AxisBoxObject), this would unique per-side.
     pub face: usize,
     #[derivative(PartialEq = "ignore", PartialOrd = "ignore")]
-    pub material: MaterialType,
+    pub material: MaterialInstance,
 }
 
 impl Eq for Intersection {}

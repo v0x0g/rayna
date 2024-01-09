@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 /// Object wrapper around a `dyn` [Object]; Delegates everything to the inner object.
 ///
-/// If possible use the enum variants on [super::ObjectType], so that static-dispatch is used instead of dynamic dispatch
+/// If possible use the enum variants on [super::ObjectInstance], so that static-dispatch is used instead of dynamic dispatch
 #[derive(Clone, Debug)]
 pub struct DynamicObject {
     pub inner: Arc<dyn Object>,

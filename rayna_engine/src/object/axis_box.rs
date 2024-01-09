@@ -6,8 +6,8 @@ use smallvec::SmallVec;
 use rayna_shared::def::types::{Number, Point2, Point3, Vector2, Vector3};
 
 use crate::accel::aabb::Aabb;
-use crate::material::MaterialType;
-use crate::object::{Object, ObjectType};
+use crate::material::MaterialInstance;
+use crate::object::{Object, ObjectInstance};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -20,18 +20,18 @@ use crate::shared::validate;
 pub struct AxisBoxBuilder {
     pub corner_1: Point3,
     pub corner_2: Point3,
-    pub material: MaterialType,
+    pub material: MaterialInstance,
 }
 
 impl AxisBoxBuilder {
-    pub fn new_corners(corner_1: Point3, corner_2: Point3, material: MaterialType) -> Self {
+    pub fn new_corners(corner_1: Point3, corner_2: Point3, material: MaterialInstance) -> Self {
         Self {
             corner_1,
             corner_2,
             material,
         }
     }
-    pub fn new_centred(centre: Point3, size: Vector3, material: MaterialType) -> Self {
+    pub fn new_centred(centre: Point3, size: Vector3, material: MaterialInstance) -> Self {
         Self {
             corner_1: centre + size / 2.,
             corner_2: centre - size / 2.,
@@ -47,7 +47,7 @@ pub struct AxisBoxObject {
     radius: Vector3,
     inv_radius: Vector3,
     aabb: Aabb,
-    material: MaterialType,
+    material: MaterialInstance,
 }
 
 impl From<AxisBoxBuilder> for AxisBoxObject {
@@ -63,8 +63,8 @@ impl From<AxisBoxBuilder> for AxisBoxObject {
     }
 }
 
-impl From<AxisBoxBuilder> for ObjectType {
-    fn from(value: AxisBoxBuilder) -> ObjectType {
+impl From<AxisBoxBuilder> for ObjectInstance {
+    fn from(value: AxisBoxBuilder) -> ObjectInstance {
         AxisBoxObject::from(value).into()
     }
 }

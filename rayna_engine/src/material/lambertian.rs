@@ -3,14 +3,14 @@ use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::rng;
 use crate::texture::Texture;
-use crate::texture::TextureType;
+use crate::texture::TextureInstance;
 use rand::RngCore;
 use rayna_shared::def::types::{Channel, Pixel, Vector3};
 
 #[derive(Clone, Debug)]
 pub struct LambertianMaterial {
-    pub albedo: TextureType,
-    pub emissive: TextureType,
+    pub albedo: TextureInstance,
+    pub emissive: TextureInstance,
 }
 
 impl Material for LambertianMaterial {

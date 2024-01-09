@@ -20,12 +20,12 @@ dyn_clone::clone_trait_object!(Texture);
 /// An optimised implementation of [Texture], using static dispatch
 #[enum_dispatch(Texture)]
 #[derive(Clone, Debug)]
-pub enum TextureType {
+pub enum TextureInstance {
     SolidTexture,
     DynamicTexture,
 }
 
-impl Default for TextureType {
+impl Default for TextureInstance {
     fn default() -> Self {
         SolidTexture::default().into()
     }

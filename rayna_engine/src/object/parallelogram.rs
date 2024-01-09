@@ -3,9 +3,9 @@ use smallvec::SmallVec;
 use rayna_shared::def::types::{Number, Point2, Point3};
 
 use crate::accel::aabb::Aabb;
-use crate::material::MaterialType;
+use crate::material::MaterialInstance;
 use crate::object::planar::Planar;
-use crate::object::{Object, ObjectType};
+use crate::object::{Object, ObjectInstance};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -15,14 +15,14 @@ pub struct ParallelogramBuilder {
     pub corner_origin: Point3,
     pub corner_upper: Point3,
     pub corner_right: Point3,
-    pub material: MaterialType,
+    pub material: MaterialInstance,
 }
 
 #[derive(Clone, Debug)]
 pub struct ParallelogramObject {
     plane: Planar,
     aabb: Aabb,
-    material: MaterialType,
+    material: MaterialInstance,
 }
 
 impl From<ParallelogramBuilder> for ParallelogramObject {
@@ -38,7 +38,7 @@ impl From<ParallelogramBuilder> for ParallelogramObject {
     }
 }
 
-impl From<ParallelogramBuilder> for ObjectType {
+impl From<ParallelogramBuilder> for ObjectInstance {
     fn from(value: ParallelogramBuilder) -> Self {
         ParallelogramObject::from(value).into()
     }

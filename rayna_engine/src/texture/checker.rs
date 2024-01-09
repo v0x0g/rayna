@@ -1,9 +1,13 @@
 use std::sync::Arc;
+
+use num_integer::Integer;
+use num_traits::ToPrimitive;
+use rand_core::RngCore;
+
+use rayna_shared::def::types::{Number, Pixel, Vector3};
+
 use crate::shared::intersect::Intersection;
 use crate::texture::{Texture, TextureInstance};
-use num_integer::Integer;
-use rand_core::RngCore;
-use rayna_shared::def::types::{Number, Pixel, Vector3};
 
 #[derive(Clone, Debug)]
 pub struct WorldCheckerTexture {
@@ -17,10 +21,12 @@ pub struct WorldCheckerTexture {
 impl Texture for WorldCheckerTexture {
     fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
         let pos = intersection.pos_w.to_vector();
-        let Some(coords) = (pos / self.scale).floor().try_cast::<u64>() else {
+        let floor = (pos / self.scale).floor();
+        // Use i128 for greatest range and lowest change of cast failing
+        let Some(coords) = floor.as_array().try_map(|n| n.to_i128()) else {
             return super::texture_error_value();
         };
-        let sum = coords.into_iter().fold(0, u64::wrapping_add);
+        let sum = coords.into_iter().fold(0, i128::wrapping_add);
 
         if sum.is_even() {
             self.even.value(intersection, rng)

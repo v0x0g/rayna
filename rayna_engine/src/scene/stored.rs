@@ -359,8 +359,8 @@ pub static BALLZ: Scene = {
                 albedo: WorldCheckerTexture {
                     offset: Vector3::ZERO,
                     scale: 0.32,
-                    odd: Arc::new([0.5; 3].into()),
-                    even: Arc::new([0.0, 1.0, 0.0].into()),
+                    odd: Arc::new([0.9; 3].into()),
+                    even: Arc::new([0.2, 0.3, 0.1].into()),
                 }
                 .into(),
                 emissive: Default::default(),

@@ -1,6 +1,7 @@
 #![feature(array_chunks)]
 #![feature(error_generic_member_access)]
 #![feature(const_for)]
+#![feature(array_try_map)]
 
 mod accel;
 pub mod material;

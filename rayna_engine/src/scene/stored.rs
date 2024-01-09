@@ -1,6 +1,7 @@
 use image::Pixel as _;
 use rand::{thread_rng, Rng};
 use static_init::*;
+use std::sync::Arc;
 
 use rayna_shared::def::types::{Angle, Number, Pixel, Point3, Vector3};
 
@@ -15,6 +16,7 @@ use crate::object::ObjectInstance;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
 use crate::skybox::SkyboxInstance;
+use crate::texture::checker::WorldCheckerTexture;
 
 use super::Scene;
 
@@ -354,7 +356,13 @@ pub static BALLZ: Scene = {
             pos: Point3::new(0., -1000., 0.),
             radius: 1000.,
             material: LambertianMaterial {
-                albedo: [0.5, 0.5, 0.5].into(),
+                albedo: WorldCheckerTexture {
+                    offset: Vector3::ZERO,
+                    scale: 0.32,
+                    odd: Arc::new([0.5; 3].into()),
+                    even: Arc::new([0.0, 1.0, 0.0].into()),
+                }
+                .into(),
                 emissive: Default::default(),
             }
             .into(),

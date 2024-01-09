@@ -1,23 +1,20 @@
+use std::sync::Arc;
 use crate::shared::intersect::Intersection;
 use crate::texture::{Texture, TextureInstance};
-use derivative::Derivative;
 use num_integer::Integer;
 use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Pixel, Vector3};
 
-#[derive(Derivative)]
-#[derivative(Copy, Clone, Debug(bound = ""))]
-pub struct WorldCheckerTexture<
-    A: Texture + Clone = TextureInstance,
-    B: Texture + Clone = TextureInstance,
-> {
+#[derive(Clone, Debug)]
+pub struct WorldCheckerTexture {
     pub offset: Vector3,
-    pub even: A,
-    pub odd: B,
+    // TODO: Find if there's a way to remove the Arc<> wrapper without having cycles in the type hierarchy
+    pub even: Arc<TextureInstance>,
+    pub odd: Arc<TextureInstance>,
     pub scale: Number,
 }
 
-impl<A: Texture + Clone, B: Texture + Clone> Texture for WorldCheckerTexture<A, B> {
+impl Texture for WorldCheckerTexture {
     fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
         let pos = intersection.pos_w.to_vector();
         let Some(coords) = (pos / self.scale).floor().try_cast::<u64>() else {

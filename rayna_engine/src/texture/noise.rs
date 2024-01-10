@@ -120,3 +120,15 @@ impl<N: RtNoiseFn<3> + Clone + 'static> From<LocalNoiseTexture<Box<N>>> for Text
         })
     }
 }
+
+/// Struct to allow using functions to act as noise sources
+#[derive(Derivative, Copy)]
+#[derivative(Debug(bound = ""), Clone(bound = ""))]
+pub struct FnNoiseWrapper<F: RtRequirement>(F);
+impl<const D: usize, F: Fn([Number; D]) -> f64 + RtRequirement> noise::NoiseFn<Number, { D }>
+    for FnNoiseWrapper<F>
+{
+    fn get(&self, point: [Number; D]) -> f64 {
+        self.0(point)
+    }
+}

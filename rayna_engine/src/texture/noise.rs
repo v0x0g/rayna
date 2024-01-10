@@ -1,6 +1,6 @@
 use crate::shared::intersect::Intersection;
 use crate::shared::RtRequirement;
-use crate::texture::Texture;
+use crate::texture::{Texture, TextureInstance};
 use derivative::Derivative;
 use image::Pixel as _;
 use noise::utils::ColorGradient;
@@ -68,6 +68,21 @@ impl<N: RtNoiseFn<2> + Clone> Texture for UvNoiseTexture<N> {
         self.func.get(intersection.uv.to_array())
     }
 }
+
+impl<N: RtNoiseFn<2> + Clone + 'static> From<UvNoiseTexture<Box<N>>> for TextureInstance {
+    fn from(value: UvNoiseTexture<Box<N>>) -> Self {
+        TextureInstance::UvNoiseTexture(UvNoiseTexture::<Box<dyn RtNoiseFn<2>>> {
+            func: value.func.as_dyn_box(),
+        })
+    }
+}
+// impl<N: RtNoiseFn<2> + Clone + 'static> From<UvNoiseTexture<Box<N>>> for TextureInstance {
+//     fn from(value: UvNoiseTexture<Box<N>>) -> Self {
+//         TextureInstance::UvNoiseTexture(UvNoiseTexture::<Box<dyn RtNoiseFn<2>>> {
+//             func: value.func.as_dyn_box(),
+//         })
+//     }
+// }
 
 #[derive(Derivative)]
 #[derivative(Clone(bound = ""), Debug(bound = ""))]

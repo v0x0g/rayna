@@ -22,6 +22,7 @@ use crate::object::sphere::*;
 use crate::object::ObjectInstance;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
+use crate::skybox::none::NoSkybox;
 use crate::skybox::SkyboxInstance;
 use crate::texture::image::ImageTexture;
 use crate::texture::noise::{ColourSource, LocalNoiseTexture, UvNoiseTexture};
@@ -328,11 +329,11 @@ pub static RTIAW_DEMO: Scene = {
 #[dynamic]
 pub static CORNELL: Scene = {
     let camera = Camera {
-        pos: Point3::new(0., 0., 4.),
-        fwd: Vector3::new(0., 0., -1.).normalize(),
-        v_fov: Angle::from_degrees(45.),
-        focus_dist: 3.,
-        defocus_angle: Angle::from_degrees(3.),
+        pos: Point3::new(278., 278., -800.),
+        fwd: Vector3::new(0., 0., 1.).normalize(),
+        v_fov: Angle::from_degrees(40.),
+        focus_dist: 1.,
+        defocus_angle: Angle::from_degrees(0.),
     };
 
     let mut objects = Vec::<ObjectInstance>::new();
@@ -376,6 +377,6 @@ pub static CORNELL: Scene = {
     Scene {
         camera,
         objects: objects.into(),
-        skybox: SkyboxInstance::default(),
+        skybox: SkyboxInstance::NoSkybox(NoSkybox {}),
     }
 };

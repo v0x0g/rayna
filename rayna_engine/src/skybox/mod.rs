@@ -1,7 +1,8 @@
 pub mod default;
 pub mod dynamic;
+pub mod none;
 
-use self::{default::DefaultSkybox, dynamic::DynamicSkybox};
+use self::{default::DefaultSkybox, dynamic::DynamicSkybox, none::NoSkybox};
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
@@ -17,6 +18,7 @@ pub trait Skybox: RtRequirement {
 #[derive(Clone, Debug)]
 pub enum SkyboxInstance {
     DefaultSkybox,
+    NoSkybox,
     DynamicSkybox,
 }
 

@@ -43,6 +43,20 @@ impl<const D: usize, N: RtNoiseFn<D> + Clone> ColourSource<N, D> {
     }
 }
 
+impl<'n, const D: usize, N: RtNoiseFn<D> + Clone + 'n> ColourSource<N, D> {
+    /// Converts the explicit instance of a colour source into a dynamic boxed colour source
+    pub fn as_dyn_box(&self) -> ColourSource<Box<dyn RtNoiseFn<D> + 'n>, D> {
+        match self {
+            Self::Greyscale(n) => ColourSource::Greyscale(Box::new(n.clone())),
+            Self::Gradient(n, g) => ColourSource::Gradient(Box::new(n.clone()), g.clone()),
+            Self::Rgb(n) => ColourSource::Rgb(
+                n.each_ref()
+                    .map(|n| Box::new(n.clone()) as Box<dyn RtNoiseFn<D>>),
+            ),
+        }
+    }
+}
+
 #[derive(Derivative)]
 #[derivative(Clone(bound = ""), Debug(bound = ""))]
 pub struct UvNoiseTexture<N: RtNoiseFn<2> + Clone> {

@@ -381,7 +381,7 @@ pub static BALLZ: Scene = {
             radius: 1000.,
             material: LambertianMaterial {
                 albedo: TextureInstance::UvNoiseTexture(UvNoiseTexture {
-                    func: ColourSource::Greyscale(Box::new(Value::default())),
+                    func: ColourSource::Greyscale(Box::new(Perlin::new(69u32))),
                 }),
                 emissive: Default::default(),
             }

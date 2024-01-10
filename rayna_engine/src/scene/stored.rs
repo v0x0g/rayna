@@ -25,6 +25,7 @@ use crate::shared::rng;
 use crate::skybox::SkyboxInstance;
 use crate::texture::image::ImageTexture;
 use crate::texture::noise::{ColourSource, LocalNoiseTexture, UvNoiseTexture};
+use crate::texture::TextureInstance;
 
 use super::Scene;
 
@@ -201,11 +202,7 @@ pub static RTIAW_DEMO: Scene = {
             let material_choice = rng.gen::<Number>();
 
             let centre = Point3::new(a, 0.2, b) + (Vector3::new(rng.gen(), 0., rng.gen()) * 0.9);
-            const BIG_BALL_CENTRE: Point3 = Point3 {
-                x: 4.,
-                y: 0.2,
-                z: 0.,
-            };
+            const BIG_BALL_CENTRE: Point3 = Point3 { x: 4., y: 0.2, z: 0. };
 
             if (centre - BIG_BALL_CENTRE).length() <= 0.9 {
                 continue;
@@ -213,8 +210,7 @@ pub static RTIAW_DEMO: Scene = {
 
             let material: MaterialInstance = if material_choice < 0.7 {
                 LambertianMaterial {
-                    albedo: Pixel::map2(&rng::colour_rgb(rng), &rng::colour_rgb(rng), |a, b| a * b)
-                        .into(),
+                    albedo: Pixel::map2(&rng::colour_rgb(rng), &rng::colour_rgb(rng), |a, b| a * b).into(),
                     emissive: Default::default(),
                 }
                 .into()
@@ -241,12 +237,7 @@ pub static RTIAW_DEMO: Scene = {
                 }
                 .into()
             } else {
-                AxisBoxBuilder::new_centred(
-                    centre,
-                    rng::vector_in_unit_cube_01(rng) * 0.8,
-                    material,
-                )
-                .into()
+                AxisBoxBuilder::new_centred(centre, rng::vector_in_unit_cube_01(rng) * 0.8, material).into()
             };
             objects.push(obj);
         }
@@ -316,10 +307,7 @@ pub static RTIAW_DEMO: Scene = {
             radius: 1000.,
             material: LambertianMaterial {
                 albedo: LocalNoiseTexture {
-                    func: ColourSource::Greyscale(
-                        ScalePoint::new(Perlin::new(69u32)).set_scale(10000.),
-                    )
-                    .as_dyn_box(),
+                    func: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69u32)).set_scale(10000.)).as_dyn_box(),
                 }
                 .into(),
                 emissive: Default::default(),
@@ -349,59 +337,41 @@ pub static CORNELL: Scene = {
 
     let mut objects = Vec::<ObjectInstance>::new();
 
-    // Ground
-    objects.push(
-        SphereBuilder {
-            pos: Point3::new(0., -100.5, 0.),
-            radius: 100.,
+    fn quad(
+        objs: &mut Vec<ObjectInstance>,
+        q: impl Into<Point3>,
+        a: impl Into<Point3>,
+        b: impl Into<Point3>,
+        albedo: impl Into<TextureInstance>,
+        emissive: impl Into<TextureInstance>,
+    ) {
+        let quad = ParallelogramBuilder {
+            corner_origin: q.into(),
+            corner_upper: b.into(),
+            corner_right: a.into(),
             material: LambertianMaterial {
-                albedo: [0.8, 0.8, 0.0].into(),
-                emissive: Default::default(),
+                albedo: albedo.into(),
+                emissive: emissive.into(),
             }
             .into(),
-        }
-        .into(),
-    );
+        };
+        objs.push(quad.into());
+    }
 
-    // Left
-    objects.push(
-        SphereBuilder {
-            pos: Point3::new(-1., 0., 0.),
-            radius: 0.5,
-            material: DielectricMaterial {
-                albedo: [1.; 3].into(),
-                refractive_index: 1.5,
-            }
-            .into(),
-        }
-        .into(),
-    );
-    // Mid
-    objects.push(
-        SphereBuilder {
-            pos: Point3::new(0., 0., 0.),
-            radius: 0.5,
-            material: LambertianMaterial {
-                albedo: [0.1, 0.2, 0.5].into(),
-                emissive: Default::default(),
-            }
-            .into(),
-        }
-        .into(),
-    );
-    // Right
-    objects.push(
-        SphereBuilder {
-            pos: Point3::new(1., 0., 0.),
-            radius: 0.5,
-            material: MetalMaterial {
-                albedo: [0.8, 0.6, 0.2].into(),
-                fuzz: 0.,
-            }
-            .into(),
-        }
-        .into(),
-    );
+    {
+        let red = [0.65, 0.05, 0.05];
+        let green = [0.12, 0.45, 0.15];
+        let white = [0.73; 3];
+        let light = [15.; 3];
+        let black = [0.; 3];
+        let o = &mut objects;
+        quad(o, [555., 0., 0.], [0., 555., 0.], [0., 0., 555.], green, black);
+        quad(o, [0., 0., 0.], [0., 555., 0.], [0., 0., 555.], red, black);
+        quad(o, [343., 554., 332.], [-130., 0., 0.], [0., 0., -105.], black, light);
+        quad(o, [0., 0., 0.], [555., 0., 0.], [0., 0., 555.], white, black);
+        quad(o, [555., 555., 555.], [-555., 0., 0.], [0., 0., -555.], white, black);
+        quad(o, [0., 0., 555.], [555., 0., 0.], [0., 555., 0.], white, black);
+    }
 
     Scene {
         camera,

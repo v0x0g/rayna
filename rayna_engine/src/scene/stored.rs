@@ -382,8 +382,8 @@ pub static BALLZ: Scene = {
                 albedo: UvNoiseTexture {
                     func: ColourSource::Greyscale(Box::new(ScalePoint {
                         source: Perlin::new(69u32),
-                        x_scale: 10.,
-                        y_scale: 10.,
+                        x_scale: 1000.,
+                        y_scale: 1000.,
                         z_scale: 0.,
                         u_scale: 0.,
                     })),

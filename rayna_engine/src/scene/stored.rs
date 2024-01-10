@@ -1,4 +1,5 @@
 use image::Pixel as _;
+use noise::*;
 use rand::{thread_rng, Rng};
 use static_init::*;
 use std::sync::Arc;
@@ -16,8 +17,9 @@ use crate::object::ObjectInstance;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
 use crate::skybox::SkyboxInstance;
-use crate::texture::checker::UvCheckerTexture;
 use crate::texture::image::ImageTexture;
+use crate::texture::noise::{ColourSource, UvNoiseTexture};
+use crate::texture::TextureInstance;
 
 use super::Scene;
 
@@ -378,13 +380,9 @@ pub static BALLZ: Scene = {
             pos: Point3::new(0., -1000., 0.),
             radius: 1000.,
             material: LambertianMaterial {
-                albedo: UvCheckerTexture {
-                    offset: Vector2::ZERO,
-                    scale: 0.0032,
-                    odd: Arc::new([0.9; 3].into()),
-                    even: Arc::new([0.2, 0.3, 0.1].into()),
-                }
-                .into(),
+                albedo: TextureInstance::UvNoiseTexture(UvNoiseTexture {
+                    func: ColourSource::Greyscale(Box::new(Value::default())),
+                }),
                 emissive: Default::default(),
             }
             .into(),

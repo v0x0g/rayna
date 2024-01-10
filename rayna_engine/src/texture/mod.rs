@@ -1,7 +1,7 @@
 pub mod checker;
 pub mod dynamic;
 pub mod image;
-mod noise;
+pub mod noise;
 pub mod solid;
 
 use crate::shared::intersect::Intersection;

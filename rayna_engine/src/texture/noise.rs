@@ -16,10 +16,17 @@ pub trait RtNoiseFn<const D: usize>: noise::NoiseFn<Number, { D }> + RtRequireme
 impl<const D: usize, N: noise::NoiseFn<Number, { D }> + RtRequirement + Clone> RtNoiseFn<D> for N {}
 dyn_clone::clone_trait_object!(<const D: usize> RtNoiseFn<D>);
 
+/// Enum that describes how a noise source is used to generate a colour for a pixel
+///
+/// The values can be output in the range `-1.0..=1.0`
 #[derive(Derivative)]
 #[derivative(Clone(bound = ""), Debug(bound = ""))]
 pub enum ColourSource<N: RtNoiseFn<D> + Clone, const D: usize> {
+    /// Treat the noise generator's values as greyscale values
     Greyscale(N),
+    /// Use the given gradient to convert noise values to colours
+    ///
+    /// Note this is a 24-bit RGB gradient, not the 96-bit RGB gradient used in the rest of the engine
     Gradient(N, ColorGradient),
     Rgb([N; 3]),
 }
@@ -31,6 +38,8 @@ impl<const D: usize, N: RtNoiseFn<D> + Clone> ColourSource<N, D> {
             Self::Gradient(n, g) => *Pixel::from_slice(&g.get_color(n.get(point)).map(Into::into)),
             Self::Rgb(n) => Pixel::from(n.each_ref().map(|n| n.get(point) as Channel)),
         }
+        // Normalise `-1..1` to `0..1`
+        .map_without_alpha(|c| c / 2. + 0.5)
     }
 }
 

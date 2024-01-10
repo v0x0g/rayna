@@ -69,6 +69,8 @@ impl<N: RtNoiseFn<2> + Clone> Texture for UvNoiseTexture<N> {
     }
 }
 
+// Unfortunately due to some problems with overlapping impls (which `feature = min_specialization` can't solve)
+// We need to have the Box<N> here, meaning the user has to box their noise function
 impl<N: RtNoiseFn<2> + Clone + 'static> From<UvNoiseTexture<Box<N>>> for TextureInstance {
     fn from(value: UvNoiseTexture<Box<N>>) -> Self {
         TextureInstance::UvNoiseTexture(UvNoiseTexture {
@@ -89,6 +91,15 @@ impl<N: RtNoiseFn<3> + Clone> Texture for WorldNoiseTexture<N> {
     }
 }
 
+// See above for explanation of this
+impl<N: RtNoiseFn<3> + Clone + 'static> From<WorldNoiseTexture<Box<N>>> for TextureInstance {
+    fn from(value: WorldNoiseTexture<Box<N>>) -> Self {
+        TextureInstance::WorldNoiseTexture(WorldNoiseTexture {
+            func: value.func.as_dyn_box(),
+        })
+    }
+}
+
 #[derive(Derivative)]
 #[derivative(Clone(bound = ""), Debug(bound = ""))]
 pub struct LocalNoiseTexture<N: RtNoiseFn<3> + Clone> {
@@ -98,5 +109,14 @@ pub struct LocalNoiseTexture<N: RtNoiseFn<3> + Clone> {
 impl<N: RtNoiseFn<3> + Clone> Texture for LocalNoiseTexture<N> {
     fn value(&self, intersection: &Intersection, _rng: &mut dyn RngCore) -> Pixel {
         self.func.get(intersection.pos_l.to_array())
+    }
+}
+
+// See above for explanation of this
+impl<N: RtNoiseFn<3> + Clone + 'static> From<LocalNoiseTexture<Box<N>>> for TextureInstance {
+    fn from(value: LocalNoiseTexture<Box<N>>) -> Self {
+        TextureInstance::LocalNoiseTexture(LocalNoiseTexture {
+            func: value.func.as_dyn_box(),
+        })
     }
 }

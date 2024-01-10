@@ -1,3 +1,9 @@
+//! This module is a repository of all builtin scenes in the engine
+//!
+//! There is no significance to them, apart from not having to manually create scenes by hand.
+//!
+//! There are some common ones [CORNELL] and [RTIAW_DEMO], that should be well known.
+
 use image::Pixel as _;
 use noise::*;
 use rand::{thread_rng, Rng};
@@ -22,6 +28,7 @@ use crate::texture::noise::{ColourSource, LocalNoiseTexture, UvNoiseTexture};
 
 use super::Scene;
 
+/// Super simple scene, just a ground sphere and a small sphere
 #[dynamic]
 pub static SIMPLE: Scene = {
     Scene {
@@ -170,82 +177,11 @@ pub static TRIO: Scene = {
     }
 };
 
-#[dynamic]
-pub static GLASS: Scene = {
-    let camera = Camera {
-        pos: Point3::new(0., 0., 4.),
-        fwd: Vector3::new(0., 0., -1.).normalize(),
-        v_fov: Angle::from_degrees(45.),
-        focus_dist: 3.,
-        defocus_angle: Angle::from_degrees(3.),
-    };
-
-    let mut objects = Vec::<ObjectInstance>::new();
-
-    // Ground
-    objects.push(
-        SphereBuilder {
-            pos: Point3::new(0., -100.5, 0.),
-            radius: 100.,
-            material: LambertianMaterial {
-                albedo: [0.8, 0.8, 0.0].into(),
-                emissive: Default::default(),
-            }
-            .into(),
-        }
-        .into(),
-    );
-
-    // Left
-    objects.push(
-        SphereBuilder {
-            pos: Point3::new(-1., 0., 0.),
-            radius: 0.5,
-            material: DielectricMaterial {
-                albedo: [1.; 3].into(),
-                refractive_index: 1.5,
-            }
-            .into(),
-        }
-        .into(),
-    );
-    // Mid
-    objects.push(
-        SphereBuilder {
-            pos: Point3::new(0., 0., 0.),
-            radius: 0.5,
-            material: LambertianMaterial {
-                albedo: [0.1, 0.2, 0.5].into(),
-                emissive: Default::default(),
-            }
-            .into(),
-        }
-        .into(),
-    );
-    // Right
-    objects.push(
-        SphereBuilder {
-            pos: Point3::new(1., 0., 0.),
-            radius: 0.5,
-            material: MetalMaterial {
-                albedo: [0.8, 0.6, 0.2].into(),
-                fuzz: 0.,
-            }
-            .into(),
-        }
-        .into(),
-    );
-
-    Scene {
-        camera,
-        objects: objects.into(),
-        skybox: SkyboxInstance::default(),
-    }
-};
-
 //noinspection SpellCheckingInspection
+
+/// From **RayTracing in A Weekend**, the demo scene at the end of the chapter (extended of course)
 #[dynamic]
-pub static BALLZ: Scene = {
+pub static RTIAW_DEMO: Scene = {
     let camera = Camera {
         pos: Point3::new(13., 2., 3.),
         fwd: Vector3::new(-13., -2., -3.).normalize(),
@@ -387,6 +323,80 @@ pub static BALLZ: Scene = {
                 }
                 .into(),
                 emissive: Default::default(),
+            }
+            .into(),
+        }
+        .into(),
+    );
+
+    Scene {
+        camera,
+        objects: objects.into(),
+        skybox: SkyboxInstance::default(),
+    }
+};
+
+/// The classic cornell box scene
+#[dynamic]
+pub static CORNELL: Scene = {
+    let camera = Camera {
+        pos: Point3::new(0., 0., 4.),
+        fwd: Vector3::new(0., 0., -1.).normalize(),
+        v_fov: Angle::from_degrees(45.),
+        focus_dist: 3.,
+        defocus_angle: Angle::from_degrees(3.),
+    };
+
+    let mut objects = Vec::<ObjectInstance>::new();
+
+    // Ground
+    objects.push(
+        SphereBuilder {
+            pos: Point3::new(0., -100.5, 0.),
+            radius: 100.,
+            material: LambertianMaterial {
+                albedo: [0.8, 0.8, 0.0].into(),
+                emissive: Default::default(),
+            }
+            .into(),
+        }
+        .into(),
+    );
+
+    // Left
+    objects.push(
+        SphereBuilder {
+            pos: Point3::new(-1., 0., 0.),
+            radius: 0.5,
+            material: DielectricMaterial {
+                albedo: [1.; 3].into(),
+                refractive_index: 1.5,
+            }
+            .into(),
+        }
+        .into(),
+    );
+    // Mid
+    objects.push(
+        SphereBuilder {
+            pos: Point3::new(0., 0., 0.),
+            radius: 0.5,
+            material: LambertianMaterial {
+                albedo: [0.1, 0.2, 0.5].into(),
+                emissive: Default::default(),
+            }
+            .into(),
+        }
+        .into(),
+    );
+    // Right
+    objects.push(
+        SphereBuilder {
+            pos: Point3::new(1., 0., 0.),
+            radius: 0.5,
+            material: MetalMaterial {
+                albedo: [0.8, 0.6, 0.2].into(),
+                fuzz: 0.,
             }
             .into(),
         }

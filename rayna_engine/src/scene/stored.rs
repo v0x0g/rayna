@@ -18,7 +18,7 @@ use crate::shared::camera::Camera;
 use crate::shared::rng;
 use crate::skybox::SkyboxInstance;
 use crate::texture::image::ImageTexture;
-use crate::texture::noise::{ColourSource, UvNoiseTexture};
+use crate::texture::noise::{ColourSource, LocalNoiseTexture, UvNoiseTexture};
 
 use super::Scene;
 
@@ -379,14 +379,11 @@ pub static BALLZ: Scene = {
             pos: Point3::new(0., -1000., 0.),
             radius: 1000.,
             material: LambertianMaterial {
-                albedo: UvNoiseTexture {
-                    func: ColourSource::Greyscale(Box::new(ScalePoint {
-                        source: Perlin::new(69u32),
-                        x_scale: 1000.,
-                        y_scale: 1000.,
-                        z_scale: 0.,
-                        u_scale: 0.,
-                    })),
+                albedo: LocalNoiseTexture {
+                    func: ColourSource::Greyscale(
+                        ScalePoint::new(Perlin::new(69u32)).set_scale(10000.),
+                    )
+                    .as_dyn_box(),
                 }
                 .into(),
                 emissive: Default::default(),

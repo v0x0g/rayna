@@ -16,7 +16,7 @@ use crate::object::ObjectInstance;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
 use crate::skybox::SkyboxInstance;
-use crate::texture::checker::{UvCheckerTexture, WorldCheckerTexture};
+use crate::texture::checker::UvCheckerTexture;
 use crate::texture::image::ImageTexture;
 
 use super::Scene;

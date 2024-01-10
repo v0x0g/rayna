@@ -35,9 +35,9 @@ pub enum TextureInstance {
     WorldCheckerTexture,
     UvCheckerTexture,
     ImageTexture,
-    UvNoiseTexture(UvNoiseTexture<dyn noise::RtNoiseFn<2>>),
-    LocalNoiseTexture(LocalNoiseTexture<dyn noise::RtNoiseFn<3>>),
-    WorldNoiseTexture(WorldNoiseTexture<dyn noise::RtNoiseFn<3>>),
+    UvNoiseTexture(UvNoiseTexture<Box<dyn noise::RtNoiseFn<2>>>),
+    LocalNoiseTexture(LocalNoiseTexture<Box<dyn noise::RtNoiseFn<3>>>),
+    WorldNoiseTexture(WorldNoiseTexture<Box<dyn noise::RtNoiseFn<3>>>),
     DynamicTexture,
 }
 

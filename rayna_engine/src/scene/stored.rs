@@ -380,11 +380,12 @@ pub static BALLZ: Scene = {
             radius: 1000.,
             material: LambertianMaterial {
                 albedo: UvNoiseTexture {
-                    func: ColourSource::Greyscale(Box::new({
-                        let gen = Perlin::new(69u32);
-                        // let scale = 50.;
-                        // move |[u, v]: [Number; 2]| gen.get([u * scale, v * scale]);
-                        gen
+                    func: ColourSource::Greyscale(Box::new(ScalePoint {
+                        source: Perlin::new(69u32),
+                        x_scale: 10.,
+                        y_scale: 10.,
+                        z_scale: 0.,
+                        u_scale: 0.,
                     })),
                 }
                 .into(),

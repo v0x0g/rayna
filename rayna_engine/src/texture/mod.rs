@@ -15,6 +15,7 @@ use self::{
     checker::{UvCheckerTexture, WorldCheckerTexture},
     dynamic::DynamicTexture,
     image::ImageTexture,
+    noise::{LocalNoiseTexture, UvNoiseTexture, WorldNoiseTexture},
     solid::SolidTexture,
 };
 
@@ -34,6 +35,9 @@ pub enum TextureInstance {
     WorldCheckerTexture,
     UvCheckerTexture,
     ImageTexture,
+    UvNoiseTexture(UvNoiseTexture<dyn noise::RtNoiseFn<2>>),
+    LocalNoiseTexture(LocalNoiseTexture<dyn noise::RtNoiseFn<3>>),
+    WorldNoiseTexture(WorldNoiseTexture<dyn noise::RtNoiseFn<3>>),
     DynamicTexture,
 }
 

@@ -24,6 +24,7 @@ rand_pcg = { workspace = true }
 rand_xorshift = { workspace = true }
 rand_hc = { workspace = true }
 rand_isaac = { workspace = true }
+noise = { workspace = true}
 
 # Raytracing
 image = { workspace = true }

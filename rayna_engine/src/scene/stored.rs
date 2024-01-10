@@ -346,10 +346,13 @@ pub static CORNELL: Scene = {
         albedo: impl Into<TextureInstance>,
         emissive: impl Into<TextureInstance>,
     ) {
+        let q = q.into();
+        let a = a.into();
+        let b = b.into();
         let quad = ParallelogramBuilder {
-            corner_origin: q.into(),
-            corner_upper: b.into(),
-            corner_right: a.into(),
+            corner_origin: q,
+            corner_upper: q + b.to_vector(),
+            corner_right: q + a.to_vector(),
             material: LambertianMaterial {
                 albedo: albedo.into(),
                 emissive: emissive.into(),
@@ -366,17 +369,17 @@ pub static CORNELL: Scene = {
         let light = [15.; 3];
         let black = [0.; 3];
         let o = &mut objects;
-        quad(o, [555., 0., 0.], [0., 555., 0.], [0., 0., 555.], green, black);
-        quad(o, [0., 0., 0.], [0., 555., 0.], [0., 0., 555.], red, black);
-        quad(o, [343., 554., 332.], [-130., 0., 0.], [0., 0., -105.], black, light);
-        quad(o, [0., 0., 0.], [555., 0., 0.], [0., 0., 555.], white, black);
-        quad(o, [555., 555., 555.], [-555., 0., 0.], [0., 0., -555.], white, black);
-        quad(o, [0., 0., 555.], [555., 0., 0.], [0., 555., 0.], white, black);
+        quad(o, [555., 0., 0.], [0., 555., 0.], [0., 0., 555.], green, black); // Left
+        quad(o, [0., 0., 0.], [0., 555., 0.], [0., 0., 555.], red, black); // Right
+        quad(o, [343., 554., 332.], [-130., 0., 0.], [0., 0., -105.], black, light); // Light
+        quad(o, [0., 0., 0.], [555., 0., 0.], [0., 0., 555.], white, black); // Floor
+        quad(o, [555., 555., 555.], [-555., 0., 0.], [0., 0., -555.], white, black); // Ceiling
+        quad(o, [0., 0., 555.], [555., 0., 0.], [0., 555., 0.], white, black); // Back
     }
 
     Scene {
         camera,
         objects: objects.into(),
-        skybox: SkyboxInstance::NoSkybox(NoSkybox {}),
+        skybox: SkyboxInstance::default(),
     }
 };

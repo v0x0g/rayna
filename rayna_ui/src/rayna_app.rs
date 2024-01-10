@@ -5,9 +5,7 @@ use crate::profiler;
 use crate::ui_val::{DRAG_SLOW, UNIT_DEG, UNIT_LEN, UNIT_PX};
 use eframe::epaint::textures::TextureFilter;
 use egui::load::SizedTexture;
-use egui::{
-    Context, CursorIcon, Key, RichText, Sense, TextureHandle, TextureOptions, Vec2, Widget,
-};
+use egui::{Context, CursorIcon, Key, RichText, Sense, TextureHandle, TextureOptions, Vec2, Widget};
 use puffin::{profile_function, profile_scope};
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
@@ -44,14 +42,13 @@ impl RaynaApp {
     /// Creates a new app instance, with an [`Context`] for configuring the app
     pub fn new_ctx(_ctx: &Context) -> Self {
         info!(target: UI, "ui app init");
-        let scene = scene::stored::RTIAW_DEMO.clone();
+        let scene = scene::stored::CORNELL.clone();
         let render_opts = Default::default();
         Self {
             render_opts,
             render_buf_tex: None,
             render_display_size: egui::vec2(1.0, 1.0),
-            integration: Integration::new(&render_opts, &scene)
-                .expect("couldn't create integration"),
+            integration: Integration::new(&render_opts, &scene).expect("couldn't create integration"),
             scene,
             render_stats: Default::default(),
             // Max ten failures in a row, once per second
@@ -112,11 +109,10 @@ impl crate::backend::app::App for RaynaApp {
 
                 if ui.button("Fill Canvas").clicked() {
                     render_opts_dirty = true;
-                    self.render_opts.width = NonZeroUsize::new(self.render_display_size.x as usize)
-                        .unwrap_or(NonZeroUsize::MIN);
+                    self.render_opts.width =
+                        NonZeroUsize::new(self.render_display_size.x as usize).unwrap_or(NonZeroUsize::MIN);
                     self.render_opts.height =
-                        NonZeroUsize::new(self.render_display_size.y as usize)
-                            .unwrap_or(NonZeroUsize::MIN);
+                        NonZeroUsize::new(self.render_display_size.y as usize).unwrap_or(NonZeroUsize::MIN);
                 }
 
                 // MSAA
@@ -141,9 +137,7 @@ impl crate::backend::app::App for RaynaApp {
                     });
 
                 ui.label("Bounces");
-                render_opts_dirty |= egui::DragValue::new(&mut self.render_opts.bounces)
-                    .ui(ui)
-                    .changed();
+                render_opts_dirty |= egui::DragValue::new(&mut self.render_opts.bounces).ui(ui).changed();
             });
 
             ui.group(|ui| {
@@ -296,11 +290,9 @@ impl crate::backend::app::App for RaynaApp {
 
             if cam_changed {
                 scene_dirty = true;
-                self.scene.camera.apply_motion(
-                    move_dirs * speed_mult,
-                    rot_dirs * speed_mult,
-                    fov_zoom * speed_mult,
-                );
+                self.scene
+                    .camera
+                    .apply_motion(move_dirs * speed_mult, rot_dirs * speed_mult, fov_zoom * speed_mult);
             }
         });
 
@@ -369,8 +361,7 @@ impl RaynaApp {
             match &mut self.render_buf_tex {
                 None => {
                     profile_scope!("tex_load");
-                    self.render_buf_tex =
-                        Some(ctx.load_texture("render_buffer_texture", render.img, opts))
+                    self.render_buf_tex = Some(ctx.load_texture("render_buffer_texture", render.img, opts))
                 }
                 Some(tex) => {
                     profile_scope!("tex_set");

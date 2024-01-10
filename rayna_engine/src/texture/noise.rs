@@ -71,18 +71,11 @@ impl<N: RtNoiseFn<2> + Clone> Texture for UvNoiseTexture<N> {
 
 impl<N: RtNoiseFn<2> + Clone + 'static> From<UvNoiseTexture<Box<N>>> for TextureInstance {
     fn from(value: UvNoiseTexture<Box<N>>) -> Self {
-        TextureInstance::UvNoiseTexture(UvNoiseTexture::<Box<dyn RtNoiseFn<2>>> {
+        TextureInstance::UvNoiseTexture(UvNoiseTexture {
             func: value.func.as_dyn_box(),
         })
     }
 }
-// impl<N: RtNoiseFn<2> + Clone + 'static> From<UvNoiseTexture<Box<N>>> for TextureInstance {
-//     fn from(value: UvNoiseTexture<Box<N>>) -> Self {
-//         TextureInstance::UvNoiseTexture(UvNoiseTexture::<Box<dyn RtNoiseFn<2>>> {
-//             func: value.func.as_dyn_box(),
-//         })
-//     }
-// }
 
 #[derive(Derivative)]
 #[derivative(Clone(bound = ""), Debug(bound = ""))]

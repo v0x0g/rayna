@@ -14,9 +14,7 @@ use std::fmt::Debug;
 /// Essentially a noise function that's safe to use in the engine
 pub trait RtNoiseFn<const D: usize>: noise::NoiseFn<Number, { D }> + RtRequirement {}
 impl<const D: usize, N: noise::NoiseFn<Number, { D }> + RtRequirement + Clone> RtNoiseFn<D> for N {}
-dyn_clone::clone_trait_object!(RtNoiseFn<1>);
-dyn_clone::clone_trait_object!(RtNoiseFn<2>);
-dyn_clone::clone_trait_object!(RtNoiseFn<3>);
+dyn_clone::clone_trait_object!(<const D: usize> RtNoiseFn<D>);
 
 #[derive(Derivative)]
 #[derivative(Clone(bound = ""), Debug(bound = ""))]

@@ -63,12 +63,12 @@ impl Aabb {
 
     /// [Self::encompass] but for an arbitrary number of points
     pub fn encompass_points<B: Borrow<Point3>>(iter: impl IntoIterator<Item = B>) -> Self {
-        let mut min = Point3::ZERO;
-        let mut max = Point3::ZERO;
+        let mut min = Point3::splat(Number::INFINITY);
+        let mut max = Point3::splat(Number::NEG_INFINITY);
         for p in iter.into_iter() {
-            let p = p.borrow();
-            min = min.min(*p);
-            max = max.max(*p);
+            let p = *p.borrow();
+            min = min.min(p);
+            max = max.max(p);
         }
         Self::new(min, max)
     }

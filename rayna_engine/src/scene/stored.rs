@@ -369,12 +369,12 @@ pub static CORNELL: Scene = {
         let light = [15.; 3];
         let black = [0.; 3];
         let o = &mut objects;
-        quad(o, (0., 0., 1.), (0., 0., 0.), (0., 1., 1.), green, black); // Left
-        quad(o, (1., 0., 0.), (1., 0., 1.), (1., 1., 0.), red, black); // Right
-        quad(o, (0., 0., 1.), (0., 0., 0.), (1., 0., 1.), white, black); // Floor
-        quad(o, (0., 1., 0.), (1., 1., 0.), (0., 1., 1.), white, black); // Ceiling
+        quad(o, (0., 0., 0.), (0., 0., 1.), (0., 1., 0.), green, black); // Left
         quad(o, (0., 0., 0.), (1., 0., 0.), (0., 1., 0.), white, black); // Back
-        quad(o, (0.4, 0.99, 0.4), (0.6, 0.99, 0.4), (0.4, 0.99, 0.6), black, light);
+        quad(o, (1., 0., 0.), (1., 0., 1.), (1., 1., 0.), red, black); // Right
+                                                                       // quad(o, (0., 0., 1.), (0., 0., 0.), (1., 0., 1.), white, black); // Floor
+                                                                       // quad(o, (0., 1., 0.), (1., 1., 0.), (0., 1., 1.), white, black); // Ceiling
+                                                                       // quad(o, (0.4, 0.99, 0.4), (0.6, 0.99, 0.4), (0.4, 0.99, 0.6), black, light);
     }
 
     Scene {

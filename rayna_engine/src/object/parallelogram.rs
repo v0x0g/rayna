@@ -12,12 +12,79 @@ use crate::shared::ray::Ray;
 
 #[derive(Clone, Debug)]
 pub enum ParallelogramBuilder {
+    /// Creates a [ParallelogramObject] from three points on the surface.
+    ///
+    /// For a 2D parallelogram in the `XY` plane, the point layout would be:
+    ///
+    /// ```text
+    ///              A ▓▓██▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓██▒▒                                    
+    ///              ▓▓                               ▓▓                                    
+    ///            ░░░░                             ░░░░                                    
+    ///            ██                               ▓▓                                      
+    ///            ▒▒                               ░░                                      
+    ///          ▒▒                               ▓▓                                        
+    ///          ▓▓                               ▒▒                                        
+    ///        ░░░░                             ▒▒                                          
+    ///        ██                               ▓▓                                          
+    ///        ▒▒                             ░░                                            
+    ///      ▒▒                               ▓▓                                            
+    ///      ██                               ▒▒                                            
+    ///    ▒▒░░                             ▒▒                                              
+    ///    ▓▓                               ▓▓                                              
+    ///  ░░░░                             ░░░░                                              
+    ///  ██                               ▓▓                                                
+    ///  ▒▒                             ░░▒▒                                                
+    ///  P ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ B                                                  
+    /// ```
+    ///
+    /// TEXT ART CREDITS:
+    ///
+    /// Author: Textart.sh
+    ///
+    /// URL: https://textart.sh/topic/parallelogram
     Points {
+        /// The 'origin' point on the plane
         p: Point3,
+        /// One of the corners.
+        ///
+        /// This corner is adjacent to `p`, and opposite to `b`
         a: Point3,
+        /// One of the corners.
+        ///
+        /// This corner is adjacent to `p`, and opposite to `a`
         b: Point3,
         material: MaterialInstance,
     },
+    /// Creates a parallelogram from the origin point `p`, and the two side vectors `u`, `v`
+    ///
+    /// For a 2D parallelogram in the `XY` plane, the point layout would be:
+    ///
+    /// ```text
+    ///              ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒                                    
+    ///              ▓▓                               ▓▓                                    
+    ///            ░░░░                             ░░░░                                    
+    ///            ██                               ▓▓                                      
+    ///            ▒▒                               ░░                                      
+    ///          ▒▒                               ▓▓                                        
+    ///          ▓▓  ^                            ▒▒                                        
+    ///        ░░░░  |                          ▒▒                                          
+    ///        ██    V                          ▓▓                                          
+    ///        ▒▒    ^                        ░░                                            
+    ///      ▒▒      |                        ▓▓                                            
+    ///      ██                               ▒▒                                            
+    ///    ▒▒░░                             ▒▒                                              
+    ///    ▓▓                               ▓▓                                              
+    ///  ░░░░                             ░░░░                                              
+    ///  ██                               ▓▓                                                
+    ///  ▒▒                             ░░▒▒                                                
+    ///  P ▓▓▓▓▓▓▓▓▓▓▓ -> U -> ▓▓▓▓▓▓▓▓▓▓▓                                                  
+    /// ```
+    ///
+    /// TEXT ART CREDITS:
+    ///
+    /// Author: Textart.sh
+    ///
+    /// URL: https://textart.sh/topic/parallelogram
     Vectors {
         p: Point3,
         u: Vector3,
@@ -26,8 +93,12 @@ pub enum ParallelogramBuilder {
     },
 }
 
+// TODO: Infinite plane version of this
+//  Will have to work out something with UV coords though
+
 #[derive(Clone, Debug)]
 pub struct ParallelogramObject {
+    /// The plane that this object sits upon
     plane: Planar,
     aabb: Aabb,
     material: MaterialInstance,
@@ -58,12 +129,13 @@ impl From<ParallelogramBuilder> for ObjectInstance {
 
 impl Object for ParallelogramObject {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
-        let i = self.plane.intersect_bounded(ray, bounds, &self.material);
+        let i = self.plane.intersect_bounded(ray, bounds, &self.material)?;
         // Check in bounds for our segment of the plane: `uv in [0, 1]`
-        return match i {
-            Some(i) if (i.uv.cmple(Point2::ONE) & i.uv.cmpge(Point2::ZERO)).all() => Some(i),
-            _ => None,
-        };
+        if (i.uv.cmple(Point2::ONE) & i.uv.cmpge(Point2::ZERO)).all() {
+            Some(i)
+        } else {
+            None
+        }
     }
 
     fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {

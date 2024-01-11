@@ -14,6 +14,10 @@ use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 /// The recommended amount of padding around AABB's for planar objects
 pub const AABB_PADDING: Number = 1e-6;
 
+/// A helper struct that is used in planar objects (objects that exist in a subsection of a 2D plane
+///
+/// Use this for calculating the ray-plane intersection, instead of reimplementing for each type.
+/// Then, you can restrict by validating the UV coordinates returned by the intersection
 #[derive(Copy, Clone, Debug)]
 pub struct Planar {
     p: Point3,
@@ -93,8 +97,8 @@ impl Planar {
             return None;
         }
 
-        let pos = ray.at(t);
-        let pos_l = pos - self.p.to_vector();
+        let pos_w = ray.at(t);
+        let pos_l = pos_w - self.p.to_vector();
 
         // We would normally project so the point is `P = Q + α*u + β*v`
         // But since the vectors `u, v` don't have to be orthogonal, have to account for that too
@@ -104,8 +108,8 @@ impl Planar {
         let beta = Vector3::dot(self.w, Vector3::cross(self.u, q));
 
         Some(Intersection {
-            pos_w: pos,
-            pos_l: pos_l,
+            pos_w,
+            pos_l,
             material: material.clone(),
             dist: t,
             normal: self.n,

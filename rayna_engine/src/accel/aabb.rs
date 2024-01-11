@@ -42,8 +42,8 @@ impl Aabb {
     }
 
     pub fn new_centred(centre: Point3, size: Vector3) -> Self {
-        let min = centre - size;
-        let max = centre + size;
+        let min = centre - size / 2.;
+        let max = centre + size / 2.;
         Self::new(min, max)
     }
 
@@ -57,9 +57,8 @@ impl Aabb {
 
     /// [Self::encompass] but for an arbitrary number of boxes
     pub fn encompass_iter<B: Borrow<Self>>(iter: impl IntoIterator<Item = B>) -> Self {
-        iter.into_iter().fold(Self::default(), |a: Self, b: B| {
-            Self::encompass(&a, b.borrow())
-        })
+        iter.into_iter()
+            .fold(Self::default(), |a: Self, b: B| Self::encompass(&a, b.borrow()))
     }
 
     /// [Self::encompass] but for an arbitrary number of points
@@ -80,9 +79,7 @@ impl Aabb {
     pub fn min_padded(&self, thresh: Number) -> Self {
         let mut dims = self.size();
         let centre = self.min + dims / 2.;
-        dims.as_array_mut()
-            .iter_mut()
-            .for_each(|d| *d = d.max(thresh));
+        dims.as_array_mut().iter_mut().for_each(|d| *d = d.max(thresh));
         return Self::new_centred(centre, dims);
     }
 }

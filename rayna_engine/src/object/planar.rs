@@ -94,16 +94,18 @@ impl Planar {
         }
 
         let pos = ray.at(t);
-        let pos_v = pos.to_vector();
+        let pos_l = pos - self.p.to_vector();
 
         // We would normally project so the point is `P = Q + α*u + β*v`
         // But since the vectors `u, v` don't have to be orthogonal, have to account for that too
-        let alpha = Vector3::dot(self.w, Vector3::cross(pos_v, self.v));
-        let beta = Vector3::dot(self.w, Vector3::cross(self.u, pos_v));
+        // Because `P = pos`, `Q = pos_l`, we need to use local pos for this
+        let q = pos_l.to_vector();
+        let alpha = Vector3::dot(self.w, Vector3::cross(q, self.v));
+        let beta = Vector3::dot(self.w, Vector3::cross(self.u, q));
 
         Some(Intersection {
             pos_w: pos,
-            pos_l: pos - self.p.to_vector(),
+            pos_l: pos_l,
             material: material.clone(),
             dist: t,
             normal: self.n,

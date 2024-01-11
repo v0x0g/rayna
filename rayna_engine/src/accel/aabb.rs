@@ -86,6 +86,26 @@ impl Aabb {
 
 // endregion Constructors
 
+// region Helper
+impl Aabb {
+    // Returns the corners of the AABB
+    pub fn corners(&self) -> [Point3; 8] {
+        let (l, h) = (self.min, self.max);
+        [
+            [l.x, l.y, l.z].into(),
+            [l.x, l.y, h.z].into(),
+            [l.x, h.y, l.z].into(),
+            [l.x, h.y, h.z].into(),
+            [h.x, l.y, l.z].into(),
+            [h.x, l.y, h.z].into(),
+            [h.x, h.y, l.z].into(),
+            [h.x, h.y, h.z].into(),
+        ]
+    }
+}
+
+// endregion Helper
+
 // region Impl
 impl Aabb {
     /// Checks whether the given ray intersects with the AABB at any point within the given distance bounds

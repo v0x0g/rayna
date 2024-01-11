@@ -45,7 +45,7 @@ mod infinite_plane;
 pub mod parallelogram;
 pub mod planar;
 pub mod sphere;
-mod transform;
+pub mod transformed;
 pub mod triangle;
 
 dyn_clone::clone_trait_object!(Object);

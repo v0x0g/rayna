@@ -12,9 +12,9 @@ use crate::shared::ray::Ray;
 
 #[derive(Clone, Debug)]
 pub struct ParallelogramBuilder {
-    pub corner_origin: Point3,
-    pub corner_upper: Point3,
-    pub corner_right: Point3,
+    pub q: Point3,
+    pub b: Point3,
+    pub a: Point3,
     pub material: MaterialInstance,
 }
 
@@ -27,9 +27,8 @@ pub struct ParallelogramObject {
 
 impl From<ParallelogramBuilder> for ParallelogramObject {
     fn from(p: ParallelogramBuilder) -> Self {
-        let aabb = Aabb::encompass_points([p.corner_origin, p.corner_right, p.corner_upper])
-            .min_padded(super::planar::AABB_PADDING);
-        let plane = Planar::new_points(p.corner_origin, p.corner_right, p.corner_upper);
+        let aabb = Aabb::encompass_points([p.q, p.a, p.b]).min_padded(super::planar::AABB_PADDING);
+        let plane = Planar::new_points(p.q, p.a, p.b);
         Self {
             plane,
             aabb,

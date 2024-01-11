@@ -40,8 +40,8 @@ impl Planar {
     /// * `a`: The first point on the plane. Traditionally this would be the "right" point
     /// * `b`: The second point on the plane. Traditionally this would be the "upper" point
     pub fn new_points(q: Point3, a: Point3, b: Point3) -> Self {
-        let u = q - a;
-        let v = q - b;
+        let u = a - q;
+        let v = b - q;
 
         let n_raw = Vector3::cross(v, u);
         let n = n_raw

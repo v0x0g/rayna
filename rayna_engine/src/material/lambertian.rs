@@ -14,18 +14,13 @@ pub struct LambertianMaterial {
 }
 
 impl Material for LambertianMaterial {
-    fn scatter(
-        &self,
-        _ray: &Ray,
-        intersection: &Intersection,
-        rng: &mut dyn RngCore,
-    ) -> Option<Vector3> {
+    fn scatter(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
         // Completely random scatter direction, in same hemisphere as normal
         let rand = rng::vector_in_unit_sphere(rng);
         // Bias towards the normal so we get a `cos(theta)` distribution (Lambertian scatter)
-        let vec = intersection.normal + rand;
+        let vec = intersection.ray_normal + rand;
         // Can't necessarily normalise, since maybe `rand + normal == 0`
-        Some(vec.try_normalize().unwrap_or(intersection.normal))
+        Some(vec.try_normalize().unwrap_or(intersection.ray_normal))
     }
 
     //noinspection DuplicatedCode

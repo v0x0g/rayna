@@ -361,25 +361,58 @@ pub static CORNELL: Scene = {
         objs.push(quad.into());
     }
 
+    fn cuboid(
+        objs: &mut Vec<ObjectInstance>,
+        a: impl Into<Point3>,
+        b: impl Into<Point3>,
+        albedo: impl Into<TextureInstance>,
+    ) {
+        let a = a.into();
+        let b = b.into();
+        let quad = AxisBoxBuilder {
+            corner_1: a,
+            corner_2: b,
+            material: LambertianMaterial {
+                albedo: albedo.into(),
+                emissive: Default::default(),
+            }
+            .into(),
+        };
+        objs.push(quad.into());
+    }
+
     {
+        // WALLS
+
         let red = [0.65, 0.05, 0.05];
         let green = [0.12, 0.45, 0.15];
-        let white = [0.73; 3];
+        let grey = [0.73; 3];
         let light = [15.; 3];
         let black = [0.; 3];
         let o = &mut objects;
 
         quad(o, (0., 0., 0.), Vector3::Y, Vector3::Z, green, black); // Left
-        quad(o, (0., 0., 0.), Vector3::X, Vector3::Y, white, black); // Back
-        quad(o, (0., 0., 0.), Vector3::Z, Vector3::X, white, black); // Floor
+        quad(o, (0., 0., 0.), Vector3::X, Vector3::Y, grey, black); // Back
+        quad(o, (0., 0., 0.), Vector3::Z, Vector3::X, grey, black); // Floor
         quad(o, (1., 0., 0.), Vector3::Z, Vector3::Y, red, black); // Right
-        quad(o, (0., 1., 0.), Vector3::X, Vector3::Z, white, black); // Ceiling
+        quad(o, (0., 1., 0.), Vector3::X, Vector3::Z, grey, black); // Ceiling
         quad(o, (0.4, 0.9999, 0.4), (0.2, 0., 0.), (0., 0., 0.2), black, light);
+    }
+
+    {
+        // INNER BOXES
+
+        let grey = [0.73; 3];
+        let o = &mut objects;
+
+        cuboid(o, (0.231, 0., 0.117), (0.531, 0.297, 0.414), grey);
+        cuboid(o, (0.477, 0., 0.531), (0.774, 0.595, 0.829), grey);
     }
 
     Scene {
         camera,
         objects: objects.into(),
-        skybox: None.into(),
+        // skybox: None.into(),
+        skybox: SkyboxInstance::default(),
     }
 };

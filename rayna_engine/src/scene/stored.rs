@@ -102,9 +102,9 @@ pub static TESTING: Scene = {
                 emissive: Default::default(),
             }
             .into(),
-            corner_origin: Point3::new(0., 0., 0.),
-            corner_upper: Point3::new(-1., 1., 0.),
-            corner_right: Point3::new(1., 0.5, 0.),
+            q: Point3::new(0., 0., 0.),
+            b: Point3::new(-1., 1., 0.),
+            a: Point3::new(1., 0.5, 0.),
         })
         .into(),
     );
@@ -350,9 +350,9 @@ pub static CORNELL: Scene = {
         let a = a.into();
         let b = b.into();
         let quad = ParallelogramBuilder {
-            corner_origin: q,
-            corner_right: a,
-            corner_upper: b,
+            q,
+            a,
+            b,
             material: LambertianMaterial {
                 albedo: albedo.into(),
                 emissive: emissive.into(),
@@ -372,9 +372,9 @@ pub static CORNELL: Scene = {
         quad(o, (0., 0., 0.), (0., 0., 1.), (0., 1., 0.), green, black); // Left
         quad(o, (0., 0., 0.), (1., 0., 0.), (0., 1., 0.), white, black); // Back
         quad(o, (1., 0., 0.), (1., 0., 1.), (1., 1., 0.), red, black); // Right
-                                                                       // quad(o, (0., 0., 1.), (0., 0., 0.), (1., 0., 1.), white, black); // Floor
-                                                                       // quad(o, (0., 1., 0.), (1., 1., 0.), (0., 1., 1.), white, black); // Ceiling
-                                                                       // quad(o, (0.4, 0.99, 0.4), (0.6, 0.99, 0.4), (0.4, 0.99, 0.6), black, light);
+        quad(o, (0., 0., 0.), (0., 0., 1.), (1., 0., 0.), white, black); // Floor
+        quad(o, (0., 1., 0.), (0., 1., 1.), (1., 1., 0.), white, black); // Ceiling
+        quad(o, (0.4, 0.9, 0.4), (0.4, 0.9, 0.6), (0.6, 0.9, 0.4), black, light);
     }
 
     Scene {

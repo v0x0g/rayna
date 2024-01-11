@@ -329,8 +329,8 @@ pub static RTIAW_DEMO: Scene = {
 #[dynamic]
 pub static CORNELL: Scene = {
     let camera = Camera {
-        pos: Point3::new(278., 278., -800.),
-        fwd: Vector3::new(0., 0., 1.).normalize(),
+        pos: Point3::new(0.5, 0.5, 2.),
+        fwd: Vector3::new(0., 0., -1.).normalize(),
         v_fov: Angle::from_degrees(40.),
         focus_dist: 1.,
         defocus_angle: Angle::from_degrees(0.),
@@ -351,8 +351,8 @@ pub static CORNELL: Scene = {
         let b = b.into();
         let quad = ParallelogramBuilder {
             corner_origin: q,
-            corner_upper: q + b.to_vector(),
-            corner_right: q + a.to_vector(),
+            corner_right: a,
+            corner_upper: b,
             material: LambertianMaterial {
                 albedo: albedo.into(),
                 emissive: emissive.into(),
@@ -369,12 +369,12 @@ pub static CORNELL: Scene = {
         let light = [15.; 3];
         let black = [0.; 3];
         let o = &mut objects;
-        quad(o, [555., 0., 0.], [0., 555., 0.], [0., 0., 555.], green, black); // Left
-        quad(o, [0., 0., 0.], [0., 555., 0.], [0., 0., 555.], red, black); // Right
-        quad(o, [343., 554., 332.], [-130., 0., 0.], [0., 0., -105.], black, light); // Light
-        quad(o, [0., 0., 0.], [555., 0., 0.], [0., 0., 555.], white, black); // Floor
-        quad(o, [555., 555., 555.], [-555., 0., 0.], [0., 0., -555.], white, black); // Ceiling
-        quad(o, [0., 0., 555.], [555., 0., 0.], [0., 555., 0.], white, black); // Back
+        quad(o, (0., 0., 1.), (0., 0., 0.), (0., 1., 1.), green, black); // Left
+        quad(o, (1., 0., 0.), (1., 0., 1.), (1., 1., 0.), red, black); // Right
+        quad(o, (0., 0., 1.), (0., 0., 0.), (1., 0., 1.), white, black); // Floor
+        quad(o, (0., 1., 0.), (1., 1., 0.), (0., 1., 1.), white, black); // Ceiling
+        quad(o, (0., 0., 0.), (1., 0., 0.), (0., 1., 0.), white, black); // Back
+        quad(o, (0.4, 0.99, 0.4), (0.6, 0.99, 0.4), (0.4, 0.99, 0.6), black, light);
     }
 
     Scene {

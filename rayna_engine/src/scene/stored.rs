@@ -373,8 +373,8 @@ pub static CORNELL: Scene = {
         quad(o, (0., 0., 0.), Vector3::X, Vector3::Y, white, black); // Back
         quad(o, (0., 0., 0.), Vector3::Z, Vector3::X, white, black); // Floor
         quad(o, (1., 0., 0.), Vector3::Z, Vector3::Y, red, black); // Right
-        quad(o, (0., 1., 0.), Vector3::Z, Vector3::X, white, black); // Ceiling
-        quad(o, (0.0, 0.9, 0.0), (0.2, 0., 0.), (0., 0., 0.2), black, light);
+        quad(o, (0., 1., 0.), Vector3::X, Vector3::Z, white, black); // Ceiling
+        quad(o, (5.0, 0.1, 5.0), (1., 0., 0.), (0., 0., 1.), black, light);
     }
 
     Scene {

@@ -34,16 +34,14 @@ use rayna_shared::def::types::Number;
 use smallvec::SmallVec;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
-use self::{
-    axis_box::AxisBoxObject, dynamic::DynamicObject, parallelogram::ParallelogramObject,
-    sphere::SphereObject,
-};
+use self::{axis_box::AxisBoxObject, dynamic::DynamicObject, parallelogram::ParallelogramObject, sphere::SphereObject};
 
 pub mod axis_box;
 pub mod dynamic;
 pub mod parallelogram;
 pub mod planar;
 pub mod sphere;
+mod transform;
 pub mod triangle;
 
 dyn_clone::clone_trait_object!(Object);

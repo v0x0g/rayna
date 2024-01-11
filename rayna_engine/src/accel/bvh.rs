@@ -20,7 +20,7 @@ use crate::shared::ray::Ray;
 #[derive(Clone, Debug)]
 pub struct Bvh {
     arena: Arena<BvhNode>,
-    root_id: NodeId,
+    root_id: Option<NodeId>,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -55,7 +55,11 @@ impl Bvh {
         );
 
         let mut arena = Arena::with_capacity(objects.len());
-        let root_id = Self::generate_nodes_sah(objects, &mut arena);
+        let root_id = if objects.is_empty() {
+            None
+        } else {
+            Some(Self::generate_nodes_sah(objects, &mut arena))
+        };
 
         // eprintln!("\n\n{:?}\n\n", root_id.debug_pretty_print(&tree));
 
@@ -92,8 +96,12 @@ impl Bvh {
     /// # **Surface-Area Heuristics** (SAH)
     /// This method uses SAH to optimise the choice of split axis, as well as split position.
     /// It does this by choosing the longest axis, and splitting at the point where the overall surface areas are optimal
+    ///
+    /// # Panics
+    /// The slice of `objects` passed in must be non-empty.
     fn generate_nodes_sah(objects: &[ObjectInstance], arena: &mut Arena<BvhNode>) -> NodeId {
         return match objects {
+            [] => panic!("Must pass in a non-empty slice for objects"),
             [obj] => arena.new_node(BvhNode::Object(obj.clone())),
             [a, b] => {
                 let aabb = Aabb::encompass(expect_aabb(a), expect_aabb(b));
@@ -122,11 +130,7 @@ impl Bvh {
 
                 // Sort along longest axis
                 {
-                    let max_side = match main_aabb
-                        .size()
-                        .into_iter()
-                        .position_max_by(Number::total_cmp)
-                    {
+                    let max_side = match main_aabb.size().into_iter().position_max_by(Number::total_cmp) {
                         Some(0) => SplitAxis::X,
                         Some(1) => SplitAxis::Y,
                         Some(2) => SplitAxis::Z,
@@ -151,8 +155,7 @@ impl Bvh {
 
                     //Calculate the area from the right towards the left
                     let mut right_aabb = Aabb::default();
-                    for (area, obj_aabb) in zip_eq(right_areas.iter_mut().rev(), aabbs.iter().rev())
-                    {
+                    for (area, obj_aabb) in zip_eq(right_areas.iter_mut().rev(), aabbs.iter().rev()) {
                         right_aabb = Aabb::encompass(&right_aabb, obj_aabb);
                         *area = right_aabb.area();
                     }
@@ -235,12 +238,7 @@ fn bvh_node_intersect(
 ///  - Tries to bail early if the [Aabb] is missed
 ///  - Collects all the child nodes
 ///  - Intersects on all those children (by calling itself recursively)
-fn bvh_node_intersect_all(
-    ray: &Ray,
-    node: NodeId,
-    arena: &Arena<BvhNode>,
-    output: &mut SmallVec<[Intersection; 32]>,
-) {
+fn bvh_node_intersect_all(ray: &Ray, node: NodeId, arena: &Arena<BvhNode>, output: &mut SmallVec<[Intersection; 32]>) {
     match arena.get(node).expect("node should exist in arena").get() {
         // An aabb will need to delegate to child nodes if not missed
         BvhNode::Nested(aabb) => {
@@ -271,18 +269,21 @@ fn bvh_node_intersect_all(
 impl Object for Bvh {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         // Pass everything on to our magical function
-        bvh_node_intersect(ray, bounds, self.root_id, &self.arena)
+        bvh_node_intersect(ray, bounds, self.root_id?, &self.arena)
     }
 
     fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
-        bvh_node_intersect_all(ray, self.root_id, &self.arena, output)
+        if let Some(root) = self.root_id {
+            bvh_node_intersect_all(ray, root, &self.arena, output);
+        }
     }
 
     fn aabb(&self) -> Option<&Aabb> {
+        let root = self.root_id?;
         match self
             .arena
-            .get(self.root_id)
-            .expect("TODO: Allow empty tree in Bvh and Option<&Aabb> for `Object::aabb`")
+            .get(root)
+            .expect(&format!("Arena should contain root node {root}"))
             .get()
         {
             BvhNode::Nested(aabb) => Some(aabb),

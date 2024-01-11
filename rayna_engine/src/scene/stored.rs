@@ -22,10 +22,9 @@ use crate::object::sphere::*;
 use crate::object::ObjectInstance;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
-use crate::skybox::none::NoSkybox;
 use crate::skybox::SkyboxInstance;
 use crate::texture::image::ImageTexture;
-use crate::texture::noise::{ColourSource, LocalNoiseTexture, UvNoiseTexture};
+use crate::texture::noise::{ColourSource, LocalNoiseTexture};
 use crate::texture::TextureInstance;
 
 use super::Scene;
@@ -95,19 +94,19 @@ pub static TESTING: Scene = {
     //     })
     //     .into(),
     // );
-    objects.push(
-        ParallelogramObject::from(ParallelogramBuilder {
-            material: LambertianMaterial {
-                albedo: [1.; 3].into(),
-                emissive: Default::default(),
-            }
-            .into(),
-            q: Point3::new(0., 0., 0.),
-            b: Point3::new(-1., 1., 0.),
-            a: Point3::new(1., 0.5, 0.),
-        })
-        .into(),
-    );
+    // objects.push(
+    //     ParallelogramObject::from(ParallelogramBuilder {
+    //         material: LambertianMaterial {
+    //             albedo: [1.; 3].into(),
+    //             emissive: Default::default(),
+    //         }
+    //         .into(),
+    //         q: Point3::new(0., 0., 0.),
+    //         b: Point3::new(-1., 1., 0.),
+    //         a: Point3::new(1., 0.5, 0.),
+    //     })
+    //     .into(),
+    // );
     // objects.push(
     //     SphereObject::from(SphereBuilder {
     //         // Ground
@@ -340,17 +339,17 @@ pub static CORNELL: Scene = {
 
     fn quad(
         objs: &mut Vec<ObjectInstance>,
-        q: impl Into<Point3>,
+        p: impl Into<Point3>,
         a: impl Into<Point3>,
         b: impl Into<Point3>,
         albedo: impl Into<TextureInstance>,
         emissive: impl Into<TextureInstance>,
     ) {
-        let q = q.into();
+        let p = p.into();
         let a = a.into();
         let b = b.into();
-        let quad = ParallelogramBuilder {
-            q,
+        let quad = ParallelogramBuilder::Points {
+            p,
             a,
             b,
             material: LambertianMaterial {
@@ -372,9 +371,9 @@ pub static CORNELL: Scene = {
         quad(o, (0., 0., 0.), (0., 0., 1.), (0., 1., 0.), green, black); // Left
         quad(o, (0., 0., 0.), (1., 0., 0.), (0., 1., 0.), white, black); // Back
         quad(o, (1., 0., 0.), (1., 0., 1.), (1., 1., 0.), red, black); // Right
-        quad(o, (0., 0., 0.), (0., 0., 1.), (1., 0., 0.), white, black); // Floor
-        quad(o, (0., 1., 0.), (0., 1., 1.), (1., 1., 0.), white, black); // Ceiling
-        quad(o, (0.4, 0.9, 0.4), (0.4, 0.9, 0.6), (0.6, 0.9, 0.4), black, light);
+                                                                       // quad(o, (0., 0., 0.), (0., 0., 1.), (1., 0., 0.), white, black); // Floor
+                                                                       // quad(o, (0., 1., 0.), (0., 1., 1.), (1., 1., 0.), white, black); // Ceiling
+                                                                       // quad(o, (0.4, 0.9, 0.4), (0.4, 0.9, 0.6), (0.6, 0.9, 0.4), black, light);
     }
 
     Scene {

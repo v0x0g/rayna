@@ -1,6 +1,6 @@
 use smallvec::SmallVec;
 
-use rayna_shared::def::types::{Number, Point2, Point3};
+use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialInstance;
@@ -11,11 +11,19 @@ use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 
 #[derive(Clone, Debug)]
-pub struct ParallelogramBuilder {
-    pub q: Point3,
-    pub b: Point3,
-    pub a: Point3,
-    pub material: MaterialInstance,
+pub enum ParallelogramBuilder {
+    Points {
+        p: Point3,
+        a: Point3,
+        b: Point3,
+        material: MaterialInstance,
+    },
+    Vector3 {
+        p: Point3,
+        u: Vector3,
+        v: Vector3,
+        material: MaterialInstance,
+    },
 }
 
 #[derive(Clone, Debug)]
@@ -27,12 +35,17 @@ pub struct ParallelogramObject {
 
 impl From<ParallelogramBuilder> for ParallelogramObject {
     fn from(p: ParallelogramBuilder) -> Self {
-        let aabb = Aabb::encompass_points([p.q, p.a, p.b]).min_padded(super::planar::AABB_PADDING);
-        let plane = Planar::new_points(p.q, p.a, p.b);
-        Self {
-            plane,
-            aabb,
-            material: p.material,
+        match p {
+            ParallelogramBuilder::Points { p, a, b, material } => {
+                let aabb = Aabb::encompass_points([p, a, b]).min_padded(super::planar::AABB_PADDING);
+                let plane = Planar::new_points(p, a, b);
+                Self { plane, aabb, material }
+            }
+            ParallelogramBuilder::Vector3 { p, u, v, material } => {
+                let aabb = Aabb::encompass_points([p, p + u, p + v]).min_padded(super::planar::AABB_PADDING);
+                let plane = Planar::new(p, u, v);
+                Self { plane, aabb, material }
+            }
         }
     }
 }

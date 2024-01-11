@@ -16,7 +16,7 @@ pub const AABB_PADDING: Number = 1e-6;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Planar {
-    q: Point3,
+    p: Point3,
     /// The vector for the `U` direction, typically the 'right' direction
     u: Vector3,
     /// The vector for the `V` direction, typically the 'up' direction
@@ -42,15 +42,18 @@ impl Planar {
     pub fn new_points(q: Point3, a: Point3, b: Point3) -> Self {
         let u = a - q;
         let v = b - q;
+        Self::new(q, u, v)
+    }
 
+    pub fn new(p: Point3, u: Vector3, v: Vector3) -> Self {
         let n_raw = Vector3::cross(v, u);
         let n = n_raw
             .try_normalize()
             .expect("couldn't normalise plane normal: cross(u, v) == 0");
-        let d = n.dot(q.to_vector());
+        let d = n.dot(p.to_vector());
         // NOTE: using non-normalised normal here
         let w = n_raw / n_raw.length_squared();
-        Self { q, u, v, n, d, w }
+        Self { p, u, v, n, d, w }
     }
 }
 
@@ -100,7 +103,7 @@ impl Planar {
 
         Some(Intersection {
             pos_w: pos,
-            pos_l: pos - self.q.to_vector(),
+            pos_l: pos - self.p.to_vector(),
             material: material.clone(),
             dist: t,
             normal: self.n,

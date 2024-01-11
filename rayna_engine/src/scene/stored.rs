@@ -371,10 +371,12 @@ pub static CORNELL: Scene = {
 
         quad(o, (0., 0., 0.), Vector3::Y, Vector3::Z, green, black); // Left
         quad(o, (0., 0., 0.), Vector3::X, Vector3::Y, white, black); // Back
-        quad(o, (1., 0., 0.), Vector3::Z, Vector3::Y, red, black); // Right
-                                                                   // quad(o, (0., 0., 0.), (0., 0., 1.), (1., 0., 0.), white, black); // Floor
-                                                                   // quad(o, (0., 1., 0.), (0., 1., 1.), (1., 1., 0.), white, black); // Ceiling
-                                                                   // quad(o, (0.4, 0.9, 0.4), (0.4, 0.9, 0.6), (0.6, 0.9, 0.4), black, light);
+        quad(o, (0., 0., 0.), Vector3::Z, Vector3::X, white, black); // Floor
+        quad(o, (0., 1., 0.), Vector3::Z, Vector3::X, red, black); // Floor
+
+        // quad(o, (1., 0., 0.), Vector3::Z, Vector3::Y, red, black); // Right
+        // quad(o, (0., 1., 0.), (0., 1., 1.), (1., 1., 0.), white, black); // Ceiling
+        // quad(o, (0.4, 0.9, 0.4), (0.4, 0.9, 0.6), (0.6, 0.9, 0.4), black, light);
     }
 
     Scene {

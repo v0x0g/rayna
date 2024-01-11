@@ -46,7 +46,7 @@ impl Planar {
     }
 
     pub fn new(p: Point3, u: Vector3, v: Vector3) -> Self {
-        let n_raw = Vector3::cross(v, u);
+        let n_raw = Vector3::cross(u, v);
         let n = n_raw
             .try_normalize()
             .expect("couldn't normalise plane normal: cross(u, v) == 0");

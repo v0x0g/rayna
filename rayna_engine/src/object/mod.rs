@@ -34,7 +34,10 @@ use rayna_shared::def::types::Number;
 use smallvec::SmallVec;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
-use self::{axis_box::AxisBoxObject, dynamic::DynamicObject, parallelogram::ParallelogramObject, sphere::SphereObject};
+use self::{
+    axis_box::AxisBoxObject, dynamic::DynamicObject, infinite_plane::InfinitePlaneObject,
+    parallelogram::ParallelogramObject, sphere::SphereObject,
+};
 
 pub mod axis_box;
 pub mod dynamic;
@@ -79,5 +82,6 @@ pub enum ObjectInstance {
     SphereObject,
     AxisBoxObject,
     ParallelogramObject,
+    InfinitePlaneObject,
     DynamicObject,
 }

@@ -1,5 +1,4 @@
 use smallvec::SmallVec;
-use std::borrow::Borrow;
 
 use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 
@@ -14,6 +13,7 @@ use crate::shared::ray::Ray;
 #[derive(Copy, Clone, Debug, Default, Ord, PartialOrd, Eq, PartialEq)]
 pub enum UvWrappingMode {
     /// Don't wrap UV coords, keep them unbounded
+    #[default]
     None,
     /// Wrap the UV coordinates when they reach `1.0`
     ///
@@ -26,6 +26,7 @@ pub enum UvWrappingMode {
 }
 
 impl UvWrappingMode {
+    /// Applies the wrapping mode to the UV coordinate, returning the new coordinate
     #[inline(always)]
     pub fn apply(self, uvs: Point2) -> Point2 {
         fn wrap(x: Number) -> Number { x % 1.0 }
@@ -38,6 +39,7 @@ impl UvWrappingMode {
         }
     }
 
+    /// Applies the wrapping mode to the UV coordinate, writing the modified coordinate into the reference
     #[inline(always)]
     pub fn apply_mut(self, uvs: &mut Point2) { *uvs = self.apply(*uvs); }
 }
@@ -121,6 +123,7 @@ impl Object for InfinitePlaneObject {
         Some(i)
     }
 
+    //noinspection DuplicatedCode
     fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
         // Ignores infinite intersection case
         self.intersect(ray, &Bounds::FULL).map(|i| output.push(i));

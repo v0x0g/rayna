@@ -328,7 +328,7 @@ pub static RTIAW_DEMO: Scene = {
 #[dynamic]
 pub static CORNELL: Scene = {
     let camera = Camera {
-        pos: Point3::new(0.5, 0.5, 2.),
+        pos: Point3::new(0.5, 0.5, 2.3),
         fwd: Vector3::new(0., 0., -1.).normalize(),
         v_fov: Angle::from_degrees(40.),
         focus_dist: 1.,
@@ -405,14 +405,14 @@ pub static CORNELL: Scene = {
         let grey = [0.73; 3];
         let o = &mut objects;
 
-        cuboid(o, (0.231, 0., 0.117), (0.531, 0.297, 0.414), grey);
-        cuboid(o, (0.477, 0., 0.531), (0.774, 0.595, 0.829), grey);
+        cuboid(o, (0.231, 0., 0.117), (0.531, 0.595, 0.414), grey);
+        cuboid(o, (0.477, 0., 0.531), (0.774, 0.297, 0.829), grey);
     }
 
     Scene {
         camera,
         objects: objects.into(),
-        // skybox: None.into(),
-        skybox: SkyboxInstance::default(),
+        skybox: None.into(),
+        // skybox: SkyboxInstance::default(),
     }
 };

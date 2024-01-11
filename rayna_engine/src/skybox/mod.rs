@@ -27,3 +27,10 @@ impl Default for SkyboxInstance {
         DefaultSkybox::default().into()
     }
 }
+
+/// This allows us to use [Option::None] as shorthand for no skybox
+impl From<Option<SkyboxInstance>> for SkyboxInstance {
+    fn from(value: Option<SkyboxInstance>) -> Self {
+        value.unwrap_or(Self::NoSkybox(NoSkybox {}))
+    }
+}

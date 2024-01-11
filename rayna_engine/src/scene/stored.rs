@@ -380,6 +380,6 @@ pub static CORNELL: Scene = {
     Scene {
         camera,
         objects: objects.into(),
-        skybox: SkyboxInstance::default(),
+        skybox: None.into(),
     }
 };

@@ -60,6 +60,7 @@ impl Object for ParallelogramObject {
     }
 
     fn aabb(&self) -> Option<&Aabb> {
-        Some(&self.aabb)
+        Some(&self.aabb);
+        None
     }
 }

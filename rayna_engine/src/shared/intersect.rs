@@ -31,7 +31,12 @@ pub struct Intersection {
     ///
     ///
     pub dist: Number,
-    /// The UV coordinates for the point on the object's surface. Normally used for texture mapping
+    /// The UV coordinates for the point on the object's surface. Normally used for texture mapping.
+    ///
+    /// # Convention
+    /// As a general rule, for any *bounded* face (one that doesn't extend to infinity along any direction),
+    /// this should range from `0.0..=1.0` for both dimensions. If the surface is infinite (e.g. infinite ground plane),
+    /// then it is acceptable to use unbounded UV coordinates, if not wrapping/mirroring them
     pub uv: Point2,
     /// Numeric ID for which "face" was hit
     ///
@@ -45,9 +50,7 @@ pub struct Intersection {
 impl Eq for Intersection {}
 
 impl PartialOrd<Self> for Intersection {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Number::partial_cmp(&self.dist, &other.dist)
-    }
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Number::partial_cmp(&self.dist, &other.dist) }
 }
 
 impl Ord for Intersection {

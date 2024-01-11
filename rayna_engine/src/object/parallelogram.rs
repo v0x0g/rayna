@@ -122,9 +122,7 @@ impl From<ParallelogramBuilder> for ParallelogramObject {
 }
 
 impl From<ParallelogramBuilder> for ObjectInstance {
-    fn from(value: ParallelogramBuilder) -> Self {
-        ParallelogramObject::from(value).into()
-    }
+    fn from(value: ParallelogramBuilder) -> Self { ParallelogramObject::from(value).into() }
 }
 
 impl Object for ParallelogramObject {
@@ -144,8 +142,5 @@ impl Object for ParallelogramObject {
         self.intersect(ray, &Bounds::FULL).map(|i| output.push(i));
     }
 
-    fn aabb(&self) -> Option<&Aabb> {
-        Some(&self.aabb);
-        None
-    }
+    fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
 }

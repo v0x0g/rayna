@@ -38,6 +38,7 @@ use self::{axis_box::AxisBoxObject, dynamic::DynamicObject, parallelogram::Paral
 
 pub mod axis_box;
 pub mod dynamic;
+mod infinite_plane;
 pub mod parallelogram;
 pub mod planar;
 pub mod sphere;

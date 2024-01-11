@@ -340,18 +340,18 @@ pub static CORNELL: Scene = {
     fn quad(
         objs: &mut Vec<ObjectInstance>,
         p: impl Into<Point3>,
-        a: impl Into<Point3>,
-        b: impl Into<Point3>,
+        u: impl Into<Vector3>,
+        v: impl Into<Vector3>,
         albedo: impl Into<TextureInstance>,
         emissive: impl Into<TextureInstance>,
     ) {
         let p = p.into();
-        let a = a.into();
-        let b = b.into();
-        let quad = ParallelogramBuilder::Points {
+        let u = u.into();
+        let v = v.into();
+        let quad = ParallelogramBuilder::Vectors {
             p,
-            a,
-            b,
+            u,
+            v,
             material: LambertianMaterial {
                 albedo: albedo.into(),
                 emissive: emissive.into(),
@@ -368,12 +368,13 @@ pub static CORNELL: Scene = {
         let light = [15.; 3];
         let black = [0.; 3];
         let o = &mut objects;
-        quad(o, (0., 0., 0.), (0., 0., 1.), (0., 1., 0.), green, black); // Left
-        quad(o, (0., 0., 0.), (1., 0., 0.), (0., 1., 0.), white, black); // Back
-        quad(o, (1., 0., 0.), (1., 0., 1.), (1., 1., 0.), red, black); // Right
-                                                                       // quad(o, (0., 0., 0.), (0., 0., 1.), (1., 0., 0.), white, black); // Floor
-                                                                       // quad(o, (0., 1., 0.), (0., 1., 1.), (1., 1., 0.), white, black); // Ceiling
-                                                                       // quad(o, (0.4, 0.9, 0.4), (0.4, 0.9, 0.6), (0.6, 0.9, 0.4), black, light);
+
+        quad(o, (0., 0., 0.), Vector3::Y, Vector3::Z, green, black); // Left
+        quad(o, (0., 0., 0.), Vector3::X, Vector3::Y, white, black); // Back
+        quad(o, (1., 0., 0.), Vector3::Z, Vector3::Y, red, black); // Right
+                                                                   // quad(o, (0., 0., 0.), (0., 0., 1.), (1., 0., 0.), white, black); // Floor
+                                                                   // quad(o, (0., 1., 0.), (0., 1., 1.), (1., 1., 0.), white, black); // Ceiling
+                                                                   // quad(o, (0.4, 0.9, 0.4), (0.4, 0.9, 0.6), (0.6, 0.9, 0.4), black, light);
     }
 
     Scene {

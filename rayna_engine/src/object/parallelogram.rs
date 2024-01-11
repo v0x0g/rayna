@@ -18,7 +18,7 @@ pub enum ParallelogramBuilder {
         b: Point3,
         material: MaterialInstance,
     },
-    Vector3 {
+    Vectors {
         p: Point3,
         u: Vector3,
         v: Vector3,
@@ -41,7 +41,7 @@ impl From<ParallelogramBuilder> for ParallelogramObject {
                 let plane = Planar::new_points(p, a, b);
                 Self { plane, aabb, material }
             }
-            ParallelogramBuilder::Vector3 { p, u, v, material } => {
+            ParallelogramBuilder::Vectors { p, u, v, material } => {
                 let aabb = Aabb::encompass_points([p, p + u, p + v]).min_padded(super::planar::AABB_PADDING);
                 let plane = Planar::new(p, u, v);
                 Self { plane, aabb, material }

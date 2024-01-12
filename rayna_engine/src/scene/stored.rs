@@ -7,10 +7,8 @@
 use image::Pixel as _;
 use noise::*;
 use rand::{thread_rng, Rng};
+use rayna_shared::def::types::{Angle, Number, Pixel, Point3, Vector3};
 use static_init::*;
-use std::sync::Arc;
-
-use rayna_shared::def::types::{Angle, Number, Pixel, Point3, Size2, Vector2, Vector3};
 
 use crate::material::dielectric::DielectricMaterial;
 use crate::material::lambertian::LambertianMaterial;
@@ -284,15 +282,11 @@ pub static RTIAW_DEMO: Scene = {
             pos: Point3::new(4., 1., 0.),
             radius: 1.,
             material: LambertianMaterial {
-                albedo: ImageTexture {
-                    scale: Size2::splat(1.),
-                    offset: Vector2::ZERO,
-                    image: Arc::new(
-                        image::open("./media/textures/earthmap.jpg")
-                            .expect("open")
-                            .into_rgb32f(),
-                    ),
-                }
+                albedo: ImageTexture::from(
+                    image::load_from_memory(include_bytes!("../../../media/textures/earthmap.jpg"))
+                        .expect("included earth-map texture file should be valid")
+                        .into_rgb32f(),
+                )
                 .into(),
                 emissive: Default::default(),
             }

@@ -15,6 +15,20 @@ pub struct ImageTexture {
     pub offset: Vector2,
 }
 
+impl From<ImgBuf> for ImageTexture {
+    fn from(value: ImgBuf) -> Self { Self::from(Arc::new(value)) }
+}
+
+impl From<Arc<ImgBuf>> for ImageTexture {
+    fn from(value: Arc<ImgBuf>) -> Self {
+        Self {
+            offset: Vector2::ZERO,
+            scale: Size2::splat(1.),
+            image: value,
+        }
+    }
+}
+
 impl Texture for ImageTexture {
     fn value(&self, intersection: &Intersection, _rng: &mut dyn RngCore) -> Pixel {
         // Calculate pixel positions after scale and offset

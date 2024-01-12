@@ -30,7 +30,7 @@ use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
-use rayna_shared::def::types::Number;
+use rayna_shared::def::types::{Number, Point3};
 use smallvec::SmallVec;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
@@ -44,14 +44,14 @@ pub mod dynamic;
 mod infinite_plane;
 pub mod parallelogram;
 pub mod planar;
-mod property;
 pub mod sphere;
 pub mod transformed;
 pub mod triangle;
 
 dyn_clone::clone_trait_object!(Object);
+
 #[enum_dispatch]
-pub trait Object: RtRequirement {
+pub trait Object: ObjectProperties + RtRequirement {
     /// Attempts to perform an intersection between the given ray and the target object
     ///
     /// # Return Value
@@ -68,9 +68,6 @@ pub trait Object: RtRequirement {
     /// It can be assumed this vector will be empty.
     fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>);
 
-    /// Gets the bounding box for this object. If the object can't be bounded (e.g. infinite plane), return [None]
-    fn aabb(&self) -> Option<&Aabb>;
-
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
 }
 
@@ -85,4 +82,17 @@ pub enum ObjectInstance {
     ParallelogramObject,
     InfinitePlaneObject,
     DynamicObject,
+}
+
+dyn_clone::clone_trait_object!(ObjectProperties);
+
+#[enum_dispatch]
+pub trait ObjectProperties: RtRequirement {
+    /// Gets the bounding box for this object. If the object can't be bounded (e.g. infinite plane), return [None]
+    fn aabb(&self) -> Option<&Aabb>;
+
+    /// Gets the centre of the object.
+    ///
+    /// Scaling and rotation will happen around this point
+    fn centre(&self) -> Point3;
 }

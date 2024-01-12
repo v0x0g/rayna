@@ -371,7 +371,7 @@ pub static CORNELL: Scene = {
             corner_2: b,
             material: LambertianMaterial {
                 albedo: albedo.into(),
-                emissive: Default::default(),
+                emissive: [0.; 3].into(),
             }
             .into(),
         }

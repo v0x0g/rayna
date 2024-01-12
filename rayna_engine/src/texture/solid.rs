@@ -20,8 +20,8 @@ impl<T: Into<Pixel>> From<T> for TextureInstance {
 
 impl Default for SolidTexture {
     fn default() -> Self {
-        // Half grey
-        Pixel::from([0.5; 3]).into()
+        // Black
+        Pixel::from([0.; 3]).into()
     }
 }
 

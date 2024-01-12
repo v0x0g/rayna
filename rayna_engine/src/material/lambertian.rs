@@ -7,10 +7,19 @@ use crate::texture::TextureInstance;
 use rand::RngCore;
 use rayna_shared::def::types::{Channel, Pixel, Vector3};
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct LambertianMaterial {
     pub albedo: TextureInstance,
     pub emissive: TextureInstance,
+}
+
+impl Default for LambertianMaterial {
+    fn default() -> Self {
+        Self {
+            albedo: [0.5; 3].into(),
+            emissive: [0.; 3].into(),
+        }
+    }
 }
 
 impl Material for LambertianMaterial {

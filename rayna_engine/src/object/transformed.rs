@@ -42,14 +42,11 @@ impl<Obj: Object + Clone> TransformedObject<Obj> {
     #[inline(always)]
     fn transform_ray(&self, ray: Ray) -> Ray {
         let (pos, dir) = (ray.pos(), ray.dir());
-        Ray::new(self.inv_transform.map_point(pos), self.inv_transform.map_vector(dir))
+        let tf = &self.inv_transform;
+        Ray::new(tf.map_point(pos), tf.map_vector(dir))
     }
 
-    /// Applies the transform matrix in `self` to the given ray.
-    ///
-    /// # Note
-    /// This actually uses the inverse transform to go from world -> object space
-    /// (the plain `transform` is object -> world space
+    /// Applies the transform matrix in `self` to the given intersection.
     #[inline(always)]
     fn transform_intersection(&self, orig_ray: &Ray, intersection: &Intersection) -> Intersection {
         // PANICS:
@@ -61,16 +58,7 @@ impl<Obj: Object + Clone> TransformedObject<Obj> {
         let mut intersection = intersection.clone();
 
         let tf = &self.transform;
-        let point = |p: &mut Point3| {
-            // TODO: I'm unsure why it mentions "perspective projection", we don't want perspective
-            //  This should just be a plain affine 3D transform (scale + rotate + translate)
-            //  This divides by the result's `W` axis, which should always be one since it's an affine transform???
-            //  Also might be faster if it skips steps
-            // tf.matrix.transform_point(p)
-
-            *p = tf.map_point(*p);
-        };
-
+        let point = |p: &mut Point3| *p = tf.matrix.transform_point(*p);
         let normal = |n: &mut Vector3| {
             *n = tf.map_vector(*n).try_normalize().expect(&format!(
                 "transformation failed: vector {n:?} transformed to {t:?} couldn't be normalised",

@@ -40,7 +40,7 @@ impl<Obj: Object + Clone> TransformedObject<Obj> {
     /// This actually uses the inverse transform to go from world -> object space
     /// (the plain `transform` is object -> world space
     #[inline(always)]
-    fn transform_ray(&self, ray: Ray) -> Ray {
+    fn transform_ray(&self, ray: &Ray) -> Ray {
         let (pos, dir) = (ray.pos(), ray.dir());
         let tf = &self.inv_transform;
         Ray::new(tf.map_point(pos), tf.map_vector(dir))
@@ -81,14 +81,14 @@ impl<Obj: Object + Clone> TransformedObject<Obj> {
 
 impl<Obj: Object + Clone> Object for TransformedObject<Obj> {
     fn intersect(&self, orig_ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
-        let trans_ray = self.transform_ray(*orig_ray);
+        let trans_ray = self.transform_ray(orig_ray);
         self.inner
             .intersect(&trans_ray, bounds)
             .map(|i| self.transform_intersection(orig_ray, &i))
     }
 
     fn intersect_all(&self, orig_ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
-        let trans_ray = self.transform_ray(*orig_ray);
+        let trans_ray = self.transform_ray(orig_ray);
         let initial_len = output.len();
         self.inner.intersect_all(&trans_ray, output);
         let new_len = output.len();

@@ -51,7 +51,7 @@ impl<Obj: Object + Clone> TransformedObject<Obj> {
     /// This actually uses the inverse transform to go from world -> object space
     /// (the plain `transform` is object -> world space
     #[inline(always)]
-    fn transform_intersection(&self, trans_ray: &Ray, intersection: &Intersection) -> Intersection {
+    fn transform_intersection(&self, orig_ray: &Ray, intersection: &Intersection) -> Intersection {
         // PANICS:
         // We use `.unwrap()` on the results of the transformations
         // Since it is of type `Transform3`, it must be an invertible matrix and can't collapse
@@ -85,22 +85,22 @@ impl<Obj: Object + Clone> TransformedObject<Obj> {
 
         // Minor hack, calculate the intersection distance instead of transforming it
         // I don't know how else to do this lol
-        intersection.dist = (intersection.pos_w - trans_ray.pos()).length();
+        intersection.dist = (intersection.pos_w - orig_ray.pos()).length();
 
         return intersection;
     }
 }
 
 impl<Obj: Object + Clone> Object for TransformedObject<Obj> {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
-        let trans_ray = self.transform_ray(*ray);
+    fn intersect(&self, orig_ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
+        let trans_ray = self.transform_ray(*orig_ray);
         self.inner
             .intersect(&trans_ray, bounds)
-            .map(|i| self.transform_intersection(&trans_ray, &i))
+            .map(|i| self.transform_intersection(orig_ray, &i))
     }
 
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
-        let trans_ray = self.transform_ray(*ray);
+    fn intersect_all(&self, orig_ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
+        let trans_ray = self.transform_ray(*orig_ray);
         let initial_len = output.len();
         self.inner.intersect_all(&trans_ray, output);
         let new_len = output.len();
@@ -109,7 +109,7 @@ impl<Obj: Object + Clone> Object for TransformedObject<Obj> {
         let inner_intersects = &mut output[initial_len..new_len];
         inner_intersects
             .into_iter()
-            .for_each(|i| *i = self.transform_intersection(&trans_ray, i))
+            .for_each(|i| *i = self.transform_intersection(orig_ray, i))
     }
 
     fn aabb(&self) -> Option<&Aabb> { self.aabb.as_ref() }

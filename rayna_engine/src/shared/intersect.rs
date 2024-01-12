@@ -4,8 +4,7 @@ use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 use std::cmp::Ordering;
 
 /// A struct representing a ray-object intersection
-#[derive(Clone, Debug, Derivative)]
-#[derivative(PartialEq)]
+#[derive(Copy, Clone, Debug, Derivative, PartialEq)]
 pub struct Intersection {
     /// The position in world coordinates of the intersection
     pub pos_w: Point3,
@@ -43,9 +42,6 @@ pub struct Intersection {
     /// For objects with a single 'surface' (like a [sphere](crate::object::sphere::SphereObject), this would be always [Number::ZERO].
     /// For an object that may have multiple faces (like a [box](crate::object::axis_box::AxisBoxObject), this would unique per-side.
     pub face: usize,
-    // TODO: Can we possibly remove this, and make the material be an `ObjectProperty` func?
-    #[derivative(PartialEq = "ignore", PartialOrd = "ignore")]
-    pub material: MaterialInstance,
 }
 
 impl Eq for Intersection {}

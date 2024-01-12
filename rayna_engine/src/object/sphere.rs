@@ -2,7 +2,7 @@ use crate::accel::aabb::Aabb;
 use crate::material::MaterialInstance;
 use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::{FullIntersection, Intersection};
 use crate::shared::ray::Ray;
 use getset::{CopyGetters, Getters};
 use glamour::AngleConsts;
@@ -57,7 +57,7 @@ impl From<SphereBuilder> for ObjectInstance {
 }
 
 impl Object for SphereObject {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
+    fn intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();
@@ -100,20 +100,22 @@ impl Object for SphereObject {
             outward_normal
         };
 
-        return Some(Intersection {
-            pos_w: world_point,
-            pos_l: local_point.to_point(),
-            dist,
-            normal: outward_normal,
-            ray_normal,
-            front_face: !ray_pos_inside,
-            material: self.material.clone(),
-            uv: sphere_uv(local_point),
-            face: 0,
-        });
+        return Some(
+            Intersection {
+                pos_w: world_point,
+                pos_l: local_point.to_point(),
+                dist,
+                normal: outward_normal,
+                ray_normal,
+                front_face: !ray_pos_inside,
+                uv: sphere_uv(local_point),
+                face: 0,
+            }
+            .make_full(&self.material),
+        );
     }
 
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
+    fn intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();
@@ -151,10 +153,10 @@ impl Object for SphereObject {
                 normal: outward_normal,
                 ray_normal,
                 front_face: !inside,
-                material: self.material.clone(),
                 uv: sphere_uv(local_point),
                 face: 0,
             }
+            .make_full(&self.material)
         }));
     }
 }

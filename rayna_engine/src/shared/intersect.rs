@@ -4,7 +4,7 @@ use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 use std::cmp::Ordering;
 
 /// A struct representing a ray-object intersection
-#[derive(Copy, Clone, Debug, Derivative, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Intersection {
     /// The position in world coordinates of the intersection
     pub pos_w: Point3,
@@ -54,5 +54,37 @@ impl Ord for Intersection {
     fn cmp(&self, other: &Self) -> Ordering {
         Number::partial_cmp(&self.dist, &other.dist)
             .expect("couldn't compare intersections distances: invariant `.dist != NaN` failed")
+    }
+}
+
+/// A small wrapper class that includes a reference to a material as well as
+/// the actual intersection with the model.
+///
+/// Mainly used internally.
+#[derive(Clone, Debug, Derivative)]
+#[derivative(Ord, PartialOrd, Eq, PartialEq)]
+pub struct FullIntersection<'a> {
+    pub intersection: Intersection,
+    /// NOTE:
+    /// For all comparisons, this field is ignored ([PartialEq], [Ord], [PartialOrd])
+    #[derivative(PartialOrd = "ignore", Ord = "ignore", PartialEq = "ignore")]
+    pub material: &'a MaterialInstance,
+}
+
+impl<'a> From<(&'a MaterialInstance, Intersection)> for FullIntersection<'a> {
+    fn from(value: (&'a MaterialInstance, Intersection)) -> Self {
+        Self {
+            intersection: value.1,
+            material: value.0,
+        }
+    }
+}
+
+impl Intersection {
+    pub fn make_full(self, material: &MaterialInstance) -> FullIntersection {
+        FullIntersection {
+            intersection: self,
+            material,
+        }
     }
 }

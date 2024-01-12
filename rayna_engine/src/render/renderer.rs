@@ -5,7 +5,7 @@ use crate::render::render_opts::{RenderMode, RenderOpts};
 use crate::scene::Scene;
 use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 use crate::shared::rng::RngPoolAllocator;
 use crate::shared::{math, validate};
@@ -64,10 +64,7 @@ impl Renderer {
         // `SmallRng` is the (slightly) fastest of all RNGs tested
         let rng_pool = opool::Pool::new_prefilled(256, RngPoolAllocator);
 
-        Ok(Self {
-            thread_pool,
-            rng_pool,
-        })
+        Ok(Self { thread_pool, rng_pool })
     }
 
     // TODO: Should `render()` be fallible?
@@ -168,9 +165,8 @@ impl Renderer {
                         // Can't use macro because of macro hygiene :(
                         let profiler_scope = if puffin::are_scopes_on() {
                             static LOCATION: OnceLock<String> = OnceLock::new();
-                            let location = LOCATION.get_or_init(|| {
-                                format!("{}:{}", puffin::current_file_name!(), line!())
-                            });
+                            let location =
+                                LOCATION.get_or_init(|| format!("{}:{}", puffin::current_file_name!(), line!()));
                             Some(puffin::ProfilerScope::new("inner", location, ""))
                         } else {
                             None
@@ -266,7 +262,11 @@ impl Renderer {
             return Self::ray_colour_recursive(scene, &ray, opts, bounds, 0, rng);
         }
 
-        let Some(intersect) = Self::calculate_intersection(scene, &ray, bounds) else {
+        let Some(FullIntersection {
+            intersection: intersect,
+            material,
+        }) = Self::calculate_intersection(scene, &ray, bounds)
+        else {
             return scene.skybox.sky_colour(&ray);
         };
         validate::intersection(ray, &intersect, bounds);
@@ -291,26 +291,16 @@ impl Renderer {
 
         return match mode {
             RenderMode::PBR => unreachable!("mode == RenderMode::PBR already checked"),
-            RenderMode::OutwardNormal => {
-                Pixel::from(intersect.normal.as_array().map(|f| (f / 2.) as f32 + 0.5))
-            }
-            RenderMode::RayNormal => Pixel::from(
-                intersect
-                    .ray_normal
-                    .as_array()
-                    .map(|f| (f / 2.) as Channel + 0.5),
-            ),
+            RenderMode::OutwardNormal => Pixel::from(intersect.normal.as_array().map(|f| (f / 2.) as f32 + 0.5)),
+            RenderMode::RayNormal => Pixel::from(intersect.ray_normal.as_array().map(|f| (f / 2.) as Channel + 0.5)),
             RenderMode::Scatter => Pixel::from(
-                intersect
-                    .material
+                material
                     .scatter(&ray, &intersect, rng)
                     .unwrap_or_default()
                     .as_array()
                     .map(|f| (f / 2.) as Channel + 0.5),
             ),
-            RenderMode::Uv => {
-                Pixel::from([intersect.uv.x as Channel, intersect.uv.y as Channel, 0.])
-            }
+            RenderMode::Uv => Pixel::from([intersect.uv.x as Channel, intersect.uv.y as Channel, 0.]),
             RenderMode::Face => {
                 // TODO: Make `Object: Hash`
                 let hash = intersect.face % (N_COL - 1) + 1;
@@ -334,11 +324,11 @@ impl Renderer {
     }
 
     /// Calculates the nearest intersection in the scene for the given ray
-    fn calculate_intersection(
-        scene: &Scene,
+    fn calculate_intersection<'o>(
+        scene: &'o Scene,
         ray: &Ray,
         bounds: &Bounds<Number>,
-    ) -> Option<Intersection> {
+    ) -> Option<FullIntersection<'o>> {
         scene.objects.intersect(ray, bounds)
     }
 
@@ -354,45 +344,33 @@ impl Renderer {
             return Pixel::from([0.; 3]);
         }
 
-        let Some(intersect) = Self::calculate_intersection(scene, ray, bounds) else {
+        let Some(FullIntersection { intersection, material }) = Self::calculate_intersection(scene, ray, bounds) else {
             return scene.skybox.sky_colour(ray);
         };
-        validate::intersection(ray, &intersect, bounds);
+        validate::intersection(ray, &intersection, bounds);
 
-        let Some(scatter_dir) = intersect.material.scatter(ray, &intersect, rng) else {
+        let Some(scatter_dir) = material.scatter(ray, &intersection, rng) else {
             // No scatter (material absorbed ray)
             return Pixel::from([0.; 3]);
         };
         validate::normal3(&scatter_dir);
-        let future_ray = Ray::new(intersect.pos_w, scatter_dir);
+        let future_ray = Ray::new(intersection.pos_w, scatter_dir);
         validate::ray(future_ray);
 
-        let future_col =
-            Self::ray_colour_recursive(scene, &future_ray, opts, bounds, depth + 1, rng);
+        let future_col = Self::ray_colour_recursive(scene, &future_ray, opts, bounds, depth + 1, rng);
         validate::colour(&future_col);
 
-        return intersect.material.calculate_colour(
-            &ray,
-            &intersect,
-            &future_ray,
-            &future_col,
-            rng,
-        );
+        return material.calculate_colour(&ray, &intersection, &future_ray, &future_col, rng);
     }
 
     /// Calculates a random pixel shift (for MSAA), and applies it to the (pixel) coordinates
 
     #[inline /* Hot path */]
     fn apply_msaa_shift(px: Number, py: Number, rng: &mut impl Rng) -> [Number; 2] {
-        [
-            px + rng.gen_range(-0.5..=0.5),
-            py + rng.gen_range(-0.5..=0.5),
-        ]
+        [px + rng.gen_range(-0.5..=0.5), py + rng.gen_range(-0.5..=0.5)]
     }
 }
 
 impl Clone for Renderer {
-    fn clone(&self) -> Self {
-        Self::new().expect("could not clone: couldn't create renderer")
-    }
+    fn clone(&self) -> Self { Self::new().expect("could not clone: couldn't create renderer") }
 }

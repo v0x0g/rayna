@@ -8,7 +8,7 @@ use crate::material::MaterialInstance;
 use crate::object::planar::Planar;
 use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 
 #[derive(Copy, Clone, Debug, Default, Ord, PartialOrd, Eq, PartialEq)]
@@ -118,15 +118,15 @@ impl From<InfinitePlaneBuilder> for ObjectInstance {
 }
 
 impl Object for InfinitePlaneObject {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
-        let mut i = self.plane.intersect_bounded(ray, bounds, &self.material)?;
+    fn intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
+        let mut i = self.plane.intersect_bounded(ray, bounds)?;
         // Wrap uv's if required
         self.uv_wrap.apply_mut(&mut i.uv);
-        Some(i)
+        Some(i.make_full(&self.material))
     }
 
     //noinspection DuplicatedCode
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
+    fn intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
         // Ignores infinite intersection case
         self.intersect(ray, &Bounds::FULL).map(|i| output.push(i));
     }

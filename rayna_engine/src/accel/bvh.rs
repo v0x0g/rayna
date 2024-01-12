@@ -14,7 +14,7 @@ use rayna_shared::def::types::{Number, Point3};
 use crate::accel::aabb::Aabb;
 use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 
 #[derive(Clone, Debug)]
@@ -197,12 +197,12 @@ impl Bvh {
 ///     - Collects all the child nodes
 ///     - Intersects on all those children (by calling itself recursively)
 ///     - Returns the closest intersection of the above
-fn bvh_node_intersect(
+fn bvh_node_intersect<'o>(
     ray: &Ray,
     bounds: &Bounds<Number>,
     node: NodeId,
-    arena: &Arena<BvhNode>,
-) -> Option<Intersection> {
+    arena: &'o Arena<BvhNode>,
+) -> Option<FullIntersection<'o>> {
     return match arena.get(node).expect("node should exist in arena").get() {
         // An aabb will need to delegate to child nodes if not missed
         BvhNode::Nested(aabb) => {
@@ -236,7 +236,12 @@ fn bvh_node_intersect(
 ///  - Tries to bail early if the [Aabb] is missed
 ///  - Collects all the child nodes
 ///  - Intersects on all those children (by calling itself recursively)
-fn bvh_node_intersect_all(ray: &Ray, node: NodeId, arena: &Arena<BvhNode>, output: &mut SmallVec<[Intersection; 32]>) {
+fn bvh_node_intersect_all<'o>(
+    ray: &Ray,
+    node: NodeId,
+    arena: &'o Arena<BvhNode>,
+    output: &mut SmallVec<[FullIntersection<'o>; 32]>,
+) {
     match arena.get(node).expect("node should exist in arena").get() {
         // An aabb will need to delegate to child nodes if not missed
         BvhNode::Nested(aabb) => {
@@ -265,12 +270,12 @@ fn bvh_node_intersect_all(ray: &Ray, node: NodeId, arena: &Arena<BvhNode>, outpu
 }
 
 impl Object for Bvh {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
+    fn intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
         // Pass everything on to our magical function
         bvh_node_intersect(ray, bounds, self.root_id?, &self.arena)
     }
 
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
+    fn intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
         if let Some(root) = self.root_id {
             bvh_node_intersect_all(ray, root, &self.arena, output);
         }

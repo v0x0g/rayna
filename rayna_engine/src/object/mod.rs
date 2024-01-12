@@ -26,7 +26,7 @@
 
 use crate::accel::aabb::Aabb;
 use crate::shared::bounds::Bounds;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
@@ -56,17 +56,14 @@ pub trait Object: ObjectProperties + RtRequirement {
     ///
     /// # Return Value
     /// This should return the *first* intersection that is within the given range, else [None]
-    ///
-    /// # Parameters
-    ///     - ray: The
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection>;
+    fn intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>>;
 
     /// Returns (possibly) an iterator over all of the intersections for the given object.
     ///
     /// # Return Value
     /// This should place all the (unbounded) intersections, into the vector `output`.
     /// It can be assumed this vector will be empty.
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>);
+    fn intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>);
 
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
 }

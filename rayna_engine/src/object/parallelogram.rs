@@ -8,7 +8,7 @@ use crate::material::MaterialInstance;
 use crate::object::planar::Planar;
 use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 
 #[derive(Clone, Debug)]
@@ -128,17 +128,17 @@ impl From<ParallelogramBuilder> for ObjectInstance {
 }
 
 impl Object for ParallelogramObject {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
-        let i = self.plane.intersect_bounded(ray, bounds, &self.material)?;
+    fn intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
+        let i = self.plane.intersect_bounded(ray, bounds)?;
         // Check in bounds for our segment of the plane: `uv in [0, 1]`
         if (i.uv.cmple(Point2::ONE) & i.uv.cmpge(Point2::ZERO)).all() {
-            Some(i)
+            Some(i.make_full(&self.material))
         } else {
             None
         }
     }
 
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
+    fn intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
         // Planes won't intersect more than once, except in the parallel case
         // That's infinite intersections but we ignore that case
         self.intersect(ray, &Bounds::FULL).map(|i| output.push(i));

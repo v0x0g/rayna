@@ -7,7 +7,7 @@ use crate::accel::aabb::Aabb;
 use crate::accel::bvh::Bvh;
 use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 
 #[derive(Clone, Debug, Getters)]
@@ -37,13 +37,13 @@ impl<Obj: Into<ObjectInstance>, Iter: IntoIterator<Item = Obj>> From<Iter> for O
 }
 
 impl Object for ObjectList {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
+    fn intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
         let bvh_int = self.bvh.intersect(ray, bounds).into_iter();
         let unbound_int = self.unbounded.iter().filter_map(|o| o.intersect(ray, bounds));
         Iterator::chain(bvh_int, unbound_int).min()
     }
 
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
+    fn intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
         self.bvh.intersect_all(ray, output);
         self.unbounded.iter().for_each(|o| o.intersect_all(ray, output));
     }

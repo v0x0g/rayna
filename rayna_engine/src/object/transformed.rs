@@ -1,7 +1,7 @@
 use crate::accel::aabb::Aabb;
 use crate::object::{Object, ObjectProperties};
 use crate::shared::bounds::Bounds;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::{FullIntersection, Intersection};
 use crate::shared::ray::Ray;
 use derivative::Derivative;
 use getset::Getters;
@@ -139,14 +139,14 @@ impl<Obj: Object + Clone> TransformedObject<Obj> {
 }
 
 impl<Obj: Object + Clone> Object for TransformedObject<Obj> {
-    fn intersect(&self, orig_ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
+    fn intersect<'o>(&'o self, orig_ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
         let trans_ray = self.transform_ray(orig_ray);
-        self.object
-            .intersect(&trans_ray, bounds)
-            .map(|i| self.transform_intersection(orig_ray, &i))
+        let mut i = self.object.intersect(&trans_ray, bounds)?;
+        i.intersection = self.transform_intersection(orig_ray, &i.intersection);
+        Some(i)
     }
 
-    fn intersect_all(&self, orig_ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
+    fn intersect_all<'o>(&'o self, orig_ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
         let trans_ray = self.transform_ray(orig_ray);
         let initial_len = output.len();
         self.object.intersect_all(&trans_ray, output);
@@ -156,7 +156,7 @@ impl<Obj: Object + Clone> Object for TransformedObject<Obj> {
         let inner_intersects = &mut output[initial_len..new_len];
         inner_intersects
             .into_iter()
-            .for_each(|i| *i = self.transform_intersection(orig_ray, i))
+            .for_each(|i| i.intersection = self.transform_intersection(orig_ray, &i.intersection))
     }
 }
 

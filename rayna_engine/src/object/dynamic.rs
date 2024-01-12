@@ -1,9 +1,9 @@
 use crate::accel::aabb::Aabb;
-use crate::object::Object;
+use crate::object::{Object, ObjectProperties};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use rayna_shared::def::types::Number;
+use rayna_shared::def::types::{Number, Point3};
 use smallvec::SmallVec;
 use std::sync::Arc;
 
@@ -31,6 +31,9 @@ impl Object for DynamicObject {
     fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
         self.inner.intersect_all(ray, output)
     }
+}
 
+impl ObjectProperties for DynamicObject {
     fn aabb(&self) -> Option<&Aabb> { self.inner.aabb() }
+    fn centre(&self) -> Point3 { self.inner.centre() }
 }

@@ -6,7 +6,7 @@ use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialInstance;
 use crate::object::planar::Planar;
-use crate::object::{Object, ObjectInstance};
+use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -130,6 +130,9 @@ impl Object for InfinitePlaneObject {
         // Ignores infinite intersection case
         self.intersect(ray, &Bounds::FULL).map(|i| output.push(i));
     }
+}
 
+impl ObjectProperties for InfinitePlaneObject {
     fn aabb(&self) -> Option<&Aabb> { None }
+    fn centre(&self) -> Point3 { self.plane.p() }
 }

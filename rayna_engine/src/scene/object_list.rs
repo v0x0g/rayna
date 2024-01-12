@@ -1,11 +1,11 @@
 use getset::Getters;
 use smallvec::SmallVec;
 
-use rayna_shared::def::types::Number;
+use rayna_shared::def::types::{Number, Point3};
 
 use crate::accel::aabb::Aabb;
 use crate::accel::bvh::Bvh;
-use crate::object::{Object, ObjectInstance};
+use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -39,22 +39,22 @@ impl<Obj: Into<ObjectInstance>, Iter: IntoIterator<Item = Obj>> From<Iter> for O
 impl Object for ObjectList {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         let bvh_int = self.bvh.intersect(ray, bounds).into_iter();
-        let unbound_int = self
-            .unbounded
-            .iter()
-            .filter_map(|o| o.intersect(ray, bounds));
+        let unbound_int = self.unbounded.iter().filter_map(|o| o.intersect(ray, bounds));
         Iterator::chain(bvh_int, unbound_int).min()
     }
 
     fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
         self.bvh.intersect_all(ray, output);
-        self.unbounded
-            .iter()
-            .for_each(|o| o.intersect_all(ray, output));
+        self.unbounded.iter().for_each(|o| o.intersect_all(ray, output));
     }
-
+}
+impl ObjectProperties for ObjectList {
     fn aabb(&self) -> Option<&Aabb> {
         // List may have unbounded objects, so we can't return Some()
         None
+    }
+
+    fn centre(&self) -> Point3 {
+        unimplemented!("an ObjectList doesn't have a centre: this method should never be called")
     }
 }

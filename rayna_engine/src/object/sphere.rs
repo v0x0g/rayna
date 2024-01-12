@@ -1,6 +1,6 @@
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialInstance;
-use crate::object::{Object, ObjectInstance};
+use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -157,8 +157,11 @@ impl Object for SphereObject {
             }
         }));
     }
+}
 
+impl ObjectProperties for SphereObject {
     fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
+    fn centre(&self) -> Point3 { self.pos }
 }
 
 /// Converts a point on a sphere (centred at [Point3::ZERO], radius `1`), into a UV coordinate

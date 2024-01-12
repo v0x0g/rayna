@@ -9,10 +9,10 @@ use std::cmp::Ordering;
 use itertools::{zip_eq, Itertools};
 use smallvec::SmallVec;
 
-use rayna_shared::def::types::Number;
+use rayna_shared::def::types::{Number, Point3};
 
 use crate::accel::aabb::Aabb;
-use crate::object::{Object, ObjectInstance};
+use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -38,9 +38,7 @@ enum BvhNode {
 }
 
 /// Helper function to unwrap an AABB with a panic message
-fn expect_aabb(o: &ObjectInstance) -> &Aabb {
-    o.aabb().expect("aabb required as invariant of `Bvh`")
-}
+fn expect_aabb(o: &ObjectInstance) -> &Aabb { o.aabb().expect("aabb required as invariant of `Bvh`") }
 
 impl Bvh {
     /// Creates a new [Bvh] tree from the given slice of objects
@@ -277,7 +275,9 @@ impl Object for Bvh {
             bvh_node_intersect_all(ray, root, &self.arena, output);
         }
     }
+}
 
+impl ObjectProperties for Bvh {
     fn aabb(&self) -> Option<&Aabb> {
         let root = self.root_id?;
         match self
@@ -289,5 +289,9 @@ impl Object for Bvh {
             BvhNode::Nested(aabb) => Some(aabb),
             BvhNode::Object(o) => Some(expect_aabb(o)),
         }
+    }
+
+    fn centre(&self) -> Point3 {
+        unimplemented!("a Bvh tree doesn't have a centre: this method should never be called")
     }
 }

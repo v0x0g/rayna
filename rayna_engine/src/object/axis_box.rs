@@ -8,7 +8,7 @@ use rayna_shared::def::types::{Number, Point2, Point3, Vector2, Vector3};
 
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialInstance;
-use crate::object::{Object, ObjectInstance};
+use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -226,5 +226,9 @@ impl Object for AxisBoxObject {
         test!(back: y, zx);
         test!(back: z, xy);
     }
+}
+
+impl ObjectProperties for AxisBoxObject {
     fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
+    fn centre(&self) -> Point3 { self.centre }
 }

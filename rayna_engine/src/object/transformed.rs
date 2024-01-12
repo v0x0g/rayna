@@ -1,5 +1,5 @@
 use crate::accel::aabb::Aabb;
-use crate::object::Object;
+use crate::object::{Object, ObjectProperties};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -45,10 +45,12 @@ use smallvec::SmallVec;
 #[derivative(Debug(bound = ""), Clone(bound = ""), Copy)]
 #[get = "pub"]
 pub struct TransformedObject<Obj: Object + Clone> {
-    inner: Obj,
+    object: Obj,
     transform: Transform3,
     inv_transform: Transform3,
     aabb: Option<Aabb>,
+    /// The transformed centre of the object
+    centre: Point3,
 }
 
 impl<Obj: Object + Clone> TransformedObject<Obj> {
@@ -79,11 +81,15 @@ impl<Obj: Object + Clone> TransformedObject<Obj> {
             .map(|corners| corners.map(|c| transform.map_point(c)))
             .map(Aabb::encompass_points);
 
+        let inv_transform = transform.inverse();
+        let centre = transform.map_point(object.centre());
+
         Self {
-            inner: object,
+            object,
             aabb,
             transform,
-            inv_transform: transform.inverse(),
+            inv_transform,
+            centre,
         }
     }
 
@@ -135,7 +141,7 @@ impl<Obj: Object + Clone> TransformedObject<Obj> {
 impl<Obj: Object + Clone> Object for TransformedObject<Obj> {
     fn intersect(&self, orig_ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         let trans_ray = self.transform_ray(orig_ray);
-        self.inner
+        self.object
             .intersect(&trans_ray, bounds)
             .map(|i| self.transform_intersection(orig_ray, &i))
     }
@@ -143,7 +149,7 @@ impl<Obj: Object + Clone> Object for TransformedObject<Obj> {
     fn intersect_all(&self, orig_ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
         let trans_ray = self.transform_ray(orig_ray);
         let initial_len = output.len();
-        self.inner.intersect_all(&trans_ray, output);
+        self.object.intersect_all(&trans_ray, output);
         let new_len = output.len();
 
         // Tracking length means we can find the intersections that were added
@@ -152,6 +158,9 @@ impl<Obj: Object + Clone> Object for TransformedObject<Obj> {
             .into_iter()
             .for_each(|i| *i = self.transform_intersection(orig_ray, i))
     }
+}
 
+impl<Obj: Object + Clone> ObjectProperties for TransformedObject<Obj> {
     fn aabb(&self) -> Option<&Aabb> { self.aabb.as_ref() }
+    fn centre(&self) -> Point3 { self.centre }
 }

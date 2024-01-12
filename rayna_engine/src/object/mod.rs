@@ -74,7 +74,7 @@ pub trait Object: ObjectProperties + RtRequirement {
 /// An optimised implementation of [Object].
 ///
 /// See [crate::material::MaterialInstance] for an explanation of the [macro@enum_dispatch] macro usage
-#[enum_dispatch(Object)]
+#[enum_dispatch(Object, ObjectProperties)]
 #[derive(Clone, Debug)]
 pub enum ObjectInstance {
     SphereObject,
@@ -86,6 +86,7 @@ pub enum ObjectInstance {
 
 dyn_clone::clone_trait_object!(ObjectProperties);
 
+/// This trait describes an [Object], and the properties it has
 #[enum_dispatch]
 pub trait ObjectProperties: RtRequirement {
     /// Gets the bounding box for this object. If the object can't be bounded (e.g. infinite plane), return [None]

@@ -43,6 +43,7 @@ pub struct Intersection {
     /// For objects with a single 'surface' (like a [sphere](crate::object::sphere::SphereObject), this would be always [Number::ZERO].
     /// For an object that may have multiple faces (like a [box](crate::object::axis_box::AxisBoxObject), this would unique per-side.
     pub face: usize,
+    // TODO: Can we possibly remove this, and make the material be an `ObjectProperty` func?
     #[derivative(PartialEq = "ignore", PartialOrd = "ignore")]
     pub material: MaterialInstance,
 }

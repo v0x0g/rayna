@@ -1,3 +1,4 @@
+use getset::Getters;
 use smallvec::SmallVec;
 
 use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
@@ -68,7 +69,8 @@ pub enum InfinitePlaneBuilder {
     },
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Getters)]
+#[get = "pub"]
 pub struct InfinitePlaneObject {
     /// The plane that this object sits upon
     plane: Planar,

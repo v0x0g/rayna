@@ -4,6 +4,7 @@ use crate::object::{Object, ObjectInstance};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
+use getset::{CopyGetters, Getters};
 use glamour::AngleConsts;
 use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 use smallvec::SmallVec;
@@ -20,8 +21,11 @@ pub struct SphereBuilder {
 
 /// The actual instance of a sphere that can be rendered.
 /// Has precomputed values and therefore cannot be mutated
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, CopyGetters, Getters)]
+#[get_copy = "pub"]
 pub struct SphereObject {
+    #[getset(skip)]
+    #[get = "pub"]
     material: MaterialInstance,
     pos: Point3,
     radius: Number,
@@ -49,9 +53,7 @@ impl From<SphereBuilder> for SphereObject {
 
 /// Converts the sphere builder into an [ObjectInstance]
 impl From<SphereBuilder> for ObjectInstance {
-    fn from(value: SphereBuilder) -> ObjectInstance {
-        SphereObject::from(value).into()
-    }
+    fn from(value: SphereBuilder) -> ObjectInstance { SphereObject::from(value).into() }
 }
 
 impl Object for SphereObject {
@@ -140,11 +142,7 @@ impl Object for SphereObject {
             let inside = Vector3::dot(ray_dir, outward_normal) > 0.;
             //This flips the normal if the ray is inside the sphere
             //This forces the normal to always be going against the ray
-            let ray_normal = if inside {
-                -outward_normal
-            } else {
-                outward_normal
-            };
+            let ray_normal = if inside { -outward_normal } else { outward_normal };
 
             Intersection {
                 pos_w: world_point,
@@ -160,9 +158,7 @@ impl Object for SphereObject {
         }));
     }
 
-    fn aabb(&self) -> Option<&Aabb> {
-        Some(&self.aabb)
-    }
+    fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
 }
 
 /// Converts a point on a sphere (centred at [Point3::ZERO], radius `1`), into a UV coordinate

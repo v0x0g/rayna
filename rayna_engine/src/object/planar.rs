@@ -8,6 +8,7 @@ use crate::material::MaterialInstance;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
+use getset::CopyGetters;
 use num_traits::Zero;
 use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 
@@ -18,7 +19,8 @@ pub const AABB_PADDING: Number = 1e-6;
 ///
 /// Use this for calculating the ray-plane intersection, instead of reimplementing for each type.
 /// Then, you can restrict by validating the UV coordinates returned by the intersection
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, CopyGetters)]
+#[get_copy = "pub"]
 pub struct Planar {
     p: Point3,
     /// The vector for the `U` direction, typically the 'right' direction

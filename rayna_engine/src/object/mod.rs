@@ -44,6 +44,7 @@ pub mod dynamic;
 mod infinite_plane;
 pub mod parallelogram;
 pub mod planar;
+mod property;
 pub mod sphere;
 pub mod transformed;
 pub mod triangle;

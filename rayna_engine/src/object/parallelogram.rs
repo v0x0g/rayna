@@ -1,3 +1,4 @@
+use getset::Getters;
 use smallvec::SmallVec;
 
 use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
@@ -96,7 +97,8 @@ pub enum ParallelogramBuilder {
 // TODO: Infinite plane version of this
 //  Will have to work out something with UV coords though
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Getters)]
+#[get = "pub"]
 pub struct ParallelogramObject {
     /// The plane that this object sits upon
     plane: Planar,

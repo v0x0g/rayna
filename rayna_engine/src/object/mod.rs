@@ -41,6 +41,7 @@ use self::{
 
 pub mod axis_box;
 pub mod dynamic;
+mod homogenous_volume;
 mod infinite_plane;
 pub mod parallelogram;
 pub mod planar;

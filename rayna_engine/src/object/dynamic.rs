@@ -20,7 +20,7 @@ impl DynamicObject {
 }
 
 impl super::ObjectInstance {
-    pub fn from_dyn(value: impl Object) -> Self { Self::from(DynamicObject::from(value)) }
+    pub fn from_dyn(value: impl Object + 'static) -> Self { Self::from(DynamicObject::from(value)) }
 }
 
 impl Object for DynamicObject {

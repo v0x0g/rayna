@@ -16,6 +16,31 @@ use smallvec::SmallVec;
 /// at the origin (`[0., 0., 0.]`), and use the transform matrix to do the translation.
 ///
 /// Otherwise, the centre of the object will be rotated/scaled around the origin as well, which will move the object.
+///
+/// Alternatively, you can also apply a post and pre-transform, to counteract the object's position offset:
+/// ```///
+/// # use rayna_engine::material::lambertian::LambertianMaterial;
+/// # use rayna_engine::object::axis_box::{AxisBoxBuilder, AxisBoxObject};
+/// # use rayna_shared::def::types::{Angle, Point3, Transform3, Vector3};
+/// #
+/// # let a: Point3 = [5., 1., 2.].into();
+/// # let b: Point3 = [3., 4., -7.].into();
+/// # let object: AxisBoxObject = AxisBoxBuilder {
+/// #     corner_1: a,
+/// #     corner_2: b,
+/// #     material: Default::default(),
+/// # }.into();
+///
+/// let transform = Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(69.0));
+///
+/// // Fix the transform so it scales/rotates around the object's centre and not the origin
+/// //  1. Move centre to origin
+/// //  2. Apply rotate/scale, while it is centred at origin
+/// //  3. Move centre back to original position
+/// let transform = Transform3::from_translation(-object.centre().to_vector())
+///     .then(transform)
+///     .then_translate(object.centre().to_vector());
+/// ```
 #[derive(Derivative, Getters)]
 #[derivative(Debug(bound = ""), Clone(bound = ""), Copy)]
 #[get = "pub"]
@@ -27,6 +52,24 @@ pub struct TransformedObject<Obj: Object + Clone> {
 }
 
 impl<Obj: Object + Clone> TransformedObject<Obj> {
+    /// Creates a new transformed object instance, using the given object and transform matrix.
+    ///
+    /// Unlike [Self::new()], this *does* account for the object's translation from the origin,
+    /// using the `obj_centre` parameter. See type documentation ([TransformedObject]) for explanation
+    /// and example of this position offset correction
+    pub fn new_with_correction(obj_centre: Point3, object: Obj, transform: Transform3) -> Self {
+        let correct_transform = Transform3::from_translation(-obj_centre.to_vector())
+            .then(transform)
+            .then_translate(obj_centre.to_vector());
+
+        Self::new(object, correct_transform)
+    }
+
+    /// Creates a new transformed object instance, using the given object and transform
+    ///
+    /// It is assumed that the object is either centred at the origin and the translation is stored in
+    /// the transform, or that the transform correctly accounts for the object's translation.
+    /// See type documentation ([TransformedObject]) for explanation
     pub fn new(object: Obj, transform: Transform3) -> Self {
         // Calculate the resulting AABB by transforming the corners of the input AABB.
         // And then we encompass those

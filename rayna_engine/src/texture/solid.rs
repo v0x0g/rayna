@@ -11,31 +11,20 @@ pub struct SolidTexture {
 }
 
 impl<T: Into<Pixel>> From<T> for SolidTexture {
-    fn from(value: T) -> Self {
-        Self {
-            albedo: value.into(),
-        }
-    }
+    fn from(value: T) -> Self { Self { albedo: value.into() } }
 }
 
 impl<T: Into<Pixel>> From<T> for TextureInstance {
-    fn from(value: T) -> Self {
-        SolidTexture {
-            albedo: value.into(),
-        }
-        .into()
-    }
+    fn from(value: T) -> Self { SolidTexture { albedo: value.into() }.into() }
 }
 
 impl Default for SolidTexture {
     fn default() -> Self {
-        // Black
-        Pixel::from([0.; 3]).into()
+        // Half grey
+        Pixel::from([0.5; 3]).into()
     }
 }
 
 impl Texture for SolidTexture {
-    fn value(&self, _intersection: &Intersection, _rng: &mut dyn RngCore) -> Pixel {
-        self.albedo
-    }
+    fn value(&self, _intersection: &Intersection, _rng: &mut dyn RngCore) -> Pixel { self.albedo }
 }

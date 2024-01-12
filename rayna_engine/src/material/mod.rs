@@ -1,7 +1,6 @@
 //noinspection ALL
 use self::{
-    dielectric::DielectricMaterial, dynamic::DynamicMaterial, lambertian::LambertianMaterial,
-    metal::MetalMaterial,
+    dielectric::DielectricMaterial, dynamic::DynamicMaterial, lambertian::LambertianMaterial, metal::MetalMaterial,
 };
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -61,12 +60,7 @@ pub trait Material: RtRequirement {
     /// #   fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel, rng: &mut dyn RngCore) -> Pixel { unimplemented!() }
     /// }
     /// ```
-    fn scatter(
-        &self,
-        ray: &Ray,
-        intersection: &Intersection,
-        rng: &mut dyn RngCore,
-    ) -> Option<Vector3>;
+    fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3>;
 
     /// This function does the lighting calculations, based on the light from the future ray
     ///
@@ -123,4 +117,8 @@ pub enum MaterialInstance {
     MetalMaterial,
     DielectricMaterial,
     DynamicMaterial,
+}
+
+impl Default for MaterialInstance {
+    fn default() -> Self { LambertianMaterial::default().into() }
 }

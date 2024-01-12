@@ -1,3 +1,4 @@
+use getset::Getters;
 use glam::swizzles::*;
 use glamour::FromRaw;
 use glamour::ToRaw;
@@ -39,9 +40,10 @@ impl AxisBoxBuilder {
         }
     }
 }
-
+//TODO: Add getters to other objects
 /// Built instance of a box object
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Getters)]
+#[get = "pub"]
 pub struct AxisBoxObject {
     centre: Point3,
     radius: Vector3,
@@ -64,9 +66,7 @@ impl From<AxisBoxBuilder> for AxisBoxObject {
 }
 
 impl From<AxisBoxBuilder> for ObjectInstance {
-    fn from(value: AxisBoxBuilder) -> ObjectInstance {
-        AxisBoxObject::from(value).into()
-    }
+    fn from(value: AxisBoxBuilder) -> ObjectInstance { AxisBoxObject::from(value).into() }
 }
 
 #[allow(unused_variables)]
@@ -226,7 +226,5 @@ impl Object for AxisBoxObject {
         test!(back: y, zx);
         test!(back: z, xy);
     }
-    fn aabb(&self) -> Option<&Aabb> {
-        Some(&self.aabb)
-    }
+    fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
 }

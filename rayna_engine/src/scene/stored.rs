@@ -376,7 +376,11 @@ pub static CORNELL: Scene = {
             .into(),
         }
         .into();
-        let wrapped = DynamicObject::from(TransformedObject::new(cuboid, transform));
+        let wrapped = DynamicObject::from(TransformedObject::new_with_correction(
+            cuboid.centre().clone(),
+            cuboid,
+            transform,
+        ));
         objs.push(wrapped.into());
     }
 

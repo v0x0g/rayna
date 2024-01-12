@@ -15,6 +15,14 @@ pub struct DynamicObject {
     pub inner: Arc<dyn Object>,
 }
 
+impl DynamicObject {
+    pub fn from(value: impl Object + 'static) -> Self { Self { inner: Arc::new(value) } }
+}
+
+impl super::ObjectInstance {
+    pub fn from_dyn(value: impl Object) -> Self { Self::from(DynamicObject::from(value)) }
+}
+
 impl Object for DynamicObject {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         self.inner.intersect(ray, bounds)
@@ -24,7 +32,5 @@ impl Object for DynamicObject {
         self.inner.intersect_all(ray, output)
     }
 
-    fn aabb(&self) -> Option<&Aabb> {
-        self.inner.aabb()
-    }
+    fn aabb(&self) -> Option<&Aabb> { self.inner.aabb() }
 }

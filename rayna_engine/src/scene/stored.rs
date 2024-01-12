@@ -7,7 +7,7 @@
 use image::Pixel as _;
 use noise::*;
 use rand::{thread_rng, Rng};
-use rayna_shared::def::types::{Angle, Number, Pixel, Point3, Vector3};
+use rayna_shared::def::types::{Angle, Number, Pixel, Point3, Transform3, Vector3};
 use static_init::*;
 
 use crate::material::dielectric::DielectricMaterial;
@@ -15,8 +15,10 @@ use crate::material::lambertian::LambertianMaterial;
 use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::object::axis_box::*;
+use crate::object::dynamic::DynamicObject;
 use crate::object::parallelogram::*;
 use crate::object::sphere::*;
+use crate::object::transformed::TransformedObject;
 use crate::object::ObjectInstance;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
@@ -360,10 +362,11 @@ pub static CORNELL: Scene = {
         a: impl Into<Point3>,
         b: impl Into<Point3>,
         albedo: impl Into<TextureInstance>,
+        transform: Transform3,
     ) {
         let a = a.into();
         let b = b.into();
-        let quad = AxisBoxBuilder {
+        let cuboid: AxisBoxObject = AxisBoxBuilder {
             corner_1: a,
             corner_2: b,
             material: LambertianMaterial {
@@ -371,8 +374,10 @@ pub static CORNELL: Scene = {
                 emissive: Default::default(),
             }
             .into(),
-        };
-        objs.push(quad.into());
+        }
+        .into();
+        let wrapped = DynamicObject::from(TransformedObject::new(cuboid, transform));
+        objs.push(wrapped.into());
     }
 
     {
@@ -399,8 +404,22 @@ pub static CORNELL: Scene = {
         let grey = [0.73; 3];
         let o = &mut objects;
 
-        cuboid(o, (0.231, 0., 0.117), (0.531, 0.595, 0.414), grey);
-        cuboid(o, (0.477, 0., 0.531), (0.774, 0.297, 0.829), grey);
+        // Big
+        cuboid(
+            o,
+            (0.231, 0., 0.117),
+            (0.531, 0.595, 0.414),
+            grey,
+            Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(15.)),
+        );
+        // Small
+        cuboid(
+            o,
+            (0.477, 0., 0.531),
+            (0.774, 0.297, 0.829),
+            grey,
+            Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(-18.)),
+        );
     }
 
     Scene {

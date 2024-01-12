@@ -58,8 +58,6 @@ impl<Obj: Object + Clone> TransformedObject<Obj> {
         // the dimensional space to <3 dimensions,
         // Therefore all transformation should be valid (and for vectors: nonzero), so we can unwrap
 
-        const EXPECT_MESSAGE: &'static str = "transformation failed: ";
-
         let mut intersection = intersection.clone();
 
         let tf = &self.transform;
@@ -73,7 +71,12 @@ impl<Obj: Object + Clone> TransformedObject<Obj> {
             *p = tf.map_point(*p);
         };
 
-        let normal = |n: &mut Vector3| *n = tf.map_vector(*n).try_normalize().expect(EXPECT_MESSAGE);
+        let normal = |n: &mut Vector3| {
+            *n = tf.map_vector(*n).try_normalize().expect(&format!(
+                "transformation failed: vector {n:?} transformed to {t:?} couldn't be normalised",
+                t = tf.map_vector(*n)
+            ))
+        };
 
         normal(&mut intersection.normal);
         normal(&mut intersection.ray_normal);

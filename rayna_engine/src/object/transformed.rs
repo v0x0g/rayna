@@ -4,11 +4,21 @@ use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use derivative::Derivative;
+use getset::Getters;
 use rayna_shared::def::types::{Number, Point3, Transform3, Vector3};
 use smallvec::SmallVec;
 
-#[derive(Derivative)]
+/// An object wrapper that applies a transformation matrix (3D affine transform, see [Transform3]),
+/// to the wrapped object
+///
+/// # Important Note
+/// If using a rotating/scaling transform, ensure that the object you are transforming is positioned
+/// at the origin (`[0., 0., 0.]`), and use the transform matrix to do the translation.
+///
+/// Otherwise, the centre of the object will be rotated/scaled around the origin as well, which will move the object.
+#[derive(Derivative, Getters)]
 #[derivative(Debug(bound = ""), Clone(bound = ""), Copy)]
+#[get = "pub"]
 pub struct TransformedObject<Obj: Object + Clone> {
     inner: Obj,
     transform: Transform3,

@@ -12,7 +12,7 @@ use rayna_shared::def::types::Number;
 #[get = "pub"]
 pub struct SceneObjectList {
     /// BVH-optimised tree of objects
-    bvh: Bvh,
+    bvh: Bvh<SceneObject>,
     /// All the unbounded objects in the list (objects where [Object::aabb()] returned [None]
     unbounded: Vec<SceneObject>,
 }

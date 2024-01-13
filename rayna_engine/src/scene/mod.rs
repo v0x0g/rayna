@@ -186,6 +186,7 @@ impl SceneObject {
             material: material.into(),
         }
     }
+
     /// Creates a new transformed object instance, using the given object. This method does not transform the [SceneObject]
     pub fn new(object: impl Into<ObjectInstance>, material: impl Into<MaterialInstance>) -> Self {
         // Calculate the resulting AABB by transforming the corners of the input AABB.

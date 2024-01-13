@@ -12,14 +12,14 @@ use smallvec::SmallVec;
 use rayna_shared::def::types::Number;
 
 use crate::accel::aabb::Aabb;
-use crate::scene::{FullObject, SceneObject};
+use crate::scene::FullObject;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 
 #[derive(Clone, Debug)]
-pub struct Bvh {
-    arena: Arena<BvhNode>,
+pub struct Bvh<O: FullObject> {
+    arena: Arena<BvhNode<O>>,
     root_id: Option<NodeId>,
 }
 
@@ -31,22 +31,22 @@ enum SplitAxis {
 }
 
 #[derive(Clone, Debug)]
-enum BvhNode {
+enum BvhNode<O: FullObject> {
     // Don't need to keep track of children since the tree does that for us
     Nested(Aabb),
-    Object(SceneObject),
+    Object(O),
 }
 
 /// Helper function to unwrap an AABB with a panic message
-fn expect_aabb(o: &SceneObject) -> &Aabb { o.aabb().as_ref().expect("aabb required as invariant of `Bvh`") }
+fn expect_aabb(o: &impl FullObject) -> &Aabb { o.aabb().as_ref().expect("aabb required as invariant of `Bvh`") }
 
-impl Bvh {
+impl<O: FullObject> Bvh<O> {
     /// Creates a new [Bvh] tree from the given slice of objects
     ///
     /// # Note
     /// The given slice of `objects` should only contain *bounded* objects (i.e. [Object::aabb()] returns [`Some(_)`]).
     /// The exact behaviour is not specified, but will most likely result in a panic during building/accessing the tree
-    pub fn new(objects: &[SceneObject]) -> Self {
+    pub fn new(objects: &[O]) -> Self {
         assert!(
             objects.iter().all(|o| o.aabb().is_some()),
             "objects should all be bounded"
@@ -66,25 +66,25 @@ impl Bvh {
 
     /// Sorts the given slice of objects along the chosen `axis`
     /// This sort is *unstable* (see [sort_unstable_by](https://doc.rust-lang.org/std/primitive.slice.html#method.sort_unstable_by))
-    fn sort_along_aabb_axis(axis: SplitAxis, objects: &mut [SceneObject]) {
-        fn sort_x(a: &SceneObject, b: &SceneObject) -> Ordering {
+    fn sort_along_aabb_axis(axis: SplitAxis, objects: &mut [O]) {
+        fn sort_x<O: FullObject>(a: &O, b: &O) -> Ordering {
             PartialOrd::partial_cmp(&expect_aabb(a).min().x, &expect_aabb(b).min().x)
                 .expect("should be able to cmp AABB x-bounds: should not be nan")
         }
 
-        fn sort_y(a: &SceneObject, b: &SceneObject) -> Ordering {
+        fn sort_y<O: FullObject>(a: &O, b: &O) -> Ordering {
             PartialOrd::partial_cmp(&expect_aabb(a).min().y, &expect_aabb(b).min().y)
                 .expect("should be able to cmp AABB y-bounds: should not be nan")
         }
-        fn sort_z(a: &SceneObject, b: &SceneObject) -> Ordering {
+        fn sort_z<O: FullObject>(a: &O, b: &O) -> Ordering {
             PartialOrd::partial_cmp(&expect_aabb(a).min().z, &expect_aabb(b).min().z)
                 .expect("should be able to cmp AABB z-bounds: should not be nan")
         }
 
         match axis {
-            SplitAxis::X => objects.sort_unstable_by(sort_x),
-            SplitAxis::Y => objects.sort_unstable_by(sort_y),
-            SplitAxis::Z => objects.sort_unstable_by(sort_z),
+            SplitAxis::X => objects.sort_unstable_by(sort_x::<O>),
+            SplitAxis::Y => objects.sort_unstable_by(sort_y::<O>),
+            SplitAxis::Z => objects.sort_unstable_by(sort_z::<O>),
         }
     }
 
@@ -97,7 +97,7 @@ impl Bvh {
     ///
     /// # Panics
     /// The slice of `objects` passed in must be non-empty.
-    fn generate_nodes_sah(objects: &[SceneObject], arena: &mut Arena<BvhNode>) -> NodeId {
+    fn generate_nodes_sah(objects: &[O], arena: &mut Arena<BvhNode<O>>) -> NodeId {
         return match objects {
             [] => panic!("Must pass in a non-empty slice for objects"),
             [obj] => arena.new_node(BvhNode::Object(obj.clone())),
@@ -189,95 +189,97 @@ impl Bvh {
     }
 }
 
-/// Given a [NodeId] on the [Arena] tree, calculates the nearest intersection for the given `ray` and `bounds`
-///
-/// If the node is a [BvhNode::Object], it passes on the check to the object.
-/// Otherwise, if it's a [BvhNode::Aabb], it:
-///     - Tries to bail early if the [Aabb] is missed
-///     - Collects all the child nodes
-///     - Intersects on all those children (by calling itself recursively)
-///     - Returns the closest intersection of the above
-fn bvh_node_intersect<'o>(
-    ray: &Ray,
-    bounds: &Bounds<Number>,
-    node: NodeId,
-    arena: &'o Arena<BvhNode>,
-) -> Option<FullIntersection<'o>> {
-    return match arena.get(node).expect("node should exist in arena").get() {
-        // An aabb will need to delegate to child nodes if not missed
-        BvhNode::Nested(aabb) => {
-            if !aabb.hit(ray, bounds) {
-                return None;
-            }
+impl<O: FullObject> Bvh<O> {
+    /// Given a [NodeId] on the [Arena] tree, calculates the nearest intersection for the given `ray` and `bounds`
+    ///
+    /// If the node is a [BvhNode::Object], it passes on the check to the object.
+    /// Otherwise, if it's a [BvhNode::Aabb], it:
+    ///     - Tries to bail early if the [Aabb] is missed
+    ///     - Collects all the child nodes
+    ///     - Intersects on all those children (by calling itself recursively)
+    ///     - Returns the closest intersection of the above
+    fn bvh_node_intersect<'o>(
+        ray: &Ray,
+        bounds: &Bounds<Number>,
+        node: NodeId,
+        arena: &'o Arena<BvhNode<O>>,
+    ) -> Option<FullIntersection<'o>> {
+        return match arena.get(node).expect("node should exist in arena").get() {
+            // An aabb will need to delegate to child nodes if not missed
+            BvhNode::Nested(aabb) => {
+                if !aabb.hit(ray, bounds) {
+                    return None;
+                }
 
-            // TODO: Rework this to use the new Bounds::bitor API to shrink the next child's search range
-            //  So keep track of the bounds, and each iteration shrink with `bounds = bounds | ..intersection.dist`
-            //  And if an intersect was found in that shrunk range then we know that
+                // TODO: Rework this to use the new Bounds::bitor API to shrink the next child's search range
+                //  So keep track of the bounds, and each iteration shrink with `bounds = bounds | ..intersection.dist`
+                //  And if an intersect was found in that shrunk range then we know that
 
-            node.children(arena)
-                .filter_map(|child| bvh_node_intersect(ray, bounds, child, arena))
-                .min()
-        }
-        // Objects can be delegated directly
-        BvhNode::Object(obj) => {
-            if !obj.aabb().expect("aabb missing").hit(ray, bounds) {
-                None
-            } else {
-                obj.full_intersect(ray, bounds)
+                node.children(arena)
+                    .filter_map(|child| Self::bvh_node_intersect(ray, bounds, child, arena))
+                    .min()
             }
-        }
-    };
-}
-
-/// Given a [NodeId] on the [Arena] tree, calculates the ALL intersection for the given `ray`
-///
-/// If the node is a [BvhNode::Object], it passes on the check to the object.
-/// Otherwise, if it's a [BvhNode::Aabb], it:
-///  - Tries to bail early if the [Aabb] is missed
-///  - Collects all the child nodes
-///  - Intersects on all those children (by calling itself recursively)
-fn bvh_node_intersect_all<'o>(
-    ray: &Ray,
-    node: NodeId,
-    arena: &'o Arena<BvhNode>,
-    output: &mut SmallVec<[FullIntersection<'o>; 32]>,
-) {
-    match arena.get(node).expect("node should exist in arena").get() {
-        // An aabb will need to delegate to child nodes if not missed
-        BvhNode::Nested(aabb) => {
-            if !aabb.hit(ray, &Bounds::FULL) {
-                return;
+            // Objects can be delegated directly
+            BvhNode::Object(obj) => {
+                if !obj.aabb().expect("aabb missing").hit(ray, bounds) {
+                    None
+                } else {
+                    obj.full_intersect(ray, bounds)
+                }
             }
-
-            node.children(arena)
-                .for_each(|child| bvh_node_intersect_all(ray, child, arena, output));
-        }
-        // Objects can be delegated directly
-        BvhNode::Object(obj) => {
-            if !expect_aabb(obj).hit(ray, &Bounds::FULL) {
-                return;
-            }
-            obj.full_intersect_all(ray, output)
-        }
+        };
     }
 
-    // // Possibly faster method, doesn't do any tree traversal at all, should be linear
-    // arena
-    //     .iter()
-    //     .filter(|node| !node.is_removed())
-    //     .filter_map(|node| match node.get() {BvhNode::Object(o) => Some(o), _ => None})
-    //     .for_each(|obj| obj.intersect_all(ray, output))
+    /// Given a [NodeId] on the [Arena] tree, calculates the ALL intersection for the given `ray`
+    ///
+    /// If the node is a [BvhNode::Object], it passes on the check to the object.
+    /// Otherwise, if it's a [BvhNode::Aabb], it:
+    ///  - Tries to bail early if the [Aabb] is missed
+    ///  - Collects all the child nodes
+    ///  - Intersects on all those children (by calling itself recursively)
+    fn bvh_node_intersect_all<'o>(
+        ray: &Ray,
+        node: NodeId,
+        arena: &'o Arena<BvhNode<O>>,
+        output: &mut SmallVec<[FullIntersection<'o>; 32]>,
+    ) {
+        match arena.get(node).expect("node should exist in arena").get() {
+            // An aabb will need to delegate to child nodes if not missed
+            BvhNode::Nested(aabb) => {
+                if !aabb.hit(ray, &Bounds::FULL) {
+                    return;
+                }
+
+                node.children(arena)
+                    .for_each(|child| Self::bvh_node_intersect_all(ray, child, arena, output));
+            }
+            // Objects can be delegated directly
+            BvhNode::Object(obj) => {
+                if !expect_aabb(obj).hit(ray, &Bounds::FULL) {
+                    return;
+                }
+                obj.full_intersect_all(ray, output)
+            }
+        }
+
+        // // Possibly faster method, doesn't do any tree traversal at all, should be linear
+        // arena
+        //     .iter()
+        //     .filter(|node| !node.is_removed())
+        //     .filter_map(|node| match node.get() {BvhNode::Object(o) => Some(o), _ => None})
+        //     .for_each(|obj| obj.intersect_all(ray, output))
+    }
 }
 
-impl FullObject for Bvh {
+impl<O: FullObject> FullObject for Bvh<O> {
     fn full_intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
         // Pass everything on to our magical function
-        bvh_node_intersect(ray, bounds, self.root_id?, &self.arena)
+        Self::bvh_node_intersect(ray, bounds, self.root_id?, &self.arena)
     }
 
     fn full_intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
         if let Some(root) = self.root_id {
-            bvh_node_intersect_all(ray, root, &self.arena, output);
+            Self::bvh_node_intersect_all(ray, root, &self.arena, output);
         }
     }
 }

@@ -46,7 +46,7 @@ impl<O: FullObject> Bvh<O> {
     /// # Note
     /// The given slice of `objects` should only contain *bounded* objects (i.e. [Object::aabb()] returns [`Some(_)`]).
     /// The exact behaviour is not specified, but will most likely result in a panic during building/accessing the tree
-    pub fn new(objects: &[O]) -> Self {
+    pub fn new(objects: Vec<O>) -> Self {
         assert!(
             objects.iter().all(|o| o.aabb().is_some()),
             "objects should all be bounded"
@@ -56,7 +56,7 @@ impl<O: FullObject> Bvh<O> {
         let root_id = if objects.is_empty() {
             None
         } else {
-            Some(Self::generate_nodes_sah(objects, &mut arena))
+            Some(Self::generate_nodes_sah(objects.into_boxed_slice(), &mut arena))
         };
 
         // eprintln!("\n\n{:?}\n\n", root_id.debug_pretty_print(&tree));
@@ -97,16 +97,17 @@ impl<O: FullObject> Bvh<O> {
     ///
     /// # Panics
     /// The slice of `objects` passed in must be non-empty.
-    fn generate_nodes_sah(objects: &[O], arena: &mut Arena<BvhNode<O>>) -> NodeId {
+    fn generate_nodes_sah(objects: Box<[O]>, arena: &mut Arena<BvhNode<O>>) -> NodeId {
+        // Can't pattern match on (owned) slices, or `Vec`s, so we use box and match that
         return match objects {
-            [] => panic!("Must pass in a non-empty slice for objects"),
-            [obj] => arena.new_node(BvhNode::Object(obj.clone())),
-            [a, b] => {
-                let aabb = Aabb::encompass(expect_aabb(a), expect_aabb(b));
+            box [] => panic!("internal invariant fail: must pass in a non-empty slice for objects"),
+            box [obj] => arena.new_node(BvhNode::Object(obj)),
+            box [a, b] => {
+                let aabb = Aabb::encompass(expect_aabb(&a), expect_aabb(&b));
 
                 let node = arena.new_node(BvhNode::Nested(aabb));
-                node.append_value(BvhNode::Object(a.clone()), arena);
-                node.append_value(BvhNode::Object(b.clone()), arena);
+                node.append_value(BvhNode::Object(a), arena);
+                node.append_value(BvhNode::Object(b), arena);
                 node
             }
             objects => {
@@ -175,7 +176,12 @@ impl<O: FullObject> Bvh<O> {
                     min_sa_idx
                 };
 
-                let (left_split, right_split) = objects.split_at(split_index + 1);
+                // Split the vector into the two halves. Annoyingly there is no nice API for boxed slices or vectors
+                let (left_split, right_split) = {
+                    let mut l = Vec::from(objects);
+                    let r = l.split_off(split_index + 1);
+                    (l.into_boxed_slice(), r.into_boxed_slice())
+                };
 
                 let left_node = Self::generate_nodes_sah(left_split, arena);
                 let right_node = Self::generate_nodes_sah(right_split, arena);
@@ -280,6 +286,19 @@ impl<O: FullObject> FullObject for Bvh<O> {
     fn full_intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
         if let Some(root) = self.root_id {
             Self::bvh_node_intersect_all(ray, root, &self.arena, output);
+        }
+    }
+
+    fn aabb(&self) -> Option<&Aabb> {
+        let root = self.root_id?;
+        match self
+            .arena
+            .get(root)
+            .expect(&format!("arena should contain root node {root}"))
+            .get()
+        {
+            BvhNode::Nested(aabb) => Some(aabb),
+            BvhNode::Object(o) => Some(expect_aabb(o)),
         }
     }
 }

@@ -42,6 +42,8 @@ pub trait FullObject {
     /// This should append all the (unbounded) intersections, into the vector `output`.
     /// It can *not* be assumed this vector will be empty. The existing contents should not be modified
     fn full_intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>);
+    
+    fn aabb(&self) -> Option<&Aabb>;
 }
 
 /// The main struct that encapsulates all the different "components" that make up an object
@@ -126,6 +128,10 @@ impl FullObject for SceneObject {
                     .map(|inner| inner.make_full(&self.material)),
             );
         }
+    }
+
+    fn aabb(&self) -> Option<&Aabb> {
+        self.aabb.as_ref()
     }
 
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)

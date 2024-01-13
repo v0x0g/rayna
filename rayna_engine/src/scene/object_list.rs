@@ -1,6 +1,7 @@
 use getset::Getters;
 use smallvec::SmallVec;
 
+use crate::accel::aabb::Aabb;
 use crate::accel::bvh::Bvh;
 use crate::scene::{FullObject, SceneObject};
 use crate::shared::bounds::Bounds;
@@ -29,7 +30,7 @@ impl<Iter: IntoIterator<Item = SceneObject>> From<Iter> for SceneObjectList {
                 unbounded.push(obj);
             }
         }
-        let bvh = Bvh::new(&bounded);
+        let bvh = Bvh::new(bounded);
         Self { bvh, unbounded }
     }
 }
@@ -44,5 +45,10 @@ impl FullObject for SceneObjectList {
     fn full_intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
         self.bvh.full_intersect_all(ray, output);
         self.unbounded.iter().for_each(|o| o.full_intersect_all(ray, output));
+    }
+
+    fn aabb(&self) -> Option<&Aabb> {
+        // List may have unbounded objects, so we can't return Some()
+        None
     }
 }

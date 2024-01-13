@@ -3,12 +3,13 @@
 #![feature(const_for)]
 #![feature(array_try_map)]
 #![feature(array_methods)]
+#![feature(box_patterns)]
 
-mod accel;
+pub mod accel;
 pub mod material;
 pub mod object;
 pub mod render;
 pub mod scene;
 pub mod shared;
 pub mod skybox;
-mod texture;
+pub mod texture;

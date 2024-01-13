@@ -1,15 +1,12 @@
 use getset::Getters;
 use smallvec::SmallVec;
 
-use rayna_shared::def::types::{Number, Point3};
-
-use crate::accel::aabb::Aabb;
 use crate::accel::bvh::Bvh;
-use crate::object::{Object, ObjectProperties};
 use crate::scene::{FullObject, SceneObject};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
+use rayna_shared::def::types::Number;
 
 #[derive(Clone, Debug, Getters)]
 #[get = "pub"]
@@ -39,23 +36,13 @@ impl<Obj: Into<SceneObject>, Iter: IntoIterator<Item = Obj>> From<Iter> for Scen
 
 impl FullObject for SceneObjectList {
     fn full_intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
-        let bvh_int = self.bvh.intersect(ray, bounds).into_iter();
+        let bvh_int = self.bvh.full_intersect(ray, bounds).into_iter();
         let unbound_int = self.unbounded.iter().filter_map(|o| o.full_intersect(ray, bounds));
         Iterator::chain(bvh_int, unbound_int).min()
     }
 
     fn full_intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
-        self.bvh.intersect_all(ray, output);
+        self.bvh.full_intersect_all(ray, output);
         self.unbounded.iter().for_each(|o| o.full_intersect_all(ray, output));
-    }
-}
-impl ObjectProperties for SceneObjectList {
-    fn aabb(&self) -> Option<&Aabb> {
-        // List may have unbounded objects, so we can't return Some()
-        None
-    }
-
-    fn centre(&self) -> Point3 {
-        unimplemented!("an ObjectList doesn't have a centre: this method should never be called")
     }
 }

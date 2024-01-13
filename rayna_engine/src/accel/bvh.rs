@@ -9,10 +9,9 @@ use std::cmp::Ordering;
 use itertools::{zip_eq, Itertools};
 use smallvec::SmallVec;
 
-use rayna_shared::def::types::{Number, Point3};
+use rayna_shared::def::types::Number;
 
 use crate::accel::aabb::Aabb;
-use crate::object::{Object, ObjectProperties};
 use crate::scene::{FullObject, SceneObject};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
@@ -270,34 +269,15 @@ fn bvh_node_intersect_all<'o>(
     //     .for_each(|obj| obj.intersect_all(ray, output))
 }
 
-impl Object for Bvh {
-    fn intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
+impl FullObject for Bvh {
+    fn full_intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
         // Pass everything on to our magical function
         bvh_node_intersect(ray, bounds, self.root_id?, &self.arena)
     }
 
-    fn intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
+    fn full_intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
         if let Some(root) = self.root_id {
             bvh_node_intersect_all(ray, root, &self.arena, output);
         }
-    }
-}
-
-impl ObjectProperties for Bvh {
-    fn aabb(&self) -> Option<&Aabb> {
-        let root = self.root_id?;
-        match self
-            .arena
-            .get(root)
-            .expect(&format!("Arena should contain root node {root}"))
-            .get()
-        {
-            BvhNode::Nested(aabb) => Some(aabb),
-            BvhNode::Object(o) => Some(expect_aabb(o)),
-        }
-    }
-
-    fn centre(&self) -> Point3 {
-        unimplemented!("a Bvh tree doesn't have a centre: this method should never be called")
     }
 }

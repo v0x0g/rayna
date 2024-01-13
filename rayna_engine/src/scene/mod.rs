@@ -1,6 +1,7 @@
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialInstance;
 use crate::object::{Object, ObjectInstance};
+use crate::scene::transform_utils::{transform_incoming_ray, transform_outgoing_intersection};
 use crate::shared::bounds::Bounds;
 use crate::shared::camera::Camera;
 use crate::shared::intersect::{FullIntersection, Intersection};
@@ -13,6 +14,7 @@ use smallvec::SmallVec;
 
 pub mod object_list;
 pub mod stored;
+pub mod transform_utils;
 
 #[derive(Clone, Debug)]
 pub struct Scene {
@@ -20,7 +22,6 @@ pub struct Scene {
     pub camera: Camera,
     pub skybox: SkyboxInstance,
 }
-
 
 /// This trait is essentially an extension of [Object], but with a [FullIntersection] not [Intersection],
 /// meaning the material of the object is also included.
@@ -43,7 +44,7 @@ pub trait FullObject {
     fn full_intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>);
 }
 
- /// The main struct that encapsulates all the different "components" that make up an object
+/// The main struct that encapsulates all the different "components" that make up an object
 ///
 /// Very similar to a `GameObject` in a game engine, where the `ObjectInstance` and `Material` are components attached
 /// to that object.
@@ -89,24 +90,41 @@ pub struct SceneObject {
     aabb: Option<Aabb>,
     /// The centre of the object. May not be equal to [crate::object::ObjectProperties::centre()],
     /// if the object has been translated
-    centre: Point3
+    centre: Point3,
 }
 
 impl FullObject for SceneObject {
-    fn full_intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
-        let i = self.object.intersect(ray, bounds)?;
-        Some(i.make_full(&self.material))
+    fn full_intersect<'o>(&'o self, orig_ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
+        if let (Some(transform), Some(inv_transform)) = (&self.transform, &self.inv_transform) {
+            let trans_ray = transform_incoming_ray(orig_ray, inv_transform);
+            let inner = self.object.intersect(trans_ray, bounds)?;
+            let intersect = transform_outgoing_intersection(orig_ray, &inner, transform);
+            Some(intersect.make_full(&self.material))
+        } else {
+            Some(self.object.intersect(orig_ray, bounds)?.make_full(&self.material))
+        }
     }
 
     fn full_intersect_all<'o>(&'o self, orig_ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
-        let trans_ray = self.transform_ray(orig_ray);
-        let mut inner_intersects = SmallVec::new();
-        self.object.intersect_all(&trans_ray, &mut inner_intersects);
+        if let (Some(transform), Some(inv_transform)) = (&self.transform, &self.inv_transform) {
+            let trans_ray = transform_incoming_ray(orig_ray, inv_transform);
+            let mut inner_intersects = SmallVec::new();
+            self.object.intersect_all(&trans_ray, &mut inner_intersects);
 
-        output.extend(inner_intersects.map(|mut inner| {
-            inner.intersection = self.transform_intersection(orig_ray, &inner.intersection)
-            inner.make_full(&self.material)}
-        ));
+            output.extend(inner_intersects.into_iter().map(|mut inner| {
+                inner = transform_outgoing_intersection(orig_ray, &inner, transform);
+                inner.make_full(&self.material)
+            }));
+        } else {
+            let mut inner_intersects = SmallVec::new();
+            self.object.intersect_all(&orig_ray, &mut inner_intersects);
+
+            output.extend(
+                inner_intersects
+                    .into_iter()
+                    .map(|inner| inner.make_full(&self.material)),
+            );
+        }
     }
 
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
@@ -120,7 +138,11 @@ impl SceneObject {
     /// Unlike [Self::new()], this *does* account for the object's translation from the origin,
     /// using the `obj_centre` parameter. See field documentation ([Self::transform]) for explanation
     /// and example of this position offset correction
-    pub fn new_with_correction(object: impl Into<ObjectInstance>, material: impl Into<MaterialInstance>, transform: Transform3) -> Self {
+    pub fn new_with_correction(
+        object: impl Into<ObjectInstance>,
+        material: impl Into<MaterialInstance>,
+        transform: Transform3,
+    ) -> Self {
         let object = object.into();
 
         let obj_centre = object.centre();
@@ -136,7 +158,11 @@ impl SceneObject {
     /// It is assumed that the object is either centred at the origin and the translation is stored in
     /// the transform, or that the transform correctly accounts for the object's translation.
     /// See field documentation ([Self::transform]) for explanation
-    pub fn new_without_correction(object: impl Into<ObjectInstance>, material: impl Into<MaterialInstance>, transform: Transform3) -> Self {
+    pub fn new_without_correction(
+        object: impl Into<ObjectInstance>,
+        material: impl Into<MaterialInstance>,
+        transform: Transform3,
+    ) -> Self {
         // Calculate the resulting AABB by transforming the corners of the input AABB.
         // And then we encompass those
         let aabb = object
@@ -152,13 +178,14 @@ impl SceneObject {
             object,
             aabb,
             transform: Some(transform),
-            inv_transform:Some(inv_transform),
+            inv_transform: Some(inv_transform),
             centre,
-            material
+            material,
         }
     }
     /// Creates a new transformed object instance, using the given object. This method does not transform the [SceneObject]
-    pub fn new(object: impl Into<ObjectInstance>, material: impl Into<MaterialInstance>) -> Self {        // Calculate the resulting AABB by transforming the corners of the input AABB.
+    pub fn new(object: impl Into<ObjectInstance>, material: impl Into<MaterialInstance>) -> Self {
+        // Calculate the resulting AABB by transforming the corners of the input AABB.
         let object = object.into();
         Self {
             object,
@@ -166,7 +193,7 @@ impl SceneObject {
             transform: None,
             inv_transform: None,
             centre: object.centre(),
-            material
+            material,
         }
     }
 }

@@ -1,6 +1,6 @@
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialInstance;
-use crate::object::{Object, ObjectInstance};
+use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::scene::transform_utils::{transform_incoming_ray, transform_outgoing_intersection};
 use crate::shared::bounds::Bounds;
 use crate::shared::camera::Camera;
@@ -88,7 +88,7 @@ pub struct SceneObject {
     transform: Option<Transform3>,
     inv_transform: Option<Transform3>,
     aabb: Option<Aabb>,
-    /// The centre of the object. May not be equal to [crate::object::ObjectProperties::centre()],
+    /// The centre of the object. May not be equal to [ObjectProperties::centre()],
     /// if the object has been translated
     centre: Point3,
     // TODO: Add a string identifier to this (name?)
@@ -164,6 +164,8 @@ impl SceneObject {
         material: impl Into<MaterialInstance>,
         transform: Transform3,
     ) -> Self {
+        let object = object.into();
+
         // Calculate the resulting AABB by transforming the corners of the input AABB.
         // And then we encompass those
         let aabb = object
@@ -176,7 +178,7 @@ impl SceneObject {
         let centre = transform.map_point(object.centre());
 
         Self {
-            object: object.into(),
+            object,
             aabb,
             transform: Some(transform),
             inv_transform: Some(inv_transform),
@@ -190,7 +192,7 @@ impl SceneObject {
         let object = object.into();
         Self {
             object,
-            aabb: object.aabb(),
+            aabb: object.aabb().copied(),
             transform: None,
             inv_transform: None,
             centre: object.centre(),

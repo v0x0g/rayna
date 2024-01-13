@@ -191,12 +191,12 @@ impl SceneObject {
         // Calculate the resulting AABB by transforming the corners of the input AABB.
         let object = object.into();
         Self {
-            object,
             aabb: object.aabb().copied(),
             transform: None,
             inv_transform: None,
             centre: object.centre(),
             material: material.into(),
+            object,
         }
     }
 }

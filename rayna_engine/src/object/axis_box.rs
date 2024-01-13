@@ -1,13 +1,12 @@
-use getset::{CopyGetters, Getters};
+use getset::CopyGetters;
 use glam::swizzles::*;
 use glamour::FromRaw;
 use glamour::ToRaw;
 use smallvec::SmallVec;
 
-use rayna_shared::def::types::{Number, Point3, Vector2, Vector3};
+use rayna_shared::def::types::{Number, Point2, Point3, Vector2, Vector3};
 
 use crate::accel::aabb::Aabb;
-use crate::material::MaterialInstance;
 use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;

@@ -15,19 +15,16 @@ use crate::material::lambertian::LambertianMaterial;
 use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::object::axis_box::*;
-use crate::object::dynamic::DynamicObject;
 use crate::object::parallelogram::*;
 use crate::object::sphere::*;
-use crate::object::transformed::TransformedObject;
 use crate::object::ObjectInstance;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
 use crate::skybox::SkyboxInstance;
-use crate::texture::image::ImageTexture;
 use crate::texture::noise::{ColourSource, LocalNoiseTexture};
 use crate::texture::TextureInstance;
 
-use super::Scene;
+use super::{Scene, SceneObject};
 
 /// Super simple scene, just a ground sphere and a small sphere
 #[dynamic]
@@ -40,166 +37,110 @@ pub static SIMPLE: Scene = {
             focus_dist: 3.,
             defocus_angle: Angle::from_degrees(0.),
         },
-        objects: vec![
-            SphereBuilder {
-                // Small, top
-                pos: Point3::new(0., 0., 1.),
-                radius: 0.5,
-                material: MetalMaterial {
+        objects: [
+            SceneObject::new(
+                SphereBuilder {
+                    // Small, top
+                    pos: Point3::new(0., 0., 1.),
+                    radius: 0.5,
+                },
+                MetalMaterial {
                     albedo: Pixel::from([0.8; 3]),
                     fuzz: 1.,
-                }
-                .into(),
-            },
-            SphereBuilder {
-                // Ground
-                pos: Point3::new(0., -100.5, -1.),
-                radius: 100.,
-                material: LambertianMaterial {
+                },
+            ),
+            SceneObject::new(
+                SphereBuilder {
+                    // Ground
+                    pos: Point3::new(0., -100.5, -1.),
+                    radius: 100.,
+                },
+                LambertianMaterial {
                     albedo: [0.5; 3].into(),
                     emissive: Default::default(),
-                }
-                .into(),
-            },
+                },
+            ),
         ]
         .into(),
         skybox: SkyboxInstance::default(),
     }
 };
 
-#[dynamic]
-pub static TESTING: Scene = {
-    let mut objects = Vec::<ObjectInstance>::new();
-    objects.push(
-        SphereObject::from(SphereBuilder {
-            // Small, top
-            pos: Point3::new(0., 2., 0.),
-            radius: 0.5,
-            material: MetalMaterial {
-                albedo: [0.8; 3].into(),
-                fuzz: 1.,
-            }
-            .into(),
-        })
-        .into(),
-    );
-    // objects.push(
-    //     AxisBoxObject::from(AxisBoxBuilder {
-    //         material: LambertianMaterial {
-    //             albedo: [1.; 3].into(),
-    //         }
-    //         .into(),
-    //         corner_1: Point3::new(-1., 0., -1.),
-    //         corner_2: Point3::new(1., 1., 1.),
-    //     })
-    //     .into(),
-    // );
-    // objects.push(
-    //     ParallelogramObject::from(ParallelogramBuilder {
-    //         material: LambertianMaterial {
-    //             albedo: [1.; 3].into(),
-    //             emissive: Default::default(),
-    //         }
-    //         .into(),
-    //         q: Point3::new(0., 0., 0.),
-    //         b: Point3::new(-1., 1., 0.),
-    //         a: Point3::new(1., 0.5, 0.),
-    //     })
-    //     .into(),
-    // );
-    // objects.push(
-    //     SphereObject::from(SphereBuilder {
-    //         // Ground
-    //         pos: Point3::new(0., -100.5, -1.),
-    //         radius: 100.,
-    //         material: LambertianMaterial {
-    //             albedo: Pixel::from([0.5; 3]),
-    //         }
-    //         .into(),
-    //     })
-    //     .into(),
-    // );
-    Scene {
-        camera: Camera {
-            pos: Point3::new(0., 0.5, -3.),
-            fwd: Vector3::Z,
-            v_fov: Angle::from_degrees(45.),
-            focus_dist: 3.,
-            defocus_angle: Angle::from_degrees(0.),
-        },
-        objects: objects.into(),
-        skybox: SkyboxInstance::default(),
-    }
-};
-
-#[dynamic]
-pub static TRIO: Scene = {
-    let material: MaterialInstance = LambertianMaterial {
-        albedo: [1.; 3].into(),
-        emissive: Default::default(),
-    }
-    .into();
-    Scene {
-        camera: Camera {
-            pos: Point3::new(0., 0., -3.),
-            fwd: Vector3::Z,
-            v_fov: Angle::from_degrees(45.),
-            focus_dist: 3.,
-            defocus_angle: Angle::from_degrees(3.),
-        },
-        objects: vec![
-            SphereBuilder {
-                // Left, big
-                pos: Point3::new(-0.2, 0., 0.),
-                radius: 0.25,
-                material: material.clone(),
-            },
-            SphereBuilder {
-                // Right, mid
-                pos: Point3::new(0.2, 0., 0.),
-                radius: 0.15,
-                material: material.clone(),
-            },
-            SphereBuilder {
-                // Small, top
-                pos: Point3::new(0., 0.5, 0.),
-                radius: 0.1,
-                material: material.clone(),
-            },
-            SphereBuilder {
-                // Ground
-                pos: Point3::new(0., -100.5, -1.),
-                radius: 100.,
-                material: material.clone(),
-            },
-        ]
-        .into(),
-        skybox: SkyboxInstance::default(),
-    }
-};
-
-//noinspection SpellCheckingInspection
+// #[dynamic]
+// pub static TESTING: Scene = {
+//     let mut objects = Vec::<ObjectInstance>::new();
+//     objects.push(
+//         SphereObject::from(SphereBuilder {
+//             // Small, top
+//             pos: Point3::new(0., 2., 0.),
+//             radius: 0.5,
+//             material: MetalMaterial {
+//                 albedo: [0.8; 3].into(),
+//                 fuzz: 1.,
+//             }
+//             .into(),
+//         })
+//         .into(),
+//     );
+//     // objects.push(
+//     //     AxisBoxObject::from(AxisBoxBuilder {
+//     //         material: LambertianMaterial {
+//     //             albedo: [1.; 3].into(),
+//     //         }
+//     //         .into(),
+//     //         corner_1: Point3::new(-1., 0., -1.),
+//     //         corner_2: Point3::new(1., 1., 1.),
+//     //     })
+//     //     .into(),
+//     // );
+//     // objects.push(
+//     //     ParallelogramObject::from(ParallelogramBuilder {
+//     //         material: LambertianMaterial {
+//     //             albedo: [1.; 3].into(),
+//     //             emissive: Default::default(),
+//     //         }
+//     //         .into(),
+//     //         q: Point3::new(0., 0., 0.),
+//     //         b: Point3::new(-1., 1., 0.),
+//     //         a: Point3::new(1., 0.5, 0.),
+//     //     })
+//     //     .into(),
+//     // );
+//     // objects.push(
+//     //     SphereObject::from(SphereBuilder {
+//     //         // Ground
+//     //         pos: Point3::new(0., -100.5, -1.),
+//     //         radius: 100.,
+//     //         material: LambertianMaterial {
+//     //             albedo: Pixel::from([0.5; 3]),
+//     //         }
+//     //         .into(),
+//     //     })
+//     //     .into(),
+//     // );
+//     Scene {
+//         camera: Camera {
+//             pos: Point3::new(0., 0.5, -3.),
+//             fwd: Vector3::Z,
+//             v_fov: Angle::from_degrees(45.),
+//             focus_dist: 3.,
+//             defocus_angle: Angle::from_degrees(0.),
+//         },
+//         objects: objects.into(),
+//         skybox: SkyboxInstance::default(),
+//     }
+// };
 
 /// From **RayTracing in A Weekend**, the demo scene at the end of the chapter (extended of course)
 #[dynamic]
 pub static RTIAW_DEMO: Scene = {
-    let camera = Camera {
-        pos: Point3::new(13., 2., 3.),
-        fwd: Vector3::new(-13., -2., -3.).normalize(),
-        v_fov: Angle::from_degrees(20.),
-        focus_dist: 10.,
-        defocus_angle: Angle::from_degrees(0.6),
-    };
-
-    let mut objects = Vec::<ObjectInstance>::new();
+    let mut objects = Vec::new();
 
     let grid_dims = -15..=15;
     let rng = &mut thread_rng();
     for a in grid_dims.clone() {
         for b in grid_dims.clone() {
             let (a, b) = (a as Number, b as Number);
-
-            let material_choice = rng.gen::<Number>();
 
             let centre = Point3::new(a, 0.2, b) + (Vector3::new(rng.gen(), 0., rng.gen()) * 0.9);
             const BIG_BALL_CENTRE: Point3 = Point3 { x: 4., y: 0.2, z: 0. };
@@ -208,6 +149,7 @@ pub static RTIAW_DEMO: Scene = {
                 continue;
             }
 
+            let material_choice = rng.gen::<Number>();
             let material: MaterialInstance = if material_choice < 0.7 {
                 LambertianMaterial {
                     albedo: Pixel::map2(&rng::colour_rgb(rng), &rng::colour_rgb(rng), |a, b| a * b).into(),
@@ -229,92 +171,72 @@ pub static RTIAW_DEMO: Scene = {
             };
 
             let obj_choice = rng.gen::<Number>();
-            let obj = if obj_choice < 0.7 {
+            let obj: ObjectInstance = if obj_choice < 0.7 {
                 SphereBuilder {
                     pos: centre,
-                    material,
                     radius: 0.2,
                 }
                 .into()
             } else {
-                AxisBoxBuilder::new_centred(centre, rng::vector_in_unit_cube_01(rng) * 0.8, material).into()
+                AxisBoxBuilder::new_centred(centre, rng::vector_in_unit_cube_01(rng) * 0.8).into()
             };
-            objects.push(obj);
+            objects.push(SceneObject::new(obj, material));
         }
     }
 
-    objects.push(
+    objects.push(SceneObject::new(
         SphereBuilder {
             pos: Point3::new(0., 1., 0.),
             radius: 1.,
-            material: DielectricMaterial {
-                refractive_index: 1.5,
-                albedo: [1.; 3].into(),
-            }
-            .into(),
-        }
-        .into(),
-    );
-    objects.push(
+        },
+        DielectricMaterial {
+            refractive_index: 1.5,
+            albedo: [1.; 3].into(),
+        },
+    ));
+    objects.push(SceneObject::new(
         SphereBuilder {
             pos: Point3::new(-4., 1., 0.),
             radius: 1.,
-            material: LambertianMaterial {
-                albedo: [0.4, 0.2, 0.1].into(),
-                emissive: Default::default(),
-            }
-            .into(),
-        }
-        .into(),
-    );
-    // objects.push(
-    //     SphereBuilder {
-    //         pos: Point3::new(4., 1., 0.),
-    //         radius: 1.,
-    //         material: MetalMaterial {
-    //             albedo: [0.7, 0.6, 0.5].into(),
-    //             fuzz: 0.,
-    //         }
-    //         .into(),
-    //     }
-    //     .into(),
-    // );
-    objects.push(
+        },
+        LambertianMaterial {
+            albedo: [0.4, 0.2, 0.1].into(),
+            emissive: Default::default(),
+        },
+    ));
+    objects.push(SceneObject::new(
         SphereBuilder {
             pos: Point3::new(4., 1., 0.),
             radius: 1.,
-            material: LambertianMaterial {
-                albedo: ImageTexture::from(
-                    image::load_from_memory(include_bytes!("../../../media/textures/earthmap.jpg"))
-                        .expect("included earth-map texture file should be valid")
-                        .into_rgb32f(),
-                )
-                .into(),
-                emissive: Default::default(),
-            }
-            .into(),
-        }
-        .into(),
-    );
+        },
+        MetalMaterial {
+            albedo: [0.7, 0.6, 0.5].into(),
+            fuzz: 0.,
+        },
+    ));
 
-    objects.push(
+    objects.push(SceneObject::new(
         SphereBuilder {
             pos: Point3::new(0., -1000., 0.),
             radius: 1000.,
-            material: LambertianMaterial {
-                albedo: LocalNoiseTexture {
-                    func: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69u32)).set_scale(10000.)).as_dyn_box(),
-                }
-                .into(),
-                emissive: Default::default(),
+        },
+        LambertianMaterial {
+            albedo: LocalNoiseTexture {
+                func: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69u32)).set_scale(10000.)).as_dyn_box(),
             }
             .into(),
-        }
-        .into(),
-    );
+            emissive: Default::default(),
+        },
+    ));
 
     Scene {
-        camera,
+        camera: Camera {
+            pos: Point3::new(13., 2., 3.),
+            fwd: Vector3::new(-13., -2., -3.).normalize(),
+            v_fov: Angle::from_degrees(20.),
+            focus_dist: 10.,
+            defocus_angle: Angle::from_degrees(0.6),
+        },
         objects: objects.into(),
         skybox: SkyboxInstance::default(),
     }
@@ -331,10 +253,10 @@ pub static CORNELL: Scene = {
         defocus_angle: Angle::from_degrees(0.),
     };
 
-    let mut objects = Vec::<ObjectInstance>::new();
+    let mut objects = Vec::new();
 
     fn quad(
-        objs: &mut Vec<ObjectInstance>,
+        objs: &mut Vec<SceneObject>,
         p: impl Into<Point3>,
         u: impl Into<Vector3>,
         v: impl Into<Vector3>,
@@ -344,44 +266,33 @@ pub static CORNELL: Scene = {
         let p = p.into();
         let u = u.into();
         let v = v.into();
-        let quad = ParallelogramBuilder::Vectors {
-            p,
-            u,
-            v,
-            material: LambertianMaterial {
+        objs.push(SceneObject::new(
+            ParallelogramBuilder::Vectors { p, u, v },
+            LambertianMaterial {
                 albedo: albedo.into(),
                 emissive: emissive.into(),
-            }
-            .into(),
-        };
-        objs.push(quad.into());
+            },
+        ));
     }
 
     fn cuboid(
-        objs: &mut Vec<ObjectInstance>,
+        objs: &mut Vec<SceneObject>,
         a: impl Into<Point3>,
         b: impl Into<Point3>,
         albedo: impl Into<TextureInstance>,
         transform: Transform3,
     ) {
-        let a = a.into();
-        let b = b.into();
-        let cuboid: AxisBoxObject = AxisBoxBuilder {
-            corner_1: a,
-            corner_2: b,
-            material: LambertianMaterial {
+        objs.push(SceneObject::new_with_correction(
+            AxisBoxBuilder {
+                corner_1: a.into(),
+                corner_2: b.into(),
+            },
+            LambertianMaterial {
                 albedo: albedo.into(),
                 emissive: [0.; 3].into(),
-            }
-            .into(),
-        }
-        .into();
-        let wrapped = DynamicObject::from(TransformedObject::new_with_correction(
-            cuboid.centre().clone(),
-            cuboid,
+            },
             transform,
         ));
-        objs.push(wrapped.into());
     }
 
     {

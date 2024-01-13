@@ -4,7 +4,7 @@ use crate::object::{Object, ObjectInstance};
 use crate::scene::transform_utils::{transform_incoming_ray, transform_outgoing_intersection};
 use crate::shared::bounds::Bounds;
 use crate::shared::camera::Camera;
-use crate::shared::intersect::{FullIntersection, Intersection};
+use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 use crate::skybox::SkyboxInstance;
 use getset::Getters;
@@ -91,13 +91,14 @@ pub struct SceneObject {
     /// The centre of the object. May not be equal to [crate::object::ObjectProperties::centre()],
     /// if the object has been translated
     centre: Point3,
+    // TODO: Add a string identifier to this (name?)
 }
 
 impl FullObject for SceneObject {
     fn full_intersect<'o>(&'o self, orig_ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
         if let (Some(transform), Some(inv_transform)) = (&self.transform, &self.inv_transform) {
             let trans_ray = transform_incoming_ray(orig_ray, inv_transform);
-            let inner = self.object.intersect(trans_ray, bounds)?;
+            let inner = self.object.intersect(&trans_ray, bounds)?;
             let intersect = transform_outgoing_intersection(orig_ray, &inner, transform);
             Some(intersect.make_full(&self.material))
         } else {
@@ -175,12 +176,12 @@ impl SceneObject {
         let centre = transform.map_point(object.centre());
 
         Self {
-            object,
+            object: object.into(),
             aabb,
             transform: Some(transform),
             inv_transform: Some(inv_transform),
             centre,
-            material,
+            material: material.into(),
         }
     }
     /// Creates a new transformed object instance, using the given object. This method does not transform the [SceneObject]
@@ -193,7 +194,7 @@ impl SceneObject {
             transform: None,
             inv_transform: None,
             centre: object.centre(),
-            material,
+            material: material.into(),
         }
     }
 }

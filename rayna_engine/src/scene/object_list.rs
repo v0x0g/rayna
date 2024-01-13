@@ -18,11 +18,11 @@ pub struct SceneObjectList {
 }
 
 // Iter<Into<ObjType>> => ObjectList
-impl<Obj: Into<SceneObject>, Iter: IntoIterator<Item = Obj>> From<Iter> for SceneObjectList {
+impl<Iter: IntoIterator<Item = SceneObject>> From<Iter> for SceneObjectList {
     fn from(value: Iter) -> Self {
         let mut bounded = vec![];
         let mut unbounded = vec![];
-        for obj in value.into_iter().map(Obj::into) {
+        for obj in value.into_iter() {
             if let Some(_) = obj.aabb() {
                 bounded.push(obj);
             } else {

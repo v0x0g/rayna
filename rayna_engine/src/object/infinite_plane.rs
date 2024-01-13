@@ -1,14 +1,13 @@
-use getset::Getters;
+use getset::CopyGetters;
 use smallvec::SmallVec;
 
 use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 
 use crate::accel::aabb::Aabb;
-use crate::material::MaterialInstance;
 use crate::object::planar::Planar;
 use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
-use crate::shared::intersect::FullIntersection;
+use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 
 #[derive(Copy, Clone, Debug, Default, Ord, PartialOrd, Eq, PartialEq)]
@@ -45,7 +44,7 @@ impl UvWrappingMode {
     pub fn apply_mut(self, uvs: &mut Point2) { *uvs = self.apply(*uvs); }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum InfinitePlaneBuilder {
     /// Creates a [InfinitePlaneObject] from three points on the surface.
     ///
@@ -54,7 +53,6 @@ pub enum InfinitePlaneBuilder {
         p: Point3,
         a: Point3,
         b: Point3,
-        material: MaterialInstance,
         uv_wrap: UvWrappingMode,
     },
     /// Creates a parallelogram from the origin point `p`, and the two side vectors `u`, `v`
@@ -64,50 +62,28 @@ pub enum InfinitePlaneBuilder {
         p: Point3,
         u: Vector3,
         v: Vector3,
-        material: MaterialInstance,
         uv_wrap: UvWrappingMode,
     },
 }
 
-#[derive(Clone, Debug, Getters)]
-#[get = "pub"]
+#[derive(Copy, Clone, Debug, CopyGetters)]
+#[get_copy = "pub"]
 pub struct InfinitePlaneObject {
     /// The plane that this object sits upon
     plane: Planar,
     uv_wrap: UvWrappingMode,
-    material: MaterialInstance,
 }
 
 impl From<InfinitePlaneBuilder> for InfinitePlaneObject {
     fn from(p: InfinitePlaneBuilder) -> Self {
         match p {
-            InfinitePlaneBuilder::Points {
-                p,
-                a,
-                b,
-                material,
-                uv_wrap,
-            } => {
+            InfinitePlaneBuilder::Points { p, a, b, uv_wrap } => {
                 let plane = Planar::new_points(p, a, b);
-                Self {
-                    plane,
-                    material,
-                    uv_wrap,
-                }
+                Self { plane, uv_wrap }
             }
-            InfinitePlaneBuilder::Vectors {
-                p,
-                u,
-                v,
-                material,
-                uv_wrap,
-            } => {
+            InfinitePlaneBuilder::Vectors { p, u, v, uv_wrap } => {
                 let plane = Planar::new(p, u, v);
-                Self {
-                    plane,
-                    uv_wrap,
-                    material,
-                }
+                Self { plane, uv_wrap }
             }
         }
     }
@@ -118,15 +94,15 @@ impl From<InfinitePlaneBuilder> for ObjectInstance {
 }
 
 impl Object for InfinitePlaneObject {
-    fn intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         let mut i = self.plane.intersect_bounded(ray, bounds)?;
         // Wrap uv's if required
         self.uv_wrap.apply_mut(&mut i.uv);
-        Some(i.make_full(&self.material))
+        Some(i)
     }
 
     //noinspection DuplicatedCode
-    fn intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
         // Ignores infinite intersection case
         self.intersect(ray, &Bounds::FULL).map(|i| output.push(i));
     }

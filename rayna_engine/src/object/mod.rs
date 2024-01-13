@@ -26,7 +26,7 @@
 
 use crate::accel::aabb::Aabb;
 use crate::shared::bounds::Bounds;
-use crate::shared::intersect::FullIntersection;
+use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
@@ -41,13 +41,14 @@ use self::{
 
 pub mod axis_box;
 pub mod dynamic;
-mod homogenous_volume;
-mod infinite_plane;
+pub mod homogenous_volume;
+pub mod infinite_plane;
 pub mod parallelogram;
 pub mod planar;
 pub mod sphere;
-pub mod transformed;
 pub mod triangle;
+
+// region Object traits
 
 dyn_clone::clone_trait_object!(Object);
 
@@ -57,14 +58,14 @@ pub trait Object: ObjectProperties + RtRequirement {
     ///
     /// # Return Value
     /// This should return the *first* intersection that is within the given range, else [None]
-    fn intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>>;
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection>;
 
     /// Returns (possibly) an iterator over all of the intersections for the given object.
     ///
     /// # Return Value
     /// This should place all the (unbounded) intersections, into the vector `output`.
     /// It can be assumed this vector will be empty.
-    fn intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>);
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>);
 
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
 }
@@ -95,3 +96,5 @@ pub trait ObjectProperties: RtRequirement {
     /// Scaling and rotation will happen around this point
     fn centre(&self) -> Point3;
 }
+
+// endregion Object traits

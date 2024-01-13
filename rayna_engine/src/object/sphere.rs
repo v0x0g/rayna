@@ -1,10 +1,9 @@
 use crate::accel::aabb::Aabb;
-use crate::material::MaterialInstance;
 use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
-use crate::shared::intersect::{FullIntersection, Intersection};
+use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use getset::{CopyGetters, Getters};
+use getset::CopyGetters;
 use glamour::AngleConsts;
 use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 use smallvec::SmallVec;
@@ -12,21 +11,17 @@ use smallvec::SmallVec;
 /// A builder struct used to create a sphere
 ///
 /// Call [Into::into] or [SphereObject::from] to create the actual sphere object
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct SphereBuilder {
     pub pos: Point3,
     pub radius: Number,
-    pub material: MaterialInstance,
 }
 
 /// The actual instance of a sphere that can be rendered.
 /// Has precomputed values and therefore cannot be mutated
-#[derive(Clone, Debug, CopyGetters, Getters)]
+#[derive(Copy, Clone, Debug, CopyGetters)]
 #[get_copy = "pub"]
 pub struct SphereObject {
-    #[getset(skip)]
-    #[get = "pub"]
-    material: MaterialInstance,
     pos: Point3,
     radius: Number,
     // TODO: is `radius_sqr` a perf improvement?
@@ -41,7 +36,6 @@ impl From<SphereBuilder> for SphereObject {
             pos: value.pos,
             radius: value.radius,
             radius_sqr: value.radius * value.radius,
-            material: value.material,
             // Cube centred around self
             aabb: Aabb::new(
                 value.pos - Vector3::splat(value.radius),
@@ -57,7 +51,7 @@ impl From<SphereBuilder> for ObjectInstance {
 }
 
 impl Object for SphereObject {
-    fn intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();
@@ -100,22 +94,19 @@ impl Object for SphereObject {
             outward_normal
         };
 
-        return Some(
-            Intersection {
-                pos_w: world_point,
-                pos_l: local_point.to_point(),
-                dist,
-                normal: outward_normal,
-                ray_normal,
-                front_face: !ray_pos_inside,
-                uv: sphere_uv(local_point),
-                face: 0,
-            }
-            .make_full(&self.material),
-        );
+        return Some(Intersection {
+            pos_w: world_point,
+            pos_l: local_point.to_point(),
+            dist,
+            normal: outward_normal,
+            ray_normal,
+            front_face: !ray_pos_inside,
+            uv: sphere_uv(local_point),
+            face: 0,
+        });
     }
 
-    fn intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();
@@ -156,7 +147,6 @@ impl Object for SphereObject {
                 uv: sphere_uv(local_point),
                 face: 0,
             }
-            .make_full(&self.material)
         }));
     }
 }

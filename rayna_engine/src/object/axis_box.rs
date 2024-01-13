@@ -1,55 +1,46 @@
-use getset::Getters;
+use getset::{CopyGetters, Getters};
 use glam::swizzles::*;
 use glamour::FromRaw;
 use glamour::ToRaw;
 use smallvec::SmallVec;
 
-use rayna_shared::def::types::{Number, Point2, Point3, Vector2, Vector3};
+use rayna_shared::def::types::{Number, Point3, Vector2, Vector3};
 
 use crate::accel::aabb::Aabb;
 use crate::material::MaterialInstance;
 use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
-use crate::shared::intersect::{FullIntersection, Intersection};
+use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::validate;
 
 /// A builder struct used to create a box
 ///
 /// Call [Into::into] or [AxisBoxObject::from] to create the actual object
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct AxisBoxBuilder {
     pub corner_1: Point3,
     pub corner_2: Point3,
-    pub material: MaterialInstance,
 }
 
 impl AxisBoxBuilder {
-    pub fn new_corners(corner_1: Point3, corner_2: Point3, material: MaterialInstance) -> Self {
-        Self {
-            corner_1,
-            corner_2,
-            material,
-        }
-    }
-    pub fn new_centred(centre: Point3, size: Vector3, material: MaterialInstance) -> Self {
+    pub fn new_corners(corner_1: Point3, corner_2: Point3) -> Self { Self { corner_1, corner_2 } }
+    pub fn new_centred(centre: Point3, size: Vector3) -> Self {
         Self {
             corner_1: centre + size / 2.,
             corner_2: centre - size / 2.,
-            material,
         }
     }
 }
 //TODO: Add getters to other objects
 /// Built instance of a box object
-#[derive(Clone, Debug, Getters)]
-#[get = "pub"]
+#[derive(Copy, Clone, Debug, CopyGetters)]
+#[get_copy = "pub"]
 pub struct AxisBoxObject {
     centre: Point3,
     radius: Vector3,
     inv_radius: Vector3,
     aabb: Aabb,
-    material: MaterialInstance,
 }
 
 impl From<AxisBoxBuilder> for AxisBoxObject {
@@ -60,7 +51,6 @@ impl From<AxisBoxBuilder> for AxisBoxObject {
             radius: aabb.size() / 2.,
             inv_radius: (aabb.size() / 2.).recip(),
             aabb,
-            material: value.material,
         }
     }
 }
@@ -72,7 +62,7 @@ impl From<AxisBoxBuilder> for ObjectInstance {
 #[allow(unused_variables)]
 impl Object for AxisBoxObject {
     //noinspection RsLiveness
-    fn intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         /*
         CREDITS:
 
@@ -128,20 +118,17 @@ impl Object for AxisBoxObject {
                         let pos_w = ray.at(dist);
                         // Remap from [-radius..radius] to [0..1]
                         let uvs = (uvs_raw / radius + Vector2::ONE) / 2.;
-                        return Some(
-                            Intersection {
-                                pos_w,
-                                pos_l: pos_w - self.centre.to_vector(),
-                                normal: ray_normal * winding,
-                                ray_normal,
-                                front_face: winding.is_sign_positive(),
-                                dist,
-                                uv: uvs.to_point(),
-                                // x: 0,1; y: 2,3; z: 4,5; -ve sign first then positive sign
-                                face: ((glam::uvec3(1, 5, 9).$u + sgn.$u as u32) / 2) as usize,
-                            }
-                            .make_full(&self.material),
-                        );
+                        return Some(Intersection {
+                            pos_w,
+                            pos_l: pos_w - self.centre.to_vector(),
+                            normal: ray_normal * winding,
+                            ray_normal,
+                            front_face: winding.is_sign_positive(),
+                            dist,
+                            uv: uvs.to_point(),
+                            // x: 0,1; y: 2,3; z: 4,5; -ve sign first then positive sign
+                            face: ((glam::uvec3(1, 5, 9).$u + sgn.$u as u32) / 2) as usize,
+                        });
                     }
                 }
             }};
@@ -158,7 +145,7 @@ impl Object for AxisBoxObject {
         return None;
     }
 
-    fn intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
         // Move to the box's reference frame. This is unavoidable and un-optimizable.
         let ro = ray.pos() - self.centre;
         let rd = ray.dir();
@@ -211,7 +198,7 @@ impl Object for AxisBoxObject {
                         uv: uvs,
                         // x: 0,1; y: 2,3; z: 4,5; -ve winding first then positive winding
                         face: ((glam::uvec3(1, 5, 9).$u + sgn.$u as u32) / 2) as usize
-                    }.make_full(&self.material));
+                    });
                 }
             }};
         }

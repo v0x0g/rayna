@@ -1,7 +1,7 @@
 use crate::accel::aabb::Aabb;
 use crate::object::{Object, ObjectProperties};
 use crate::shared::bounds::Bounds;
-use crate::shared::intersect::FullIntersection;
+use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use rayna_shared::def::types::{Number, Point3};
 use smallvec::SmallVec;
@@ -24,11 +24,11 @@ impl super::ObjectInstance {
 }
 
 impl Object for DynamicObject {
-    fn intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         self.inner.intersect(ray, bounds)
     }
 
-    fn intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
         self.inner.intersect_all(ray, output)
     }
 }

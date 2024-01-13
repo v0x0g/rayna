@@ -329,7 +329,7 @@ impl Renderer {
         ray: &Ray,
         bounds: &Bounds<Number>,
     ) -> Option<FullIntersection<'o>> {
-        scene.objects.intersect(ray, bounds)
+        scene.objects.full_intersect(ray, bounds)
     }
 
     fn ray_colour_recursive(

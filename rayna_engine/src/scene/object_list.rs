@@ -5,22 +5,23 @@ use rayna_shared::def::types::{Number, Point3};
 
 use crate::accel::aabb::Aabb;
 use crate::accel::bvh::Bvh;
-use crate::object::{Object, ObjectInstance, ObjectProperties};
+use crate::object::{Object, ObjectProperties};
+use crate::scene::{FullObject, SceneObject};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 
 #[derive(Clone, Debug, Getters)]
 #[get = "pub"]
-pub struct ObjectList {
+pub struct SceneObjectList {
     /// BVH-optimised tree of objects
     bvh: Bvh,
     /// All the unbounded objects in the list (objects where [Object::aabb()] returned [None]
-    unbounded: Vec<ObjectInstance>,
+    unbounded: Vec<SceneObject>,
 }
 
 // Iter<Into<ObjType>> => ObjectList
-impl<Obj: Into<ObjectInstance>, Iter: IntoIterator<Item = Obj>> From<Iter> for ObjectList {
+impl<Obj: Into<SceneObject>, Iter: IntoIterator<Item = Obj>> From<Iter> for SceneObjectList {
     fn from(value: Iter) -> Self {
         let mut bounded = vec![];
         let mut unbounded = vec![];
@@ -36,19 +37,19 @@ impl<Obj: Into<ObjectInstance>, Iter: IntoIterator<Item = Obj>> From<Iter> for O
     }
 }
 
-impl Object for ObjectList {
-    fn intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
+impl FullObject for SceneObjectList {
+    fn full_intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
         let bvh_int = self.bvh.intersect(ray, bounds).into_iter();
-        let unbound_int = self.unbounded.iter().filter_map(|o| o.intersect(ray, bounds));
+        let unbound_int = self.unbounded.iter().filter_map(|o| o.full_intersect(ray, bounds));
         Iterator::chain(bvh_int, unbound_int).min()
     }
 
-    fn intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
+    fn full_intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
         self.bvh.intersect_all(ray, output);
-        self.unbounded.iter().for_each(|o| o.intersect_all(ray, output));
+        self.unbounded.iter().for_each(|o| o.full_intersect_all(ray, output));
     }
 }
-impl ObjectProperties for ObjectList {
+impl ObjectProperties for SceneObjectList {
     fn aabb(&self) -> Option<&Aabb> {
         // List may have unbounded objects, so we can't return Some()
         None

@@ -1,117 +1,87 @@
-// use crate::accel::aabb::Aabb;
-// use crate::object::{Object, ObjectProperties};
-// use crate::shared::bounds::Bounds;
-// use crate::shared::intersect::{FullIntersection, Intersection};
-// use crate::shared::ray::Ray;
-// use derivative::Derivative;
-// use getset::Getters;
-// use rayna_shared::def::types::{Number, Point3, Transform3, Vector3};
-// use smallvec::SmallVec;
-//
-// /// An object wrapper that treats the wrapped object as a constant-density volume
-// #[derive(Derivative, Getters)]
-// #[derivative(Debug(bound = ""), Clone(bound = ""), Copy)]
-// #[get = "pub"]
-// pub struct HomogenousVolumeObject<Obj: Object + Clone> {
-//     object: Obj,
-//     transform: Transform3,
-//     inv_transform: Transform3,
-//     aabb: Option<Aabb>,
-//     /// The transformed centre of the object
-//     centre: Point3,
-// }
-//
-// impl<Obj: Object + Clone> HomogenousVolumeObject<Obj> {
-//     /// Creates a new transformed object instance, using the given properties
-//     pub fn new(object: Obj, transform: Transform3) -> Self {
-//         // Calculate the resulting AABB by transforming the corners of the input AABB.
-//         // And then we encompass those
-//         let aabb = object
-//             .aabb()
-//             .map(Aabb::corners)
-//             .map(|corners| corners.map(|c| transform.map_point(c)))
-//             .map(Aabb::encompass_points);
-//
-//         let inv_transform = transform.inverse();
-//         let centre = transform.map_point(object.centre());
-//
-//         Self {
-//             object,
-//             aabb,
-//             transform,
-//             inv_transform,
-//             centre,
-//         }
-//     }
-//
-//     /// Applies the transform matrix in `self` to the given ray.
-//     ///
-//     /// # Note
-//     /// This actually uses the inverse transform to go from world -> object space
-//     /// (the plain `transform` is object -> world space
-//     #[inline(always)]
-//     fn transform_ray(&self, ray: &Ray) -> Ray {
-//         let (pos, dir) = (ray.pos(), ray.dir());
-//         let tf = &self.inv_transform;
-//         Ray::new(tf.map_point(pos), tf.map_vector(dir))
-//     }
-//
-//     /// Applies the transform matrix in `self` to the given intersection.
-//     #[inline(always)]
-//     fn transform_intersection(&self, orig_ray: &Ray, intersection: &Intersection) -> Intersection {
-//         // PANICS:
-//         // We use `.unwrap()` on the results of the transformations
-//         // Since it is of type `Transform3`, it must be an invertible matrix and can't collapse
-//         // the dimensional space to <3 dimensions,
-//         // Therefore all transformation should be valid (and for vectors: nonzero), so we can unwrap
-//
-//         let mut intersection = intersection.clone();
-//
-//         let tf = &self.transform;
-//         let point = |p: &mut Point3| *p = tf.matrix.transform_point(*p);
-//         let normal = |n: &mut Vector3| {
-//             *n = tf.map_vector(*n).try_normalize().expect(&format!(
-//                 "transformation failed: vector {n:?} transformed to {t:?} couldn't be normalised",
-//                 t = tf.map_vector(*n)
-//             ))
-//         };
-//
-//         normal(&mut intersection.normal);
-//         normal(&mut intersection.ray_normal);
-//         point(&mut intersection.pos_l);
-//         point(&mut intersection.pos_w);
-//
-//         // Minor hack, calculate the intersection distance instead of transforming it
-//         // I don't know how else to do this lol
-//         intersection.dist = (intersection.pos_w - orig_ray.pos()).length();
-//
-//         return intersection;
-//     }
-// }
-//
-// impl<Obj: Object + Clone> Object for TransformedObject<Obj> {
-//     fn intersect<'o>(&'o self, orig_ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
-//         let trans_ray = self.transform_ray(orig_ray);
-//         let mut i = self.object.intersect(&trans_ray, bounds)?;
-//         i.intersection = self.transform_intersection(orig_ray, &i.intersection);
-//         Some(i)
-//     }
-//
-//     fn intersect_all<'o>(&'o self, orig_ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
-//         let trans_ray = self.transform_ray(orig_ray);
-//         let initial_len = output.len();
-//         self.object.intersect_all(&trans_ray, output);
-//         let new_len = output.len();
-//
-//         // Tracking length means we can find the intersections that were added
-//         let inner_intersects = &mut output[initial_len..new_len];
-//         inner_intersects
-//             .into_iter()
-//             .for_each(|i| i.intersection = self.transform_intersection(orig_ray, &i.intersection))
-//     }
-// }
-//
-// impl<Obj: Object + Clone> ObjectProperties for TransformedObject<Obj> {
-//     fn aabb(&self) -> Option<&Aabb> { self.aabb.as_ref() }
-//     fn centre(&self) -> Point3 { self.centre }
-// }
+use crate::accel::aabb::Aabb;
+use crate::object::{Object, ObjectProperties};
+use crate::shared::bounds::Bounds;
+use crate::shared::intersect::Intersection;
+use crate::shared::ray::Ray;
+use crate::shared::rng;
+use derivative::Derivative;
+use getset::Getters;
+use rand::Rng;
+use rand_core::RngCore;
+use rayna_shared::def::types::{Number, Point3};
+use smallvec::SmallVec;
+
+#[derive(Derivative)]
+#[derivative(Debug(bound = ""), Clone(bound = ""), Copy)]
+pub struct HomogeneousVolumeBuilder<Obj: Object + Clone> {
+    pub object: Obj,
+    pub density: Number,
+}
+
+impl<Obj: Object + Clone> From<HomogeneousVolumeBuilder<Obj>> for HomogeneousVolumeObject<Obj> {
+    fn from(value: HomogeneousVolumeBuilder<Obj>) -> Self {
+        Self {
+            object: value.object,
+            density: value.density,
+            neg_inv_density: -value.density.recip(),
+        }
+    }
+}
+
+/// An object wrapper that treats the wrapped object as a constant-density volume
+#[derive(Derivative, Getters)]
+#[derivative(Debug(bound = ""), Clone(bound = ""), Copy)]
+#[get = "pub"]
+pub struct HomogeneousVolumeObject<Obj: Object + Clone> {
+    object: Obj,
+    density: Number,
+    neg_inv_density: Number,
+}
+
+impl<Obj: Object + Clone> Object for HomogeneousVolumeObject<Obj> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
+        // Find two samples on surface of volume
+        // These should be as the ray enters and exits the object
+
+        // TODO: Perhaps optimise this so we can use the given bounds?
+        let entering = self.object.intersect(ray, bounds)?;
+
+        let exiting = self.object.intersect(ray, &bounds.with_some_start(entering.dist))?;
+
+        if !bounds.contains(&entering.dist) || !bounds.contains(&exiting.dist) {
+            return None;
+        }
+
+        // Distance between entry and exit of object along ray
+        let dist_inside = exiting.dist - entering.dist;
+        // Random distance at which we will hit
+        let hit_dist = self.neg_inv_density * Number::ln(rng.gen());
+
+        if hit_dist > dist_inside {
+            return None;
+        }
+
+        let dist = entering.dist + hit_dist;
+        let pos_w = ray.at(dist);
+        let pos_l = pos_w;
+
+        Some(Intersection {
+            dist,
+            pos_w,
+            pos_l,
+
+            // The following are all completely arbitrary
+            normal: rng::vector_on_unit_sphere(rng),
+            ray_normal: rng::vector_on_unit_sphere(rng),
+            uv: rng::vector_in_unit_square_01(rng).to_point(),
+            face: 0,
+            front_face: true,
+        })
+    }
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) { todo!() }
+}
+
+impl<Obj: Object + Clone> ObjectProperties for HomogeneousVolumeObject<Obj> {
+    fn aabb(&self) -> Option<&Aabb> { self.object.aabb() }
+    fn centre(&self) -> Point3 { self.object.centre() }
+}

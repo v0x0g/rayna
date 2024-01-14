@@ -9,12 +9,7 @@ pub struct Bounds<T> {
 }
 
 impl<T> From<RangeFull> for Bounds<T> {
-    fn from(_value: RangeFull) -> Self {
-        Self {
-            start: None,
-            end: None,
-        }
-    }
+    fn from(_value: RangeFull) -> Self { Self { start: None, end: None } }
 }
 impl<T> From<RangeInclusive<T>> for Bounds<T> {
     fn from(value: RangeInclusive<T>) -> Self {
@@ -59,21 +54,14 @@ impl<T> From<Range<T>> for Bounds<T> {
 }
 
 impl<T> Bounds<T> {
-    pub const FULL: Self = Self {
-        start: None,
-        end: None,
-    };
+    pub const FULL: Self = Self { start: None, end: None };
 }
 
 impl<T: PartialOrd> Bounds<T> {
-    // TODO: Expand this to cover two full `Bounds<T>` objects, overlapping with each other
     /// Checks if the given range `min..max` overlaps with the bounds (`self`)
     pub fn range_overlaps(&self, min: &T, max: &T) -> bool {
         return match self {
-            Self {
-                start: None,
-                end: None,
-            } => true,
+            Self { start: None, end: None } => true,
             Self {
                 start: Some(start),
                 end: Some(end),
@@ -126,10 +114,7 @@ impl<T: PartialOrd> Bounds<T> {
                 start: None,
                 end: Some(end),
             } => item <= end,
-            Self {
-                start: None,
-                end: None,
-            } => true,
+            Self { start: None, end: None } => true,
         }
     }
 }
@@ -187,5 +172,15 @@ impl<T: Display> Display for Bounds<T> {
         //     Self { start: None, end:Some(end) } => write!(f, "..{}", end),
         //     Self { start: Some(start), end:None } => write!(f, "{}..", start),
         // }
+    }
+}
+
+impl<T> Bounds<T> {
+    pub fn with_start(self, start: Option<T>) -> Self { Self { start, ..self } }
+    pub fn with_some_start(self, start: T) -> Self {
+        Self {
+            start: Some(start),
+            ..self
+        }
     }
 }

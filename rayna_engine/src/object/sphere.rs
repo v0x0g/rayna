@@ -51,7 +51,7 @@ impl From<SphereBuilder> for ObjectInstance {
 }
 
 impl Object for SphereObject {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore -> Option<Intersection> {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();
@@ -106,7 +106,7 @@ impl Object for SphereObject {
         });
     }
 
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, rng: &mut dyn RngCore) {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();

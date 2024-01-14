@@ -40,7 +40,7 @@ impl From<ParallelogramBuilder> for ObjectInstance {
 }
 
 impl Object for ParallelogramObject {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore -> Option<Intersection> {
         let i = self.plane.intersect_bounded(ray, bounds)?;
         // Check in bounds for our segment of the plane: `uv in [0, 1]`
         if (i.uv.cmple(Point2::ONE) & i.uv.cmpge(Point2::ZERO)).all() {
@@ -50,7 +50,7 @@ impl Object for ParallelogramObject {
         }
     }
 
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, rng: &mut dyn RngCore) {
         // Planes won't intersect more than once, except in the parallel case
         // That's infinite intersections but we ignore that case
         self.intersect(ray, &Bounds::FULL).map(|i| output.push(i));

@@ -109,7 +109,7 @@ impl Aabb {
 // region Impl
 impl Aabb {
     /// Checks whether the given ray intersects with the AABB at any point within the given distance bounds
-    pub fn hit(&self, ray: &Ray, bounds: &Bounds<Number>) -> bool {
+    pub fn hit(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore -> bool {
         /*
         CREDITS:
 

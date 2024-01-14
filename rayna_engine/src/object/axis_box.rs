@@ -62,7 +62,7 @@ impl From<AxisBoxBuilder> for ObjectInstance {
 #[allow(unused_variables)]
 impl Object for AxisBoxObject {
     //noinspection RsLiveness
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore -> Option<Intersection> {
         /*
         CREDITS:
 
@@ -145,7 +145,7 @@ impl Object for AxisBoxObject {
         return None;
     }
 
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, rng: &mut dyn RngCore) {
         // Move to the box's reference frame. This is unavoidable and un-optimizable.
         let ro = ray.pos() - self.centre;
         let rd = ray.dir();

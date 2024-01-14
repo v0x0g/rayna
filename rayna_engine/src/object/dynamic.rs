@@ -24,11 +24,11 @@ impl super::ObjectInstance {
 }
 
 impl Object for DynamicObject {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore -> Option<Intersection> {
         self.inner.intersect(ray, bounds)
     }
 
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, rng: &mut dyn RngCore) {
         self.inner.intersect_all(ray, output)
     }
 }

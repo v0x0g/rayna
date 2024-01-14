@@ -78,7 +78,7 @@ impl<Obj: Object + Clone> Object for HomogeneousVolumeObject<Obj> {
             front_face: true,
         })
     }
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) { todo!() }
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, rng: &mut dyn RngCore) { todo!() }
 }
 
 impl<Obj: Object + Clone> ObjectProperties for HomogeneousVolumeObject<Obj> {

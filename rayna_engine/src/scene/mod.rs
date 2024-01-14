@@ -34,7 +34,7 @@ pub trait FullObject {
     ///
     /// # Return Value
     /// This should return the *first* intersection that is within the given range, else [None]
-    fn full_intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>>;
+    fn full_intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore -> Option<FullIntersection<'o>>;
 
     /// Calculates all of the intersections for the given object.
     ///
@@ -97,7 +97,7 @@ pub struct SceneObject {
 }
 
 impl FullObject for SceneObject {
-    fn full_intersect<'o>(&'o self, orig_ray: &Ray, bounds: &Bounds<Number>) -> Option<FullIntersection<'o>> {
+    fn full_intersect<'o>(&'o self, orig_ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore -> Option<FullIntersection<'o>> {
         if let (Some(transform), Some(inv_transform)) = (&self.transform, &self.inv_transform) {
             let trans_ray = transform_incoming_ray(orig_ray, inv_transform);
             let inner = self.object.intersect(&trans_ray, bounds)?;

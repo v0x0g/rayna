@@ -5,6 +5,7 @@ use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use getset::CopyGetters;
 use glamour::AngleConsts;
+use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 use smallvec::SmallVec;
 
@@ -51,7 +52,7 @@ impl From<SphereBuilder> for ObjectInstance {
 }
 
 impl Object for SphereObject {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();
@@ -106,7 +107,7 @@ impl Object for SphereObject {
         });
     }
 
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, rng: &mut dyn RngCore) {
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, _rng: &mut dyn RngCore) {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();

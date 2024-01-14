@@ -148,7 +148,7 @@ impl Planar {
     /// so if creating a plane from three points, `u, v` will be equal to one *at those points*, as opposed to one unit in the direction of those points,
     /// meaning scaling those points will "enlarge" the resulting shape
     #[inline(always)]
-    pub fn intersect_bounded(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
+    pub fn intersect_bounded(&self, ray: &Ray, bounds: &Bounds<Number>) -> Option<Intersection> {
         let denominator = Vector3::dot(self.n, ray.dir());
 
         // Ray is parallel to plane

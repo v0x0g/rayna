@@ -9,6 +9,7 @@ use crate::shared::ray::Ray;
 use crate::skybox::SkyboxInstance;
 use getset::Getters;
 use object_list::SceneObjectList;
+use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Point3, Transform3};
 use smallvec::SmallVec;
 
@@ -46,7 +47,13 @@ pub trait FullObject {
     /// # Return Value
     /// This should append all the (unbounded) intersections, into the vector `output`.
     /// It can *not* be assumed this vector will be empty. The existing contents should not be modified
-    fn full_intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>);
+    fn full_intersect_all<'o>(
+        &'o self,
+        ray: &Ray,
+        output: &mut SmallVec<[FullIntersection<'o>; 32]>,
+
+        rng: &mut dyn RngCore,
+    );
 
     fn aabb(&self) -> Option<&Aabb>;
 }
@@ -110,15 +117,20 @@ impl FullObject for SceneObject {
     ) -> Option<FullIntersection<'o>> {
         if let (Some(transform), Some(inv_transform)) = (&self.transform, &self.inv_transform) {
             let trans_ray = transform_incoming_ray(orig_ray, inv_transform);
-            let inner = self.object.intersect(&trans_ray, bounds)?;
+            let inner = self.object.intersect(&trans_ray, bounds, rng)?;
             let intersect = transform_outgoing_intersection(orig_ray, &inner, transform);
             Some(intersect.make_full(&self.material))
         } else {
-            Some(self.object.intersect(orig_ray, bounds)?.make_full(&self.material))
+            Some(self.object.intersect(orig_ray, bounds, rng)?.make_full(&self.material))
         }
     }
 
-    fn full_intersect_all<'o>(&'o self, orig_ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
+    fn full_intersect_all<'o>(
+        &'o self,
+        orig_ray: &Ray,
+        output: &mut SmallVec<[FullIntersection<'o>; 32]>,
+        _rng: &mut dyn RngCore,
+    ) {
         if let (Some(transform), Some(inv_transform)) = (&self.transform, &self.inv_transform) {
             let trans_ray = transform_incoming_ray(orig_ray, inv_transform);
             let mut inner_intersects = SmallVec::new();

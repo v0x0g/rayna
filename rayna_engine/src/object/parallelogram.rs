@@ -1,4 +1,5 @@
 use getset::CopyGetters;
+use rand_core::RngCore;
 use smallvec::SmallVec;
 
 use rayna_shared::def::types::{Number, Point2, Point3};

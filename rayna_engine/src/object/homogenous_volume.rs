@@ -44,9 +44,11 @@ impl<Obj: Object + Clone> Object for HomogeneousVolumeObject<Obj> {
         // These should be as the ray enters and exits the object
 
         // TODO: Perhaps optimise this so we can use the given bounds?
-        let entering = self.object.intersect(ray, bounds)?;
+        let entering = self.object.intersect(ray, bounds, rng)?;
 
-        let exiting = self.object.intersect(ray, &bounds.with_some_start(entering.dist))?;
+        let exiting = self
+            .object
+            .intersect(ray, &bounds.with_some_start(entering.dist), rng)?;
 
         if !bounds.contains(&entering.dist) || !bounds.contains(&exiting.dist) {
             return None;

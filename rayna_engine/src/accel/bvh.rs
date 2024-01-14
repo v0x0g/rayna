@@ -7,6 +7,7 @@ use indextree::{Arena, NodeId};
 use std::cmp::Ordering;
 
 use itertools::{zip_eq, Itertools};
+use rand_core::RngCore;
 use smallvec::SmallVec;
 
 use rayna_shared::def::types::Number;
@@ -222,6 +223,7 @@ impl<O: FullObject> Bvh<O> {
         bounds: &Bounds<Number>,
         node: NodeId,
         arena: &'o Arena<BvhNode<O>>,
+        rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o>> {
         return match arena.get(node).expect("node should exist in arena").get() {
             // An aabb will need to delegate to child nodes if not missed
@@ -235,7 +237,7 @@ impl<O: FullObject> Bvh<O> {
                 //  And if an intersect was found in that shrunk range then we know that
 
                 node.children(arena)
-                    .filter_map(|child| Self::bvh_node_intersect(ray, bounds, child, arena))
+                    .filter_map(|child| Self::bvh_node_intersect(ray, bounds, child, arena, rng))
                     .min()
             }
             // Objects can be delegated directly
@@ -243,7 +245,7 @@ impl<O: FullObject> Bvh<O> {
                 if !obj.aabb().expect("aabb missing").hit(ray, bounds) {
                     None
                 } else {
-                    obj.full_intersect(ray, bounds)
+                    obj.full_intersect(ray, bounds, rng)
                 }
             }
         };
@@ -261,6 +263,7 @@ impl<O: FullObject> Bvh<O> {
         node: NodeId,
         arena: &'o Arena<BvhNode<O>>,
         output: &mut SmallVec<[FullIntersection<'o>; 32]>,
+        rng: &mut dyn RngCore,
     ) {
         match arena.get(node).expect("node should exist in arena").get() {
             // An aabb will need to delegate to child nodes if not missed
@@ -270,14 +273,14 @@ impl<O: FullObject> Bvh<O> {
                 }
 
                 node.children(arena)
-                    .for_each(|child| Self::bvh_node_intersect_all(ray, child, arena, output));
+                    .for_each(|child| Self::bvh_node_intersect_all(ray, child, arena, output, rng));
             }
             // Objects can be delegated directly
             BvhNode::Object(obj) => {
                 if !expect_aabb(obj).hit(ray, &Bounds::FULL) {
                     return;
                 }
-                obj.full_intersect_all(ray, output)
+                obj.full_intersect_all(ray, output, rng)
             }
         }
 
@@ -298,12 +301,17 @@ impl<O: FullObject> FullObject for Bvh<O> {
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o>> {
         // Pass everything on to our magical function
-        Self::bvh_node_intersect(ray, bounds, self.root_id?, &self.arena)
+        Self::bvh_node_intersect(ray, bounds, self.root_id?, &self.arena, rng)
     }
 
-    fn full_intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
+    fn full_intersect_all<'o>(
+        &'o self,
+        ray: &Ray,
+        output: &mut SmallVec<[FullIntersection<'o>; 32]>,
+        rng: &mut dyn RngCore,
+    ) {
         if let Some(root) = self.root_id {
-            Self::bvh_node_intersect_all(ray, root, &self.arena, output);
+            Self::bvh_node_intersect_all(ray, root, &self.arena, output, rng);
         }
     }
 

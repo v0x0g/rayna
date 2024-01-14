@@ -1,4 +1,5 @@
 use getset::CopyGetters;
+use rand_core::RngCore;
 use smallvec::SmallVec;
 
 use rayna_shared::def::types::{Number, Point3};
@@ -40,7 +41,7 @@ impl From<TriangleBuilder> for ObjectInstance {
 }
 
 impl Object for TriangleObject {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         let i = self.plane.intersect_bounded(ray, bounds)?;
         // Check in bounds for our segment of the plane: `u + v: [0..1]`
         // TODO: Bayesian coordinates for triangles??
@@ -51,7 +52,7 @@ impl Object for TriangleObject {
         }
     }
 
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, rng: &mut dyn RngCore) {
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, _rng: &mut dyn RngCore) {
         // Planes won't intersect more than once, except in the parallel case
         // That's infinite intersections but we ignore that case
         self.intersect(ray, &Bounds::FULL).map(|i| output.push(i));

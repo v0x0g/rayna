@@ -1,4 +1,5 @@
 use getset::CopyGetters;
+use rand_core::RngCore;
 use smallvec::SmallVec;
 
 use rayna_shared::def::types::{Number, Point2, Point3};
@@ -73,14 +74,14 @@ impl From<InfinitePlaneBuilder> for ObjectInstance {
 }
 
 impl Object for InfinitePlaneObject {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         let mut i = self.plane.intersect_bounded(ray, bounds)?;
         // Wrap uv's if required
         self.uv_wrap.apply_mut(&mut i.uv);
         Some(i)
     }
 
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, rng: &mut dyn RngCore) {
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, _rng: &mut dyn RngCore) {
         // Ignores infinite intersection case
         self.intersect(ray, &Bounds::FULL).map(|i| output.push(i));
     }

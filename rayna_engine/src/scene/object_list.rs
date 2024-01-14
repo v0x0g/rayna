@@ -1,4 +1,5 @@
 use getset::Getters;
+use rand_core::RngCore;
 use smallvec::SmallVec;
 
 use crate::accel::aabb::Aabb;
@@ -42,14 +43,21 @@ impl FullObject for SceneObjectList {
         bounds: &Bounds<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o>> {
-        let bvh_int = self.bvh.full_intersect(ray, bounds).into_iter();
-        let unbound_int = self.unbounded.iter().filter_map(|o| o.full_intersect(ray, bounds));
+        let bvh_int = self.bvh.full_intersect(ray, bounds, rng).into_iter();
+        let unbound_int = self.unbounded.iter().filter_map(|o| o.full_intersect(ray, bounds, rng));
         Iterator::chain(bvh_int, unbound_int).min()
     }
 
-    fn full_intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>) {
-        self.bvh.full_intersect_all(ray, output);
-        self.unbounded.iter().for_each(|o| o.full_intersect_all(ray, output));
+    fn full_intersect_all<'o>(
+        &'o self,
+        ray: &Ray,
+        output: &mut SmallVec<[FullIntersection<'o>; 32]>,
+        rng: &mut dyn RngCore,
+    ) {
+        self.bvh.full_intersect_all(ray, output, rng);
+        self.unbounded
+            .iter()
+            .for_each(|o| o.full_intersect_all(ray, output, rng));
     }
 
     fn aabb(&self) -> Option<&Aabb> {

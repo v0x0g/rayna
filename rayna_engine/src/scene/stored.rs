@@ -19,6 +19,7 @@ use crate::object::infinite_plane::{InfinitePlaneBuilder, UvWrappingMode};
 use crate::object::parallelogram::*;
 use crate::object::planar::PlanarBuilder;
 use crate::object::sphere::*;
+use crate::object::triangle::TriangleBuilder;
 use crate::object::ObjectInstance;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
@@ -107,6 +108,20 @@ pub static TESTING: Scene = {
         SphereBuilder {
             pos: (0., 1., 0.).into(),
             radius: 1.,
+        },
+        LambertianMaterial {
+            albedo: [0.5; 3].into(),
+            emissive: [0.; 3].into(),
+        },
+    ));
+    objects.push(SceneObject::new(
+        // Ball
+        TriangleBuilder {
+            plane: PlanarBuilder::Vectors {
+                p: (0., 2., 0.).into(),
+                u: Vector3::X,
+                v: Vector3::Y,
+            },
         },
         LambertianMaterial {
             albedo: [0.5; 3].into(),

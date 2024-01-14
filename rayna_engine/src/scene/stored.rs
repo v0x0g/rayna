@@ -112,7 +112,7 @@ pub static TESTING: Scene = {
                 radius: 1.,
             }
             .into(),
-            density: 0.8,
+            density: 1.,
         },
         IsotropicMaterial {
             albedo: [0.5; 3].into(),
@@ -322,6 +322,21 @@ pub static CORNELL: Scene = {
                 emissive: [0.; 3].into(),
             },
             Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(-18.)),
+        ));
+
+        // Ball on Small
+        o.push(SceneObject::new(
+            HomogeneousVolumeBuilder::<SphereObject> {
+                object: SphereBuilder {
+                    pos: (0.6255, 0.1485, 0.680).into(),
+                    radius: 0.2,
+                }
+                .into(),
+                density: 3.,
+            },
+            IsotropicMaterial {
+                albedo: [0.3; 3].into(),
+            },
         ));
     }
 

@@ -36,8 +36,9 @@ use smallvec::SmallVec;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
 use self::{
-    axis_box::AxisBoxObject, dynamic::DynamicObject, infinite_plane::InfinitePlaneObject,
-    parallelogram::ParallelogramObject, sphere::SphereObject, triangle::TriangleObject,
+    axis_box::AxisBoxObject, dynamic::DynamicObject, homogenous_volume::HomogeneousVolumeObject,
+    infinite_plane::InfinitePlaneObject, parallelogram::ParallelogramObject, sphere::SphereObject,
+    triangle::TriangleObject,
 };
 
 pub mod axis_box;
@@ -83,6 +84,7 @@ pub enum ObjectInstance {
     ParallelogramObject,
     InfinitePlaneObject,
     TriangleObject,
+    HomogeneousVolumeObject,
     DynamicObject,
 }
 

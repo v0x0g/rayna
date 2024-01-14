@@ -15,6 +15,7 @@ use crate::material::lambertian::LambertianMaterial;
 use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::object::axis_box::*;
+use crate::object::homogenous_volume::HomogeneousVolumeBuilder;
 use crate::object::infinite_plane::{InfinitePlaneBuilder, UvWrappingMode};
 use crate::object::parallelogram::*;
 use crate::object::planar::PlanarBuilder;
@@ -105,30 +106,17 @@ pub static TESTING: Scene = {
     ));
     objects.push(SceneObject::new(
         // Ball
-        SphereBuilder {
-            pos: (0., 1., 0.).into(),
-            radius: 1.,
-        },
-        LambertianMaterial {
-            albedo: [0.5; 3].into(),
-            emissive: [0.; 3].into(),
-        },
-    ));
-    objects.push(SceneObject::new(
-        // Ball
-        TriangleBuilder {
-            plane: PlanarBuilder::Vectors {
-                p: (0., 2., 0.).into(),
-                u: Vector3::X,
-                v: Vector3::Y,
+        HomogeneousVolumeBuilder {
+            object: SphereBuilder {
+                pos: (0., 1., 0.).into(),
+                radius: 1.,
             },
+            density: 1.,
         },
-        LambertianMaterial {
+        IsotropicMaterial {
             albedo: [0.5; 3].into(),
-            emissive: [0.; 3].into(),
         },
     ));
-
     Scene {
         camera: Camera {
             pos: Point3::new(0., 0.5, -3.),

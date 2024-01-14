@@ -1,7 +1,8 @@
 use std::borrow::Borrow;
 //noinspection ALL
 use self::{
-    dielectric::DielectricMaterial, dynamic::DynamicMaterial, lambertian::LambertianMaterial, metal::MetalMaterial,
+    dielectric::DielectricMaterial, dynamic::DynamicMaterial, isotropic::IsotropicMaterial,
+    lambertian::LambertianMaterial, metal::MetalMaterial,
 };
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -118,6 +119,7 @@ pub enum MaterialInstance {
     LambertianMaterial,
     MetalMaterial,
     DielectricMaterial,
+    IsotropicMaterial,
     DynamicMaterial,
 }
 

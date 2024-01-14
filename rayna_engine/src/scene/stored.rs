@@ -15,6 +15,7 @@ use crate::material::lambertian::LambertianMaterial;
 use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::object::axis_box::*;
+use crate::object::infinite_plane::{InfinitePlaneBuilder, UvWrappingMode};
 use crate::object::parallelogram::*;
 use crate::object::sphere::*;
 use crate::object::ObjectInstance;
@@ -66,70 +67,60 @@ pub static SIMPLE: Scene = {
     }
 };
 
-// #[dynamic]
-// pub static TESTING: Scene = {
-//     let mut objects = Vec::<ObjectInstance>::new();
-//     objects.push(
-//         SphereObject::from(SphereBuilder {
-//             // Small, top
-//             pos: Point3::new(0., 2., 0.),
-//             radius: 0.5,
-//             material: MetalMaterial {
-//                 albedo: [0.8; 3].into(),
-//                 fuzz: 1.,
-//             }
-//             .into(),
-//         })
-//         .into(),
-//     );
-//     // objects.push(
-//     //     AxisBoxObject::from(AxisBoxBuilder {
-//     //         material: LambertianMaterial {
-//     //             albedo: [1.; 3].into(),
-//     //         }
-//     //         .into(),
-//     //         corner_1: Point3::new(-1., 0., -1.),
-//     //         corner_2: Point3::new(1., 1., 1.),
-//     //     })
-//     //     .into(),
-//     // );
-//     // objects.push(
-//     //     ParallelogramObject::from(ParallelogramBuilder {
-//     //         material: LambertianMaterial {
-//     //             albedo: [1.; 3].into(),
-//     //             emissive: Default::default(),
-//     //         }
-//     //         .into(),
-//     //         q: Point3::new(0., 0., 0.),
-//     //         b: Point3::new(-1., 1., 0.),
-//     //         a: Point3::new(1., 0.5, 0.),
-//     //     })
-//     //     .into(),
-//     // );
-//     // objects.push(
-//     //     SphereObject::from(SphereBuilder {
-//     //         // Ground
-//     //         pos: Point3::new(0., -100.5, -1.),
-//     //         radius: 100.,
-//     //         material: LambertianMaterial {
-//     //             albedo: Pixel::from([0.5; 3]),
-//     //         }
-//     //         .into(),
-//     //     })
-//     //     .into(),
-//     // );
-//     Scene {
-//         camera: Camera {
-//             pos: Point3::new(0., 0.5, -3.),
-//             fwd: Vector3::Z,
-//             v_fov: Angle::from_degrees(45.),
-//             focus_dist: 3.,
-//             defocus_angle: Angle::from_degrees(0.),
-//         },
-//         objects: objects.into(),
-//         skybox: SkyboxInstance::default(),
-//     }
-// };
+#[dynamic]
+pub static TESTING: Scene = {
+    let mut objects = Vec::<SceneObject>::new();
+
+    objects.push(SceneObject::new(
+        // Ground
+        InfinitePlaneBuilder::Vectors {
+            p: Point3::ZERO,
+            u: Vector3::X,
+            v: Vector3::Z,
+            uv_wrap: UvWrappingMode::Wrap,
+        },
+        LambertianMaterial {
+            albedo: [0.5; 3].into(),
+            emissive: [0.; 3].into(),
+        },
+    ));
+    objects.push(SceneObject::new(
+        // Slope
+        InfinitePlaneBuilder::Vectors {
+            p: (0., -0.1, 0.).into(),
+            u: (1., 0.1, 0.).into(),
+            v: Vector3::Z,
+            uv_wrap: UvWrappingMode::Wrap,
+        },
+        LambertianMaterial {
+            albedo: [0.2; 3].into(),
+            emissive: [0.1; 3].into(),
+        },
+    ));
+    objects.push(SceneObject::new(
+        // Ball
+        SphereBuilder {
+            pos: (0., 1., 0.).into(),
+            radius: 1.,
+        },
+        LambertianMaterial {
+            albedo: [0.5; 3].into(),
+            emissive: [0.; 3].into(),
+        },
+    ));
+
+    Scene {
+        camera: Camera {
+            pos: Point3::new(0., 0.5, -3.),
+            fwd: Vector3::Z,
+            v_fov: Angle::from_degrees(45.),
+            focus_dist: 3.,
+            defocus_angle: Angle::from_degrees(0.),
+        },
+        objects: objects.into(),
+        skybox: SkyboxInstance::default(),
+    }
+};
 
 /// From **RayTracing in A Weekend**, the demo scene at the end of the chapter (extended of course)
 #[dynamic]

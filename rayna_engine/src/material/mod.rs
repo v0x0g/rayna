@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 //noinspection ALL
 use self::{
     dielectric::DielectricMaterial, dynamic::DynamicMaterial, lambertian::LambertianMaterial, metal::MetalMaterial,
@@ -7,7 +8,7 @@ use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
 use rand::RngCore;
-use rayna_shared::def::types::{Pixel, Vector3};
+use rayna_shared::def::types::{Channel, Pixel, Vector3};
 
 pub mod dielectric;
 pub mod dynamic;
@@ -121,4 +122,25 @@ pub enum MaterialInstance {
 
 impl Default for MaterialInstance {
     fn default() -> Self { LambertianMaterial::default().into() }
+}
+
+/// A simple helper function for implementing [Material::calculate_colour()]
+///
+/// # Return Value
+/// Output is equal to `(future_col * albedo) + emissive`
+#[inline(always)]
+pub fn calculate_colour_simple(
+    future_col: impl Borrow<Pixel>,
+    albedo: impl Borrow<Pixel>,
+    emissive: impl Borrow<Pixel>,
+) -> Pixel {
+    let f = future_col.borrow().0;
+    let a = albedo.borrow().0;
+    let e = emissive.borrow().0;
+
+    Pixel::from([
+        Channel::mul_add(f[0], a[0], e[0]),
+        Channel::mul_add(f[1], a[1], e[1]),
+        Channel::mul_add(f[2], a[2], e[2]),
+    ])
 }

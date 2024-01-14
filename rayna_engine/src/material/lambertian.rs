@@ -5,7 +5,7 @@ use crate::shared::rng;
 use crate::texture::Texture;
 use crate::texture::TextureInstance;
 use rand::RngCore;
-use rayna_shared::def::types::{Channel, Pixel, Vector3};
+use rayna_shared::def::types::{Pixel, Vector3};
 
 #[derive(Clone, Debug)]
 pub struct LambertianMaterial {
@@ -41,14 +41,10 @@ impl Material for LambertianMaterial {
         future_col: &Pixel,
         rng: &mut dyn RngCore,
     ) -> Pixel {
-        let f = future_col.0;
-        let a = self.albedo.value(intersect, rng).0;
-        let e = self.emissive.value(intersect, rng).0;
-
-        Pixel::from([
-            Channel::mul_add(f[0], a[0], e[0]),
-            Channel::mul_add(f[1], a[1], e[1]),
-            Channel::mul_add(f[2], a[2], e[2]),
-        ])
+        super::calculate_colour_simple(
+            future_col,
+            self.albedo.value(intersect, rng),
+            self.emissive.value(intersect, rng),
+        )
     }
 }

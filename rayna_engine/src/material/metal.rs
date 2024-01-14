@@ -2,23 +2,18 @@ use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::{math, rng};
-use image::Pixel as _;
+use crate::texture::{Texture, TextureInstance};
 use rand::RngCore;
 use rayna_shared::def::types::{Number, Pixel, Vector3};
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct MetalMaterial {
-    pub albedo: Pixel,
+    pub albedo: TextureInstance,
     pub fuzz: Number,
 }
 
 impl Material for MetalMaterial {
-    fn scatter(
-        &self,
-        ray: &Ray,
-        intersection: &Intersection,
-        rng: &mut dyn RngCore,
-    ) -> Option<Vector3> {
+    fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
         let reflected = math::reflect(ray.dir(), intersection.ray_normal);
         let rand = rng::vector_on_unit_sphere(rng);
 
@@ -39,11 +34,11 @@ impl Material for MetalMaterial {
     fn calculate_colour(
         &self,
         _ray: &Ray,
-        _intersection: &Intersection,
+        intersect: &Intersection,
         _future_ray: &Ray,
         future_col: &Pixel,
-        _rng: &mut dyn RngCore,
+        rng: &mut dyn RngCore,
     ) -> Pixel {
-        Pixel::map2(&future_col, &self.albedo, |a, b| a * b)
+        super::calculate_colour_simple(future_col, self.albedo.value(intersect, rng), Pixel::from([0.; 3]))
     }
 }

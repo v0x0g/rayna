@@ -45,7 +45,7 @@ pub static SIMPLE: Scene = {
                     radius: 0.5,
                 },
                 MetalMaterial {
-                    albedo: Pixel::from([0.8; 3]),
+                    albedo: [0.8; 3].into(),
                     fuzz: 1.,
                 },
             ),
@@ -158,7 +158,7 @@ pub static RTIAW_DEMO: Scene = {
                 .into()
             } else if material_choice <= 0.9 {
                 MetalMaterial {
-                    albedo: rng::colour_rgb_range(rng, 0.5..=1.0),
+                    albedo: rng::colour_rgb_range(rng, 0.5..=1.0).into(),
                     fuzz: rng.gen_range(0.0..=0.5),
                 }
                 .into()
@@ -275,40 +275,21 @@ pub static CORNELL: Scene = {
         ));
     }
 
-    fn cuboid(
-        objs: &mut Vec<SceneObject>,
-        a: impl Into<Point3>,
-        b: impl Into<Point3>,
-        albedo: impl Into<TextureInstance>,
-        transform: Transform3,
-    ) {
-        objs.push(SceneObject::new_with_correction(
-            AxisBoxBuilder {
-                corner_1: a.into(),
-                corner_2: b.into(),
-            },
-            LambertianMaterial {
-                albedo: albedo.into(),
-                emissive: [0.; 3].into(),
-            },
-            transform,
-        ));
-    }
+    let red = [0.65, 0.05, 0.05];
+    let green = [0.12, 0.45, 0.15];
+    let grey = [0.73; 3];
+    let light = [15.; 3];
+    let black = [0.; 3];
+
+    let o = &mut objects;
 
     {
         // WALLS
 
-        let red = [0.65, 0.05, 0.05];
-        let green = [0.12, 0.45, 0.15];
-        let grey = [0.73; 3];
-        let light = [15.; 3];
-        let black = [0.; 3];
-        let o = &mut objects;
-
-        quad(o, (0., 0., 0.), Vector3::Y, Vector3::Z, green, black); // Left
+        quad(o, (0., 0., 0.), Vector3::Y, Vector3::Z, red, black); // Left
         quad(o, (0., 0., 0.), Vector3::X, Vector3::Y, grey, black); // Back
         quad(o, (0., 0., 0.), Vector3::Z, Vector3::X, grey, black); // Floor
-        quad(o, (1., 0., 0.), Vector3::Z, Vector3::Y, red, black); // Right
+        quad(o, (1., 0., 0.), Vector3::Z, Vector3::Y, green, black); // Right
         quad(o, (0., 1., 0.), Vector3::X, Vector3::Z, grey, black); // Ceiling
         quad(o, (0.4, 0.9999, 0.4), (0.2, 0., 0.), (0., 0., 0.2), black, light);
     }
@@ -316,25 +297,30 @@ pub static CORNELL: Scene = {
     {
         // INNER BOXES
 
-        let grey = [0.73; 3];
-        let o = &mut objects;
-
         // Big
-        cuboid(
-            o,
-            (0.231, 0., 0.117),
-            (0.531, 0.595, 0.414),
-            grey,
+        o.push(SceneObject::new_with_correction(
+            AxisBoxBuilder {
+                corner_1: (0.231, 0., 0.117).into(),
+                corner_2: (0.531, 0.595, 0.414).into(),
+            },
+            MetalMaterial {
+                albedo: grey.into(),
+                fuzz: 0.,
+            },
             Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(15.)),
-        );
+        ));
         // Small
-        cuboid(
-            o,
-            (0.477, 0., 0.531),
-            (0.774, 0.297, 0.829),
-            grey,
+        o.push(SceneObject::new_with_correction(
+            AxisBoxBuilder {
+                corner_1: (0.477, 0., 0.531).into(),
+                corner_2: (0.774, 0.297, 0.829).into(),
+            },
+            LambertianMaterial {
+                albedo: grey.into(),
+                emissive: [0.; 3].into(),
+            },
             Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(-18.)),
-        );
+        ));
     }
 
     Scene {

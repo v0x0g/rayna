@@ -328,7 +328,7 @@ pub static CORNELL: Scene = {
         o.push(SceneObject::new(
             HomogeneousVolumeBuilder::<SphereObject> {
                 object: SphereBuilder {
-                    pos: (0.6255, 0.1485, 0.680).into(),
+                    pos: (0.6255, 0.66, 0.680).into(),
                     radius: 0.2,
                 }
                 .into(),

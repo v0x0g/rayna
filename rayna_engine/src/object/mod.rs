@@ -36,7 +36,7 @@ use smallvec::SmallVec;
 #[allow(unused_imports)]
 use self::{
     axis_box::AxisBoxObject, dynamic::DynamicObject, infinite_plane::InfinitePlaneObject,
-    parallelogram::ParallelogramObject, sphere::SphereObject,
+    parallelogram::ParallelogramObject, sphere::SphereObject, triangle::TriangleObject,
 };
 
 pub mod axis_box;
@@ -80,6 +80,7 @@ pub enum ObjectInstance {
     AxisBoxObject,
     ParallelogramObject,
     InfinitePlaneObject,
+    TriangleObject,
     DynamicObject,
 }
 

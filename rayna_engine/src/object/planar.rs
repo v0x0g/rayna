@@ -14,6 +14,84 @@ use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 /// The recommended amount of padding around AABB's for planar objects
 pub const AABB_PADDING: Number = 1e-6;
 
+#[derive(Copy, Clone, Debug)]
+pub enum PlanarBuilder {
+    /// Creates a [Planar] object from three points on the surface.
+    ///
+    /// For a 2D plane in the `XY` plane, the point layout would be:
+    ///
+    /// ```text
+    ///              A ▓▓██▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓██▒▒                                    
+    ///              ▓▓                               ▓▓                                    
+    ///            ░░░░                             ░░░░                                    
+    ///            ██                               ▓▓                                      
+    ///            ▒▒                               ░░                                      
+    ///          ▒▒                               ▓▓                                        
+    ///          ▓▓                               ▒▒                                        
+    ///        ░░░░                             ▒▒                                          
+    ///        ██                               ▓▓                                          
+    ///        ▒▒                             ░░                                            
+    ///      ▒▒                               ▓▓                                            
+    ///      ██                               ▒▒                                            
+    ///    ▒▒░░                             ▒▒                                              
+    ///    ▓▓                               ▓▓                                              
+    ///  ░░░░                             ░░░░                                              
+    ///  ██                               ▓▓                                                
+    ///  ▒▒                             ░░▒▒                                                
+    ///  P ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ B                                                  
+    /// ```
+    ///
+    /// TEXT ART CREDITS:
+    ///
+    /// Author: Textart.sh
+    ///
+    /// URL: https://textart.sh/topic/parallelogram
+    Points {
+        /// The 'origin' point on the plane
+        p: Point3,
+        /// One of the corners.
+        ///
+        /// This corner is adjacent to `p`, and opposite to `b`
+        a: Point3,
+        /// One of the corners.
+        ///
+        /// This corner is adjacent to `p`, and opposite to `a`
+        b: Point3,
+    },
+    /// Creates a plane from the origin point `p`, and the two side vectors `u`, `v`
+    ///
+    /// For a 2D plane in the `XY` plane, the point layout would be:
+    ///
+    /// ```text
+    ///              ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒                                    
+    ///              ▓▓                               ▓▓                                    
+    ///            ░░░░                             ░░░░                                    
+    ///            ██                               ▓▓                                      
+    ///            ▒▒                               ░░                                      
+    ///          ▒▒                               ▓▓                                        
+    ///          ▓▓  ^                            ▒▒                                        
+    ///        ░░░░  |                          ▒▒                                          
+    ///        ██    V                          ▓▓                                          
+    ///        ▒▒    ^                        ░░                                            
+    ///      ▒▒      |                        ▓▓                                            
+    ///      ██                               ▒▒                                            
+    ///    ▒▒░░                             ▒▒                                              
+    ///    ▓▓                               ▓▓                                              
+    ///  ░░░░                             ░░░░                                              
+    ///  ██                               ▓▓                                                
+    ///  ▒▒                             ░░▒▒                                                
+    ///  P ▓▓▓▓▓▓▓▓▓▓▓ -> U -> ▓▓▓▓▓▓▓▓▓▓▓                                                  
+    /// ```
+    ///
+    /// TEXT ART CREDITS:
+    ///
+    /// Author: Textart.sh
+    ///
+    /// URL: https://textart.sh/topic/parallelogram
+    Vectors { p: Point3, u: Vector3, v: Vector3 },
+}
+ 
+
 /// A helper struct that is used in planar objects (objects that exist in a subsection of a 2D plane
 ///
 /// Use this for calculating the ray-plane intersection, instead of reimplementing for each type.
@@ -36,21 +114,15 @@ pub struct Planar {
 
 // region Constructors
 
-impl Planar {
-    /// Creates a new planar struct from three points
-    ///
-    /// # Arguments
-    ///
-    /// * `q`: The origin point, treated as the UV coordinate `(0, 0)`
-    /// * `a`: The first point on the plane. Traditionally this would be the "right" point
-    /// * `b`: The second point on the plane. Traditionally this would be the "upper" point
-    pub fn new_points(q: Point3, a: Point3, b: Point3) -> Self {
-        let u = a - q;
-        let v = b - q;
-        Self::new(q, u, v)
-    }
+impl From<PlanarBuilder> for Planar {
+    fn from(value: PlanarBuilder) -> Self {
+        let (p,u,v) = match value {
+            PlanarBuilder::Points {p,a,b} => {
+                (p, a - p, b - p)
+            },
+            PlanarBuilder::Vectors {p, u, v} => (p,u,v)
+        };
 
-    pub fn new(p: Point3, u: Vector3, v: Vector3) -> Self {
         let n_raw = Vector3::cross(u, v);
         let n = n_raw
             .try_normalize()

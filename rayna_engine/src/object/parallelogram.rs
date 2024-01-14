@@ -1,90 +1,18 @@
 use getset::CopyGetters;
 use smallvec::SmallVec;
 
-use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
+use rayna_shared::def::types::{Number, Point2, Point3};
 
 use crate::accel::aabb::Aabb;
-use crate::object::planar::Planar;
+use crate::object::planar::{Planar, PlanarBuilder};
 use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 
 #[derive(Copy, Clone, Debug)]
-pub enum ParallelogramBuilder {
-    /// Creates a [ParallelogramObject] from three points on the surface.
-    ///
-    /// For a 2D parallelogram in the `XY` plane, the point layout would be:
-    ///
-    /// ```text
-    ///              A ▓▓██▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓██▒▒                                    
-    ///              ▓▓                               ▓▓                                    
-    ///            ░░░░                             ░░░░                                    
-    ///            ██                               ▓▓                                      
-    ///            ▒▒                               ░░                                      
-    ///          ▒▒                               ▓▓                                        
-    ///          ▓▓                               ▒▒                                        
-    ///        ░░░░                             ▒▒                                          
-    ///        ██                               ▓▓                                          
-    ///        ▒▒                             ░░                                            
-    ///      ▒▒                               ▓▓                                            
-    ///      ██                               ▒▒                                            
-    ///    ▒▒░░                             ▒▒                                              
-    ///    ▓▓                               ▓▓                                              
-    ///  ░░░░                             ░░░░                                              
-    ///  ██                               ▓▓                                                
-    ///  ▒▒                             ░░▒▒                                                
-    ///  P ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ B                                                  
-    /// ```
-    ///
-    /// TEXT ART CREDITS:
-    ///
-    /// Author: Textart.sh
-    ///
-    /// URL: https://textart.sh/topic/parallelogram
-    Points {
-        /// The 'origin' point on the plane
-        p: Point3,
-        /// One of the corners.
-        ///
-        /// This corner is adjacent to `p`, and opposite to `b`
-        a: Point3,
-        /// One of the corners.
-        ///
-        /// This corner is adjacent to `p`, and opposite to `a`
-        b: Point3,
-    },
-    /// Creates a parallelogram from the origin point `p`, and the two side vectors `u`, `v`
-    ///
-    /// For a 2D parallelogram in the `XY` plane, the point layout would be:
-    ///
-    /// ```text
-    ///              ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒                                    
-    ///              ▓▓                               ▓▓                                    
-    ///            ░░░░                             ░░░░                                    
-    ///            ██                               ▓▓                                      
-    ///            ▒▒                               ░░                                      
-    ///          ▒▒                               ▓▓                                        
-    ///          ▓▓  ^                            ▒▒                                        
-    ///        ░░░░  |                          ▒▒                                          
-    ///        ██    V                          ▓▓                                          
-    ///        ▒▒    ^                        ░░                                            
-    ///      ▒▒      |                        ▓▓                                            
-    ///      ██                               ▒▒                                            
-    ///    ▒▒░░                             ▒▒                                              
-    ///    ▓▓                               ▓▓                                              
-    ///  ░░░░                             ░░░░                                              
-    ///  ██                               ▓▓                                                
-    ///  ▒▒                             ░░▒▒                                                
-    ///  P ▓▓▓▓▓▓▓▓▓▓▓ -> U -> ▓▓▓▓▓▓▓▓▓▓▓                                                  
-    /// ```
-    ///
-    /// TEXT ART CREDITS:
-    ///
-    /// Author: Textart.sh
-    ///
-    /// URL: https://textart.sh/topic/parallelogram
-    Vectors { p: Point3, u: Vector3, v: Vector3 },
+pub struct ParallelogramBuilder {
+    pub plane: PlanarBuilder,
 }
 
 #[derive(Copy, Clone, Debug, CopyGetters)]
@@ -93,27 +21,23 @@ pub struct ParallelogramObject {
     /// The plane that this object sits upon
     plane: Planar,
     aabb: Aabb,
+    centre: Point3
 }
 
 impl From<ParallelogramBuilder> for ParallelogramObject {
-    fn from(p: ParallelogramBuilder) -> Self {
-        match p {
-            ParallelogramBuilder::Points { p, a, b } => {
-                let aabb = Aabb::encompass_points([p, a, b]).min_padded(super::planar::AABB_PADDING);
-                let plane = Planar::new_points(p, a, b);
-                Self { plane, aabb }
-            }
-            ParallelogramBuilder::Vectors { p, u, v } => {
-                let aabb = Aabb::encompass_points([p, p + u, p + v]).min_padded(super::planar::AABB_PADDING);
-                let plane = Planar::new(p, u, v);
-                Self { plane, aabb }
-            }
-        }
+    fn from(builder: ParallelogramBuilder) -> Self {
+        let plane = Planar::from(builder.plane);
+        let (p,a,b) = (plane.p(), plane.p() + plane.u(), plane.p() + plane.v());
+        let centre = p + (plane.u() / 2.) + (plane.v() / 2.);
+        let aabb = Aabb::encompass_points([p,a,b])
+            .min_padded(super::planar::AABB_PADDING);
+
+        Self { plane, aabb, centre }
     }
 }
 
 impl From<ParallelogramBuilder> for ObjectInstance {
-    fn from(value: ParallelogramBuilder) -> Self { ParallelogramObject::from(value).into() }
+    fn from(value: ParallelogramBuilder) -> Self { Self::from(value).into() }
 }
 
 impl Object for ParallelogramObject {

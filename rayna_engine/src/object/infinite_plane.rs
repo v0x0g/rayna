@@ -1,10 +1,10 @@
 use getset::CopyGetters;
 use smallvec::SmallVec;
 
-use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
+use rayna_shared::def::types::{Number, Point2, Point3};
 
 use crate::accel::aabb::Aabb;
-use crate::object::planar::Planar;
+use crate::object::planar::{Planar, PlanarBuilder};
 use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -45,25 +45,9 @@ impl UvWrappingMode {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub enum InfinitePlaneBuilder {
-    /// Creates a [InfinitePlaneObject] from three points on the surface.
-    ///
-    /// See [super::parallelogram::ParallelogramBuilder::Points] for a visual demonstration
-    Points {
-        p: Point3,
-        a: Point3,
-        b: Point3,
-        uv_wrap: UvWrappingMode,
-    },
-    /// Creates a parallelogram from the origin point `p`, and the two side vectors `u`, `v`
-    ///
-    /// See [super::parallelogram::ParallelogramBuilder::Vectors] for a visual demonstration
-    Vectors {
-        p: Point3,
-        u: Vector3,
-        v: Vector3,
-        uv_wrap: UvWrappingMode,
-    },
+pub struct InfinitePlaneBuilder {
+    pub plane: PlanarBuilder,
+    pub uv_wrap: UvWrappingMode,
 }
 
 #[derive(Copy, Clone, Debug, CopyGetters)]
@@ -75,16 +59,11 @@ pub struct InfinitePlaneObject {
 }
 
 impl From<InfinitePlaneBuilder> for InfinitePlaneObject {
-    fn from(p: InfinitePlaneBuilder) -> Self {
-        match p {
-            InfinitePlaneBuilder::Points { p, a, b, uv_wrap } => {
-                let plane = Planar::new_points(p, a, b);
-                Self { plane, uv_wrap }
-            }
-            InfinitePlaneBuilder::Vectors { p, u, v, uv_wrap } => {
-                let plane = Planar::new(p, u, v);
-                Self { plane, uv_wrap }
-            }
+    fn from(builder: InfinitePlaneBuilder) -> Self {
+        let plane = builder.plane.into();
+        Self {
+            plane,
+            uv_wrap: builder.uv_wrap,
         }
     }
 }
@@ -101,7 +80,6 @@ impl Object for InfinitePlaneObject {
         Some(i)
     }
 
-    //noinspection DuplicatedCode
     fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>) {
         // Ignores infinite intersection case
         self.intersect(ray, &Bounds::FULL).map(|i| output.push(i));

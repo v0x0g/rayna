@@ -22,6 +22,7 @@ pub struct AxisBoxBuilder {
     pub corner_2: Point3,
 }
 
+// TODO: Convert this to the enum builder style like in [Planar]
 impl AxisBoxBuilder {
     pub fn new_corners(corner_1: Point3, corner_2: Point3) -> Self { Self { corner_1, corner_2 } }
     pub fn new_centred(centre: Point3, size: Vector3) -> Self {

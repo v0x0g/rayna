@@ -36,7 +36,12 @@ impl<Iter: IntoIterator<Item = SceneObject>> From<Iter> for SceneObjectList {
 }
 
 impl FullObject for SceneObjectList {
-    fn full_intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore -> Option<FullIntersection<'o>> {
+    fn full_intersect<'o>(
+        &'o self,
+        ray: &Ray,
+        bounds: &Bounds<Number>,
+        rng: &mut dyn RngCore,
+    ) -> Option<FullIntersection<'o>> {
         let bvh_int = self.bvh.full_intersect(ray, bounds).into_iter();
         let unbound_int = self.unbounded.iter().filter_map(|o| o.full_intersect(ray, bounds));
         Iterator::chain(bvh_int, unbound_int).min()

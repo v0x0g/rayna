@@ -62,7 +62,7 @@ impl From<AxisBoxBuilder> for ObjectInstance {
 #[allow(unused_variables)]
 impl Object for AxisBoxObject {
     //noinspection RsLiveness
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
         /*
         CREDITS:
 

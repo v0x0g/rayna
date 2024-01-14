@@ -40,7 +40,7 @@ impl From<TriangleBuilder> for ObjectInstance {
 }
 
 impl Object for TriangleObject {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
         let i = self.plane.intersect_bounded(ray, bounds)?;
         // Check in bounds for our segment of the plane: `u + v: [0..1]`
         // TODO: Bayesian coordinates for triangles??

@@ -291,7 +291,12 @@ impl<O: FullObject> Bvh<O> {
 }
 
 impl<O: FullObject> FullObject for Bvh<O> {
-    fn full_intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore -> Option<FullIntersection<'o>> {
+    fn full_intersect<'o>(
+        &'o self,
+        ray: &Ray,
+        bounds: &Bounds<Number>,
+        rng: &mut dyn RngCore,
+    ) -> Option<FullIntersection<'o>> {
         // Pass everything on to our magical function
         Self::bvh_node_intersect(ray, bounds, self.root_id?, &self.arena)
     }

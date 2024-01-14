@@ -73,7 +73,7 @@ impl From<InfinitePlaneBuilder> for ObjectInstance {
 }
 
 impl Object for InfinitePlaneObject {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
         let mut i = self.plane.intersect_bounded(ray, bounds)?;
         // Wrap uv's if required
         self.uv_wrap.apply_mut(&mut i.uv);

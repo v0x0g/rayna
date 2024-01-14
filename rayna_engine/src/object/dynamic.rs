@@ -24,7 +24,7 @@ impl super::ObjectInstance {
 }
 
 impl Object for DynamicObject {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
         self.inner.intersect(ray, bounds)
     }
 

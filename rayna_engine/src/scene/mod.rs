@@ -34,7 +34,12 @@ pub trait FullObject {
     ///
     /// # Return Value
     /// This should return the *first* intersection that is within the given range, else [None]
-    fn full_intersect<'o>(&'o self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore -> Option<FullIntersection<'o>>;
+    fn full_intersect<'o>(
+        &'o self,
+        ray: &Ray,
+        bounds: &Bounds<Number>,
+        rng: &mut dyn RngCore,
+    ) -> Option<FullIntersection<'o>>;
 
     /// Calculates all of the intersections for the given object.
     ///
@@ -42,7 +47,7 @@ pub trait FullObject {
     /// This should append all the (unbounded) intersections, into the vector `output`.
     /// It can *not* be assumed this vector will be empty. The existing contents should not be modified
     fn full_intersect_all<'o>(&'o self, ray: &Ray, output: &mut SmallVec<[FullIntersection<'o>; 32]>);
-    
+
     fn aabb(&self) -> Option<&Aabb>;
 }
 
@@ -97,7 +102,12 @@ pub struct SceneObject {
 }
 
 impl FullObject for SceneObject {
-    fn full_intersect<'o>(&'o self, orig_ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore -> Option<FullIntersection<'o>> {
+    fn full_intersect<'o>(
+        &'o self,
+        orig_ray: &Ray,
+        bounds: &Bounds<Number>,
+        rng: &mut dyn RngCore,
+    ) -> Option<FullIntersection<'o>> {
         if let (Some(transform), Some(inv_transform)) = (&self.transform, &self.inv_transform) {
             let trans_ray = transform_incoming_ray(orig_ray, inv_transform);
             let inner = self.object.intersect(&trans_ray, bounds)?;
@@ -130,9 +140,7 @@ impl FullObject for SceneObject {
         }
     }
 
-    fn aabb(&self) -> Option<&Aabb> {
-        self.aabb.as_ref()
-    }
+    fn aabb(&self) -> Option<&Aabb> { self.aabb.as_ref() }
 
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
 }

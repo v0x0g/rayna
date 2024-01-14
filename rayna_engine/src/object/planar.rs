@@ -91,7 +91,6 @@ pub enum PlanarBuilder {
     Vectors { p: Point3, u: Vector3, v: Vector3 },
 }
 
-
 /// A helper struct that is used in planar objects (objects that exist in a subsection of a 2D plane
 ///
 /// Use this for calculating the ray-plane intersection, instead of reimplementing for each type.
@@ -116,11 +115,9 @@ pub struct Planar {
 
 impl From<PlanarBuilder> for Planar {
     fn from(value: PlanarBuilder) -> Self {
-        let (p,u,v) = match value {
-            PlanarBuilder::Points {p,a,b} => {
-                (p, a - p, b - p)
-            },
-            PlanarBuilder::Vectors {p, u, v} => (p,u,v)
+        let (p, u, v) = match value {
+            PlanarBuilder::Points { p, a, b } => (p, a - p, b - p),
+            PlanarBuilder::Vectors { p, u, v } => (p, u, v),
         };
 
         let n_raw = Vector3::cross(u, v);
@@ -151,7 +148,7 @@ impl Planar {
     /// so if creating a plane from three points, `u, v` will be equal to one *at those points*, as opposed to one unit in the direction of those points,
     /// meaning scaling those points will "enlarge" the resulting shape
     #[inline(always)]
-    pub fn intersect_bounded(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore -> Option<Intersection> {
+    pub fn intersect_bounded(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
         let denominator = Vector3::dot(self.n, ray.dir());
 
         // Ray is parallel to plane

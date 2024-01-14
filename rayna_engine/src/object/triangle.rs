@@ -52,10 +52,10 @@ impl Object for TriangleObject {
         }
     }
 
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, _rng: &mut dyn RngCore) {
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, rng: &mut dyn RngCore) {
         // Planes won't intersect more than once, except in the parallel case
         // That's infinite intersections but we ignore that case
-        self.intersect(ray, &Bounds::FULL).map(|i| output.push(i));
+        self.intersect(ray, &Bounds::FULL, rng).map(|i| output.push(i));
     }
 }
 

@@ -81,9 +81,9 @@ impl Object for InfinitePlaneObject {
         Some(i)
     }
 
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, _rng: &mut dyn RngCore) {
+    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, rng: &mut dyn RngCore) {
         // Ignores infinite intersection case
-        self.intersect(ray, &Bounds::FULL).map(|i| output.push(i));
+        self.intersect(ray, &Bounds::FULL, rng).map(|i| output.push(i));
     }
 }
 

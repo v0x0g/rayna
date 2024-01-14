@@ -14,6 +14,7 @@ use image::Pixel as _;
 use puffin::profile_function;
 use rand::rngs::SmallRng;
 use rand::Rng;
+use rand_core::RngCore;
 use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel};
 use rayna_shared::profiler;
@@ -266,7 +267,7 @@ impl Renderer {
         let Some(FullIntersection {
             intersection: intersect,
             material,
-        }) = Self::calculate_intersection(scene, &ray, bounds)
+        }) = Self::calculate_intersection(scene, &ray, bounds, rng)
         else {
             return scene.skybox.sky_colour(&ray);
         };
@@ -333,8 +334,9 @@ impl Renderer {
         scene: &'o Scene,
         ray: &Ray,
         bounds: &Bounds<Number>,
+        rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o>> {
-        scene.objects.full_intersect(ray, bounds)
+        scene.objects.full_intersect(ray, bounds, rng)
     }
 
     fn ray_colour_recursive(
@@ -349,7 +351,8 @@ impl Renderer {
             return Pixel::from([0.; 3]);
         }
 
-        let Some(FullIntersection { intersection, material }) = Self::calculate_intersection(scene, ray, bounds) else {
+        let Some(FullIntersection { intersection, material }) = Self::calculate_intersection(scene, ray, bounds, rng)
+        else {
             return scene.skybox.sky_colour(ray);
         };
         validate::intersection(ray, &intersection, bounds);

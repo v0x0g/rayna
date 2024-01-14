@@ -21,23 +21,22 @@ pub struct ParallelogramObject {
     /// The plane that this object sits upon
     plane: Planar,
     aabb: Aabb,
-    centre: Point3
+    centre: Point3,
 }
 
 impl From<ParallelogramBuilder> for ParallelogramObject {
     fn from(builder: ParallelogramBuilder) -> Self {
         let plane = Planar::from(builder.plane);
-        let (p,a,b) = (plane.p(), plane.p() + plane.u(), plane.p() + plane.v());
+        let (p, a, b) = (plane.p(), plane.p() + plane.u(), plane.p() + plane.v());
         let centre = p + (plane.u() / 2.) + (plane.v() / 2.);
-        let aabb = Aabb::encompass_points([p,a,b])
-            .min_padded(super::planar::AABB_PADDING);
+        let aabb = Aabb::encompass_points([p, a, b]).min_padded(super::planar::AABB_PADDING);
 
         Self { plane, aabb, centre }
     }
 }
 
 impl From<ParallelogramBuilder> for ObjectInstance {
-    fn from(value: ParallelogramBuilder) -> Self { Self::from(value).into() }
+    fn from(value: ParallelogramBuilder) -> Self { ParallelogramObject::from(value).into() }
 }
 
 impl Object for ParallelogramObject {

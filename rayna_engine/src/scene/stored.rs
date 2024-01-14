@@ -17,6 +17,7 @@ use crate::material::MaterialInstance;
 use crate::object::axis_box::*;
 use crate::object::infinite_plane::{InfinitePlaneBuilder, UvWrappingMode};
 use crate::object::parallelogram::*;
+use crate::object::planar::PlanarBuilder;
 use crate::object::sphere::*;
 use crate::object::ObjectInstance;
 use crate::shared::camera::Camera;
@@ -73,10 +74,12 @@ pub static TESTING: Scene = {
 
     objects.push(SceneObject::new(
         // Ground
-        InfinitePlaneBuilder::Vectors {
-            p: Point3::ZERO,
-            u: Vector3::X,
-            v: Vector3::Z,
+        InfinitePlaneBuilder {
+            plane: PlanarBuilder::Vectors {
+                p: Point3::ZERO,
+                u: Vector3::X,
+                v: Vector3::Z,
+            },
             uv_wrap: UvWrappingMode::Wrap,
         },
         LambertianMaterial {
@@ -86,10 +89,12 @@ pub static TESTING: Scene = {
     ));
     objects.push(SceneObject::new(
         // Slope
-        InfinitePlaneBuilder::Vectors {
-            p: (0., -0.1, 0.).into(),
-            u: (1., 0.1, 0.).into(),
-            v: Vector3::Z,
+        InfinitePlaneBuilder {
+            plane: PlanarBuilder::Vectors {
+                p: (0., -0.1, 0.).into(),
+                u: (1., 0.1, 0.).into(),
+                v: Vector3::Z,
+            },
             uv_wrap: UvWrappingMode::Wrap,
         },
         LambertianMaterial {
@@ -258,7 +263,9 @@ pub static CORNELL: Scene = {
         let u = u.into();
         let v = v.into();
         objs.push(SceneObject::new(
-            ParallelogramBuilder::Vectors { p, u, v },
+            ParallelogramBuilder {
+                plane: PlanarBuilder::Vectors { p, u, v },
+            },
             LambertianMaterial {
                 albedo: albedo.into(),
                 emissive: emissive.into(),

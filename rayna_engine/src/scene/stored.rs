@@ -277,7 +277,7 @@ pub static CORNELL: Scene = {
 
     let red = [0.65, 0.05, 0.05];
     let green = [0.12, 0.45, 0.15];
-    let grey = [0.73; 3];
+    let warm_grey = [0.85, 0.74, 0.55];
     let light = [15.; 3];
     let black = [0.; 3];
 
@@ -287,10 +287,10 @@ pub static CORNELL: Scene = {
         // WALLS
 
         quad(o, (0., 0., 0.), Vector3::Y, Vector3::Z, red, black); // Left
-        quad(o, (0., 0., 0.), Vector3::X, Vector3::Y, grey, black); // Back
-        quad(o, (0., 0., 0.), Vector3::Z, Vector3::X, grey, black); // Floor
+        quad(o, (0., 0., 0.), Vector3::X, Vector3::Y, warm_grey, black); // Back
+        quad(o, (0., 0., 0.), Vector3::Z, Vector3::X, warm_grey, black); // Floor
         quad(o, (1., 0., 0.), Vector3::Z, Vector3::Y, green, black); // Right
-        quad(o, (0., 1., 0.), Vector3::X, Vector3::Z, grey, black); // Ceiling
+        quad(o, (0., 1., 0.), Vector3::X, Vector3::Z, warm_grey, black); // Ceiling
         quad(o, (0.4, 0.9999, 0.4), (0.2, 0., 0.), (0., 0., 0.2), black, light);
     }
 
@@ -304,7 +304,7 @@ pub static CORNELL: Scene = {
                 corner_2: (0.531, 0.595, 0.414).into(),
             },
             MetalMaterial {
-                albedo: grey.into(),
+                albedo: warm_grey.into(),
                 fuzz: 0.,
             },
             Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(15.)),
@@ -316,7 +316,7 @@ pub static CORNELL: Scene = {
                 corner_2: (0.774, 0.297, 0.829).into(),
             },
             LambertianMaterial {
-                albedo: grey.into(),
+                albedo: warm_grey.into(),
                 emissive: [0.; 3].into(),
             },
             Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(-18.)),

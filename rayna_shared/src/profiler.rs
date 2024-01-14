@@ -88,6 +88,6 @@ use std::sync::{Arc, Mutex, MutexGuard};
 pub static EGUI_CALLS_PUFFIN: bool = false;
 
 profiler! {
-    {name: MAIN,    port: 8587},
-    {name: WORKER,  port: 8588},
+    {name: MAIN,    port: 8585},
+    {name: WORKER,  port: 8586},
 }

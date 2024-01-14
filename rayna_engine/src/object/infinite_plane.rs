@@ -29,7 +29,7 @@ impl UvWrappingMode {
     /// Applies the wrapping mode to the UV coordinate, returning the new coordinate
     #[inline(always)]
     pub fn apply(self, uvs: Point2) -> Point2 {
-        fn wrap(x: Number) -> Number { x % 1.0 }
+        fn wrap(x: Number) -> Number { (x % 1.0).abs() }
         fn mirror(x: Number) -> Number { ((x % 2.0) - 1.0).abs() }
 
         match self {

@@ -244,6 +244,8 @@ impl Renderer {
     }
 
     /// Renders a given pixel a single time
+    ///
+    /// This handles the switching between render modes
     fn render_px_once(
         scene: &Scene,
         viewport: &Viewport,
@@ -299,7 +301,11 @@ impl Renderer {
                     .as_array()
                     .map(|f| (f / 2.) as Channel + 0.5),
             ),
-            RenderMode::Uv => Pixel::from([intersect.uv.x as Channel, intersect.uv.y as Channel, 0.]),
+            RenderMode::Uv => Pixel::from([
+                (intersect.uv.x as Channel).clamp(0., 1.),
+                (intersect.uv.y as Channel).clamp(0., 1.),
+                0.,
+            ]),
             RenderMode::Face => {
                 // TODO: Make `Object: Hash`
                 let hash = intersect.face % (N_COL - 1) + 1;

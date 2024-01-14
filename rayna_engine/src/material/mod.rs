@@ -13,7 +13,7 @@ use rayna_shared::def::types::{Channel, Pixel, Vector3};
 
 pub mod dielectric;
 pub mod dynamic;
-mod isotropic;
+pub mod isotropic;
 pub mod lambertian;
 pub mod metal;
 

@@ -14,6 +14,14 @@ pub struct IsotropicMaterial {
     pub albedo: TextureInstance,
 }
 
+impl Default for IsotropicMaterial {
+    fn default() -> Self {
+        Self {
+            albedo: [0.5; 3].into(),
+        }
+    }
+}
+
 impl Material for IsotropicMaterial {
     fn scatter(&self, _ray: &Ray, _intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
         Some(rng::vector_on_unit_sphere(rng))

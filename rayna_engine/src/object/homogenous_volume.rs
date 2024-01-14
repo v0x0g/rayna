@@ -1,5 +1,6 @@
 use crate::accel::aabb::Aabb;
-use crate::object::{Object, ObjectProperties};
+use crate::object::dynamic::DynamicObject;
+use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -25,6 +26,16 @@ impl<Obj: Object + Clone> From<HomogeneousVolumeBuilder<Obj>> for HomogeneousVol
             density: value.density,
             neg_inv_density: -value.density.recip(),
         }
+    }
+}
+impl<Obj: Object + Clone + 'static> From<HomogeneousVolumeBuilder<Obj>> for ObjectInstance {
+    fn from(value: HomogeneousVolumeBuilder<Obj>) -> Self {
+        let HomogeneousVolumeBuilder { object, density } = value;
+        let dyn_builder = HomogeneousVolumeBuilder {
+            density,
+            object: DynamicObject::from(object),
+        };
+        ObjectInstance::HomogeneousVolumeObject(HomogeneousVolumeObject::from(dyn_builder))
     }
 }
 

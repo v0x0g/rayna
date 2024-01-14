@@ -84,7 +84,7 @@ pub enum ObjectInstance {
     ParallelogramObject,
     InfinitePlaneObject,
     TriangleObject,
-    HomogeneousVolumeObject,
+    HomogeneousVolumeObject(HomogeneousVolumeObject<DynamicObject>),
     DynamicObject,
 }
 

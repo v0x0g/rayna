@@ -11,6 +11,7 @@ use rayna_shared::def::types::{Angle, Number, Pixel, Point3, Transform3, Vector3
 use static_init::*;
 
 use crate::material::dielectric::DielectricMaterial;
+use crate::material::isotropic::IsotropicMaterial;
 use crate::material::lambertian::LambertianMaterial;
 use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
@@ -20,7 +21,6 @@ use crate::object::infinite_plane::{InfinitePlaneBuilder, UvWrappingMode};
 use crate::object::parallelogram::*;
 use crate::object::planar::PlanarBuilder;
 use crate::object::sphere::*;
-use crate::object::triangle::TriangleBuilder;
 use crate::object::ObjectInstance;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
@@ -106,11 +106,12 @@ pub static TESTING: Scene = {
     ));
     objects.push(SceneObject::new(
         // Ball
-        HomogeneousVolumeBuilder {
+        HomogeneousVolumeBuilder::<SphereObject> {
             object: SphereBuilder {
                 pos: (0., 1., 0.).into(),
                 radius: 1.,
-            },
+            }
+            .into(),
             density: 1.,
         },
         IsotropicMaterial {

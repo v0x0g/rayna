@@ -112,7 +112,7 @@ pub static TESTING: Scene = {
                 radius: 1.,
             }
             .into(),
-            density: 1.,
+            density: 0.8,
         },
         IsotropicMaterial {
             albedo: [0.5; 3].into(),

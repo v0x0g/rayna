@@ -54,12 +54,11 @@ impl<Obj: Object + Clone> Object for HomogeneousVolumeObject<Obj> {
         // Find two samples on surface of volume
         // These should be as the ray enters and exits the object
 
-        // TODO: Perhaps optimise this so we can use the given bounds?
         let entering = self.object.intersect(ray, bounds, rng)?;
-
+        // Have to add a slight offset so we don't intersect with the same point twice
         let exiting = self
             .object
-            .intersect(ray, &bounds.with_some_start(entering.dist), rng)?;
+            .intersect(ray, &bounds.with_some_start(entering.dist + 1e-4), rng)?;
 
         if !bounds.contains(&entering.dist) || !bounds.contains(&exiting.dist) {
             return None;

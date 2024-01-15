@@ -11,6 +11,7 @@ use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
+use crate::shared::transform_utils::{transform_incoming_ray, transform_outgoing_intersection};
 use rayna_shared::def::types::{Number, Point3, Transform3};
 
 #[derive(Getters, Derivative)]
@@ -107,8 +108,8 @@ where
             aabb,
             transform: Some(transform),
             inv_transform: Some(inv_transform),
-            bvh, 
-            unbounded
+            bvh,
+            unbounded,
         }
     }
 
@@ -124,9 +125,9 @@ where
             inv_transform: None,
         }
     }
-    
+
     /// A helper method for transforming an iterator of objects into a [Bvh] tree, a [Vec] of unbounded objects, and an AABB
-    fn process_objects(objects: impl IntoIterator<Item=Obj>) -> (Bvh<Mesh, Mat, Obj>, Vec<Obj>, Option<Aabb>) {
+    fn process_objects(objects: impl IntoIterator<Item = Obj>) -> (Bvh<Mesh, Mat, Obj>, Vec<Obj>, Option<Aabb>) {
         let mut bounded = vec![];
         let mut unbounded = vec![];
         for obj in objects.into_iter() {
@@ -160,29 +161,63 @@ where
 {
     fn full_intersect<'o>(
         &'o self,
-        ray: &Ray,
+        orig_ray: &Ray,
         bounds: &Bounds<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Mat>> {
-        let bvh_int = self.bvh.full_intersect(ray, bounds, rng).into_iter();
-        let unbound_int = self.unbounded.iter().filter_map(|o| o.full_intersect(ray, bounds, rng));
-        Iterator::chain(bvh_int, unbound_int).min()
+        // NOTE: This transformation code is practically the same as SimpleObject's implementation
+        return match (&self.transform, &self.inv_transform) {
+            (Some(transform), Some(inv_transform)) => {
+                let trans_ray = transform_incoming_ray(orig_ray, inv_transform);
+
+                let bvh_int = self.bvh.full_intersect(&trans_ray, bounds, rng).into_iter();
+                let unbound_int = self
+                    .unbounded
+                    .iter()
+                    .filter_map(|o| o.full_intersect(&trans_ray, bounds, rng));
+                let mut intersect = Iterator::chain(bvh_int, unbound_int).min()?;
+
+                intersect.intersection = transform_outgoing_intersection(orig_ray, intersect.intersection, transform);
+                Some(intersect)
+            }
+            _ => {
+                let bvh_int = self.bvh.full_intersect(orig_ray, bounds, rng).into_iter();
+                let unbound_int = self
+                    .unbounded
+                    .iter()
+                    .filter_map(|o| o.full_intersect(orig_ray, bounds, rng));
+                Iterator::chain(bvh_int, unbound_int).min()
+            }
+        };
     }
 
     fn full_intersect_all<'o>(
         &'o self,
-        ray: &Ray,
+        orig_ray: &Ray,
         output: &mut SmallVec<[FullIntersection<'o, Mat>; 32]>,
         rng: &mut dyn RngCore,
     ) {
-        self.bvh.full_intersect_all(ray, output, rng);
-        self.unbounded
-            .iter()
-            .for_each(|o| o.full_intersect_all(ray, output, rng));
+        if let (Some(transform), Some(inv_transform)) = (&self.transform, &self.inv_transform) {
+            let trans_ray = transform_incoming_ray(orig_ray, inv_transform);
+
+            let mut inner_intersects = SmallVec::new();
+            self.bvh.full_intersect_all(&trans_ray, &mut inner_intersects, rng);
+            self.unbounded
+                .iter()
+                .for_each(|o| o.full_intersect_all(&trans_ray, &mut inner_intersects, rng));
+
+            // Undo the transform on the intersections
+            output.extend(inner_intersects.into_iter().map(|mut inner| {
+                inner.intersection = transform_outgoing_intersection(orig_ray, inner.intersection, transform);
+                inner
+            }));
+        } else {
+            self.bvh.full_intersect_all(orig_ray, output, rng);
+            self.unbounded
+                .iter()
+                .for_each(|o| o.full_intersect_all(orig_ray, output, rng));
+        }
     }
 
-    fn aabb(&self) -> Option<&Aabb> {
-        // List may have unbounded objects, so we can't return Some()
-        None
-    }
+    fn aabb(&self) -> Option<&Aabb> { self.aabb.as_ref() }
 }

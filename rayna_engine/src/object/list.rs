@@ -5,7 +5,7 @@ use smallvec::SmallVec;
 
 use crate::material::Material;
 use crate::object::bvh::Bvh;
-use crate::object::Object;
+use crate::object::{Object, ObjectInstance};
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
@@ -47,6 +47,24 @@ where
         }
         let bvh = Bvh::new(bounded);
         Self { bvh, unbounded }
+    }
+}
+
+// Iter<Into<ObjType> => ObjectInstance
+
+impl<Mesh, Mat, Obj, Iter> From<Iter> for ObjectInstance<Mesh, Mat>
+where
+    Mesh: crate::mesh::Mesh + Clone,
+    Mat: Material + Clone,
+    Obj: Into<ObjectInstance<Mesh, Mat>>,
+    Iter: IntoIterator<Item = Obj>,
+{
+    fn from(value: Iter) -> Self {
+        // Convert each object into an ObjectInstance
+        let object_instances = value.into_iter().map(Obj::into);
+        // Convert to plain ObjectList
+        let list = ObjectList::from(object_instances);
+        Self::ObjectList(list)
     }
 }
 

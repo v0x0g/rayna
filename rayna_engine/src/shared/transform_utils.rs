@@ -24,7 +24,7 @@ pub fn transform_incoming_ray(incoming_ray: &Ray, inv_transform: &Transform3) ->
 /// Transforms the outgoing intersection from mesh-space to world-space
 pub fn transform_outgoing_intersection(
     original_ray: &Ray,
-    intersection: &Intersection,
+    mut intersection: Intersection,
     transform: &Transform3,
 ) -> Intersection {
     // PANICS:
@@ -32,8 +32,6 @@ pub fn transform_outgoing_intersection(
     // Since it is of type `Transform3`, it must be an invertible matrix and can't collapse
     // the dimensional space to <3 dimensions,
     // Therefore all transformation should be valid (and for vectors: nonzero), so we can unwrap
-
-    let mut intersection = intersection.clone();
 
     let point = |p: &mut Point3| *p = transform.matrix.transform_point(*p);
     let normal = |n: &mut Vector3| {

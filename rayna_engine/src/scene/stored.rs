@@ -440,6 +440,7 @@ pub static RTTNW_DEMO: Scene = {
         // CUBE OF BALLS
 
         const COUNT: usize = 1000;
+        const SPREAD: Number = 0.825;
         let white = LambertianMaterial {
             albedo: solid_texture([0.85; 3]),
             emissive: BLACK_TEX,
@@ -448,7 +449,7 @@ pub static RTTNW_DEMO: Scene = {
         let balls_iter = (0..COUNT).into_iter().map(|_| {
             SimpleObject::new(
                 SphereBuilder {
-                    pos: (rng::vector_in_unit_cube_01(rng) * 1.65).to_point(),
+                    pos: (rng::vector_in_unit_cube(rng) * SPREAD).to_point(),
                     radius: 0.1,
                 },
                 white.clone(),
@@ -456,7 +457,16 @@ pub static RTTNW_DEMO: Scene = {
             .into()
         });
 
-        let balls_list = ObjectList::from(balls_iter);
+        let balls_list = ObjectList::new_without_correction(
+            balls_iter,
+            Transform3::from_scale_rotation_translation(
+                Vector3::ONE,
+                Vector3::Y,
+                Angle::from_degrees(15.),
+                // The original cube was not centred at middle, but "centred" at the corner
+                Vector3::new(-1.0, 2.7, 3.95) + Vector3::splat(SPREAD),
+            ),
+        );
         objects.push(ObjectInstance::ObjectList(balls_list));
     }
 

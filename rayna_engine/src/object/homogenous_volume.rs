@@ -24,13 +24,14 @@ impl<Obj: Object + Clone> From<HomogeneousVolumeBuilder<Obj>> for HomogeneousVol
         Self {
             object: value.object,
             density: value.density,
-            neg_inv_density: -value.density.recip(),
+            neg_inv_density: -1.0 / value.density,
         }
     }
 }
 impl<Obj: Object + Clone + 'static> From<HomogeneousVolumeBuilder<Obj>> for ObjectInstance {
     fn from(value: HomogeneousVolumeBuilder<Obj>) -> Self {
         let HomogeneousVolumeBuilder { object, density } = value;
+        // ObjectInstance uses HomogeneousVolumeObject<DynamicObject>, so cast the builder
         let dyn_builder = HomogeneousVolumeBuilder {
             density,
             object: DynamicObject::from(object),

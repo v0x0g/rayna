@@ -1,6 +1,6 @@
-use crate::fat_object::FullObject;
 use crate::material::{Material, MaterialInstance};
 use crate::mesh::{Mesh, MeshInstance, MeshProperties};
+use crate::object::FullObject;
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
@@ -46,10 +46,10 @@ use smallvec::SmallVec;
 ///     .then_translate(mesh.centre().to_vector());
 /// ```
 ///
-/// This pre/post transform is encapsulated in [TransformedFatObject::new_with_correction()]
+/// This pre/post transform is encapsulated in [SimpleObject::new_with_correction()]
 #[derive(Getters, Clone, Debug)]
 #[get = "pub"]
-pub struct TransformedFatObject<Obj: Mesh + Clone = MeshInstance, Mat: Material + Clone = MaterialInstance> {
+pub struct SimpleObject<Obj: Mesh + Clone = MeshInstance, Mat: Material + Clone = MaterialInstance> {
     object: Obj,
     material: Mat,
     transform: Option<Transform3>,
@@ -61,7 +61,7 @@ pub struct TransformedFatObject<Obj: Mesh + Clone = MeshInstance, Mat: Material 
     // TODO: Add a string identifier to this (name?)
 }
 
-impl<Obj: Mesh + Clone, Mat: Material + Clone> FullObject for TransformedFatObject<Obj, Mat> {
+impl<Obj: Mesh + Clone, Mat: Material + Clone> FullObject for SimpleObject<Obj, Mat> {
     fn full_intersect<'o>(
         &'o self,
         orig_ray: &Ray,
@@ -112,7 +112,7 @@ impl<Obj: Mesh + Clone, Mat: Material + Clone> FullObject for TransformedFatObje
 
 // region Constructors
 
-impl TransformedFatObject {
+impl SimpleObject {
     /// Creates a new transformed mesh instance, using the given mesh and transform matrix.
     ///
     /// Unlike [Self::new()], this *does* account for the mesh's translation from the origin,
@@ -166,7 +166,7 @@ impl TransformedFatObject {
         }
     }
 
-    /// Creates a new transformed mesh instance, using the given mesh. This method does not transform the [TransformedFatObject]
+    /// Creates a new transformed mesh instance, using the given mesh. This method does not transform the [SimpleObject]
     pub fn new(object: impl Into<MeshInstance>, material: impl Into<MaterialInstance>) -> Self {
         // Calculate the resulting AABB by transforming the corners of the input AABB.
         let object = object.into();

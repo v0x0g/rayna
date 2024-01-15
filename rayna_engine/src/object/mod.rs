@@ -8,12 +8,12 @@ use crate::shared::ray::Ray;
 use rand_core::RngCore;
 use rayna_shared::def::types::Number;
 use smallvec::SmallVec;
-use transformed::TransformedFatObject;
+use transformed::SimpleObject;
 
 /// This trait is essentially an extension of [Mesh], but with a [FullIntersection] not [Intersection],
 /// meaning the material of the mesh is also included.
 ///
-/// This should only be implemented on [TransformedFatObject], and any objects that group multiple objects together.
+/// This should only be implemented on [SimpleObject], and any objects that group multiple objects together.
 ///
 /// It's a bit of an implementation detail
 pub trait FullObject {

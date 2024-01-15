@@ -12,7 +12,7 @@ use smallvec::SmallVec;
 
 use rayna_shared::def::types::Number;
 
-use crate::fat_object::FullObject;
+use crate::object::FullObject;
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;

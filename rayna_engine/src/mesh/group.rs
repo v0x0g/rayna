@@ -1,8 +1,8 @@
 // use getset::Getters;
 // use crate::accel::bvh::Bvh;
-// use crate::object::{Object, ObjectInstance};
+// use crate::mesh::{Object, ObjectInstance};
 //
-// /// A group of objects that are rendered as one object
+// /// A group of objects that are rendered as one mesh
 // ///
 // /// # Notes
 // /// Since this only implements [Object], and not [crate::scene::FullObject], all the sub-objects

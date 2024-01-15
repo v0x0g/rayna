@@ -5,7 +5,7 @@ use crate::texture::{Texture, TextureInstance};
 use rand_core::RngCore;
 use rayna_shared::def::types::{Pixel, Vector3};
 
-/// A simple emissive material for turning an object into a light.
+/// A simple emissive material for turning an mesh into a light.
 ///
 /// Does not scatter.
 #[derive(Clone, Debug)]

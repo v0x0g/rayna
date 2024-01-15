@@ -1,6 +1,6 @@
 mod transformed;
 
-use crate::object::Object;
+use crate::mesh::Object;
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
@@ -11,13 +11,13 @@ use smallvec::SmallVec;
 use transformed::TransformedFatObject;
 
 /// This trait is essentially an extension of [Object], but with a [FullIntersection] not [Intersection],
-/// meaning the material of the object is also included.
+/// meaning the material of the mesh is also included.
 ///
 /// This should only be implemented on [TransformedFatObject], and any objects that group multiple objects together.
 ///
 /// It's a bit of an implementation detail
 pub trait FullObject {
-    /// Attempts to perform an intersection between the given ray and the target object
+    /// Attempts to perform an intersection between the given ray and the target mesh
     ///
     /// # Return Value
     /// This should return the *first* intersection that is within the given range, else [None]
@@ -28,7 +28,7 @@ pub trait FullObject {
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o>>;
 
-    /// Calculates all of the intersections for the given object.
+    /// Calculates all of the intersections for the given mesh.
     ///
     /// # Return Value
     /// This should append all the (unbounded) intersections, into the vector `output`.

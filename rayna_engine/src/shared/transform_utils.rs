@@ -1,27 +1,27 @@
-//! This module contains utility functions for helping with scene object transformations
+//! This module contains utility functions for helping with scene mesh transformations
 //!
 //! # Terminology
 //!
 //! ## Transform
-//! The object's 3D affine transform matrix (see [Transform3]). This represents the transformation from
-//! object-space to world-space; e.g. a [Transform3::from_scale()] with a scale of `Vector3::splat(2.)`,
-//! would cause the object to appear twice as large.
+//! The mesh's 3D affine transform matrix (see [Transform3]). This represents the transformation from
+//! mesh-space to world-space; e.g. a [Transform3::from_scale()] with a scale of `Vector3::splat(2.)`,
+//! would cause the mesh to appear twice as large.
 //!
 //! ## Inverse Transform
 //! The matrix inverse of `transform`. This is the matrix corresponding to the transformation from
-//! object-space to world-space
+//! mesh-space to world-space
 
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use rayna_shared::def::types::{Point3, Transform3, Vector3};
 
-/// Transforms the incoming ray from world-space to object-space, using the object's inverse transform
+/// Transforms the incoming ray from world-space to mesh-space, using the mesh's inverse transform
 pub fn transform_incoming_ray(incoming_ray: &Ray, inv_transform: &Transform3) -> Ray {
     let (pos, dir) = incoming_ray.into();
     Ray::new(inv_transform.map_point(pos), inv_transform.map_vector(dir))
 }
 
-/// Transforms the outgoing intersection from object-space to world-space
+/// Transforms the outgoing intersection from mesh-space to world-space
 pub fn transform_outgoing_intersection(
     original_ray: &Ray,
     intersection: &Intersection,

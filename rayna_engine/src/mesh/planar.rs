@@ -1,7 +1,7 @@
-//! This module is not an object module per-se, but a helper module that provides abstractions for
+//! This module is not an mesh module per-se, but a helper module that provides abstractions for
 //! planar types (such as planes, quads, triangles, etc)
 //!
-//! You should store an instance of [Planar] inside your object struct, and then simply validate the UV coordinates
+//! You should store an instance of [Planar] inside your mesh struct, and then simply validate the UV coordinates
 //! of the planar intersection for whichever shape your dreams do so desire...
 
 use crate::shared::bounds::Bounds;
@@ -16,7 +16,7 @@ pub const AABB_PADDING: Number = 1e-6;
 
 #[derive(Copy, Clone, Debug)]
 pub enum PlanarBuilder {
-    /// Creates a [Planar] object from three points on the surface.
+    /// Creates a [Planar] mesh from three points on the surface.
     ///
     /// For a 2D plane in the `XY` plane, the point layout would be:
     ///

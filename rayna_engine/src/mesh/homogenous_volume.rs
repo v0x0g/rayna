@@ -1,5 +1,5 @@
-use crate::object::dynamic::DynamicObject;
-use crate::object::{Object, ObjectInstance, ObjectProperties};
+use crate::mesh::dynamic::DynamicObject;
+use crate::mesh::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -40,7 +40,7 @@ impl<Obj: Object + Clone + 'static> From<HomogeneousVolumeBuilder<Obj>> for Obje
     }
 }
 
-/// An object wrapper that treats the wrapped object as a constant-density volume
+/// An mesh wrapper that treats the wrapped mesh as a constant-density volume
 #[derive(Derivative, Getters)]
 #[derivative(Debug(bound = ""), Clone(bound = ""), Copy)]
 #[get = "pub"]
@@ -53,7 +53,7 @@ pub struct HomogeneousVolumeObject<Obj: Object + Clone> {
 impl<Obj: Object + Clone> Object for HomogeneousVolumeObject<Obj> {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
         // Find two samples on surface of volume
-        // These should be as the ray enters and exits the object
+        // These should be as the ray enters and exits the mesh
 
         let entering = self.object.intersect(ray, bounds, rng)?;
         // Have to add a slight offset so we don't intersect with the same point twice
@@ -65,7 +65,7 @@ impl<Obj: Object + Clone> Object for HomogeneousVolumeObject<Obj> {
             return None;
         }
 
-        // Distance between entry and exit of object along ray
+        // Distance between entry and exit of mesh along ray
         let dist_inside = exiting.dist - entering.dist;
         // Random distance at which we will hit
         let hit_dist = self.neg_inv_density * Number::ln(rng.gen());

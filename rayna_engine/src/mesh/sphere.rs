@@ -1,4 +1,4 @@
-use crate::object::{Object, ObjectInstance, ObjectProperties};
+use crate::mesh::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -11,7 +11,7 @@ use smallvec::SmallVec;
 
 /// A builder struct used to create a sphere
 ///
-/// Call [Into::into] or [SphereObject::from] to create the actual sphere object
+/// Call [Into::into] or [SphereObject::from] to create the actual sphere mesh
 #[derive(Copy, Clone, Debug)]
 pub struct SphereBuilder {
     pub pos: Point3,

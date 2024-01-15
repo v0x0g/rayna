@@ -4,8 +4,8 @@ use smallvec::SmallVec;
 
 use rayna_shared::def::types::{Number, Point2, Point3};
 
-use crate::object::planar::{Planar, PlanarBuilder};
-use crate::object::{Object, ObjectInstance, ObjectProperties};
+use crate::mesh::planar::{Planar, PlanarBuilder};
+use crate::mesh::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -54,7 +54,7 @@ pub struct InfinitePlaneBuilder {
 #[derive(Copy, Clone, Debug, CopyGetters)]
 #[get_copy = "pub"]
 pub struct InfinitePlaneObject {
-    /// The plane that this object sits upon
+    /// The plane that this mesh sits upon
     plane: Planar,
     uv_wrap: UvWrappingMode,
 }

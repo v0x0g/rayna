@@ -1,6 +1,6 @@
 //! Module containing **Bounding Volume Hierarchy** (BVH) structures
 //!
-//! These are used to accelerate ray-object intersection tests by narrowing the search space,
+//! These are used to accelerate ray-mesh intersection tests by narrowing the search space,
 //! by skipping objects that obviously can't be intersected.
 
 use indextree::{Arena, NodeId};
@@ -139,7 +139,7 @@ impl<O: FullObject> Bvh<O> {
             // TODO: maybe choose the axis that gives the smallest overlap between the left & right splits?
             //  This means why try `product_of(all 3 axes, all split positions)` and find the optimal by `left.len()^2 + right.len()^2`
 
-            // TODO: Sometimes this seems to generate a node with a single object.
+            // TODO: Sometimes this seems to generate a node with a single mesh.
             //  It creates an (AABB->Object) node, which does double ray-aabb intersects (this is slow)
 
             // Sort along longest axis
@@ -212,7 +212,7 @@ impl<O: FullObject> Bvh<O> {
 impl<O: FullObject> Bvh<O> {
     /// Given a [NodeId] on the [Arena] tree, calculates the nearest intersection for the given `ray` and `bounds`
     ///
-    /// If the node is a [BvhNode::Object], it passes on the check to the object.
+    /// If the node is a [BvhNode::Object], it passes on the check to the mesh.
     /// Otherwise, if it's a [BvhNode::Aabb], it:
     ///     - Tries to bail early if the [Aabb] is missed
     ///     - Collects all the child nodes
@@ -253,7 +253,7 @@ impl<O: FullObject> Bvh<O> {
 
     /// Given a [NodeId] on the [Arena] tree, calculates the ALL intersection for the given `ray`
     ///
-    /// If the node is a [BvhNode::Object], it passes on the check to the object.
+    /// If the node is a [BvhNode::Object], it passes on the check to the mesh.
     /// Otherwise, if it's a [BvhNode::Aabb], it:
     ///  - Tries to bail early if the [Aabb] is missed
     ///  - Collects all the child nodes

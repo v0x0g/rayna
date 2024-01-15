@@ -1,6 +1,6 @@
-//! # Module [crate::object]
+//! # Module [crate::mesh]
 //!
-//! This module contains the submodules for different object (see [Object] and [ObjectInstance]) types.
+//! This module contains the submodules for different mesh (see [Object] and [ObjectInstance]) types.
 //!
 //! ## Related
 //! - [Object]
@@ -12,11 +12,11 @@
 //! ## Object Modules
 //! Objects (and their corresponding types) are placed into named submodules, and those submodules
 //! are publicly exported. Objects should be split into a "Builder" struct, which contains the publicly accessible properties
-//! for the type, and an "Object" struct which contains the 'built' object (which may contain cached values for performance, and
+//! for the type, and an "Object" struct which contains the 'built' mesh (which may contain cached values for performance, and
 //! should be immutable/private fields)
 //!
 //! ## Example
-//! Considering a "Sphere" object:
+//! Considering a "Sphere" mesh:
 //!
 //! - File: `./sphere.rs`
 //! - Add module: `pub mod sphere;`
@@ -56,13 +56,13 @@ dyn_clone::clone_trait_object!(Object);
 
 #[enum_dispatch]
 pub trait Object: ObjectProperties + RtRequirement {
-    /// Attempts to perform an intersection between the given ray and the target object
+    /// Attempts to perform an intersection between the given ray and the target mesh
     ///
     /// # Return Value
     /// This should return the *first* intersection that is within the given range, else [None]
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection>;
 
-    /// Returns (possibly) an iterator over all of the intersections for the given object.
+    /// Returns (possibly) an iterator over all of the intersections for the given mesh.
     ///
     /// # Return Value
     /// This should place all the (unbounded) intersections, into the vector `output`.
@@ -93,10 +93,10 @@ dyn_clone::clone_trait_object!(ObjectProperties);
 /// This trait describes an [Object], and the properties it has
 #[enum_dispatch]
 pub trait ObjectProperties: RtRequirement {
-    /// Gets the bounding box for this object. If the object can't be bounded (e.g. infinite plane), return [None]
+    /// Gets the bounding box for this mesh. If the mesh can't be bounded (e.g. infinite plane), return [None]
     fn aabb(&self) -> Option<&Aabb>;
 
-    /// Gets the centre of the object.
+    /// Gets the centre of the mesh.
     ///
     /// Scaling and rotation will happen around this point
     fn centre(&self) -> Point3;

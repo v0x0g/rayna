@@ -1,6 +1,6 @@
 use crate::fat_object::FullObject;
 use crate::material::{Material, MaterialInstance};
-use crate::object::{Object, ObjectInstance, ObjectProperties};
+use crate::mesh::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
@@ -11,39 +11,39 @@ use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Point3, Transform3};
 use smallvec::SmallVec;
 
-/// The main struct that encapsulates all the different "components" that make up an object
+/// The main struct that encapsulates all the different "components" that make up an mesh
 ///
 /// Very similar to a `GameObject` in a game engine, where the `ObjectInstance` and `Material` are components attached
-/// to that object.
+/// to that mesh.
 ///
 /// # Important Note
-/// If using a rotating/scaling transform, ensure that the object you are transforming is positioned
+/// If using a rotating/scaling transform, ensure that the mesh you are transforming is positioned
 /// at the origin (`[0., 0., 0.]`), and use the transform matrix to do the translation.
 ///
-/// Otherwise, the centre of the object will be rotated/scaled around the origin as well, which will move the object.
+/// Otherwise, the centre of the mesh will be rotated/scaled around the origin as well, which will move the mesh.
 ///
-/// Alternatively, you can also apply a post and pre-transform, to counteract the object's position offset:
+/// Alternatively, you can also apply a post and pre-transform, to counteract the mesh's position offset:
 /// ```
 /// # use rayna_engine::material::lambertian::LambertianMaterial;
-/// # use rayna_engine::object::axis_box::{AxisBoxBuilder, AxisBoxObject};
+/// # use rayna_engine::mesh::axis_box::{AxisBoxBuilder, AxisBoxObject};
 /// # use rayna_shared::def::types::{Angle, Point3, Transform3, Vector3};
 /// #
 /// # let a: Point3 = [5., 1., 2.].into();
 /// # let b: Point3 = [3., 4., -7.].into();
-/// # let object: AxisBoxObject = AxisBoxBuilder {
+/// # let mesh: AxisBoxObject = AxisBoxBuilder {
 /// #     corner_1: a,
 /// #     corner_2: b,
 /// # }.into();
 ///
 /// let transform = Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(69.0));
 ///
-/// // Fix the transform so it scales/rotates around the object's centre and not the origin
+/// // Fix the transform so it scales/rotates around the mesh's centre and not the origin
 /// //  1. Move centre to origin
 /// //  2. Apply rotate/scale, while it is centred at origin
 /// //  3. Move centre back to original position
-/// let transform = Transform3::from_translation(-object.centre().to_vector())
+/// let transform = Transform3::from_translation(-mesh.centre().to_vector())
 ///     .then(transform)
-///     .then_translate(object.centre().to_vector());
+///     .then_translate(mesh.centre().to_vector());
 /// ```
 ///
 /// This pre/post transform is encapsulated in [TransformedFatObject::new_with_correction()]
@@ -55,8 +55,8 @@ pub struct TransformedFatObject<Obj: Object + Clone = ObjectInstance, Mat: Mater
     transform: Option<Transform3>,
     inv_transform: Option<Transform3>,
     aabb: Option<Aabb>,
-    /// The centre of the object. May not be equal to [ObjectProperties::centre()],
-    /// if the object has been translated
+    /// The centre of the mesh. May not be equal to [ObjectProperties::centre()],
+    /// if the mesh has been translated
     centre: Point3,
     // TODO: Add a string identifier to this (name?)
 }
@@ -113,9 +113,9 @@ impl<Obj: Object + Clone, Mat: Material + Clone> FullObject for TransformedFatOb
 // region Constructors
 
 impl TransformedFatObject {
-    /// Creates a new transformed object instance, using the given object and transform matrix.
+    /// Creates a new transformed mesh instance, using the given mesh and transform matrix.
     ///
-    /// Unlike [Self::new()], this *does* account for the object's translation from the origin,
+    /// Unlike [Self::new()], this *does* account for the mesh's translation from the origin,
     /// using the `obj_centre` parameter. See field documentation ([Self::transform]) for explanation
     /// and example of this position offset correction
     pub fn new_with_correction(
@@ -133,10 +133,10 @@ impl TransformedFatObject {
         Self::new_without_correction(object, material, correct_transform)
     }
 
-    /// Creates a new transformed object instance, using the given object and transform
+    /// Creates a new transformed mesh instance, using the given mesh and transform
     ///
-    /// It is assumed that the object is either centred at the origin and the translation is stored in
-    /// the transform, or that the transform correctly accounts for the object's translation.
+    /// It is assumed that the mesh is either centred at the origin and the translation is stored in
+    /// the transform, or that the transform correctly accounts for the mesh's translation.
     /// See field documentation ([Self::transform]) for explanation
     pub fn new_without_correction(
         object: impl Into<ObjectInstance>,
@@ -166,7 +166,7 @@ impl TransformedFatObject {
         }
     }
 
-    /// Creates a new transformed object instance, using the given object. This method does not transform the [TransformedFatObject]
+    /// Creates a new transformed mesh instance, using the given mesh. This method does not transform the [TransformedFatObject]
     pub fn new(object: impl Into<ObjectInstance>, material: impl Into<MaterialInstance>) -> Self {
         // Calculate the resulting AABB by transforming the corners of the input AABB.
         let object = object.into();

@@ -7,7 +7,7 @@ use smallvec::SmallVec;
 
 use rayna_shared::def::types::{Number, Point2, Point3, Vector2, Vector3};
 
-use crate::object::{Object, ObjectInstance, ObjectProperties};
+use crate::mesh::{Object, ObjectInstance, ObjectProperties};
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -16,7 +16,7 @@ use crate::shared::validate;
 
 /// A builder struct used to create a box
 ///
-/// Call [Into::into] or [AxisBoxObject::from] to create the actual object
+/// Call [Into::into] or [AxisBoxObject::from] to create the actual mesh
 #[derive(Copy, Clone, Debug)]
 pub struct AxisBoxBuilder {
     pub corner_1: Point3,
@@ -34,7 +34,7 @@ impl AxisBoxBuilder {
     }
 }
 //TODO: Add getters to other objects
-/// Built instance of a box object
+/// Built instance of a box mesh
 #[derive(Copy, Clone, Debug, CopyGetters)]
 #[get_copy = "pub"]
 pub struct AxisBoxObject {

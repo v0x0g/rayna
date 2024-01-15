@@ -22,6 +22,7 @@ use rayna_shared::profiler;
 use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use smallvec::SmallVec;
+use std::marker::PhantomData;
 use std::ops::{Add, DerefMut};
 use std::sync::OnceLock;
 use std::time::Duration;
@@ -30,11 +31,18 @@ use tracing::{error, trace};
 
 #[derive(Derivative)]
 #[derivative(Debug)]
-pub struct Renderer {
+pub struct Renderer<Mesh, Mat, Obj, Sky>
+where
+    Mesh: crate::mesh::Mesh + Clone,
+    Mat: Material + Clone,
+    Obj: Object<Mesh, Mat> + Clone,
+    Sky: Skybox + Clone,
+{
     /// A thread pool used to distribute the workload
     thread_pool: ThreadPool,
     #[derivative(Debug = "ignore")]
     rng_pool: opool::Pool<RngPoolAllocator, SmallRng>,
+    phantom: PhantomData<Scene<Mesh, Mat, Obj, Sky>>,
 }
 
 #[derive(Error, Debug)]
@@ -47,7 +55,13 @@ pub enum RendererCreateError {
     },
 }
 
-impl Renderer {
+impl<Mesh, Mat, Obj, Sky> Renderer<Mesh, Mat, Obj, Sky>
+where
+    Mesh: crate::mesh::Mesh + Clone,
+    Mat: Material + Clone,
+    Obj: Object<Mesh, Mat> + Clone,
+    Sky: Skybox + Clone,
+{
     pub fn new() -> Result<Self, RendererCreateError> {
         let thread_pool = ThreadPoolBuilder::new()
             .num_threads(10)
@@ -65,11 +79,15 @@ impl Renderer {
         // `SmallRng` is the (slightly) fastest of all RNGs tested
         let rng_pool = opool::Pool::new_prefilled(256, RngPoolAllocator);
 
-        Ok(Self { thread_pool, rng_pool })
+        Ok(Self {
+            thread_pool,
+            rng_pool,
+            phantom: PhantomData {},
+        })
     }
 
     // TODO: Should `render()` be fallible?
-    pub fn render(&mut self, scene: &Scene, render_opts: &RenderOpts) -> Render<ImgBuf> {
+    pub fn render(&mut self, scene: &Scene<Mesh, Mat, Obj, Sky>, render_opts: &RenderOpts) -> Render<ImgBuf> {
         profile_function!();
 
         let viewport = match scene.camera.calculate_viewport(render_opts) {
@@ -128,7 +146,7 @@ impl Renderer {
     /// This is only called when the viewport is valid, and therefore an image can be rendered
     fn render_actual(
         &mut self,
-        scene: &Scene,
+        scene: &Scene<Mesh, Mat, Obj, Sky>,
         render_opts: &RenderOpts,
         viewport: &Viewport,
         bounds: &Bounds<Number>,
@@ -210,7 +228,7 @@ impl Renderer {
     ///
     /// Takes into account [`RenderOpts::msaa`]
     fn render_px(
-        scene: &Scene,
+        scene: &Scene<Mesh, Mat, Obj, Sky>,
         opts: &RenderOpts,
         viewport: &Viewport,
         bounds: &Bounds<Number>,
@@ -249,7 +267,7 @@ impl Renderer {
     ///
     /// This handles the switching between render modes
     fn render_px_once(
-        scene: &Scene,
+        scene: &Scene<Mesh, Mat, Obj, Sky>,
         viewport: &Viewport,
         opts: &RenderOpts,
         bounds: &Bounds<Number>,
@@ -332,16 +350,16 @@ impl Renderer {
 
     /// Calculates the nearest intersection in the scene for the given ray
     fn calculate_intersection<'o>(
-        scene: &'o Scene,
+        scene: &'o Scene<Mesh, Mat, Obj, Sky>,
         ray: &Ray,
         bounds: &Bounds<Number>,
         rng: &mut dyn RngCore,
-    ) -> Option<FullIntersection<'o>> {
+    ) -> Option<FullIntersection<'o, Mat>> {
         scene.objects.full_intersect(ray, bounds, rng)
     }
 
     fn ray_colour_recursive(
-        scene: &Scene,
+        scene: &Scene<Mesh, Mat, Obj, Sky>,
         ray: &Ray,
         opts: &RenderOpts,
         bounds: &Bounds<Number>,
@@ -389,6 +407,12 @@ impl Renderer {
     }
 }
 
-impl Clone for Renderer {
+impl<Mesh, Mat, Obj, Sky> Clone for Renderer<Mesh, Mat, Obj, Sky>
+where
+    Mesh: crate::mesh::Mesh + Clone,
+    Mat: Material + Clone,
+    Obj: Object<Mesh, Mat> + Clone,
+    Sky: Skybox + Clone,
+{
     fn clone(&self) -> Self { Self::new().expect("could not clone: couldn't create renderer") }
 }

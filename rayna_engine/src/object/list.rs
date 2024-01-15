@@ -10,16 +10,30 @@ use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
+use crate::shared::RtRequirement;
 use rayna_shared::def::types::Number;
 
 #[derive(Getters, Derivative)]
 #[get = "pub"]
 #[derivative(Clone(bound = ""), Debug(bound = ""))]
-pub struct ObjectList<Mesh: crate::mesh::Mesh + Clone, Mat: Material + Clone, Obj: Object<Mesh, Mat> + Clone> {
+pub struct ObjectList<Mesh, Mat, Obj>
+where
+    Mesh: crate::mesh::Mesh + Clone,
+    Mat: Material + Clone,
+    Obj: Object<Mesh, Mat> + Clone,
+{
     /// BVH-optimised tree of objects
     bvh: Bvh<Mesh, Mat, Obj>,
     /// All the unbounded objects in the list (objects where [Object::aabb()] returned [None]
     unbounded: Vec<Obj>,
+}
+
+impl<Mesh, Mat, Obj> RtRequirement for ObjectList<Mesh, Mat, Obj>
+where
+    Mesh: crate::mesh::Mesh + Clone,
+    Mat: Material + Clone,
+    Obj: Object<Mesh, Mat>,
+{
 }
 
 // Iter<Into<ObjType>> => ObjectList

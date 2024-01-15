@@ -1,5 +1,5 @@
 use crate::material::Material;
-use crate::mesh::{Mesh as MeshTrait, MeshProperties};
+use crate::mesh::Mesh as MeshTrait;
 use crate::object::Object;
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;

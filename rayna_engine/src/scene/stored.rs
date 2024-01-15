@@ -10,6 +10,7 @@ use noise::*;
 use rand::{thread_rng, Rng};
 use rayna_shared::def::types::{Angle, Channel, Number, Pixel, Point3, Transform3, Vector3};
 use static_init::*;
+use std::marker::PhantomData;
 
 use crate::material::dielectric::DielectricMaterial;
 use crate::material::isotropic::IsotropicMaterial;
@@ -71,6 +72,8 @@ pub static SIMPLE: Scene = {
         ]
         .into(),
         skybox: SkyboxInstance::default(),
+        phantom_mat: PhantomData,
+        phantom_mesh: PhantomData,
     }
 };
 
@@ -132,6 +135,8 @@ pub static TESTING: Scene = {
         },
         objects: objects.into(),
         skybox: SkyboxInstance::default(),
+        phantom_mat: PhantomData,
+        phantom_mesh: PhantomData,
     }
 };
 
@@ -243,6 +248,8 @@ pub static RTIAW_DEMO: Scene = {
         },
         objects: objects.into(),
         skybox: SkyboxInstance::default(),
+        phantom_mat: PhantomData,
+        phantom_mesh: PhantomData,
     }
 };
 
@@ -446,6 +453,8 @@ pub static RTTNW_DEMO: Scene = {
         },
         objects: objects.into(),
         skybox: None.into(),
+        phantom_mat: PhantomData,
+        phantom_mesh: PhantomData,
     }
 };
 
@@ -552,5 +561,7 @@ pub static CORNELL: Scene = {
         objects: objects.into(),
         skybox: None.into(),
         // skybox: SkyboxInstance::default(),
+        phantom_mat: PhantomData,
+        phantom_mesh: PhantomData,
     }
 };

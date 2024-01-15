@@ -1,5 +1,5 @@
 use crate::material::Material;
-use crate::object::FullObject;
+use crate::object::Object;
 use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::{RenderMode, RenderOpts};
 use crate::scene::Scene;

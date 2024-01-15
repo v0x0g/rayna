@@ -1,4 +1,4 @@
-use crate::material::{Material, MaterialInstance};
+use crate::material::Material;
 use derivative::Derivative;
 use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 use std::cmp::Ordering;
@@ -63,7 +63,7 @@ impl Ord for Intersection {
 /// Mainly used internally.
 #[derive(Clone, Debug, Derivative)]
 #[derivative(Ord, PartialOrd, Eq, PartialEq)]
-pub struct FullIntersection<'mat, Mat: Material + Clone + 'mat = MaterialInstance> {
+pub struct FullIntersection<'mat, Mat: Material + Clone + 'mat> {
     pub intersection: Intersection,
     /// NOTE:
     /// For all comparisons, this field is ignored ([PartialEq], [Ord], [PartialOrd])

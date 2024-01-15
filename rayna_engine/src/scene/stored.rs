@@ -4,7 +4,7 @@
 //!
 //! There are some common ones [CORNELL] and [RTIAW_DEMO], that should be well known.
 
-use crate::object::transformed::SimpleObject;
+use crate::object::simple::SimpleObject;
 use image::Pixel as _;
 use noise::*;
 use rand::{thread_rng, Rng};

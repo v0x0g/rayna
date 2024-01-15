@@ -75,7 +75,7 @@ pub trait Mesh: MeshProperties + RtRequirement {
 /// An optimised implementation of [Mesh].
 ///
 /// See [crate::material::MaterialInstance] for an explanation of the [macro@enum_dispatch] macro usage
-#[enum_dispatch(Object, ObjectProperties)]
+#[enum_dispatch(Mesh, MeshProperties)]
 #[derive(Clone, Debug)]
 pub enum MeshInstance {
     SphereMesh,

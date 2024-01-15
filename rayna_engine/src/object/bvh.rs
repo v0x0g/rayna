@@ -3,6 +3,8 @@
 //! These are used to accelerate ray-mesh intersection tests by narrowing the search space,
 //! by skipping objects that obviously can't be intersected.
 
+use derivative::Derivative;
+use getset::Getters;
 use indextree::{Arena, NodeId};
 use std::cmp::Ordering;
 
@@ -10,17 +12,25 @@ use itertools::{zip_eq, Itertools};
 use rand_core::RngCore;
 use smallvec::SmallVec;
 
+use crate::material::Material;
 use rayna_shared::def::types::Number;
 
-use crate::object::FullObject;
+use crate::object::Object;
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 
-#[derive(Clone, Debug)]
-pub struct Bvh<O: FullObject> {
-    arena: Arena<BvhNode<O>>,
+#[derive(Getters, Derivative)]
+#[get = "pub"]
+#[derivative(Clone(bound = ""), Debug(bound = ""))]
+pub struct Bvh<Mesh, Mat, Obj>
+where
+    Mesh: crate::mesh::Mesh + Clone,
+    Mat: Material + Clone,
+    Obj: Object<Mesh, Mat>,
+{
+    arena: Arena<BvhNode<Mesh, Mat, Obj>>,
     root_id: Option<NodeId>,
 }
 
@@ -32,22 +42,34 @@ enum SplitAxis {
 }
 
 #[derive(Clone, Debug)]
-enum BvhNode<O: FullObject> {
+enum BvhNode<Mesh, Mat, Obj>
+where
+    Mesh: crate::mesh::Mesh + Clone,
+    Mat: Material + Clone,
+    Obj: Object<Mesh, Mat>,
+{
     // Don't need to keep track of children since the tree does that for us
     Nested(Aabb),
-    Object(O),
+    Object(Obj),
 }
 
 /// Helper function to unwrap an AABB with a panic message
-fn expect_aabb(o: &impl FullObject) -> &Aabb { o.aabb().as_ref().expect("aabb required as invariant of `Bvh`") }
+fn expect_aabb<Mesh: crate::mesh::Mesh + Clone, Mat: Material + Clone, Obj: Object<Mesh, Mat>>(o: &Obj) -> &Aabb {
+    o.aabb().as_ref().expect("aabb required as invariant of `Bvh`")
+}
 
-impl<O: FullObject> Bvh<O> {
+impl<Mesh, Mat, Obj> Bvh<Mesh, Mat, Obj>
+where
+    Mesh: crate::mesh::Mesh + Clone,
+    Mat: Material + Clone,
+    Obj: Object<Mesh, Mat>,
+{
     /// Creates a new [Bvh] tree from the given slice of objects
     ///
     /// # Note
     /// The given slice of `objects` should only contain *bounded* objects (i.e. [Object::aabb()] returns [`Some(_)`]).
     /// The exact behaviour is not specified, but will most likely result in a panic during building/accessing the tree
-    pub fn new(objects: Vec<O>) -> Self {
+    pub fn new(objects: Vec<Obj>) -> Self {
         assert!(
             objects.iter().all(|o| o.aabb().is_some()),
             "objects should all be bounded"
@@ -67,25 +89,24 @@ impl<O: FullObject> Bvh<O> {
 
     /// Sorts the given slice of objects along the chosen `axis`
     /// This sort is *unstable* (see [sort_unstable_by](https://doc.rust-lang.org/std/primitive.slice.html#method.sort_unstable_by))
-    fn sort_along_aabb_axis(axis: SplitAxis, objects: &mut [O]) {
-        fn sort_x<O: FullObject>(a: &O, b: &O) -> Ordering {
+    fn sort_along_aabb_axis(axis: SplitAxis, objects: &mut [Obj]) {
+        let sort_x = |a: &Obj, b: &Obj| -> Ordering {
             PartialOrd::partial_cmp(&expect_aabb(a).min().x, &expect_aabb(b).min().x)
                 .expect("should be able to cmp AABB x-bounds: should not be nan")
-        }
-
-        fn sort_y<O: FullObject>(a: &O, b: &O) -> Ordering {
+        };
+        let sort_y = |a: &Obj, b: &Obj| -> Ordering {
             PartialOrd::partial_cmp(&expect_aabb(a).min().y, &expect_aabb(b).min().y)
                 .expect("should be able to cmp AABB y-bounds: should not be nan")
-        }
-        fn sort_z<O: FullObject>(a: &O, b: &O) -> Ordering {
+        };
+        let sort_z = |a: &Obj, b: &Obj| -> Ordering {
             PartialOrd::partial_cmp(&expect_aabb(a).min().z, &expect_aabb(b).min().z)
                 .expect("should be able to cmp AABB z-bounds: should not be nan")
-        }
+        };
 
         match axis {
-            SplitAxis::X => objects.sort_unstable_by(sort_x::<O>),
-            SplitAxis::Y => objects.sort_unstable_by(sort_y::<O>),
-            SplitAxis::Z => objects.sort_unstable_by(sort_z::<O>),
+            SplitAxis::X => objects.sort_unstable_by(sort_x::<Obj>),
+            SplitAxis::Y => objects.sort_unstable_by(sort_y::<Obj>),
+            SplitAxis::Z => objects.sort_unstable_by(sort_z::<Obj>),
         }
     }
 
@@ -98,7 +119,7 @@ impl<O: FullObject> Bvh<O> {
     ///
     /// # Panics
     /// The slice of `objects` passed in must be non-empty.
-    fn generate_nodes_sah(mut objects: Vec<O>, arena: &mut Arena<BvhNode<O>>) -> NodeId {
+    fn generate_nodes_sah(mut objects: Vec<Obj>, arena: &mut Arena<BvhNode<Mesh, Mat, Obj>>) -> NodeId {
         if 0 == objects.len() {
             panic!("internal invariant fail: must pass in a non-empty slice for objects")
         }
@@ -107,14 +128,14 @@ impl<O: FullObject> Bvh<O> {
         // Can't match on a `Vec<O>`, can't move out of a `Box<[O]>` (even with `#![feature(box_patterns)]`)
         // Can't use `if let Ok(..)` since it moves the Vec
 
-        objects = match <[O; 1]>::try_from(objects) {
+        objects = match <[Obj; 1]>::try_from(objects) {
             Ok([obj]) => {
                 return arena.new_node(BvhNode::Object(obj));
             }
             Err(v) => v,
         };
 
-        objects = match <[O; 2]>::try_from(objects) {
+        objects = match <[Obj; 2]>::try_from(objects) {
             Ok([a, b]) => {
                 let aabb = Aabb::encompass(expect_aabb(&a), expect_aabb(&b));
 
@@ -209,7 +230,12 @@ impl<O: FullObject> Bvh<O> {
     }
 }
 
-impl<O: FullObject> Bvh<O> {
+impl<Mesh, Mat, Obj> Bvh<Mesh, Mat, Obj>
+where
+    Mesh: crate::mesh::Mesh + Clone,
+    Mat: Material + Clone,
+    Obj: Object<Mesh, Mat>,
+{
     /// Given a [NodeId] on the [Arena] tree, calculates the nearest intersection for the given `ray` and `bounds`
     ///
     /// If the node is a [BvhNode::Object], it passes on the check to the mesh.
@@ -222,9 +248,9 @@ impl<O: FullObject> Bvh<O> {
         ray: &Ray,
         bounds: &Bounds<Number>,
         node: NodeId,
-        arena: &'o Arena<BvhNode<O>>,
+        arena: &'o Arena<BvhNode<Mesh, Mat, Obj>>,
         rng: &mut dyn RngCore,
-    ) -> Option<FullIntersection<'o>> {
+    ) -> Option<FullIntersection<'o, Mat>> {
         return match arena.get(node).expect("node should exist in arena").get() {
             // An aabb will need to delegate to child nodes if not missed
             BvhNode::Nested(aabb) => {
@@ -261,8 +287,8 @@ impl<O: FullObject> Bvh<O> {
     fn bvh_node_intersect_all<'o>(
         ray: &Ray,
         node: NodeId,
-        arena: &'o Arena<BvhNode<O>>,
-        output: &mut SmallVec<[FullIntersection<'o>; 32]>,
+        arena: &'o Arena<BvhNode<Mesh, Mat, Obj>>,
+        output: &mut SmallVec<[FullIntersection<'o, Mat>; 32]>,
         rng: &mut dyn RngCore,
     ) {
         match arena.get(node).expect("node should exist in arena").get() {
@@ -293,13 +319,18 @@ impl<O: FullObject> Bvh<O> {
     }
 }
 
-impl<O: FullObject> FullObject for Bvh<O> {
+impl<Mesh, Mat, Obj> Object<Mesh, Mat> for Bvh<Mesh, Mat, Obj>
+where
+    Mesh: crate::mesh::Mesh + Clone,
+    Mat: Material + Clone,
+    Obj: Object<Mesh, Mat> + Clone,
+{
     fn full_intersect<'o>(
         &'o self,
         ray: &Ray,
         bounds: &Bounds<Number>,
         rng: &mut dyn RngCore,
-    ) -> Option<FullIntersection<'o>> {
+    ) -> Option<FullIntersection<'o, Mat>> {
         // Pass everything on to our magical function
         Self::bvh_node_intersect(ray, bounds, self.root_id?, &self.arena, rng)
     }
@@ -307,7 +338,7 @@ impl<O: FullObject> FullObject for Bvh<O> {
     fn full_intersect_all<'o>(
         &'o self,
         ray: &Ray,
-        output: &mut SmallVec<[FullIntersection<'o>; 32]>,
+        output: &mut SmallVec<[FullIntersection<'o, Mat>; 32]>,
         rng: &mut dyn RngCore,
     ) {
         if let Some(root) = self.root_id {

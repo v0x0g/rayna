@@ -1,27 +1,35 @@
+use derivative::Derivative;
 use getset::Getters;
 use rand_core::RngCore;
 use smallvec::SmallVec;
 
-use crate::accel::bvh::Bvh;
-use crate::fat_object::transformed::SceneObject;
-use crate::fat_object::FullObject;
+use crate::material::Material;
+use crate::object::bvh::Bvh;
+use crate::object::Object;
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 use rayna_shared::def::types::Number;
 
-#[derive(Clone, Debug, Getters)]
+#[derive(Getters, Derivative)]
 #[get = "pub"]
-pub struct SceneObjectList {
+#[derivative(Clone(bound = ""), Debug(bound = ""))]
+pub struct ObjectList<Mesh: crate::mesh::Mesh + Clone, Mat: Material + Clone, Obj: Object<Mesh, Mat> + Clone> {
     /// BVH-optimised tree of objects
-    bvh: Bvh<SceneObject>,
+    bvh: Bvh<Mesh, Mat, Obj>,
     /// All the unbounded objects in the list (objects where [Object::aabb()] returned [None]
-    unbounded: Vec<SceneObject>,
+    unbounded: Vec<Obj>,
 }
 
 // Iter<Into<ObjType>> => ObjectList
-impl<Iter: IntoIterator<Item = SceneObject>> From<Iter> for SceneObjectList {
+impl<Mesh, Mat, Obj, Iter> From<Iter> for ObjectList<Mesh, Mat, Obj>
+where
+    Mesh: crate::mesh::Mesh + Clone,
+    Mat: Material + Clone,
+    Obj: Object<Mesh, Mat>,
+    Iter: IntoIterator<Item = Obj>,
+{
     fn from(value: Iter) -> Self {
         let mut bounded = vec![];
         let mut unbounded = vec![];
@@ -37,13 +45,18 @@ impl<Iter: IntoIterator<Item = SceneObject>> From<Iter> for SceneObjectList {
     }
 }
 
-impl FullObject for SceneObjectList {
+impl<Mesh, Mat, Obj> Object<Mesh, Mat> for ObjectList<Mesh, Mat, Obj>
+where
+    Mesh: crate::mesh::Mesh + Clone,
+    Mat: Material + Clone,
+    Obj: Object<Mesh, Mat>,
+{
     fn full_intersect<'o>(
         &'o self,
         ray: &Ray,
         bounds: &Bounds<Number>,
         rng: &mut dyn RngCore,
-    ) -> Option<FullIntersection<'o>> {
+    ) -> Option<FullIntersection<'o, Mat>> {
         let bvh_int = self.bvh.full_intersect(ray, bounds, rng).into_iter();
         let unbound_int = self.unbounded.iter().filter_map(|o| o.full_intersect(ray, bounds, rng));
         Iterator::chain(bvh_int, unbound_int).min()
@@ -52,7 +65,7 @@ impl FullObject for SceneObjectList {
     fn full_intersect_all<'o>(
         &'o self,
         ray: &Ray,
-        output: &mut SmallVec<[FullIntersection<'o>; 32]>,
+        output: &mut SmallVec<[FullIntersection<'o, Mat>; 32]>,
         rng: &mut dyn RngCore,
     ) {
         self.bvh.full_intersect_all(ray, output, rng);

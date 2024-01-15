@@ -1,22 +1,30 @@
-mod transformed;
+pub mod bvh;
+pub mod list;
+pub mod simple;
 
-use crate::mesh::Mesh;
+use crate::material::Material;
+use crate::mesh::Mesh as MeshTrait;
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
+use crate::shared::RtRequirement;
+use enum_dispatch::enum_dispatch;
 use rand_core::RngCore;
 use rayna_shared::def::types::Number;
 use smallvec::SmallVec;
-use transformed::SimpleObject;
+
+// noinspection ALL
+use self::simple::SimpleObject;
+
+dyn_clone::clone_trait_object!(<Mesh: MeshTrait + Clone, Mat: Material + Clone> Object<Mesh, Mat>);
 
 /// This trait is essentially an extension of [Mesh], but with a [FullIntersection] not [Intersection],
 /// meaning the material of the mesh is also included.
 ///
 /// This should only be implemented on [SimpleObject], and any objects that group multiple objects together.
-///
-/// It's a bit of an implementation detail
-pub trait FullObject {
+#[enum_dispatch]
+pub trait Object<Mesh: MeshTrait + Clone, Mat: Material + Clone>: RtRequirement {
     /// Attempts to perform an intersection between the given ray and the target mesh
     ///
     /// # Return Value
@@ -26,7 +34,7 @@ pub trait FullObject {
         ray: &Ray,
         bounds: &Bounds<Number>,
         rng: &mut dyn RngCore,
-    ) -> Option<FullIntersection<'o>>;
+    ) -> Option<FullIntersection<'o, Mat>>;
 
     /// Calculates all of the intersections for the given mesh.
     ///
@@ -36,10 +44,15 @@ pub trait FullObject {
     fn full_intersect_all<'o>(
         &'o self,
         ray: &Ray,
-        output: &mut SmallVec<[FullIntersection<'o>; 32]>,
-
+        output: &mut SmallVec<[FullIntersection<'o, Mat>; 32]>,
         rng: &mut dyn RngCore,
     );
 
     fn aabb(&self) -> Option<&Aabb>;
+}
+
+#[enum_dispatch(Object)]
+#[derive(Clone, Debug)]
+pub enum ObjectInstance<Mesh: MeshTrait + Clone, Mat: Material + Clone> {
+    SimpleObject(SimpleObject<Mesh, Mat>),
 }

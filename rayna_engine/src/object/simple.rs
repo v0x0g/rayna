@@ -1,6 +1,6 @@
-use crate::material::{Material, MaterialInstance};
-use crate::mesh::{Mesh, MeshInstance, MeshProperties};
-use crate::object::FullObject;
+use crate::material::Material;
+use crate::mesh::{Mesh as MeshTrait, MeshProperties};
+use crate::object::Object;
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
@@ -49,8 +49,8 @@ use smallvec::SmallVec;
 /// This pre/post transform is encapsulated in [SimpleObject::new_with_correction()]
 #[derive(Getters, Clone, Debug)]
 #[get = "pub"]
-pub struct SimpleObject<Obj: Mesh + Clone = MeshInstance, Mat: Material + Clone = MaterialInstance> {
-    object: Obj,
+pub struct SimpleObject<Mesh: MeshTrait + Clone, Mat: Material + Clone> {
+    object: Mesh,
     material: Mat,
     transform: Option<Transform3>,
     inv_transform: Option<Transform3>,
@@ -61,7 +61,7 @@ pub struct SimpleObject<Obj: Mesh + Clone = MeshInstance, Mat: Material + Clone 
     // TODO: Add a string identifier to this (name?)
 }
 
-impl<Obj: Mesh + Clone, Mat: Material + Clone> FullObject for SimpleObject<Obj, Mat> {
+impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> Object<Mesh, Mat> for SimpleObject<Mesh, Mat> {
     fn full_intersect<'o>(
         &'o self,
         orig_ray: &Ray,
@@ -71,7 +71,7 @@ impl<Obj: Mesh + Clone, Mat: Material + Clone> FullObject for SimpleObject<Obj, 
         if let (Some(transform), Some(inv_transform)) = (&self.transform, &self.inv_transform) {
             let trans_ray = transform_incoming_ray(orig_ray, inv_transform);
             let inner = self.object.intersect(&trans_ray, bounds, rng)?;
-            let intersect = transform_outgoing_intersection(orig_ray, &inner, transform);
+            let intersect = transform_outgoing_intersection(orig_ray, inner, transform);
             Some(intersect.make_full(&self.material))
         } else {
             Some(self.object.intersect(orig_ray, bounds, rng)?.make_full(&self.material))
@@ -90,7 +90,7 @@ impl<Obj: Mesh + Clone, Mat: Material + Clone> FullObject for SimpleObject<Obj, 
             self.object.intersect_all(&trans_ray, &mut inner_intersects, rng);
 
             output.extend(inner_intersects.into_iter().map(|mut inner| {
-                inner = transform_outgoing_intersection(orig_ray, &inner, transform);
+                inner = transform_outgoing_intersection(orig_ray, inner, transform);
                 inner.make_full(&self.material)
             }));
         } else {
@@ -112,17 +112,13 @@ impl<Obj: Mesh + Clone, Mat: Material + Clone> FullObject for SimpleObject<Obj, 
 
 // region Constructors
 
-impl SimpleObject {
+impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> SimpleObject<Mesh, Mat> {
     /// Creates a new transformed mesh instance, using the given mesh and transform matrix.
     ///
     /// Unlike [Self::new()], this *does* account for the mesh's translation from the origin,
     /// using the `obj_centre` parameter. See field documentation ([Self::transform]) for explanation
     /// and example of this position offset correction
-    pub fn new_with_correction(
-        object: impl Into<MeshInstance>,
-        material: impl Into<MaterialInstance>,
-        transform: Transform3,
-    ) -> Self {
+    pub fn new_with_correction(object: impl Into<Mesh>, material: impl Into<Mat>, transform: Transform3) -> Self {
         let object = object.into();
 
         let obj_centre = object.centre();
@@ -138,11 +134,7 @@ impl SimpleObject {
     /// It is assumed that the mesh is either centred at the origin and the translation is stored in
     /// the transform, or that the transform correctly accounts for the mesh's translation.
     /// See field documentation ([Self::transform]) for explanation
-    pub fn new_without_correction(
-        object: impl Into<MeshInstance>,
-        material: impl Into<MaterialInstance>,
-        transform: Transform3,
-    ) -> Self {
+    pub fn new_without_correction(object: impl Into<Mesh>, material: impl Into<Mat>, transform: Transform3) -> Self {
         let object = object.into();
 
         // Calculate the resulting AABB by transforming the corners of the input AABB.
@@ -167,7 +159,7 @@ impl SimpleObject {
     }
 
     /// Creates a new transformed mesh instance, using the given mesh. This method does not transform the [SimpleObject]
-    pub fn new(object: impl Into<MeshInstance>, material: impl Into<MaterialInstance>) -> Self {
+    pub fn new(object: impl Into<Mesh>, material: impl Into<Mat>) -> Self {
         // Calculate the resulting AABB by transforming the corners of the input AABB.
         let object = object.into();
         Self {

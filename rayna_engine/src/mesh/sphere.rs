@@ -1,4 +1,4 @@
-use crate::mesh::{Object, ObjectInstance, ObjectProperties};
+use crate::mesh::{Mesh, MeshInstance, MeshProperties};
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -11,7 +11,7 @@ use smallvec::SmallVec;
 
 /// A builder struct used to create a sphere
 ///
-/// Call [Into::into] or [SphereObject::from] to create the actual sphere mesh
+/// Call [Into::into] or [SphereMesh::from] to create the actual sphere mesh
 #[derive(Copy, Clone, Debug)]
 pub struct SphereBuilder {
     pub pos: Point3,
@@ -22,7 +22,7 @@ pub struct SphereBuilder {
 /// Has precomputed values and therefore cannot be mutated
 #[derive(Copy, Clone, Debug, CopyGetters)]
 #[get_copy = "pub"]
-pub struct SphereObject {
+pub struct SphereMesh {
     pos: Point3,
     radius: Number,
     // TODO: is `radius_sqr` a perf improvement?
@@ -31,7 +31,7 @@ pub struct SphereObject {
 }
 
 /// Builds the sphere
-impl From<SphereBuilder> for SphereObject {
+impl From<SphereBuilder> for SphereMesh {
     fn from(value: SphereBuilder) -> Self {
         Self {
             pos: value.pos,
@@ -46,12 +46,12 @@ impl From<SphereBuilder> for SphereObject {
     }
 }
 
-/// Converts the sphere builder into an [ObjectInstance]
-impl From<SphereBuilder> for ObjectInstance {
-    fn from(value: SphereBuilder) -> ObjectInstance { SphereObject::from(value).into() }
+/// Converts the sphere builder into an [MeshInstance]
+impl From<SphereBuilder> for MeshInstance {
+    fn from(value: SphereBuilder) -> MeshInstance { SphereMesh::from(value).into() }
 }
 
-impl Object for SphereObject {
+impl Mesh for SphereMesh {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
@@ -152,7 +152,7 @@ impl Object for SphereObject {
     }
 }
 
-impl ObjectProperties for SphereObject {
+impl MeshProperties for SphereMesh {
     fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
     fn centre(&self) -> Point3 { self.pos }
 }

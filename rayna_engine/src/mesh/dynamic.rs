@@ -1,4 +1,4 @@
-use crate::mesh::{Object, ObjectProperties};
+use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -8,23 +8,23 @@ use rayna_shared::def::types::{Number, Point3};
 use smallvec::SmallVec;
 use std::sync::Arc;
 
-/// Object wrapper around a `dyn` [Object]; Delegates everything to the inner mesh.
+/// Object wrapper around a `dyn` [Mesh]; Delegates everything to the inner mesh.
 ///
-/// If possible use the enum variants on [super::ObjectInstance], so that static-dispatch is used instead of dynamic dispatch
+/// If possible use the enum variants on [super::MeshInstance], so that static-dispatch is used instead of dynamic dispatch
 #[derive(Clone, Debug)]
-pub struct DynamicObject {
-    pub inner: Arc<dyn Object>,
+pub struct DynamicMesh {
+    pub inner: Arc<dyn Mesh>,
 }
 
-impl DynamicObject {
-    pub fn from(value: impl Object + 'static) -> Self { Self { inner: Arc::new(value) } }
+impl DynamicMesh {
+    pub fn from(value: impl Mesh + 'static) -> Self { Self { inner: Arc::new(value) } }
 }
 
-impl super::ObjectInstance {
-    pub fn from_dyn(value: impl Object + 'static) -> Self { Self::from(DynamicObject::from(value)) }
+impl super::MeshInstance {
+    pub fn from_dyn(value: impl Mesh + 'static) -> Self { Self::from(DynamicMesh::from(value)) }
 }
 
-impl Object for DynamicObject {
+impl Mesh for DynamicMesh {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
         self.inner.intersect(ray, bounds, rng)
     }
@@ -34,7 +34,7 @@ impl Object for DynamicObject {
     }
 }
 
-impl ObjectProperties for DynamicObject {
+impl MeshProperties for DynamicMesh {
     fn aabb(&self) -> Option<&Aabb> { self.inner.aabb() }
     fn centre(&self) -> Point3 { self.inner.centre() }
 }

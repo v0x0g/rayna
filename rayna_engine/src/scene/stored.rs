@@ -23,7 +23,7 @@ use crate::mesh::infinite_plane::{InfinitePlaneBuilder, UvWrappingMode};
 use crate::mesh::parallelogram::*;
 use crate::mesh::planar::PlanarBuilder;
 use crate::mesh::sphere::*;
-use crate::mesh::ObjectInstance;
+use crate::mesh::MeshInstance;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
 use crate::skybox::SkyboxInstance;
@@ -110,7 +110,7 @@ pub static TESTING: Scene = {
     ));
     objects.push(TransformedFatObject::new(
         // Ball
-        HomogeneousVolumeBuilder::<SphereObject> {
+        HomogeneousVolumeBuilder::<SphereMesh> {
             object: SphereBuilder {
                 pos: (0., 1., 0.).into(),
                 radius: 1.,
@@ -175,7 +175,7 @@ pub static RTIAW_DEMO: Scene = {
             };
 
             let obj_choice = rng.gen::<Number>();
-            let obj: ObjectInstance = if obj_choice < 0.7 {
+            let obj: MeshInstance = if obj_choice < 0.7 {
                 SphereBuilder {
                     pos: centre,
                     radius: 0.2,
@@ -354,7 +354,7 @@ pub static RTTNW_DEMO: Scene = {
         ));
         objects.push(TransformedFatObject::new(
             // BLUE HAZE INSIDE
-            HomogeneousVolumeBuilder::<SphereObject> {
+            HomogeneousVolumeBuilder::<SphereMesh> {
                 object: SphereBuilder {
                     pos: (3.6, 1.5, 1.45).into(),
                     radius: 0.6,
@@ -424,7 +424,7 @@ pub static RTTNW_DEMO: Scene = {
         // HAZE
 
         objects.push(TransformedFatObject::new(
-            HomogeneousVolumeBuilder::<SphereObject> {
+            HomogeneousVolumeBuilder::<SphereMesh> {
                 object: SphereBuilder {
                     pos: Point3::ZERO,
                     radius: 50.,
@@ -533,7 +533,7 @@ pub static CORNELL: Scene = {
 
         // Ball on Small
         o.push(TransformedFatObject::new(
-            HomogeneousVolumeBuilder::<SphereObject> {
+            HomogeneousVolumeBuilder::<SphereMesh> {
                 object: SphereBuilder {
                     pos: (0.6255, 0.43, 0.680).into(),
                     radius: 0.1,

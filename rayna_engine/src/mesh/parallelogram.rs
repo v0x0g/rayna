@@ -5,7 +5,7 @@ use smallvec::SmallVec;
 use rayna_shared::def::types::{Number, Point2, Point3};
 
 use crate::mesh::planar::{Planar, PlanarBuilder};
-use crate::mesh::{Object, ObjectInstance, ObjectProperties};
+use crate::mesh::{Mesh, MeshInstance, MeshProperties};
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -18,14 +18,14 @@ pub struct ParallelogramBuilder {
 
 #[derive(Copy, Clone, Debug, CopyGetters)]
 #[get_copy = "pub"]
-pub struct ParallelogramObject {
+pub struct ParallelogramMesh {
     /// The plane that this mesh sits upon
     plane: Planar,
     aabb: Aabb,
     centre: Point3,
 }
 
-impl From<ParallelogramBuilder> for ParallelogramObject {
+impl From<ParallelogramBuilder> for ParallelogramMesh {
     fn from(builder: ParallelogramBuilder) -> Self {
         let plane = Planar::from(builder.plane);
         let (p, a, b) = (plane.p(), plane.p() + plane.u(), plane.p() + plane.v());
@@ -36,11 +36,11 @@ impl From<ParallelogramBuilder> for ParallelogramObject {
     }
 }
 
-impl From<ParallelogramBuilder> for ObjectInstance {
-    fn from(value: ParallelogramBuilder) -> Self { ParallelogramObject::from(value).into() }
+impl From<ParallelogramBuilder> for MeshInstance {
+    fn from(value: ParallelogramBuilder) -> Self { ParallelogramMesh::from(value).into() }
 }
 
-impl Object for ParallelogramObject {
+impl Mesh for ParallelogramMesh {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         let i = self.plane.intersect_bounded(ray, bounds)?;
         // Check in bounds for our segment of the plane: `uv in [0, 1]`
@@ -58,7 +58,7 @@ impl Object for ParallelogramObject {
     }
 }
 
-impl ObjectProperties for ParallelogramObject {
+impl MeshProperties for ParallelogramMesh {
     fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
     fn centre(&self) -> Point3 { self.plane.p() }
 }

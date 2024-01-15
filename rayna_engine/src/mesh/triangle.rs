@@ -5,7 +5,7 @@ use smallvec::SmallVec;
 use rayna_shared::def::types::{Number, Point3};
 
 use crate::mesh::planar::{Planar, PlanarBuilder};
-use crate::mesh::{Object, ObjectInstance, ObjectProperties};
+use crate::mesh::{Mesh, MeshInstance, MeshProperties};
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -18,14 +18,14 @@ pub struct TriangleBuilder {
 
 #[derive(Copy, Clone, Debug, CopyGetters)]
 #[get_copy = "pub"]
-pub struct TriangleObject {
+pub struct TriangleMesh {
     /// The plane that this mesh sits upon
     plane: Planar,
     aabb: Aabb,
     centre: Point3,
 }
 
-impl From<TriangleBuilder> for TriangleObject {
+impl From<TriangleBuilder> for TriangleMesh {
     fn from(builder: TriangleBuilder) -> Self {
         let plane = Planar::from(builder.plane);
         let (p, a, b) = (plane.p(), plane.p() + plane.u(), plane.p() + plane.v());
@@ -36,11 +36,11 @@ impl From<TriangleBuilder> for TriangleObject {
     }
 }
 
-impl From<TriangleBuilder> for ObjectInstance {
-    fn from(value: TriangleBuilder) -> Self { TriangleObject::from(value).into() }
+impl From<TriangleBuilder> for MeshInstance {
+    fn from(value: TriangleBuilder) -> Self { TriangleMesh::from(value).into() }
 }
 
-impl Object for TriangleObject {
+impl Mesh for TriangleMesh {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         let i = self.plane.intersect_bounded(ray, bounds)?;
         // Check in bounds for our segment of the plane: `u + v: [0..1]`
@@ -59,7 +59,7 @@ impl Object for TriangleObject {
     }
 }
 
-impl ObjectProperties for TriangleObject {
+impl MeshProperties for TriangleMesh {
     fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
     fn centre(&self) -> Point3 { self.plane.p() }
 }

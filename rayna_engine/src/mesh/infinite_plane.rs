@@ -5,7 +5,7 @@ use smallvec::SmallVec;
 use rayna_shared::def::types::{Number, Point2, Point3};
 
 use crate::mesh::planar::{Planar, PlanarBuilder};
-use crate::mesh::{Object, ObjectInstance, ObjectProperties};
+use crate::mesh::{Mesh, MeshInstance, MeshProperties};
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -53,13 +53,13 @@ pub struct InfinitePlaneBuilder {
 
 #[derive(Copy, Clone, Debug, CopyGetters)]
 #[get_copy = "pub"]
-pub struct InfinitePlaneObject {
+pub struct InfinitePlaneMesh {
     /// The plane that this mesh sits upon
     plane: Planar,
     uv_wrap: UvWrappingMode,
 }
 
-impl From<InfinitePlaneBuilder> for InfinitePlaneObject {
+impl From<InfinitePlaneBuilder> for InfinitePlaneMesh {
     fn from(builder: InfinitePlaneBuilder) -> Self {
         let plane = builder.plane.into();
         Self {
@@ -69,11 +69,11 @@ impl From<InfinitePlaneBuilder> for InfinitePlaneObject {
     }
 }
 
-impl From<InfinitePlaneBuilder> for ObjectInstance {
-    fn from(value: InfinitePlaneBuilder) -> Self { InfinitePlaneObject::from(value).into() }
+impl From<InfinitePlaneBuilder> for MeshInstance {
+    fn from(value: InfinitePlaneBuilder) -> Self { InfinitePlaneMesh::from(value).into() }
 }
 
-impl Object for InfinitePlaneObject {
+impl Mesh for InfinitePlaneMesh {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         let mut i = self.plane.intersect_bounded(ray, bounds)?;
         // Wrap uv's if required
@@ -87,7 +87,7 @@ impl Object for InfinitePlaneObject {
     }
 }
 
-impl ObjectProperties for InfinitePlaneObject {
+impl MeshProperties for InfinitePlaneMesh {
     fn aabb(&self) -> Option<&Aabb> { None }
     fn centre(&self) -> Point3 { self.plane.p() }
 }

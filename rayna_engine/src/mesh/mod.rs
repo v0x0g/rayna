@@ -1,10 +1,10 @@
 //! # Module [crate::mesh]
 //!
-//! This module contains the submodules for different mesh (see [Object] and [ObjectInstance]) types.
+//! This module contains the submodules for different mesh (see [Mesh] and [MeshInstance]) types.
 //!
 //! ## Related
-//! - [Object]
-//! - [ObjectInstance]
+//! - [Mesh]
+//! - [MeshInstance]
 //! - [sphere]
 //!
 //! # DEV: Code Structure
@@ -21,7 +21,7 @@
 //! - File: `./sphere.rs`
 //! - Add module: `pub mod sphere;`
 //! - Structs: `SphereBuilder`, which is translated into `SphereObject`, where `SphereObject: Object`
-//! - Add an entry to [ObjectInstance] to correspond to the `SphereObject` for static-dispatch
+//! - Add an entry to [MeshInstance] to correspond to the `SphereObject` for static-dispatch
 //! - See [sphere] for an example
 
 use crate::shared::aabb::Aabb;
@@ -36,9 +36,8 @@ use smallvec::SmallVec;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
 use self::{
-    axis_box::AxisBoxObject, dynamic::DynamicObject, homogenous_volume::HomogeneousVolumeObject,
-    infinite_plane::InfinitePlaneObject, parallelogram::ParallelogramObject, sphere::SphereObject,
-    triangle::TriangleObject,
+    axis_box::AxisBoxMesh, dynamic::DynamicMesh, homogenous_volume::HomogeneousVolumeMesh,
+    infinite_plane::InfinitePlaneMesh, parallelogram::ParallelogramMesh, sphere::SphereMesh, triangle::TriangleMesh,
 };
 
 pub mod axis_box;
@@ -52,10 +51,10 @@ pub mod triangle;
 
 // region Object traits
 
-dyn_clone::clone_trait_object!(Object);
+dyn_clone::clone_trait_object!(Mesh);
 
 #[enum_dispatch]
-pub trait Object: ObjectProperties + RtRequirement {
+pub trait Mesh: MeshProperties + RtRequirement {
     /// Attempts to perform an intersection between the given ray and the target mesh
     ///
     /// # Return Value
@@ -73,26 +72,26 @@ pub trait Object: ObjectProperties + RtRequirement {
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
 }
 
-/// An optimised implementation of [Object].
+/// An optimised implementation of [Mesh].
 ///
 /// See [crate::material::MaterialInstance] for an explanation of the [macro@enum_dispatch] macro usage
 #[enum_dispatch(Object, ObjectProperties)]
 #[derive(Clone, Debug)]
-pub enum ObjectInstance {
-    SphereObject,
-    AxisBoxObject,
-    ParallelogramObject,
-    InfinitePlaneObject,
-    TriangleObject,
-    HomogeneousVolumeObject(HomogeneousVolumeObject<DynamicObject>),
-    DynamicObject,
+pub enum MeshInstance {
+    SphereMesh,
+    AxisBoxMesh,
+    ParallelogramMesh,
+    InfinitePlaneMesh,
+    TriangleMesh,
+    HomogeneousVolumeMesh(HomogeneousVolumeMesh<DynamicMesh>),
+    DynamicMesh,
 }
 
-dyn_clone::clone_trait_object!(ObjectProperties);
+dyn_clone::clone_trait_object!(MeshProperties);
 
-/// This trait describes an [Object], and the properties it has
+/// This trait describes an [Mesh], and the properties it has
 #[enum_dispatch]
-pub trait ObjectProperties: RtRequirement {
+pub trait MeshProperties: RtRequirement {
     /// Gets the bounding box for this mesh. If the mesh can't be bounded (e.g. infinite plane), return [None]
     fn aabb(&self) -> Option<&Aabb>;
 

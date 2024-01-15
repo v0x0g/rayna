@@ -7,7 +7,7 @@ use smallvec::SmallVec;
 
 use rayna_shared::def::types::{Number, Point2, Point3, Vector2, Vector3};
 
-use crate::mesh::{Object, ObjectInstance, ObjectProperties};
+use crate::mesh::{Mesh, MeshInstance, MeshProperties};
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -16,7 +16,7 @@ use crate::shared::validate;
 
 /// A builder struct used to create a box
 ///
-/// Call [Into::into] or [AxisBoxObject::from] to create the actual mesh
+/// Call [Into::into] or [AxisBoxMesh::from] to create the actual mesh
 #[derive(Copy, Clone, Debug)]
 pub struct AxisBoxBuilder {
     pub corner_1: Point3,
@@ -37,14 +37,14 @@ impl AxisBoxBuilder {
 /// Built instance of a box mesh
 #[derive(Copy, Clone, Debug, CopyGetters)]
 #[get_copy = "pub"]
-pub struct AxisBoxObject {
+pub struct AxisBoxMesh {
     centre: Point3,
     radius: Vector3,
     inv_radius: Vector3,
     aabb: Aabb,
 }
 
-impl From<AxisBoxBuilder> for AxisBoxObject {
+impl From<AxisBoxBuilder> for AxisBoxMesh {
     fn from(value: AxisBoxBuilder) -> Self {
         let aabb = Aabb::new(value.corner_1, value.corner_2);
         Self {
@@ -56,12 +56,12 @@ impl From<AxisBoxBuilder> for AxisBoxObject {
     }
 }
 
-impl From<AxisBoxBuilder> for ObjectInstance {
-    fn from(value: AxisBoxBuilder) -> ObjectInstance { AxisBoxObject::from(value).into() }
+impl From<AxisBoxBuilder> for MeshInstance {
+    fn from(value: AxisBoxBuilder) -> MeshInstance { AxisBoxMesh::from(value).into() }
 }
 
 #[allow(unused_variables)]
-impl Object for AxisBoxObject {
+impl Mesh for AxisBoxMesh {
     //noinspection RsLiveness
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         /*
@@ -217,7 +217,7 @@ impl Object for AxisBoxObject {
     }
 }
 
-impl ObjectProperties for AxisBoxObject {
+impl MeshProperties for AxisBoxMesh {
     fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
     fn centre(&self) -> Point3 { self.centre }
 }

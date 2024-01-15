@@ -1,6 +1,6 @@
 mod transformed;
 
-use crate::mesh::Object;
+use crate::mesh::Mesh;
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
@@ -10,7 +10,7 @@ use rayna_shared::def::types::Number;
 use smallvec::SmallVec;
 use transformed::TransformedFatObject;
 
-/// This trait is essentially an extension of [Object], but with a [FullIntersection] not [Intersection],
+/// This trait is essentially an extension of [Mesh], but with a [FullIntersection] not [Intersection],
 /// meaning the material of the mesh is also included.
 ///
 /// This should only be implemented on [TransformedFatObject], and any objects that group multiple objects together.

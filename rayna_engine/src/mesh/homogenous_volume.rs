@@ -1,5 +1,5 @@
-use crate::mesh::dynamic::DynamicObject;
-use crate::mesh::{Object, ObjectInstance, ObjectProperties};
+use crate::mesh::dynamic::DynamicMesh;
+use crate::mesh::{Mesh, MeshInstance, MeshProperties};
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -14,12 +14,12 @@ use smallvec::SmallVec;
 
 #[derive(Derivative)]
 #[derivative(Debug(bound = ""), Clone(bound = ""), Copy)]
-pub struct HomogeneousVolumeBuilder<Obj: Object + Clone> {
+pub struct HomogeneousVolumeBuilder<Obj: Mesh + Clone> {
     pub object: Obj,
     pub density: Number,
 }
 
-impl<Obj: Object + Clone> From<HomogeneousVolumeBuilder<Obj>> for HomogeneousVolumeObject<Obj> {
+impl<Obj: Mesh + Clone> From<HomogeneousVolumeBuilder<Obj>> for HomogeneousVolumeMesh<Obj> {
     fn from(value: HomogeneousVolumeBuilder<Obj>) -> Self {
         Self {
             object: value.object,
@@ -28,15 +28,15 @@ impl<Obj: Object + Clone> From<HomogeneousVolumeBuilder<Obj>> for HomogeneousVol
         }
     }
 }
-impl<Obj: Object + Clone + 'static> From<HomogeneousVolumeBuilder<Obj>> for ObjectInstance {
+impl<Obj: Mesh + Clone + 'static> From<HomogeneousVolumeBuilder<Obj>> for MeshInstance {
     fn from(value: HomogeneousVolumeBuilder<Obj>) -> Self {
         let HomogeneousVolumeBuilder { object, density } = value;
         // ObjectInstance uses HomogeneousVolumeObject<DynamicObject>, so cast the builder
         let dyn_builder = HomogeneousVolumeBuilder {
             density,
-            object: DynamicObject::from(object),
+            object: DynamicMesh::from(object),
         };
-        ObjectInstance::HomogeneousVolumeObject(HomogeneousVolumeObject::from(dyn_builder))
+        MeshInstance::HomogeneousVolumeMesh(HomogeneousVolumeMesh::from(dyn_builder))
     }
 }
 
@@ -44,13 +44,13 @@ impl<Obj: Object + Clone + 'static> From<HomogeneousVolumeBuilder<Obj>> for Obje
 #[derive(Derivative, Getters)]
 #[derivative(Debug(bound = ""), Clone(bound = ""), Copy)]
 #[get = "pub"]
-pub struct HomogeneousVolumeObject<Obj: Object + Clone> {
+pub struct HomogeneousVolumeMesh<Obj: Mesh + Clone> {
     object: Obj,
     density: Number,
     neg_inv_density: Number,
 }
 
-impl<Obj: Object + Clone> Object for HomogeneousVolumeObject<Obj> {
+impl<Obj: Mesh + Clone> Mesh for HomogeneousVolumeMesh<Obj> {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
         // Find two samples on surface of volume
         // These should be as the ray enters and exits the mesh
@@ -103,7 +103,7 @@ impl<Obj: Object + Clone> Object for HomogeneousVolumeObject<Obj> {
     }
 }
 
-impl<Obj: Object + Clone> ObjectProperties for HomogeneousVolumeObject<Obj> {
+impl<Obj: Mesh + Clone> MeshProperties for HomogeneousVolumeMesh<Obj> {
     fn aabb(&self) -> Option<&Aabb> { self.object.aabb() }
     fn centre(&self) -> Point3 { self.object.centre() }
 }

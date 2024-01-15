@@ -1,6 +1,6 @@
 use crate::fat_object::FullObject;
 use crate::material::{Material, MaterialInstance};
-use crate::mesh::{Object, ObjectInstance, ObjectProperties};
+use crate::mesh::{Mesh, MeshInstance, MeshProperties};
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
@@ -25,12 +25,12 @@ use smallvec::SmallVec;
 /// Alternatively, you can also apply a post and pre-transform, to counteract the mesh's position offset:
 /// ```
 /// # use rayna_engine::material::lambertian::LambertianMaterial;
-/// # use rayna_engine::mesh::axis_box::{AxisBoxBuilder, AxisBoxObject};
+/// # use rayna_engine::mesh::axis_box::{AxisBoxBuilder, AxisBoxMesh};
 /// # use rayna_shared::def::types::{Angle, Point3, Transform3, Vector3};
 /// #
 /// # let a: Point3 = [5., 1., 2.].into();
 /// # let b: Point3 = [3., 4., -7.].into();
-/// # let mesh: AxisBoxObject = AxisBoxBuilder {
+/// # let mesh: AxisBoxMesh = AxisBoxBuilder {
 /// #     corner_1: a,
 /// #     corner_2: b,
 /// # }.into();
@@ -49,19 +49,19 @@ use smallvec::SmallVec;
 /// This pre/post transform is encapsulated in [TransformedFatObject::new_with_correction()]
 #[derive(Getters, Clone, Debug)]
 #[get = "pub"]
-pub struct TransformedFatObject<Obj: Object + Clone = ObjectInstance, Mat: Material + Clone = MaterialInstance> {
+pub struct TransformedFatObject<Obj: Mesh + Clone = MeshInstance, Mat: Material + Clone = MaterialInstance> {
     object: Obj,
     material: Mat,
     transform: Option<Transform3>,
     inv_transform: Option<Transform3>,
     aabb: Option<Aabb>,
-    /// The centre of the mesh. May not be equal to [ObjectProperties::centre()],
+    /// The centre of the mesh. May not be equal to [MeshProperties::centre()],
     /// if the mesh has been translated
     centre: Point3,
     // TODO: Add a string identifier to this (name?)
 }
 
-impl<Obj: Object + Clone, Mat: Material + Clone> FullObject for TransformedFatObject<Obj, Mat> {
+impl<Obj: Mesh + Clone, Mat: Material + Clone> FullObject for TransformedFatObject<Obj, Mat> {
     fn full_intersect<'o>(
         &'o self,
         orig_ray: &Ray,
@@ -119,7 +119,7 @@ impl TransformedFatObject {
     /// using the `obj_centre` parameter. See field documentation ([Self::transform]) for explanation
     /// and example of this position offset correction
     pub fn new_with_correction(
-        object: impl Into<ObjectInstance>,
+        object: impl Into<MeshInstance>,
         material: impl Into<MaterialInstance>,
         transform: Transform3,
     ) -> Self {
@@ -139,7 +139,7 @@ impl TransformedFatObject {
     /// the transform, or that the transform correctly accounts for the mesh's translation.
     /// See field documentation ([Self::transform]) for explanation
     pub fn new_without_correction(
-        object: impl Into<ObjectInstance>,
+        object: impl Into<MeshInstance>,
         material: impl Into<MaterialInstance>,
         transform: Transform3,
     ) -> Self {
@@ -167,7 +167,7 @@ impl TransformedFatObject {
     }
 
     /// Creates a new transformed mesh instance, using the given mesh. This method does not transform the [TransformedFatObject]
-    pub fn new(object: impl Into<ObjectInstance>, material: impl Into<MaterialInstance>) -> Self {
+    pub fn new(object: impl Into<MeshInstance>, material: impl Into<MaterialInstance>) -> Self {
         // Calculate the resulting AABB by transforming the corners of the input AABB.
         let object = object.into();
         Self {

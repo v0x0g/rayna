@@ -32,13 +32,13 @@ impl<M: Mesh + Clone> From<HomogeneousVolumeBuilder<M>> for HomogeneousVolumeMes
 }
 
 // VolumeBuilder<T> => MeshInstance
-impl<M: Mesh + Clone> From<HomogeneousVolumeBuilder<M>> for MeshInstance {
+impl<M: Mesh + Clone + 'static> From<HomogeneousVolumeBuilder<M>> for MeshInstance {
     fn from(value: HomogeneousVolumeBuilder<M>) -> Self {
         let HomogeneousVolumeBuilder { mesh: object, density } = value;
         // ObjectInstance uses HomogeneousVolumeObject<DynamicObject>, so cast the builder to dyn mesh
         let dyn_builder = HomogeneousVolumeBuilder {
             density,
-            mesh: DynamicMesh::from(object),
+            mesh: DynamicMesh::new(object),
         };
         MeshInstance::HomogeneousVolumeMesh(HomogeneousVolumeMesh::from(dyn_builder))
     }

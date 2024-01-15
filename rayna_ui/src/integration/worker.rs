@@ -3,10 +3,14 @@ use crate::profiler;
 use egui::{Color32, ColorImage};
 use image::RgbaImage;
 use puffin::{profile_function, profile_scope};
+use rayna_engine::material::MaterialInstance;
+use rayna_engine::mesh::MeshInstance;
+use rayna_engine::object::ObjectInstance;
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
 use rayna_engine::scene::Scene;
+use rayna_engine::skybox::SkyboxInstance;
 use rayna_shared::def::targets::BG_WORKER;
 use rayna_shared::def::types::{Channel, ImgBuf};
 use rayon::iter::IntoParallelIterator;
@@ -25,7 +29,8 @@ pub(super) struct BgWorker {
     /// Receiver for messages from the UI, to the worker
     pub msg_rx: flume::Receiver<MessageToWorker>,
     pub render_tx: flume::Sender<Render<ColorImage>>,
-    pub renderer: Renderer,
+    pub renderer:
+        Renderer<MeshInstance, MaterialInstance, ObjectInstance<MeshInstance, MaterialInstance>, SkyboxInstance>,
 }
 
 impl BgWorker {
@@ -132,9 +137,7 @@ impl BgWorker {
             const INV_GAMMA: Channel = 1.0 / GAMMA;
 
             // Gamma correction is per-channel, not per-pixel
-            img.deref_mut()
-                .into_par_iter()
-                .for_each(|c| *c = c.powf(INV_GAMMA));
+            img.deref_mut().into_par_iter().for_each(|c| *c = c.powf(INV_GAMMA));
         }
 
         // Convert

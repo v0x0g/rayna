@@ -10,7 +10,7 @@ pub struct DynamicTexture {
 }
 
 impl DynamicTexture {
-    pub fn new(inner: impl Texture) -> Self { Self { inner: Arc::new(inner) } }
+    pub fn new(inner: impl Texture + 'static) -> Self { Self { inner: Arc::new(inner) } }
 }
 
 impl Texture for DynamicTexture {

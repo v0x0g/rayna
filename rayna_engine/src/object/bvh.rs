@@ -53,6 +53,8 @@ where
     Nested(Aabb),
     Object(Obj),
     /// DO NOT USE, JUST A MARKER FOR THE STUPID COMPILER
+    #[allow(unused)]
+    #[doc(hidden)]
     Marker(PhantomData<Mesh>, PhantomData<Mat>),
 }
 

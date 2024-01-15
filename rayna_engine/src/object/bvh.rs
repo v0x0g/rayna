@@ -29,7 +29,7 @@ pub struct Bvh<Mesh, Mat, Obj>
 where
     Mesh: crate::mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat>,
+    Obj: Object<Mesh, Mat> + Clone,
 {
     arena: Arena<BvhNode<Mesh, Mat, Obj>>,
     root_id: Option<NodeId>,
@@ -47,7 +47,7 @@ enum BvhNode<Mesh, Mat, Obj>
 where
     Mesh: crate::mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat>,
+    Obj: Object<Mesh, Mat> + Clone,
 {
     // Don't need to keep track of children since the tree does that for us
     Nested(Aabb),
@@ -57,15 +57,22 @@ where
 }
 
 /// Helper function to unwrap an AABB with a panic message
-fn expect_aabb<Mesh: crate::mesh::Mesh + Clone, Mat: Material + Clone, Obj: Object<Mesh, Mat>>(o: &Obj) -> &Aabb {
+fn expect_aabb<Mesh: crate::mesh::Mesh + Clone, Mat: Material + Clone, Obj: Object<Mesh, Mat> + Clone>(
+    o: &Obj,
+) -> &Aabb {
     o.aabb().as_ref().expect("aabb required as invariant of `Bvh`")
+}
+
+/// Function that panics with a message that a BvhNode::Marker variant was supplied
+fn panic_bvhnode_marker_unreachable() -> ! {
+    unreachable!("BvhNode::Marker variant should not be constructed, it's a compiler hint to stop being dumb")
 }
 
 impl<Mesh, Mat, Obj> Bvh<Mesh, Mat, Obj>
 where
     Mesh: crate::mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat>,
+    Obj: Object<Mesh, Mat> + Clone,
 {
     /// Creates a new [Bvh] tree from the given slice of objects
     ///
@@ -107,9 +114,9 @@ where
         };
 
         match axis {
-            SplitAxis::X => objects.sort_unstable_by(sort_x::<Obj>),
-            SplitAxis::Y => objects.sort_unstable_by(sort_y::<Obj>),
-            SplitAxis::Z => objects.sort_unstable_by(sort_z::<Obj>),
+            SplitAxis::X => objects.sort_unstable_by(sort_x),
+            SplitAxis::Y => objects.sort_unstable_by(sort_y),
+            SplitAxis::Z => objects.sort_unstable_by(sort_z),
         }
     }
 
@@ -237,7 +244,7 @@ impl<Mesh, Mat, Obj> Bvh<Mesh, Mat, Obj>
 where
     Mesh: crate::mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat>,
+    Obj: Object<Mesh, Mat> + Clone,
 {
     /// Given a [NodeId] on the [Arena] tree, calculates the nearest intersection for the given `ray` and `bounds`
     ///
@@ -277,6 +284,7 @@ where
                     obj.full_intersect(ray, bounds, rng)
                 }
             }
+            BvhNode::Marker(_, _) => panic_bvhnode_marker_unreachable(),
         };
     }
 
@@ -311,6 +319,8 @@ where
                 }
                 obj.full_intersect_all(ray, output, rng)
             }
+
+            BvhNode::Marker(_, _) => panic_bvhnode_marker_unreachable(),
         }
 
         // // Possibly faster method, doesn't do any tree traversal at all, should be linear
@@ -359,6 +369,7 @@ where
         {
             BvhNode::Nested(aabb) => Some(aabb),
             BvhNode::Object(o) => Some(expect_aabb(o)),
+            BvhNode::Marker(_, _) => panic_bvhnode_marker_unreachable(),
         }
     }
 }

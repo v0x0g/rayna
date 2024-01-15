@@ -18,6 +18,7 @@ where
     pub objects: Obj,
     pub skybox: Sky,
     pub camera: Camera,
+    // Why won't the compiler figure out that Mesh and Mat are used by Object???
     pub phantom_mesh: PhantomData<Mesh>,
     pub phantom_mat: PhantomData<Mat>,
 }

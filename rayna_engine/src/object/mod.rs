@@ -51,7 +51,7 @@ pub trait Object<Mesh: MeshTrait + Clone, Mat: Material + Clone>: RtRequirement 
     fn aabb(&self) -> Option<&Aabb>;
 }
 
-#[enum_dispatch(Object)]
+#[enum_dispatch(Object<Mesh, Mat>)]
 #[derive(Clone, Debug)]
 pub enum ObjectInstance<Mesh: MeshTrait + Clone, Mat: Material + Clone> {
     SimpleObject(SimpleObject<Mesh, Mat>),

@@ -25,6 +25,8 @@ use crate::mesh::parallelogram::*;
 use crate::mesh::planar::PlanarBuilder;
 use crate::mesh::sphere::*;
 use crate::mesh::MeshInstance;
+use crate::object::list::ObjectList;
+use crate::object::ObjectInstance;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
 use crate::skybox::SkyboxInstance;
@@ -257,7 +259,7 @@ pub static RTIAW_DEMO: Scene = {
 /// From **RayTracing The Next Week**, the demo scene at the end of the chapter (extended of course)
 #[dynamic]
 pub static RTTNW_DEMO: Scene = {
-    let mut objects = Vec::new();
+    let mut objects: Vec<ObjectInstance<MeshInstance, MaterialInstance>> = Vec::new();
     let rng = &mut thread_rng();
 
     // Const trait impls aren't yet stabilised, so we can't call TextureInstance::From(Pixel) yet
@@ -284,127 +286,154 @@ pub static RTTNW_DEMO: Scene = {
                 let low = Point3::new(-10., 0., -10.) + Vector3::new(i as Number * WIDTH, 0., j as Number * WIDTH);
                 let high = low + Vector3::new(WIDTH, rng.gen_range(0.0..=1.0), WIDTH);
 
-                objects.push(SimpleObject::new(
-                    AxisBoxBuilder {
-                        corner_1: low,
-                        corner_2: high,
-                    },
-                    GROUND_MATERIAL,
-                ));
+                objects.push(
+                    SimpleObject::new(
+                        AxisBoxBuilder {
+                            corner_1: low,
+                            corner_2: high,
+                        },
+                        GROUND_MATERIAL,
+                    )
+                    .into(),
+                );
             }
         }
     }
 
     {
         // LIGHT
-        objects.push(SimpleObject::new(
-            ParallelogramBuilder {
-                plane: PlanarBuilder::Vectors {
-                    p: (1.23, 5.54, 1.47).into(),
-                    u: (3., 0., 0.).into(),
-                    v: (0., 0., 2.65).into(),
+        objects.push(
+            SimpleObject::new(
+                ParallelogramBuilder {
+                    plane: PlanarBuilder::Vectors {
+                        p: (1.23, 5.54, 1.47).into(),
+                        u: (3., 0., 0.).into(),
+                        v: (0., 0., 2.65).into(),
+                    },
                 },
-            },
-            LightMaterial {
-                emissive: solid_texture([7.; 3]),
-            },
-        ));
+                LightMaterial {
+                    emissive: solid_texture([7.; 3]),
+                },
+            )
+            .into(),
+        );
     }
 
     {
         // BROWN SPHERE
-        objects.push(SimpleObject::new(
-            SphereBuilder {
-                pos: (4., 4., 2.).into(),
-                radius: 0.5,
-            },
-            LambertianMaterial {
-                albedo: solid_texture([0.7, 0.3, 0.1]),
-                emissive: BLACK_TEX,
-            },
-        ));
+        objects.push(
+            SimpleObject::new(
+                SphereBuilder {
+                    pos: (4., 4., 2.).into(),
+                    radius: 0.5,
+                },
+                LambertianMaterial {
+                    albedo: solid_texture([0.7, 0.3, 0.1]),
+                    emissive: BLACK_TEX,
+                },
+            )
+            .into(),
+        );
 
         // GLASS SPHERE
-        objects.push(SimpleObject::new(
-            SphereBuilder {
-                pos: (2.6, 1.5, 0.45).into(),
-                radius: 0.5,
-            },
-            DielectricMaterial {
-                albedo: [1.; 3].into(),
-                refractive_index: 1.5,
-            },
-        ));
+        objects.push(
+            SimpleObject::new(
+                SphereBuilder {
+                    pos: (2.6, 1.5, 0.45).into(),
+                    radius: 0.5,
+                },
+                DielectricMaterial {
+                    albedo: [1.; 3].into(),
+                    refractive_index: 1.5,
+                },
+            )
+            .into(),
+        );
 
         // METAL SPHERE (RIGHT)
-        objects.push(SimpleObject::new(
-            SphereBuilder {
-                pos: (0., 1.5, 1.45).into(),
-                radius: 0.5,
-            },
-            MetalMaterial {
-                albedo: [0.8, 0.8, 0.9].into(),
-                fuzz: 1.,
-            },
-        ));
+        objects.push(
+            SimpleObject::new(
+                SphereBuilder {
+                    pos: (0., 1.5, 1.45).into(),
+                    radius: 0.5,
+                },
+                MetalMaterial {
+                    albedo: [0.8, 0.8, 0.9].into(),
+                    fuzz: 1.,
+                },
+            )
+            .into(),
+        );
 
         // SUBSURFACE SCATTER BLUE SPHERE (LEFT)
-        objects.push(SimpleObject::new(
-            SphereBuilder {
-                pos: (3.6, 1.5, 1.45).into(),
-                radius: 0.7,
-            },
-            DielectricMaterial {
-                albedo: [1.; 3].into(),
-                refractive_index: 1.5,
-            },
-        ));
-        objects.push(SimpleObject::new(
-            // BLUE HAZE INSIDE
-            HomogeneousVolumeBuilder::<SphereMesh> {
-                mesh: SphereBuilder {
+        objects.push(
+            SimpleObject::new(
+                SphereBuilder {
                     pos: (3.6, 1.5, 1.45).into(),
-                    radius: 0.6,
-                }
-                .into(),
-                density: 40.,
-            },
-            IsotropicMaterial {
-                albedo: [0.01, 0.02, 0.6].into(),
-            },
-        ));
+                    radius: 0.7,
+                },
+                DielectricMaterial {
+                    albedo: [1.; 3].into(),
+                    refractive_index: 1.5,
+                },
+            )
+            .into(),
+        );
+        objects.push(
+            SimpleObject::new(
+                // BLUE HAZE INSIDE
+                HomogeneousVolumeBuilder::<SphereMesh> {
+                    mesh: SphereBuilder {
+                        pos: (3.6, 1.5, 1.45).into(),
+                        radius: 0.6,
+                    }
+                    .into(),
+                    density: 40.,
+                },
+                IsotropicMaterial {
+                    albedo: [0.01, 0.02, 0.6].into(),
+                },
+            )
+            .into(),
+        );
 
         // EARTH SPHERE
-        objects.push(SimpleObject::new(
-            SphereBuilder {
-                pos: (4., 2., 4.).into(),
-                radius: 1.0,
-            },
-            LambertianMaterial {
-                albedo: ImageTexture::from(
-                    image::load_from_memory(include_bytes!("../../../media/textures/earthmap.jpg"))
-                        .expect("compile-time image resource should be valid")
-                        .into_rgb32f(),
-                )
-                .into(),
-                emissive: BLACK_TEX,
-            },
-        ));
+        objects.push(
+            SimpleObject::new(
+                SphereBuilder {
+                    pos: (4., 2., 4.).into(),
+                    radius: 1.0,
+                },
+                LambertianMaterial {
+                    albedo: ImageTexture::from(
+                        image::load_from_memory(include_bytes!("../../../media/textures/earthmap.jpg"))
+                            .expect("compile-time image resource should be valid")
+                            .into_rgb32f(),
+                    )
+                    .into(),
+                    emissive: BLACK_TEX,
+                },
+            )
+            .into(),
+        );
 
         // NOISE SPHERE
-        objects.push(SimpleObject::new(
-            SphereBuilder {
-                pos: (2.2, 2.8, 3.0).into(),
-                radius: 0.8,
-            },
-            LambertianMaterial {
-                albedo: WorldNoiseTexture {
-                    source: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69)).set_scale(4.)).as_dyn_box(),
-                }
-                .into(),
-                emissive: BLACK_TEX,
-            },
-        ));
+        objects.push(
+            SimpleObject::new(
+                SphereBuilder {
+                    pos: (2.2, 2.8, 3.0).into(),
+                    radius: 0.8,
+                },
+                LambertianMaterial {
+                    albedo: WorldNoiseTexture {
+                        source: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69)).set_scale(4.)).as_dyn_box(),
+                    }
+                    .into(),
+                    emissive: BLACK_TEX,
+                },
+            )
+            .into(),
+        );
     }
 
     {
@@ -416,31 +445,38 @@ pub static RTTNW_DEMO: Scene = {
             emissive: BLACK_TEX,
         };
 
-        for _ in 0..COUNT {
-            objects.push(SimpleObject::new(
+        let balls_iter = (0..COUNT).into_iter().map(|_| {
+            SimpleObject::new(
                 SphereBuilder {
                     pos: (rng::vector_in_unit_cube_01(rng) * 1.65).to_point(),
                     radius: 0.1,
                 },
                 white.clone(),
-            ));
-        }
+            )
+            .into()
+        });
+
+        let balls_list = ObjectList::from(balls_iter);
+        objects.push(ObjectInstance::ObjectList(balls_list));
     }
 
     {
         // HAZE
 
-        objects.push(SimpleObject::new(
-            HomogeneousVolumeBuilder::<SphereMesh> {
-                mesh: SphereBuilder {
-                    pos: Point3::ZERO,
-                    radius: 50.,
-                }
-                .into(),
-                density: 0.8,
-            },
-            IsotropicMaterial { albedo: [1.; 3].into() },
-        ));
+        objects.push(
+            SimpleObject::new(
+                HomogeneousVolumeBuilder::<SphereMesh> {
+                    mesh: SphereBuilder {
+                        pos: Point3::ZERO,
+                        radius: 50.,
+                    }
+                    .into(),
+                    density: 0.8,
+                },
+                IsotropicMaterial { albedo: [1.; 3].into() },
+            )
+            .into(),
+        );
     }
 
     Scene {

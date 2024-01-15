@@ -1,14 +1,13 @@
-use std::fmt::Debug;
-use std::ops::Deref;
 use num_traits::float::FloatCore;
 use num_traits::Euclid;
 use rand_core::RngCore;
+use std::fmt::Debug;
 
 use rayna_shared::def::types::{Number, Pixel, Vector2, Vector3};
 
 use crate::shared::intersect::Intersection;
-use crate::texture::Texture;
 use crate::texture::dynamic::DynamicTexture;
+use crate::texture::Texture;
 
 #[derive(Clone, Debug)]
 pub struct WorldCheckerTexture<Odd: Texture + Clone = DynamicTexture, Even: Texture + Clone = DynamicTexture> {
@@ -22,13 +21,7 @@ impl<Odd: Texture + Clone, Even: Texture + Clone> Texture for WorldCheckerTextur
     fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
         let pos = (intersection.pos_w.to_vector() / self.scale) + self.offset;
 
-        do_checker(
-            pos.to_array(),
-            self.odd.deref(),
-            self.even.deref(),
-            intersection,
-            rng,
-        )
+        do_checker(pos.to_array(), &self.odd, &self.even, intersection, rng)
     }
 }
 
@@ -44,13 +37,7 @@ impl<Odd: Texture + Clone, Even: Texture + Clone> Texture for UvCheckerTexture<O
     fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
         let pos = (intersection.uv.to_vector() / self.scale) + self.offset;
 
-        do_checker(
-            pos.to_array(),
-            self.odd.deref(),
-            self.even.deref(),
-            intersection,
-            rng,
-        )
+        do_checker(pos.to_array(), &self.odd, &self.even, intersection, rng)
     }
 }
 
@@ -60,14 +47,11 @@ pub fn do_checker<C: Euclid + FloatCore>(
     odd: &impl Texture,
     even: &impl Texture,
     intersection: &Intersection,
-    rng: &mut impl RngCore,
+    rng: &mut dyn RngCore,
 ) -> Pixel {
     let two: C = C::one() + C::one();
 
-    let sum: C = coords
-        .into_iter()
-        .map(C::floor)
-        .fold(C::zero(), |a: C, b: C| a + b);
+    let sum: C = coords.into_iter().map(C::floor).fold(C::zero(), |a: C, b: C| a + b);
 
     let is_even = C::rem_euclid(&sum, &two) < C::one();
 

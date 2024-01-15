@@ -1,5 +1,5 @@
-use crate::accel::aabb::Aabb;
 use crate::object::{Object, ObjectInstance, ObjectProperties};
+use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;

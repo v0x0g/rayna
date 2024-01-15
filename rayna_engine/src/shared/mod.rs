@@ -1,6 +1,7 @@
 use dyn_clone::DynClone;
 use std::fmt::Debug;
 
+pub mod aabb;
 pub mod bounds;
 pub mod camera;
 pub mod intersect;

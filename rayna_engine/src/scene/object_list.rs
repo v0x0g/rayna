@@ -2,9 +2,9 @@ use getset::Getters;
 use rand_core::RngCore;
 use smallvec::SmallVec;
 
-use crate::accel::aabb::Aabb;
 use crate::accel::bvh::Bvh;
 use crate::scene::{FullObject, SceneObject};
+use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;

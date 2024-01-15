@@ -12,8 +12,8 @@ use smallvec::SmallVec;
 
 use rayna_shared::def::types::Number;
 
-use crate::accel::aabb::Aabb;
 use crate::scene::FullObject;
+use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;

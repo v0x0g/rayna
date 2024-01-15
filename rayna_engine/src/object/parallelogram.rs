@@ -4,9 +4,9 @@ use smallvec::SmallVec;
 
 use rayna_shared::def::types::{Number, Point2, Point3};
 
-use crate::accel::aabb::Aabb;
 use crate::object::planar::{Planar, PlanarBuilder};
 use crate::object::{Object, ObjectInstance, ObjectProperties};
+use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;

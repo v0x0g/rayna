@@ -1,7 +1,7 @@
-use crate::accel::aabb::Aabb;
 use crate::material::MaterialInstance;
 use crate::object::{Object, ObjectInstance, ObjectProperties};
 use crate::scene::transform_utils::{transform_incoming_ray, transform_outgoing_intersection};
+use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::camera::Camera;
 use crate::shared::intersect::FullIntersection;

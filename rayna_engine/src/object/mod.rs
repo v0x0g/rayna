@@ -24,7 +24,7 @@
 //! - Add an entry to [ObjectInstance] to correspond to the `SphereObject` for static-dispatch
 //! - See [sphere] for an example
 
-use crate::accel::aabb::Aabb;
+use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;

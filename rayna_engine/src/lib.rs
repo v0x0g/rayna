@@ -5,10 +5,9 @@
 #![feature(array_methods)]
 #![feature(box_patterns)]
 
-pub mod accel;
 pub mod material;
 pub mod mesh;
-mod object;
+pub mod object;
 pub mod render;
 pub mod scene;
 pub mod shared;

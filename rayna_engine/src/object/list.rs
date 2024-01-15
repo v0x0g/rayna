@@ -10,7 +10,6 @@ use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
-use crate::shared::RtRequirement;
 use rayna_shared::def::types::Number;
 
 #[derive(Getters, Derivative)]
@@ -28,20 +27,12 @@ where
     unbounded: Vec<Obj>,
 }
 
-impl<Mesh, Mat, Obj> RtRequirement for ObjectList<Mesh, Mat, Obj>
-where
-    Mesh: crate::mesh::Mesh + Clone,
-    Mat: Material + Clone,
-    Obj: Object<Mesh, Mat>,
-{
-}
-
 // Iter<Into<ObjType>> => ObjectList
 impl<Mesh, Mat, Obj, Iter> From<Iter> for ObjectList<Mesh, Mat, Obj>
 where
     Mesh: crate::mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat>,
+    Obj: Object<Mesh, Mat> + Clone,
     Iter: IntoIterator<Item = Obj>,
 {
     fn from(value: Iter) -> Self {
@@ -63,7 +54,7 @@ impl<Mesh, Mat, Obj> Object<Mesh, Mat> for ObjectList<Mesh, Mat, Obj>
 where
     Mesh: crate::mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat>,
+    Obj: Object<Mesh, Mat> + Clone,
 {
     fn full_intersect<'o>(
         &'o self,

@@ -76,7 +76,7 @@ pub static SIMPLE: Scene = {
 
 #[dynamic]
 pub static TESTING: Scene = {
-    let mut objects = Vec::<SimpleObject>::new();
+    let mut objects = Vec::new();
 
     objects.push(SimpleObject::new(
         // Ground
@@ -463,7 +463,7 @@ pub static CORNELL: Scene = {
     let mut objects = Vec::new();
 
     fn quad(
-        objs: &mut Vec<SimpleObject>,
+        objs: &mut Vec<SimpleObject<MeshInstance, MaterialInstance>>,
         p: impl Into<Point3>,
         u: impl Into<Vector3>,
         v: impl Into<Vector3>,

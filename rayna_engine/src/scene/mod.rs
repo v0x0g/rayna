@@ -1,12 +1,13 @@
-use crate::material::Material;
-use crate::object::Object;
+use crate::material::{Material, MaterialInstance};
+use crate::mesh::MeshInstance;
+use crate::object::{Object, ObjectInstance};
 use crate::shared::camera::Camera;
 use crate::skybox::{Skybox, SkyboxInstance};
 
 pub mod stored;
 
 #[derive(Clone, Debug)]
-pub struct Scene<Mesh, Mat, Obj, Sky = SkyboxInstance>
+pub struct Scene<Mesh = MeshInstance, Mat = MaterialInstance, Obj = ObjectInstance<Mesh, Mat>, Sky = SkyboxInstance>
 where
     Mesh: crate::mesh::Mesh + Clone,
     Mat: Material + Clone,

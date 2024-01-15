@@ -7,12 +7,13 @@
 use image::Pixel as _;
 use noise::*;
 use rand::{thread_rng, Rng};
-use rayna_shared::def::types::{Angle, Number, Pixel, Point3, Transform3, Vector3};
+use rayna_shared::def::types::{Angle, Channel, Number, Pixel, Point3, Transform3, Vector3};
 use static_init::*;
 
 use crate::material::dielectric::DielectricMaterial;
 use crate::material::isotropic::IsotropicMaterial;
 use crate::material::lambertian::LambertianMaterial;
+use crate::material::light::LightMaterial;
 use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::object::axis_box::*;
@@ -26,6 +27,7 @@ use crate::shared::camera::Camera;
 use crate::shared::rng;
 use crate::skybox::SkyboxInstance;
 use crate::texture::noise::{ColourSource, LocalNoiseTexture};
+use crate::texture::solid::SolidTexture;
 use crate::texture::TextureInstance;
 
 use super::{Scene, SceneObject};
@@ -242,6 +244,80 @@ pub static RTIAW_DEMO: Scene = {
     }
 };
 
+//noinspection SpellCheckingInspection
+/// From **RayTracing The Next Week**, the demo scene at the end of the chapter (extended of course)
+#[dynamic]
+pub static RTTNW_DEMO: Scene = {
+    let mut objects = Vec::new();
+    let rng = &mut thread_rng();
+
+    // Const trait impls aren't yet stabilised, so we can't call TextureInstance::From(Pixel) yet
+    const fn solid_texture(albedo: [Channel; 3]) -> TextureInstance {
+        let pixel = Pixel { 0: albedo };
+        let solid = SolidTexture { albedo: pixel };
+        let texture = TextureInstance::SolidTexture(solid);
+        texture
+    }
+
+    const BLACK_TEX: TextureInstance = solid_texture([0., 0., 0.]);
+
+    {
+        // BOXES (FLOOR)
+
+        const BOXES_PER_SIDE: usize = 20;
+        const WIDTH: Number = 1.;
+        const GROUND_MATERIAL: LambertianMaterial = LambertianMaterial {
+            albedo: solid_texture([0.48, 0.83, 0.53]),
+            emissive: BLACK_TEX,
+        };
+
+        for i in 0..BOXES_PER_SIDE {
+            for j in 0..BOXES_PER_SIDE {
+                let low = Point3::new(-10., 0., -10.) + Vector3::new(i as Number * WIDTH, 0., j as Number * WIDTH);
+                let high = low + Vector3::new(WIDTH, rng.gen_range(0.0..=1.0), WIDTH);
+
+                objects.push(SceneObject::new(
+                    AxisBoxBuilder {
+                        corner_1: low,
+                        corner_2: high,
+                    },
+                    GROUND_MATERIAL,
+                ));
+            }
+        }
+    }
+
+    {
+        // LIGHT
+
+        objects.push(SceneObject::new(
+            ParallelogramBuilder {
+                plane: PlanarBuilder::Vectors {
+                    p: (1.23, 5.54, 1.47).into(),
+                    u: (3., 0., 0.).into(),
+                    v: (0., 0., 2.65).into(),
+                },
+            },
+            LightMaterial {
+                // albedo: BLACK_TEX,
+                emissive: solid_texture([7.; 3]),
+            },
+        ))
+    }
+
+    Scene {
+        camera: Camera {
+            pos: Point3::new(4.78, 2.78, -6.0),
+            fwd: Vector3::new(-1., 0., 3.).normalize(),
+            v_fov: Angle::from_degrees(40.),
+            focus_dist: 1.,
+            defocus_angle: Angle::from_degrees(0.0),
+        },
+        objects: objects.into(),
+        skybox: None.into(),
+    }
+};
+
 /// The classic cornell box scene
 #[dynamic]
 pub static CORNELL: Scene = {
@@ -328,11 +404,11 @@ pub static CORNELL: Scene = {
         o.push(SceneObject::new(
             HomogeneousVolumeBuilder::<SphereObject> {
                 object: SphereBuilder {
-                    pos: (0.6255, 0.66, 0.680).into(),
-                    radius: 0.2,
+                    pos: (0.6255, 0.43, 0.680).into(),
+                    radius: 0.1,
                 }
                 .into(),
-                density: 3.,
+                density: 8.,
             },
             IsotropicMaterial {
                 albedo: [0.3; 3].into(),

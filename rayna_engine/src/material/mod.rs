@@ -2,7 +2,7 @@ use std::borrow::Borrow;
 //noinspection ALL
 use self::{
     dielectric::DielectricMaterial, dynamic::DynamicMaterial, isotropic::IsotropicMaterial,
-    lambertian::LambertianMaterial, metal::MetalMaterial,
+    lambertian::LambertianMaterial, metal::MetalMaterial, light::LightMaterial
 };
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -15,6 +15,7 @@ pub mod dielectric;
 pub mod dynamic;
 pub mod isotropic;
 pub mod lambertian;
+pub mod light;
 pub mod metal;
 
 /// The trait that defines what properties a material has
@@ -120,6 +121,7 @@ pub enum MaterialInstance {
     MetalMaterial,
     DielectricMaterial,
     IsotropicMaterial,
+    LightMaterial,
     DynamicMaterial,
 }
 

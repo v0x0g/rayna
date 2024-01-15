@@ -341,26 +341,28 @@ pub static RTTNW_DEMO: Scene = {
         ));
 
         // SUBSURFACE SCATTER BLUE SPHERE (LEFT)
-        let subsurface_sphere: SphereObject = SphereBuilder {
-            pos: (3.6, 1.5, 1.45).into(),
-            radius: 0.7,
-        }
-        .into();
         objects.push(SceneObject::new(
-            subsurface_sphere,
+            SphereBuilder {
+                pos: (3.6, 1.5, 1.45).into(),
+                radius: 0.7,
+            },
             DielectricMaterial {
                 albedo: [1.; 3].into(),
                 refractive_index: 1.5,
             },
         ));
         objects.push(SceneObject::new(
-            HomogeneousVolumeBuilder {
-                object: subsurface_sphere,
-                density: 0.2,
+            // BLUE HAZE INSIDE
+            HomogeneousVolumeBuilder::<SphereObject> {
+                object: SphereBuilder {
+                    pos: (3.6, 1.5, 1.45).into(),
+                    radius: 0.6,
+                }
+                .into(),
+                density: 40.,
             },
-            // Blue haze
             IsotropicMaterial {
-                albedo: [0.2, 0.4, 0.9].into(),
+                albedo: [0.01, 0.02, 0.6].into(),
             },
         ));
 
@@ -389,12 +391,32 @@ pub static RTTNW_DEMO: Scene = {
             },
             LambertianMaterial {
                 albedo: WorldNoiseTexture {
-                    source: ColourSource::Greyscale(Perlin::new(69)).as_dyn_box(),
+                    source: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69)).set_scale(4.)).as_dyn_box(),
                 }
                 .into(),
                 emissive: BLACK_TEX,
             },
         ));
+    }
+
+    {
+        // CUBE OF BALLS
+
+        const COUNT: usize = 1000;
+        let white = LambertianMaterial {
+            albedo: solid_texture([0.85; 3]),
+            emissive: BLACK_TEX,
+        };
+
+        for _ in 0..COUNT {
+            objects.push(SceneObject::new(
+                SphereBuilder {
+                    pos: (rng::vector_in_unit_cube_01(rng) * 1.65).to_point(),
+                    radius: 0.1,
+                },
+                white.clone(),
+            ));
+        }
     }
 
     {
@@ -407,7 +429,7 @@ pub static RTTNW_DEMO: Scene = {
                     radius: 50.,
                 }
                 .into(),
-                density: 0.001,
+                density: 0.8,
             },
             IsotropicMaterial { albedo: [1.; 3].into() },
         ));

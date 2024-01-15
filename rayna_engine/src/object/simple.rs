@@ -49,7 +49,11 @@ use smallvec::SmallVec;
 /// This pre/post transform is encapsulated in [SimpleObject::new_with_correction()]
 #[derive(Getters, Clone, Debug)]
 #[get = "pub"]
-pub struct SimpleObject<Mesh: MeshTrait + Clone, Mat: Material + Clone> {
+pub struct SimpleObject<Mesh, Mat>
+where
+    Mesh: MeshTrait + Clone,
+    Mat: Material + Clone,
+{
     object: Mesh,
     material: Mat,
     transform: Option<Transform3>,
@@ -58,7 +62,11 @@ pub struct SimpleObject<Mesh: MeshTrait + Clone, Mat: Material + Clone> {
     // TODO: Add a string identifier to this (name?)
 }
 
-impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> Object<Mesh, Mat> for SimpleObject<Mesh, Mat> {
+impl<Mesh, Mat> Object<Mesh, Mat> for SimpleObject<Mesh, Mat>
+where
+    Mesh: MeshTrait + Clone,
+    Mat: Material + Clone,
+{
     fn full_intersect<'o>(
         &'o self,
         orig_ray: &Ray,
@@ -109,7 +117,11 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> Object<Mesh, Mat> for Simpl
 
 // region Constructors
 
-impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> SimpleObject<Mesh, Mat> {
+impl<Mesh, Mat> SimpleObject<Mesh, Mat>
+where
+    Mesh: MeshTrait + Clone,
+    Mat: Material + Clone,
+{
     /// Creates a new transformed mesh instance, using the given mesh and transform matrix.
     ///
     /// Unlike [Self::new()], this *does* account for the mesh's translation from the origin,

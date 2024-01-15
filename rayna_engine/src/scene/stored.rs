@@ -26,7 +26,7 @@ use crate::object::ObjectInstance;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
 use crate::skybox::SkyboxInstance;
-use crate::texture::noise::{ColourSource, LocalNoiseTexture};
+use crate::texture::noise::{ColourSource, LocalNoiseTexture, WorldNoiseTexture};
 use crate::texture::solid::SolidTexture;
 use crate::texture::TextureInstance;
 
@@ -299,10 +299,103 @@ pub static RTTNW_DEMO: Scene = {
                 },
             },
             LightMaterial {
-                // albedo: BLACK_TEX,
                 emissive: solid_texture([7.; 3]),
             },
-        ))
+        ));
+    }
+
+    {
+        // BROWN SPHERE
+
+        objects.push(SceneObject::new(
+            SphereBuilder {
+                pos: (4., 4., 2.).into(),
+                radius: 0.5,
+            },
+            LambertianMaterial {
+                albedo: solid_texture([0.7, 0.3, 0.1]),
+                emissive: BLACK_TEX,
+            },
+        ));
+
+        // GLASS SPHERE
+
+        objects.push(SceneObject::new(
+            SphereBuilder {
+                pos: (2.6, 1.5, 0.45).into(),
+                radius: 0.5,
+            },
+            DielectricMaterial {
+                albedo: [1.; 3].into(),
+                refractive_index: 1.5,
+            },
+        ));
+
+        // METAL SPHERE (RIGHT)
+
+        objects.push(SceneObject::new(
+            SphereBuilder {
+                pos: (0., 1.5, 1.45).into(),
+                radius: 0.5,
+            },
+            MetalMaterial {
+                albedo: [0.8, 0.8, 0.9].into(),
+                fuzz: 1.,
+            },
+        ));
+
+        // NOISE SPHERE (MIDDLE)
+
+        objects.push(SceneObject::new(
+            SphereBuilder {
+                pos: (3.6, 1.5, 1.45).into(),
+                radius: 0.7,
+            },
+            DielectricMaterial {
+                albedo: [1.; 3].into(),
+                refractive_index: 1.5,
+            },
+        ));
+
+        // SUBSURFACE SCATTER SPHERE
+
+        // Simulate subsurface scatter with a thin dielectric shell around the object
+        let boundary: SphereObject = SphereBuilder {
+            pos: (0., 1.5, 1.45).into(),
+            radius: 0.5,
+        }
+        .into();
+        objects.push(SceneObject::new(
+            boundary,
+            MetalMaterial {
+                albedo: [0.8, 0.8, 0.9].into(),
+                fuzz: 1.,
+            },
+        ));
+        objects.push(SceneObject::new(
+            HomogeneousVolumeBuilder {
+                object: boundary,
+                density: 0.2,
+            },
+            IsotropicMaterial {
+                albedo: [0.2, 0.4, 0.9].into(),
+            },
+        ));
+    }
+
+    {
+        // HAZE
+
+        objects.push(SceneObject::new(
+            HomogeneousVolumeBuilder::<SphereObject> {
+                object: SphereBuilder {
+                    pos: Point3::ZERO,
+                    radius: 50.,
+                },
+                density: 0.001,
+            },
+            IsotropicMaterial { albedo: [1.; 3].into() },
+        ));
     }
 
     Scene {

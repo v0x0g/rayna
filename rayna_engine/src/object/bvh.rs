@@ -7,6 +7,7 @@ use derivative::Derivative;
 use getset::Getters;
 use indextree::{Arena, NodeId};
 use std::cmp::Ordering;
+use std::marker::PhantomData;
 
 use itertools::{zip_eq, Itertools};
 use rand_core::RngCore;
@@ -51,6 +52,8 @@ where
     // Don't need to keep track of children since the tree does that for us
     Nested(Aabb),
     Object(Obj),
+    /// DO NOT USE, JUST A MARKER FOR THE STUPID COMPILER
+    Marker(PhantomData<Mesh>, PhantomData<Mat>),
 }
 
 /// Helper function to unwrap an AABB with a panic message

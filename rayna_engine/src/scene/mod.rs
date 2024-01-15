@@ -3,6 +3,7 @@ use crate::mesh::MeshInstance;
 use crate::object::{Object, ObjectInstance};
 use crate::shared::camera::Camera;
 use crate::skybox::{Skybox, SkyboxInstance};
+use std::marker::PhantomData;
 
 pub mod stored;
 
@@ -17,4 +18,6 @@ where
     pub objects: Obj,
     pub skybox: Sky,
     pub camera: Camera,
+    pub phantom_mesh: PhantomData<Mesh>,
+    pub phantom_mat: PhantomData<Mat>,
 }

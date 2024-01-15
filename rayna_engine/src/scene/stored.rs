@@ -26,6 +26,7 @@ use crate::object::ObjectInstance;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
 use crate::skybox::SkyboxInstance;
+use crate::texture::image::ImageTexture;
 use crate::texture::noise::{ColourSource, LocalNoiseTexture, WorldNoiseTexture};
 use crate::texture::solid::SolidTexture;
 use crate::texture::TextureInstance;
@@ -224,7 +225,7 @@ pub static RTIAW_DEMO: Scene = {
         },
         LambertianMaterial {
             albedo: LocalNoiseTexture {
-                func: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69u32)).set_scale(10000.)).as_dyn_box(),
+                source: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69u32)).set_scale(10000.)).as_dyn_box(),
             }
             .into(),
             emissive: Default::default(),
@@ -263,7 +264,6 @@ pub static RTTNW_DEMO: Scene = {
 
     {
         // BOXES (FLOOR)
-
         const BOXES_PER_SIDE: usize = 20;
         const WIDTH: Number = 1.;
         const GROUND_MATERIAL: LambertianMaterial = LambertianMaterial {
@@ -289,7 +289,6 @@ pub static RTTNW_DEMO: Scene = {
 
     {
         // LIGHT
-
         objects.push(SceneObject::new(
             ParallelogramBuilder {
                 plane: PlanarBuilder::Vectors {
@@ -306,7 +305,6 @@ pub static RTTNW_DEMO: Scene = {
 
     {
         // BROWN SPHERE
-
         objects.push(SceneObject::new(
             SphereBuilder {
                 pos: (4., 4., 2.).into(),
@@ -319,7 +317,6 @@ pub static RTTNW_DEMO: Scene = {
         ));
 
         // GLASS SPHERE
-
         objects.push(SceneObject::new(
             SphereBuilder {
                 pos: (2.6, 1.5, 0.45).into(),
@@ -332,7 +329,6 @@ pub static RTTNW_DEMO: Scene = {
         ));
 
         // METAL SPHERE (RIGHT)
-
         objects.push(SceneObject::new(
             SphereBuilder {
                 pos: (0., 1.5, 1.45).into(),
@@ -344,41 +340,59 @@ pub static RTTNW_DEMO: Scene = {
             },
         ));
 
-        // NOISE SPHERE (MIDDLE)
-
+        // SUBSURFACE SCATTER BLUE SPHERE (LEFT)
+        let subsurface_sphere: SphereObject = SphereBuilder {
+            pos: (3.6, 1.5, 1.45).into(),
+            radius: 0.7,
+        }
+        .into();
         objects.push(SceneObject::new(
-            SphereBuilder {
-                pos: (3.6, 1.5, 1.45).into(),
-                radius: 0.7,
-            },
+            subsurface_sphere,
             DielectricMaterial {
                 albedo: [1.; 3].into(),
                 refractive_index: 1.5,
             },
         ));
-
-        // SUBSURFACE SCATTER SPHERE
-
-        // Simulate subsurface scatter with a thin dielectric shell around the object
-        let boundary: SphereObject = SphereBuilder {
-            pos: (0., 1.5, 1.45).into(),
-            radius: 0.5,
-        }
-        .into();
-        objects.push(SceneObject::new(
-            boundary,
-            MetalMaterial {
-                albedo: [0.8, 0.8, 0.9].into(),
-                fuzz: 1.,
-            },
-        ));
         objects.push(SceneObject::new(
             HomogeneousVolumeBuilder {
-                object: boundary,
+                object: subsurface_sphere,
                 density: 0.2,
             },
+            // Blue haze
             IsotropicMaterial {
                 albedo: [0.2, 0.4, 0.9].into(),
+            },
+        ));
+
+        // EARTH SPHERE
+        objects.push(SceneObject::new(
+            SphereBuilder {
+                pos: (4., 2., 4.).into(),
+                radius: 1.0,
+            },
+            LambertianMaterial {
+                albedo: ImageTexture::from(
+                    image::load_from_memory(include_bytes!("../../../media/textures/earthmap.jpg"))
+                        .expect("compile-time image resource should be valid")
+                        .into_rgb32f(),
+                )
+                .into(),
+                emissive: BLACK_TEX,
+            },
+        ));
+
+        // NOISE SPHERE
+        objects.push(SceneObject::new(
+            SphereBuilder {
+                pos: (2.2, 2.8, 3.0).into(),
+                radius: 0.8,
+            },
+            LambertianMaterial {
+                albedo: WorldNoiseTexture {
+                    source: ColourSource::Greyscale(Perlin::new(69)).as_dyn_box(),
+                }
+                .into(),
+                emissive: BLACK_TEX,
             },
         ));
     }
@@ -391,7 +405,8 @@ pub static RTTNW_DEMO: Scene = {
                 object: SphereBuilder {
                     pos: Point3::ZERO,
                     radius: 50.,
-                },
+                }
+                .into(),
                 density: 0.001,
             },
             IsotropicMaterial { albedo: [1.; 3].into() },

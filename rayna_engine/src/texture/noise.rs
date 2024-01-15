@@ -19,6 +19,8 @@ dyn_clone::clone_trait_object!(<const D: usize> RtNoiseFn<D>);
 /// Enum that describes how a noise source is used to generate a colour for a pixel
 ///
 /// The values can be output in the range `-1.0..=1.0`
+///
+/// If using this in a scene, you might need to call [ColourSource::as_dyn_box()].
 #[derive(Derivative)]
 #[derivative(Clone(bound = ""), Debug(bound = ""))]
 pub enum ColourSource<N: RtNoiseFn<D> + Clone, const D: usize> {
@@ -49,10 +51,7 @@ impl<'n, const D: usize, N: RtNoiseFn<D> + Clone + 'n> ColourSource<N, D> {
         match self {
             Self::Greyscale(n) => ColourSource::Greyscale(Box::new(n.clone())),
             Self::Gradient(n, g) => ColourSource::Gradient(Box::new(n.clone()), g.clone()),
-            Self::Rgb(n) => ColourSource::Rgb(
-                n.each_ref()
-                    .map(|n| Box::new(n.clone()) as Box<dyn RtNoiseFn<D>>),
-            ),
+            Self::Rgb(n) => ColourSource::Rgb(n.each_ref().map(|n| Box::new(n.clone()) as Box<dyn RtNoiseFn<D>>)),
         }
     }
 }
@@ -60,12 +59,12 @@ impl<'n, const D: usize, N: RtNoiseFn<D> + Clone + 'n> ColourSource<N, D> {
 #[derive(Derivative)]
 #[derivative(Clone(bound = ""), Debug(bound = ""))]
 pub struct UvNoiseTexture<N: RtNoiseFn<2> + Clone> {
-    pub func: ColourSource<N, 2>,
+    pub source: ColourSource<N, 2>,
 }
 
 impl<N: RtNoiseFn<2> + Clone> Texture for UvNoiseTexture<N> {
     fn value(&self, intersection: &Intersection, _rng: &mut dyn RngCore) -> Pixel {
-        self.func.get(intersection.uv.to_array())
+        self.source.get(intersection.uv.to_array())
     }
 }
 
@@ -74,7 +73,7 @@ impl<N: RtNoiseFn<2> + Clone> Texture for UvNoiseTexture<N> {
 impl<N: RtNoiseFn<2> + Clone + 'static> From<UvNoiseTexture<Box<N>>> for TextureInstance {
     fn from(value: UvNoiseTexture<Box<N>>) -> Self {
         TextureInstance::UvNoiseTexture(UvNoiseTexture {
-            func: value.func.as_dyn_box(),
+            source: value.source.as_dyn_box(),
         })
     }
 }
@@ -82,12 +81,12 @@ impl<N: RtNoiseFn<2> + Clone + 'static> From<UvNoiseTexture<Box<N>>> for Texture
 #[derive(Derivative)]
 #[derivative(Clone(bound = ""), Debug(bound = ""))]
 pub struct WorldNoiseTexture<N: RtNoiseFn<3> + Clone> {
-    pub func: ColourSource<N, 3>,
+    pub source: ColourSource<N, 3>,
 }
 
 impl<N: RtNoiseFn<3> + Clone> Texture for WorldNoiseTexture<N> {
     fn value(&self, intersection: &Intersection, _rng: &mut dyn RngCore) -> Pixel {
-        self.func.get(intersection.pos_w.to_array())
+        self.source.get(intersection.pos_w.to_array())
     }
 }
 
@@ -95,7 +94,7 @@ impl<N: RtNoiseFn<3> + Clone> Texture for WorldNoiseTexture<N> {
 impl<N: RtNoiseFn<3> + Clone + 'static> From<WorldNoiseTexture<Box<N>>> for TextureInstance {
     fn from(value: WorldNoiseTexture<Box<N>>) -> Self {
         TextureInstance::WorldNoiseTexture(WorldNoiseTexture {
-            func: value.func.as_dyn_box(),
+            source: value.source.as_dyn_box(),
         })
     }
 }
@@ -103,12 +102,12 @@ impl<N: RtNoiseFn<3> + Clone + 'static> From<WorldNoiseTexture<Box<N>>> for Text
 #[derive(Derivative)]
 #[derivative(Clone(bound = ""), Debug(bound = ""))]
 pub struct LocalNoiseTexture<N: RtNoiseFn<3> + Clone> {
-    pub func: ColourSource<N, 3>,
+    pub source: ColourSource<N, 3>,
 }
 
 impl<N: RtNoiseFn<3> + Clone> Texture for LocalNoiseTexture<N> {
     fn value(&self, intersection: &Intersection, _rng: &mut dyn RngCore) -> Pixel {
-        self.func.get(intersection.pos_l.to_array())
+        self.source.get(intersection.pos_l.to_array())
     }
 }
 
@@ -116,7 +115,7 @@ impl<N: RtNoiseFn<3> + Clone> Texture for LocalNoiseTexture<N> {
 impl<N: RtNoiseFn<3> + Clone + 'static> From<LocalNoiseTexture<Box<N>>> for TextureInstance {
     fn from(value: LocalNoiseTexture<Box<N>>) -> Self {
         TextureInstance::LocalNoiseTexture(LocalNoiseTexture {
-            func: value.func.as_dyn_box(),
+            source: value.source.as_dyn_box(),
         })
     }
 }

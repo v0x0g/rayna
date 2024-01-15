@@ -11,16 +11,15 @@ pub struct DynamicMaterial {
 }
 
 impl Material for DynamicMaterial {
-    fn scatter(
-        &self,
-        ray: &Ray,
-        intersection: &Intersection,
-        rng: &mut dyn RngCore,
-    ) -> Option<Vector3> {
+    fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
         self.inner.scatter(ray, intersection, rng)
     }
 
-    fn calculate_colour(
+    fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
+        self.inner.emitted_light(ray, intersection, rng)
+    }
+
+    fn reflected_light(
         &self,
         ray: &Ray,
         intersection: &Intersection,
@@ -29,6 +28,6 @@ impl Material for DynamicMaterial {
         rng: &mut dyn RngCore,
     ) -> Pixel {
         self.inner
-            .calculate_colour(ray, intersection, future_ray, future_col, rng)
+            .reflected_light(ray, intersection, future_ray, future_col, rng)
     }
 }

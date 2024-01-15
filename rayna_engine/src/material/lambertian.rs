@@ -4,8 +4,10 @@ use crate::shared::ray::Ray;
 use crate::shared::rng;
 use crate::texture::Texture;
 use crate::texture::TextureInstance;
+use image::Pixel as _;
 use rand::RngCore;
-use rayna_shared::def::types::{Pixel, Vector3};
+use rayna_shared::def::types::{Channel, Pixel, Vector3};
+use std::ops::Mul;
 
 #[derive(Clone, Debug)]
 pub struct LambertianMaterial {
@@ -33,7 +35,7 @@ impl Material for LambertianMaterial {
     }
 
     //noinspection DuplicatedCode
-    fn calculate_colour(
+    fn reflected_light(
         &self,
         _ray: &Ray,
         intersect: &Intersection,
@@ -41,10 +43,6 @@ impl Material for LambertianMaterial {
         future_col: &Pixel,
         rng: &mut dyn RngCore,
     ) -> Pixel {
-        super::calculate_colour_simple(
-            future_col,
-            self.albedo.value(intersect, rng),
-            self.emissive.value(intersect, rng),
-        )
+        Pixel::map2(future_col, &self.albedo.value(intersect, rng), Channel::mul)
     }
 }

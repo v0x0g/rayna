@@ -357,18 +357,27 @@ impl Renderer {
         };
         validate::intersection(ray, &intersection, bounds);
 
-        let Some(scatter_dir) = material.scatter(ray, &intersection, rng) else {
-            // No scatter (material absorbed ray)
-            return Pixel::from([0.; 3]);
+        return match material.scatter(ray, &intersection, rng) {
+            Some(scatter_dir) => {
+                validate::normal3(&scatter_dir);
+
+                let future_ray = Ray::new(intersection.pos_w, scatter_dir);
+                validate::ray(future_ray);
+
+                let future_col = Self::ray_colour_recursive(scene, &future_ray, opts, bounds, depth + 1, rng);
+                validate::colour(&future_col);
+
+                let reflected_col = material.reflected_light(ray, &intersection, &future_ray, &future_col, rng);
+                let emitted_col = material.emitted_light(ray, &intersection, rng);
+
+                Pixel::map2(&reflected_col, &emitted_col, Channel::add)
+            }
+            // No scatter, so only emission
+            None => {
+                let emitted_col = material.emitted_light(ray, &intersection, rng);
+                emitted_col
+            }
         };
-        validate::normal3(&scatter_dir);
-        let future_ray = Ray::new(intersection.pos_w, scatter_dir);
-        validate::ray(future_ray);
-
-        let future_col = Self::ray_colour_recursive(scene, &future_ray, opts, bounds, depth + 1, rng);
-        validate::colour(&future_col);
-
-        return material.calculate_colour(&ray, &intersection, &future_ray, &future_col, rng);
     }
 
     /// Calculates a random pixel shift (for MSAA), and applies it to the (pixel) coordinates

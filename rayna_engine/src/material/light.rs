@@ -16,14 +16,18 @@ pub struct LightMaterial {
 impl Material for LightMaterial {
     fn scatter(&self, _ray: &Ray, _intersection: &Intersection, _rng: &mut dyn RngCore) -> Option<Vector3> { None }
 
-    fn calculate_colour(
+    fn emitted_light(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
+        self.emissive.value(intersection, rng)
+    }
+
+    fn reflected_light(
         &self,
         _ray: &Ray,
-        intersection: &Intersection,
+        _intersection: &Intersection,
         _future_ray: &Ray,
-        future_col: &Pixel,
-        rng: &mut dyn RngCore,
+        _future_col: &Pixel,
+        _rng: &mut dyn RngCore,
     ) -> Pixel {
-        super::calculate_colour_simple(future_col, Pixel::from([0.; 3]), self.emissive.value(intersection, rng))
+        [0.; 3].into()
     }
 }

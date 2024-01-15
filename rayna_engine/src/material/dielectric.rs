@@ -5,7 +5,8 @@ use crate::shared::ray::Ray;
 use image::Pixel as _;
 use num_traits::Pow;
 use rand::{Rng, RngCore};
-use rayna_shared::def::types::{Number, Pixel, Vector3};
+use rayna_shared::def::types::{Channel, Number, Pixel, Vector3};
+use std::ops::Mul;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct DielectricMaterial {
@@ -14,12 +15,7 @@ pub struct DielectricMaterial {
 }
 
 impl Material for DielectricMaterial {
-    fn scatter(
-        &self,
-        ray: &Ray,
-        intersection: &Intersection,
-        rng: &mut dyn RngCore,
-    ) -> Option<Vector3> {
+    fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
         let index_ratio = if intersection.front_face {
             1.0 / self.refractive_index
         } else {
@@ -29,8 +25,7 @@ impl Material for DielectricMaterial {
         let sin_theta = Number::sqrt(1.0 - cos_theta * cos_theta);
 
         let total_internal_reflection = index_ratio * sin_theta > 1.0;
-        let schlick_approx_reflect =
-            Self::reflectance(cos_theta, index_ratio) > rng.gen::<Number>();
+        let schlick_approx_reflect = Self::reflectance(cos_theta, index_ratio) > rng.gen::<Number>();
 
         let dir = if total_internal_reflection || schlick_approx_reflect {
             // Cannot refract, have to reflect
@@ -43,7 +38,7 @@ impl Material for DielectricMaterial {
     }
 
     //noinspection DuplicatedCode
-    fn calculate_colour(
+    fn reflected_light(
         &self,
         _ray: &Ray,
         _intersection: &Intersection,
@@ -51,7 +46,7 @@ impl Material for DielectricMaterial {
         future_col: &Pixel,
         _rng: &mut dyn RngCore,
     ) -> Pixel {
-        Pixel::map2(&future_col, &self.albedo, |a, b| a * b)
+        Pixel::map2(&future_col, &self.albedo, Channel::mul)
     }
 }
 

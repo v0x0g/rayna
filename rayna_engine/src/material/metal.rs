@@ -31,7 +31,7 @@ impl Material for MetalMaterial {
     }
 
     //noinspection DuplicatedCode
-    fn calculate_colour(
+    fn reflected_light(
         &self,
         _ray: &Ray,
         intersect: &Intersection,

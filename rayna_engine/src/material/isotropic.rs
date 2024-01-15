@@ -3,8 +3,10 @@ use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::rng;
 use crate::texture::{Texture, TextureInstance};
+use image::Pixel as _;
 use rand_core::RngCore;
-use rayna_shared::def::types::{Pixel, Vector3};
+use rayna_shared::def::types::{Channel, Pixel, Vector3};
+use std::ops::Mul;
 
 /// A material that uniformly scatters rays in all directions
 ///
@@ -27,7 +29,7 @@ impl Material for IsotropicMaterial {
         Some(rng::vector_on_unit_sphere(rng))
     }
 
-    fn calculate_colour(
+    fn reflected_light(
         &self,
         _ray: &Ray,
         intersection: &Intersection,
@@ -35,6 +37,7 @@ impl Material for IsotropicMaterial {
         future_col: &Pixel,
         rng: &mut dyn RngCore,
     ) -> Pixel {
-        super::calculate_colour_simple(future_col, self.albedo.value(intersection, rng), Pixel::from([0.; 3]))
+        let albedo = self.albedo.value(intersection, rng);
+        Pixel::map2(future_col, &albedo, Channel::mul)
     }
 }

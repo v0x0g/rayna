@@ -2,7 +2,7 @@ use std::borrow::Borrow;
 //noinspection ALL
 use self::{
     dielectric::DielectricMaterial, dynamic::DynamicMaterial, isotropic::IsotropicMaterial,
-    lambertian::LambertianMaterial, metal::MetalMaterial, light::LightMaterial
+    lambertian::LambertianMaterial, light::LightMaterial, metal::MetalMaterial,
 };
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -61,18 +61,43 @@ pub trait Material: RtRequirement {
     ///             r
     ///         }
     ///     }
-    /// #   fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel, rng: &mut dyn RngCore) -> Pixel { unimplemented!() }
+    /// #   fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
+    /// #       unimplemented!("code example")
+    /// #   }
+    /// #
+    /// #   fn reflected_light(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel, rng: &mut dyn RngCore) -> Pixel {
+    /// #       unimplemented!("code example")
+    /// #   }
     /// }
     /// ```
     fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3>;
 
-    /// This function does the lighting calculations, based on the light from the future ray
+    /// This function calculates the amount of light that is emitted by the material
+    ///
+    /// # Notes
+    /// This function will always be called, even if the material does not scatter (see [Material::scatter()])
+    ///
+    /// # Return Value
+    /// Returns the light (colour) of emission for the given intersection and ray. The default implementation
+    /// is to return black (`Pixel([0.; 3])`)
+    #[allow(unused_variables)]
+    fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
+        const BLACK: Pixel = Pixel { 0: [0.; 3] };
+        BLACK
+    }
+
+    /// This function calculates what light should be reflected, based off the future light/ray information
     ///
     /// # Arguments
     ///
     /// * `intersection`: Information such as where the ray hit, surface normals, etc
     /// * `future_ray`: The ray for the future bounce that was made
     /// * `future_col`: The colour information for the future bounce that was made
+    ///
+    /// # Notes
+    ///
+    /// This function will only be called if the material scattered (see [Material::scatter()]) a ray. If there was no scatter,
+    /// then only [Material::emitted_light()] will be called
     ///
     /// # Examples
     ///
@@ -91,7 +116,8 @@ pub trait Material: RtRequirement {
     /// #     /// #
     /// impl Material for Test {
     /// #   fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Vector3 { unimplemented!() }
-    ///     fn calculate_colour(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel, rng: &mut dyn RngCore) -> Pixel {
+    /// #   fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel { unimplemented!() }
+    ///     fn reflected_light(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel, rng: &mut dyn RngCore) -> Pixel {
     ///         // Pure reflection
     ///         return *future_col;
     ///         // Pure absorbtion
@@ -99,7 +125,7 @@ pub trait Material: RtRequirement {
     ///     }
     /// }
     /// ```
-    fn calculate_colour(
+    fn reflected_light(
         &self,
         ray: &Ray,
         intersection: &Intersection,
@@ -129,7 +155,7 @@ impl Default for MaterialInstance {
     fn default() -> Self { LambertianMaterial::default().into() }
 }
 
-/// A simple helper function for implementing [Material::calculate_colour()]
+/// A simple helper function for implementing [Material::reflected_light()]
 ///
 /// # Return Value
 /// Output is equal to `(future_col * albedo) + emissive`

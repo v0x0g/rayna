@@ -3,8 +3,10 @@ use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::{math, rng};
 use crate::texture::{Texture, TextureInstance};
+use image::Pixel as _;
 use rand::RngCore;
-use rayna_shared::def::types::{Number, Pixel, Vector3};
+use rayna_shared::def::types::{Channel, Number, Pixel, Vector3};
+use std::ops::Mul;
 
 #[derive(Clone, Debug)]
 pub struct MetalMaterial {
@@ -39,6 +41,6 @@ impl Material for MetalMaterial {
         future_col: &Pixel,
         rng: &mut dyn RngCore,
     ) -> Pixel {
-        super::calculate_colour_simple(future_col, self.albedo.value(intersect, rng), Pixel::from([0.; 3]))
+        Pixel::map2(future_col, &self.albedo.value(intersect, rng), Channel::mul)
     }
 }

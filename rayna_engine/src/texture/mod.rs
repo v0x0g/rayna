@@ -32,8 +32,8 @@ dyn_clone::clone_trait_object!(Texture);
 #[derive(Clone, Debug)]
 pub enum TextureInstance {
     SolidTexture,
-    WorldCheckerTexture,
-    UvCheckerTexture,
+    WorldCheckerTexture(WorldCheckerTexture<DynamicTexture, DynamicTexture>),
+    UvCheckerTexture(UvCheckerTexture<DynamicTexture, DynamicTexture>),
     ImageTexture,
     UvNoiseTexture(UvNoiseTexture<Box<dyn noise::RtNoiseFn<2>>>),
     LocalNoiseTexture(LocalNoiseTexture<Box<dyn noise::RtNoiseFn<3>>>),
@@ -42,15 +42,11 @@ pub enum TextureInstance {
 }
 
 impl Default for TextureInstance {
-    fn default() -> Self {
-        SolidTexture::default().into()
-    }
+    fn default() -> Self { SolidTexture::default().into() }
 }
 
 /// Special function to be called when an error occurs during texture value calculations,
 /// and a value cannot be generated. Calling this has an advantage over panicking since it won't crash anything,
 /// and it'll also allow breakpoints to be set to debug the problem.
 #[cold]
-pub fn texture_error_value() -> Pixel {
-    crate::shared::rng::colour_rgb(&mut thread_rng())
-}
+pub fn texture_error_value() -> Pixel { crate::shared::rng::colour_rgb(&mut thread_rng()) }

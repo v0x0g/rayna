@@ -1,7 +1,5 @@
 use std::fmt::Debug;
 use std::ops::Deref;
-use std::sync::Arc;
-
 use num_traits::float::FloatCore;
 use num_traits::Euclid;
 use rand_core::RngCore;
@@ -9,18 +7,18 @@ use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Pixel, Vector2, Vector3};
 
 use crate::shared::intersect::Intersection;
-use crate::texture::{Texture, TextureInstance};
+use crate::texture::Texture;
+use crate::texture::dynamic::DynamicTexture;
 
 #[derive(Clone, Debug)]
-pub struct WorldCheckerTexture {
+pub struct WorldCheckerTexture<Odd: Texture + Clone = DynamicTexture, Even: Texture + Clone = DynamicTexture> {
     pub offset: Vector3,
-    // TODO: Find if there's a way to remove the Arc<> wrapper without having cycles in the type hierarchy
-    pub even: Arc<TextureInstance>,
-    pub odd: Arc<TextureInstance>,
+    pub even: Even,
+    pub odd: Odd,
     pub scale: Number,
 }
 
-impl Texture for WorldCheckerTexture {
+impl<Odd: Texture + Clone, Even: Texture + Clone> Texture for WorldCheckerTexture<Odd, Even> {
     fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
         let pos = (intersection.pos_w.to_vector() / self.scale) + self.offset;
 
@@ -33,15 +31,16 @@ impl Texture for WorldCheckerTexture {
         )
     }
 }
+
 #[derive(Clone, Debug)]
-pub struct UvCheckerTexture {
+pub struct UvCheckerTexture<Odd: Texture + Clone = DynamicTexture, Even: Texture + Clone = DynamicTexture> {
     pub offset: Vector2,
-    pub even: Arc<TextureInstance>,
-    pub odd: Arc<TextureInstance>,
+    pub even: Even,
+    pub odd: Odd,
     pub scale: Number,
 }
 
-impl Texture for UvCheckerTexture {
+impl<Odd: Texture + Clone, Even: Texture + Clone> Texture for UvCheckerTexture<Odd, Even> {
     fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
         let pos = (intersection.uv.to_vector() / self.scale) + self.offset;
 
@@ -61,7 +60,7 @@ pub fn do_checker<C: Euclid + FloatCore>(
     odd: &impl Texture,
     even: &impl Texture,
     intersection: &Intersection,
-    rng: &mut dyn RngCore,
+    rng: &mut impl RngCore,
 ) -> Pixel {
     let two: C = C::one() + C::one();
 

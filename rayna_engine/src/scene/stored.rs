@@ -4,6 +4,7 @@
 //!
 //! There are some common ones [CORNELL] and [RTIAW_DEMO], that should be well known.
 
+use crate::fat_object::transformed::TransformedFatObject;
 use image::Pixel as _;
 use noise::*;
 use rand::{thread_rng, Rng};
@@ -31,7 +32,7 @@ use crate::texture::noise::{ColourSource, LocalNoiseTexture, WorldNoiseTexture};
 use crate::texture::solid::SolidTexture;
 use crate::texture::TextureInstance;
 
-use super::{Scene, SceneObject};
+use super::Scene;
 
 /// Super simple scene, just a ground sphere and a small sphere
 #[dynamic]
@@ -45,7 +46,7 @@ pub static SIMPLE: Scene = {
             defocus_angle: Angle::from_degrees(0.),
         },
         objects: [
-            SceneObject::new(
+            TransformedFatObject::new(
                 SphereBuilder {
                     // Small, top
                     pos: Point3::new(0., 0., 1.),
@@ -56,7 +57,7 @@ pub static SIMPLE: Scene = {
                     fuzz: 1.,
                 },
             ),
-            SceneObject::new(
+            TransformedFatObject::new(
                 SphereBuilder {
                     // Ground
                     pos: Point3::new(0., -100.5, -1.),
@@ -75,9 +76,9 @@ pub static SIMPLE: Scene = {
 
 #[dynamic]
 pub static TESTING: Scene = {
-    let mut objects = Vec::<SceneObject>::new();
+    let mut objects = Vec::<TransformedFatObject>::new();
 
-    objects.push(SceneObject::new(
+    objects.push(TransformedFatObject::new(
         // Ground
         InfinitePlaneBuilder {
             plane: PlanarBuilder::Vectors {
@@ -92,7 +93,7 @@ pub static TESTING: Scene = {
             emissive: [0.; 3].into(),
         },
     ));
-    objects.push(SceneObject::new(
+    objects.push(TransformedFatObject::new(
         // Slope
         InfinitePlaneBuilder {
             plane: PlanarBuilder::Vectors {
@@ -107,7 +108,7 @@ pub static TESTING: Scene = {
             emissive: [0.1; 3].into(),
         },
     ));
-    objects.push(SceneObject::new(
+    objects.push(TransformedFatObject::new(
         // Ball
         HomogeneousVolumeBuilder::<SphereObject> {
             object: SphereBuilder {
@@ -183,11 +184,11 @@ pub static RTIAW_DEMO: Scene = {
             } else {
                 AxisBoxBuilder::new_centred(centre, rng::vector_in_unit_cube_01(rng) * 0.8).into()
             };
-            objects.push(SceneObject::new(obj, material));
+            objects.push(TransformedFatObject::new(obj, material));
         }
     }
 
-    objects.push(SceneObject::new(
+    objects.push(TransformedFatObject::new(
         SphereBuilder {
             pos: Point3::new(0., 1., 0.),
             radius: 1.,
@@ -197,7 +198,7 @@ pub static RTIAW_DEMO: Scene = {
             albedo: [1.; 3].into(),
         },
     ));
-    objects.push(SceneObject::new(
+    objects.push(TransformedFatObject::new(
         SphereBuilder {
             pos: Point3::new(-4., 1., 0.),
             radius: 1.,
@@ -207,7 +208,7 @@ pub static RTIAW_DEMO: Scene = {
             emissive: Default::default(),
         },
     ));
-    objects.push(SceneObject::new(
+    objects.push(TransformedFatObject::new(
         SphereBuilder {
             pos: Point3::new(4., 1., 0.),
             radius: 1.,
@@ -218,7 +219,7 @@ pub static RTIAW_DEMO: Scene = {
         },
     ));
 
-    objects.push(SceneObject::new(
+    objects.push(TransformedFatObject::new(
         SphereBuilder {
             pos: Point3::new(0., -1000., 0.),
             radius: 1000.,
@@ -276,7 +277,7 @@ pub static RTTNW_DEMO: Scene = {
                 let low = Point3::new(-10., 0., -10.) + Vector3::new(i as Number * WIDTH, 0., j as Number * WIDTH);
                 let high = low + Vector3::new(WIDTH, rng.gen_range(0.0..=1.0), WIDTH);
 
-                objects.push(SceneObject::new(
+                objects.push(TransformedFatObject::new(
                     AxisBoxBuilder {
                         corner_1: low,
                         corner_2: high,
@@ -289,7 +290,7 @@ pub static RTTNW_DEMO: Scene = {
 
     {
         // LIGHT
-        objects.push(SceneObject::new(
+        objects.push(TransformedFatObject::new(
             ParallelogramBuilder {
                 plane: PlanarBuilder::Vectors {
                     p: (1.23, 5.54, 1.47).into(),
@@ -305,7 +306,7 @@ pub static RTTNW_DEMO: Scene = {
 
     {
         // BROWN SPHERE
-        objects.push(SceneObject::new(
+        objects.push(TransformedFatObject::new(
             SphereBuilder {
                 pos: (4., 4., 2.).into(),
                 radius: 0.5,
@@ -317,7 +318,7 @@ pub static RTTNW_DEMO: Scene = {
         ));
 
         // GLASS SPHERE
-        objects.push(SceneObject::new(
+        objects.push(TransformedFatObject::new(
             SphereBuilder {
                 pos: (2.6, 1.5, 0.45).into(),
                 radius: 0.5,
@@ -329,7 +330,7 @@ pub static RTTNW_DEMO: Scene = {
         ));
 
         // METAL SPHERE (RIGHT)
-        objects.push(SceneObject::new(
+        objects.push(TransformedFatObject::new(
             SphereBuilder {
                 pos: (0., 1.5, 1.45).into(),
                 radius: 0.5,
@@ -341,7 +342,7 @@ pub static RTTNW_DEMO: Scene = {
         ));
 
         // SUBSURFACE SCATTER BLUE SPHERE (LEFT)
-        objects.push(SceneObject::new(
+        objects.push(TransformedFatObject::new(
             SphereBuilder {
                 pos: (3.6, 1.5, 1.45).into(),
                 radius: 0.7,
@@ -351,7 +352,7 @@ pub static RTTNW_DEMO: Scene = {
                 refractive_index: 1.5,
             },
         ));
-        objects.push(SceneObject::new(
+        objects.push(TransformedFatObject::new(
             // BLUE HAZE INSIDE
             HomogeneousVolumeBuilder::<SphereObject> {
                 object: SphereBuilder {
@@ -367,7 +368,7 @@ pub static RTTNW_DEMO: Scene = {
         ));
 
         // EARTH SPHERE
-        objects.push(SceneObject::new(
+        objects.push(TransformedFatObject::new(
             SphereBuilder {
                 pos: (4., 2., 4.).into(),
                 radius: 1.0,
@@ -384,7 +385,7 @@ pub static RTTNW_DEMO: Scene = {
         ));
 
         // NOISE SPHERE
-        objects.push(SceneObject::new(
+        objects.push(TransformedFatObject::new(
             SphereBuilder {
                 pos: (2.2, 2.8, 3.0).into(),
                 radius: 0.8,
@@ -409,7 +410,7 @@ pub static RTTNW_DEMO: Scene = {
         };
 
         for _ in 0..COUNT {
-            objects.push(SceneObject::new(
+            objects.push(TransformedFatObject::new(
                 SphereBuilder {
                     pos: (rng::vector_in_unit_cube_01(rng) * 1.65).to_point(),
                     radius: 0.1,
@@ -422,7 +423,7 @@ pub static RTTNW_DEMO: Scene = {
     {
         // HAZE
 
-        objects.push(SceneObject::new(
+        objects.push(TransformedFatObject::new(
             HomogeneousVolumeBuilder::<SphereObject> {
                 object: SphereBuilder {
                     pos: Point3::ZERO,
@@ -462,7 +463,7 @@ pub static CORNELL: Scene = {
     let mut objects = Vec::new();
 
     fn quad(
-        objs: &mut Vec<SceneObject>,
+        objs: &mut Vec<TransformedFatObject>,
         p: impl Into<Point3>,
         u: impl Into<Vector3>,
         v: impl Into<Vector3>,
@@ -472,7 +473,7 @@ pub static CORNELL: Scene = {
         let p = p.into();
         let u = u.into();
         let v = v.into();
-        objs.push(SceneObject::new(
+        objs.push(TransformedFatObject::new(
             ParallelogramBuilder {
                 plane: PlanarBuilder::Vectors { p, u, v },
             },
@@ -506,7 +507,7 @@ pub static CORNELL: Scene = {
         // INNER BOXES
 
         // Big
-        o.push(SceneObject::new_with_correction(
+        o.push(TransformedFatObject::new_with_correction(
             AxisBoxBuilder {
                 corner_1: (0.231, 0., 0.117).into(),
                 corner_2: (0.531, 0.595, 0.414).into(),
@@ -518,7 +519,7 @@ pub static CORNELL: Scene = {
             Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(15.)),
         ));
         // Small
-        o.push(SceneObject::new_with_correction(
+        o.push(TransformedFatObject::new_with_correction(
             AxisBoxBuilder {
                 corner_1: (0.477, 0., 0.531).into(),
                 corner_2: (0.774, 0.297, 0.829).into(),
@@ -531,7 +532,7 @@ pub static CORNELL: Scene = {
         ));
 
         // Ball on Small
-        o.push(SceneObject::new(
+        o.push(TransformedFatObject::new(
             HomogeneousVolumeBuilder::<SphereObject> {
                 object: SphereBuilder {
                     pos: (0.6255, 0.43, 0.680).into(),

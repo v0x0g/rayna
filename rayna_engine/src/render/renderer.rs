@@ -1,7 +1,8 @@
+use crate::fat_object::FullObject;
 use crate::material::Material;
 use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::{RenderMode, RenderOpts};
-use crate::scene::{FullObject, Scene};
+use crate::scene::Scene;
 use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
 use crate::shared::intersect::FullIntersection;

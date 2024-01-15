@@ -3,7 +3,8 @@ use rand_core::RngCore;
 use smallvec::SmallVec;
 
 use crate::accel::bvh::Bvh;
-use crate::scene::{FullObject, SceneObject};
+use crate::fat_object::transformed::SceneObject;
+use crate::fat_object::FullObject;
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;

@@ -6,6 +6,7 @@
 #![feature(box_patterns)]
 
 pub mod accel;
+mod fat_object;
 pub mod material;
 pub mod object;
 pub mod render;

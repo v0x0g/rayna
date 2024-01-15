@@ -8,6 +8,7 @@ pub mod intersect;
 pub mod math;
 pub mod ray;
 pub mod rng;
+pub mod transform_utils;
 pub mod validate;
 
 // NOTE: We have to use [`DynClone`] instead of plain old [`Clone`],

@@ -31,7 +31,9 @@ where
     Mat: Material + Clone,
     Obj: Object<Mesh, Mat> + Clone,
 {
+    /// The backing store containing all of our objects, as well as their hierarchy
     arena: Arena<BvhNode<Mesh, Mat, Obj>>,
+    /// The node of the root object in the tree
     root_id: Option<NodeId>,
 }
 

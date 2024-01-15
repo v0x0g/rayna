@@ -4,20 +4,21 @@ use rand_core::RngCore;
 use smallvec::SmallVec;
 
 use crate::material::Material;
+use crate::mesh;
 use crate::object::bvh::Bvh;
 use crate::object::{Object, ObjectInstance};
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
-use rayna_shared::def::types::Number;
+use rayna_shared::def::types::{Number, Point3, Transform3};
 
 #[derive(Getters, Derivative)]
 #[get = "pub"]
 #[derivative(Clone(bound = ""), Debug(bound = ""))]
 pub struct ObjectList<Mesh, Mat, Obj>
 where
-    Mesh: crate::mesh::Mesh + Clone,
+    Mesh: mesh::Mesh + Clone,
     Mat: Material + Clone,
     Obj: Object<Mesh, Mat> + Clone,
 {
@@ -25,36 +26,29 @@ where
     bvh: Bvh<Mesh, Mat, Obj>,
     /// All the unbounded objects in the list (objects where [Object::aabb()] returned [None]
     unbounded: Vec<Obj>,
+    transform: Option<Transform3>,
+    inv_transform: Option<Transform3>,
+    /// The [Aabb] for all of the enclosed objects. Will be [None] if there are unbounded objects
+    aabb: Option<Aabb>,
 }
+
+// region From<> Impl
 
 // Iter<Into<ObjType>> => ObjectList
 impl<Mesh, Mat, Obj, Iter> From<Iter> for ObjectList<Mesh, Mat, Obj>
 where
-    Mesh: crate::mesh::Mesh + Clone,
+    Mesh: mesh::Mesh + Clone,
     Mat: Material + Clone,
     Obj: Object<Mesh, Mat> + Clone,
     Iter: IntoIterator<Item = Obj>,
 {
-    fn from(value: Iter) -> Self {
-        let mut bounded = vec![];
-        let mut unbounded = vec![];
-        for obj in value.into_iter() {
-            if let Some(_) = obj.aabb() {
-                bounded.push(obj);
-            } else {
-                unbounded.push(obj);
-            }
-        }
-        let bvh = Bvh::new(bounded);
-        Self { bvh, unbounded }
-    }
+    fn from(value: Iter) -> Self { Self::new(value) }
 }
 
 // Iter<Into<ObjType> => ObjectInstance
-
 impl<Mesh, Mat, Obj, Iter> From<Iter> for ObjectInstance<Mesh, Mat>
 where
-    Mesh: crate::mesh::Mesh + Clone,
+    Mesh: mesh::Mesh + Clone,
     Mat: Material + Clone,
     Obj: Into<ObjectInstance<Mesh, Mat>>,
     Iter: IntoIterator<Item = Obj>,
@@ -63,14 +57,104 @@ where
         // Convert each object into an ObjectInstance
         let object_instances = value.into_iter().map(Obj::into);
         // Convert to plain ObjectList
-        let list = ObjectList::from(object_instances);
+        let list = ObjectList::new(object_instances);
         Self::ObjectList(list)
     }
 }
 
+// endregion From<> Impl
+
+// region Constructors
+
+impl<Mesh, Mat, Obj> ObjectList<Mesh, Mat, Obj>
+where
+    Mesh: mesh::Mesh + Clone,
+    Mat: Material + Clone,
+    Obj: Object<Mesh, Mat> + Clone,
+{
+    /// Creates a new transformed mesh instance, using the given mesh and transform matrix.
+    ///
+    /// Unlike [Self::new_without_correction()], this *does* account for the mesh's translation from the origin,
+    /// using the `centre` parameter. See type documentation ([super::simple::SimpleObject]) for explanation
+    /// and example of this position offset correction
+    pub fn new_with_correction(objects: impl IntoIterator<Item = Obj>, transform: Transform3, centre: Point3) -> Self {
+        let correct_transform = Transform3::from_translation(-centre.to_vector())
+            .then(transform)
+            .then_translate(centre.to_vector());
+
+        Self::new_without_correction(objects, correct_transform)
+    }
+
+    /// Creates a new transformed mesh instance, using the given mesh and transform
+    ///
+    /// It is assumed that the mesh is either centred at the origin and the translation is stored in
+    /// the transform, or that the transform correctly accounts for the mesh's translation.
+    /// See type documentation ([super::simple::SimpleObject]) for explanation
+    pub fn new_without_correction(objects: impl IntoIterator<Item = Obj>, transform: Transform3) -> Self {
+        let (bvh, unbounded, aabb) = Self::process_objects(objects);
+
+        // Calculate the resulting AABB by transforming the corners of the input AABB.
+        // And then we encompass those
+        let aabb = aabb
+            .as_ref()
+            .map(Aabb::corners)
+            .map(|corners| corners.map(|c| transform.map_point(c)))
+            .map(Aabb::encompass_points);
+
+        let inv_transform = transform.inverse();
+
+        Self {
+            aabb,
+            transform: Some(transform),
+            inv_transform: Some(inv_transform),
+            bvh, 
+            unbounded
+        }
+    }
+
+    /// Creates a new [ObjectList] instance, using the given mesh. This method does not transform the [ObjectList]
+    pub fn new(objects: impl IntoIterator<Item = Obj>) -> Self {
+        let (bvh, unbounded, aabb) = Self::process_objects(objects);
+
+        Self {
+            bvh,
+            unbounded,
+            aabb,
+            transform: None,
+            inv_transform: None,
+        }
+    }
+    
+    /// A helper method for transforming an iterator of objects into a [Bvh] tree, a [Vec] of unbounded objects, and an AABB
+    fn process_objects(objects: impl IntoIterator<Item=Obj>) -> (Bvh<Mesh, Mat, Obj>, Vec<Obj>, Option<Aabb>) {
+        let mut bounded = vec![];
+        let mut unbounded = vec![];
+        for obj in objects.into_iter() {
+            if let Some(_) = obj.aabb() {
+                bounded.push(obj);
+            } else {
+                unbounded.push(obj);
+            }
+        }
+        let aabb = if unbounded.is_empty() && !bounded.is_empty() {
+            // All objects were checked for AABB so can unwrap
+            Some(Aabb::encompass_iter(
+                bounded.iter().map(Object::aabb).map(Option::unwrap),
+            ))
+        } else {
+            None
+        };
+        let bvh = Bvh::new(bounded);
+
+        (bvh, unbounded, aabb)
+    }
+}
+
+// endregion Constructors
+
 impl<Mesh, Mat, Obj> Object<Mesh, Mat> for ObjectList<Mesh, Mat, Obj>
 where
-    Mesh: crate::mesh::Mesh + Clone,
+    Mesh: mesh::Mesh + Clone,
     Mat: Material + Clone,
     Obj: Object<Mesh, Mat> + Clone,
 {

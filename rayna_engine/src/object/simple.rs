@@ -8,7 +8,7 @@ use crate::shared::ray::Ray;
 use crate::shared::transform_utils::{transform_incoming_ray, transform_outgoing_intersection};
 use getset::Getters;
 use rand_core::RngCore;
-use rayna_shared::def::types::{Number, Point3, Transform3};
+use rayna_shared::def::types::{Number, Transform3};
 use smallvec::SmallVec;
 
 /// The main struct that encapsulates all the different "components" that make up an mesh
@@ -55,9 +55,6 @@ pub struct SimpleObject<Mesh: MeshTrait + Clone, Mat: Material + Clone> {
     transform: Option<Transform3>,
     inv_transform: Option<Transform3>,
     aabb: Option<Aabb>,
-    /// The centre of the mesh. May not be equal to [MeshProperties::centre()],
-    /// if the mesh has been translated
-    centre: Point3,
     // TODO: Add a string identifier to this (name?)
 }
 
@@ -146,14 +143,12 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> SimpleObject<Mesh, Mat> {
             .map(Aabb::encompass_points);
 
         let inv_transform = transform.inverse();
-        let centre = transform.map_point(object.centre());
 
         Self {
             object,
             aabb,
             transform: Some(transform),
             inv_transform: Some(inv_transform),
-            centre,
             material: material.into(),
         }
     }
@@ -166,7 +161,6 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> SimpleObject<Mesh, Mat> {
             aabb: object.aabb().copied(),
             transform: None,
             inv_transform: None,
-            centre: object.centre(),
             material: material.into(),
             object,
         }

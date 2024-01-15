@@ -14,51 +14,57 @@ use smallvec::SmallVec;
 
 #[derive(Derivative)]
 #[derivative(Debug(bound = ""), Clone(bound = ""), Copy)]
-pub struct HomogeneousVolumeBuilder<Obj: Mesh + Clone> {
-    pub object: Obj,
+pub struct HomogeneousVolumeBuilder<M: Mesh + Clone> {
+    /// The mesh that gives this volume it's shape
+    pub mesh: M,
+    /// How dense the volume is. Higher values give a "thicker" volume
     pub density: Number,
 }
 
-impl<Obj: Mesh + Clone> From<HomogeneousVolumeBuilder<Obj>> for HomogeneousVolumeMesh<Obj> {
-    fn from(value: HomogeneousVolumeBuilder<Obj>) -> Self {
+impl<M: Mesh + Clone> From<HomogeneousVolumeBuilder<M>> for HomogeneousVolumeMesh<M> {
+    fn from(value: HomogeneousVolumeBuilder<M>) -> Self {
         Self {
-            object: value.object,
+            mesh: value.mesh,
             density: value.density,
             neg_inv_density: -1.0 / value.density,
         }
     }
 }
-impl<Obj: Mesh + Clone + 'static> From<HomogeneousVolumeBuilder<Obj>> for MeshInstance {
-    fn from(value: HomogeneousVolumeBuilder<Obj>) -> Self {
-        let HomogeneousVolumeBuilder { object, density } = value;
-        // ObjectInstance uses HomogeneousVolumeObject<DynamicObject>, so cast the builder
+
+// VolumeBuilder<T> => MeshInstance
+impl<M: Mesh + Clone> From<HomogeneousVolumeBuilder<M>> for MeshInstance {
+    fn from(value: HomogeneousVolumeBuilder<M>) -> Self {
+        let HomogeneousVolumeBuilder { mesh: object, density } = value;
+        // ObjectInstance uses HomogeneousVolumeObject<DynamicObject>, so cast the builder to dyn mesh
         let dyn_builder = HomogeneousVolumeBuilder {
             density,
-            object: DynamicMesh::from(object),
+            mesh: DynamicMesh::from(object),
         };
         MeshInstance::HomogeneousVolumeMesh(HomogeneousVolumeMesh::from(dyn_builder))
     }
 }
 
 /// An mesh wrapper that treats the wrapped mesh as a constant-density volume
+///
+/// The volume has the same shape as the wrapped `mesh`, and a constant density at all points in the volume
 #[derive(Derivative, Getters)]
 #[derivative(Debug(bound = ""), Clone(bound = ""), Copy)]
 #[get = "pub"]
-pub struct HomogeneousVolumeMesh<Obj: Mesh + Clone> {
-    object: Obj,
+pub struct HomogeneousVolumeMesh<M: Mesh + Clone> {
+    mesh: M,
     density: Number,
     neg_inv_density: Number,
 }
 
-impl<Obj: Mesh + Clone> Mesh for HomogeneousVolumeMesh<Obj> {
+impl<M: Mesh + Clone> Mesh for HomogeneousVolumeMesh<M> {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
         // Find two samples on surface of volume
         // These should be as the ray enters and exits the mesh
 
-        let entering = self.object.intersect(ray, bounds, rng)?;
+        let entering = self.mesh.intersect(ray, bounds, rng)?;
         // Have to add a slight offset so we don't intersect with the same point twice
         let exiting = self
-            .object
+            .mesh
             .intersect(ray, &bounds.with_some_start(entering.dist + 1e-4), rng)?;
 
         if !bounds.contains(&entering.dist) || !bounds.contains(&exiting.dist) {
@@ -103,7 +109,7 @@ impl<Obj: Mesh + Clone> Mesh for HomogeneousVolumeMesh<Obj> {
     }
 }
 
-impl<Obj: Mesh + Clone> MeshProperties for HomogeneousVolumeMesh<Obj> {
-    fn aabb(&self) -> Option<&Aabb> { self.object.aabb() }
-    fn centre(&self) -> Point3 { self.object.centre() }
+impl<M: Mesh + Clone> MeshProperties for HomogeneousVolumeMesh<M> {
+    fn aabb(&self) -> Option<&Aabb> { self.mesh.aabb() }
+    fn centre(&self) -> Point3 { self.mesh.centre() }
 }

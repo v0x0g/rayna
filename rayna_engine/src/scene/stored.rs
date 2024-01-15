@@ -111,7 +111,7 @@ pub static TESTING: Scene = {
     objects.push(SimpleObject::new(
         // Ball
         HomogeneousVolumeBuilder::<SphereMesh> {
-            object: SphereBuilder {
+            mesh: SphereBuilder {
                 pos: (0., 1., 0.).into(),
                 radius: 1.,
             }
@@ -355,7 +355,7 @@ pub static RTTNW_DEMO: Scene = {
         objects.push(SimpleObject::new(
             // BLUE HAZE INSIDE
             HomogeneousVolumeBuilder::<SphereMesh> {
-                object: SphereBuilder {
+                mesh: SphereBuilder {
                     pos: (3.6, 1.5, 1.45).into(),
                     radius: 0.6,
                 }
@@ -425,7 +425,7 @@ pub static RTTNW_DEMO: Scene = {
 
         objects.push(SimpleObject::new(
             HomogeneousVolumeBuilder::<SphereMesh> {
-                object: SphereBuilder {
+                mesh: SphereBuilder {
                     pos: Point3::ZERO,
                     radius: 50.,
                 }
@@ -534,7 +534,7 @@ pub static CORNELL: Scene = {
         // Ball on Small
         o.push(SimpleObject::new(
             HomogeneousVolumeBuilder::<SphereMesh> {
-                object: SphereBuilder {
+                mesh: SphereBuilder {
                     pos: (0.6255, 0.43, 0.680).into(),
                     radius: 0.1,
                 }

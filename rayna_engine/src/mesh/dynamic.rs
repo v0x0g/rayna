@@ -17,11 +17,11 @@ pub struct DynamicMesh {
 }
 
 impl DynamicMesh {
-    pub fn from(value: impl Mesh + 'static) -> Self { Self { inner: Arc::new(value) } }
+    pub fn from(value: impl Mesh) -> Self { Self { inner: Arc::new(value) } }
 }
 
 impl super::MeshInstance {
-    pub fn from_dyn(value: impl Mesh + 'static) -> Self { Self::from(DynamicMesh::from(value)) }
+    pub fn from_dyn(value: impl Mesh) -> Self { Self::from(DynamicMesh::from(value)) }
 }
 
 impl Mesh for DynamicMesh {

@@ -51,8 +51,8 @@ use smallvec::SmallVec;
 #[get = "pub"]
 pub struct SimpleObject<Mesh = MeshInstance, Mat = MaterialInstance>
 where
-    Mesh: MeshTrait + Clone,
-    Mat: Material + Clone,
+    Mesh: MeshTrait,
+    Mat: Material,
 {
     object: Mesh,
     material: Mat,
@@ -65,8 +65,8 @@ where
 
 impl<Mesh, Mat> Object for SimpleObject<Mesh, Mat>
 where
-    Mesh: MeshTrait + Clone,
-    Mat: Material + Clone,
+    Mesh: MeshTrait,
+    Mat: Material,
 {
     type Mesh = Mesh;
     type Mat = Mat;
@@ -117,8 +117,8 @@ where
 
 impl<Mesh, Mat> HasAabb for SimpleObject<Mesh, Mat>
 where
-    Mesh: MeshTrait + Clone,
-    Mat: Material + Clone,
+    Mesh: MeshTrait,
+    Mat: Material,
 {
     fn aabb(&self) -> Option<&Aabb> { self.aabb.as_ref() }
 
@@ -129,8 +129,8 @@ where
 
 impl<Mesh, Mat> SimpleObject<Mesh, Mat>
 where
-    Mesh: MeshTrait + Clone,
-    Mat: Material + Clone,
+    Mesh: MeshTrait,
+    Mat: Material,
 {
     /// Creates a new transformed mesh instance, using the given mesh and transform matrix.
     ///

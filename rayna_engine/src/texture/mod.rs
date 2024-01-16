@@ -25,8 +25,6 @@ pub trait Texture: RtRequirement {
     fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel;
 }
 
-dyn_clone::clone_trait_object!(Texture);
-
 /// An optimised implementation of [Texture], using static dispatch
 #[enum_dispatch(Texture)]
 #[derive(Clone, Debug)]

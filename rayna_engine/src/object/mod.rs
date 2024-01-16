@@ -17,14 +17,13 @@ use smallvec::SmallVec;
 // noinspection ALL
 use self::{bvh::BvhObject, list::ObjectList, simple::SimpleObject};
 
-dyn_clone::clone_trait_object!(<Mesh: MeshTrait + Clone, Mat: Material + Clone> Object<Mesh=Mesh, Mat=Mat>);
 /// This trait is essentially an extension of [Mesh], but with a [FullIntersection] not [Intersection],
 /// meaning the material of the mesh is also included.
 ///
 /// This should only be implemented on [SimpleObject], and any objects that group multiple objects together.
 pub trait Object: RtRequirement + HasAabb {
-    type Mesh: MeshTrait + Clone;
-    type Mat: Material + Clone;
+    type Mesh: MeshTrait;
+    type Mat: Material;
     /// Attempts to perform an intersection between the given ray and the target mesh
     ///
     /// # Return Value
@@ -103,6 +102,8 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> HasAabb for ObjectInstance<
 // endregion Static dispatch
 
 // region impl From<_> for ObjectInstance
+
+// NOTE: Since [ObjectInstance] is [Clone], the wrapped meshes and materials also need to be [Clone]
 
 impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> From<SimpleObject<Mesh, Mat>> for ObjectInstance<Mesh, Mat> {
     fn from(value: SimpleObject<Mesh, Mat>) -> Self { Self::SimpleObject(value) }

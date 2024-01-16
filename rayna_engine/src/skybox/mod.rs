@@ -8,8 +8,6 @@ use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
 use rayna_shared::def::types::Pixel;
 
-dyn_clone::clone_trait_object!(Skybox);
-
 /// The main trait for implementing a skybox
 ///
 /// This simply needs to return the sky colour for a given ray

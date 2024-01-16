@@ -1,4 +1,3 @@
-use derivative::Derivative;
 use getset::Getters;
 use rand_core::RngCore;
 use smallvec::SmallVec;
@@ -14,14 +13,13 @@ use crate::shared::ray::Ray;
 use crate::shared::transform_utils::{transform_incoming_ray, transform_outgoing_intersection};
 use rayna_shared::def::types::{Number, Point3, Transform3};
 
-#[derive(Getters, Derivative)]
+#[derive(Getters, Clone, Debug)]
 #[get = "pub"]
-#[derivative(Clone(bound = ""), Debug(bound = ""))]
 pub struct ObjectList<Mesh, Mat, Obj>
 where
-    Mesh: mesh::Mesh + Clone,
-    Mat: Material + Clone,
-    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
+    Mesh: mesh::Mesh,
+    Mat: Material,
+    Obj: Object<Mesh = Mesh, Mat = Mat>,
 {
     /// BVH-optimised tree of objects
     bvh: BvhObject<Mesh, Mat, Obj>,
@@ -39,9 +37,9 @@ where
 // Iter<Into<ObjType>> => ObjectList
 impl<Mesh, Mat, Obj, Iter> From<Iter> for ObjectList<Mesh, Mat, Obj>
 where
-    Mesh: mesh::Mesh + Clone,
-    Mat: Material + Clone,
-    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
+    Mesh: mesh::Mesh,
+    Mat: Material,
+    Obj: Object<Mesh = Mesh, Mat = Mat>,
     Iter: IntoIterator<Item = Obj>,
 {
     fn from(value: Iter) -> Self { Self::new(value) }
@@ -70,9 +68,9 @@ where
 
 impl<Mesh, Mat, Obj> ObjectList<Mesh, Mat, Obj>
 where
-    Mesh: mesh::Mesh + Clone,
-    Mat: Material + Clone,
-    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
+    Mesh: mesh::Mesh,
+    Mat: Material,
+    Obj: Object<Mesh = Mesh, Mat = Mat>,
 {
     /// Creates a new transformed mesh instance, using the given mesh and transform matrix.
     ///
@@ -154,9 +152,9 @@ where
 
 impl<Mesh, Mat, Obj> Object for ObjectList<Mesh, Mat, Obj>
 where
-    Mesh: mesh::Mesh + Clone,
-    Mat: Material + Clone,
-    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
+    Mesh: mesh::Mesh,
+    Mat: Material,
+    Obj: Object<Mesh = Mesh, Mat = Mat>,
 {
     type Mesh = Mesh;
     type Mat = Mat;
@@ -223,9 +221,9 @@ where
 }
 impl<Mesh, Mat, Obj> HasAabb for ObjectList<Mesh, Mat, Obj>
 where
-    Mesh: mesh::Mesh + Clone,
-    Mat: Material + Clone,
-    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
+    Mesh: mesh::Mesh,
+    Mat: Material,
+    Obj: Object<Mesh = Mesh, Mat = Mat>,
 {
     fn aabb(&self) -> Option<&Aabb> { self.aabb.as_ref() }
 }

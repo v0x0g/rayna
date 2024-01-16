@@ -63,7 +63,7 @@ impl Ord for Intersection {
 /// Mainly used internally.
 #[derive(Clone, Debug, Derivative)]
 #[derivative(Ord, PartialOrd, Eq, PartialEq)]
-pub struct FullIntersection<'mat, Mat: Material + Clone + 'mat> {
+pub struct FullIntersection<'mat, Mat: Material + 'mat> {
     pub intersection: Intersection,
     /// NOTE:
     /// For all comparisons, this field is ignored ([PartialEq], [Ord], [PartialOrd])
@@ -71,12 +71,12 @@ pub struct FullIntersection<'mat, Mat: Material + Clone + 'mat> {
     pub material: &'mat Mat,
 }
 
-impl<'mat, Mat: Material + Clone + 'mat> From<(&'mat Mat, Intersection)> for FullIntersection<'mat, Mat> {
+impl<'mat, Mat: Material + 'mat> From<(&'mat Mat, Intersection)> for FullIntersection<'mat, Mat> {
     fn from((material, intersection): (&'mat Mat, Intersection)) -> Self { Self { intersection, material } }
 }
 
 impl Intersection {
-    pub fn make_full<Mat: Material + Clone>(self, material: &Mat) -> FullIntersection<Mat> {
+    pub fn make_full<Mat: Material>(self, material: &Mat) -> FullIntersection<Mat> {
         FullIntersection {
             intersection: self,
             material,

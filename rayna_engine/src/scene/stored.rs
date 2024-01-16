@@ -175,7 +175,7 @@ pub static RTIAW_DEMO: Scene = {
                 .into()
             } else {
                 DielectricMaterial {
-                    albedo: rng::colour_rgb_range(rng, 0.5..1.0),
+                    albedo: rng::colour_rgb_range(rng, 0.5..1.0).into(),
                     refractive_index: rng.gen_range(1.0..=10.0),
                 }
                 .into()
@@ -233,7 +233,7 @@ pub static RTIAW_DEMO: Scene = {
         },
         LambertianMaterial {
             albedo: LocalNoiseTexture {
-                source: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69u32)).set_scale(10000.)).as_dyn_box(),
+                source: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69u32)).set_scale(10000.)).to_dyn_box(),
             }
             .into(),
             emissive: Default::default(),
@@ -431,7 +431,7 @@ pub static RTTNW_DEMO: Scene = {
                 },
                 LambertianMaterial {
                     albedo: WorldNoiseTexture {
-                        source: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69)).set_scale(4.)).as_dyn_box(),
+                        source: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69)).set_scale(4.)).to_dyn_box(),
                     }
                     .into(),
                     emissive: BLACK_TEX,

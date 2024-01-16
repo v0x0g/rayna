@@ -52,8 +52,6 @@ pub mod triangle;
 
 // region Object traits
 
-dyn_clone::clone_trait_object!(Mesh);
-
 #[enum_dispatch]
 pub trait Mesh: MeshProperties + RtRequirement {
     /// Attempts to perform an intersection between the given ray and the target mesh
@@ -87,8 +85,6 @@ pub enum MeshInstance {
     HomogeneousVolumeMesh(HomogeneousVolumeMesh<DynamicMesh>),
     DynamicMesh,
 }
-
-dyn_clone::clone_trait_object!(MeshProperties);
 
 /// This trait describes an [Mesh], and the properties it has
 #[enum_dispatch]

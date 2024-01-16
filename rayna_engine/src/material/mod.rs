@@ -20,7 +20,8 @@ pub mod metal;
 /// The trait that defines what properties a material has
 #[enum_dispatch]
 pub trait Material: RtRequirement {
-    // TODO: Should `scatter()` return a ray?
+    // TODO: For all materials that currently take a TextureInstance, make them take generic
+    //  Also make `Derive(Copy)`
 
     /// Scatters the input ray, according to the material's properties
     ///

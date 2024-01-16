@@ -2,15 +2,16 @@ use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::math;
 use crate::shared::ray::Ray;
+use crate::texture::{Texture, TextureInstance};
 use image::Pixel as _;
 use num_traits::Pow;
 use rand::{Rng, RngCore};
 use rayna_shared::def::types::{Channel, Number, Pixel, Vector3};
 use std::ops::Mul;
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct DielectricMaterial {
-    pub albedo: Pixel,
+    pub albedo: TextureInstance,
     pub refractive_index: Number,
 }
 
@@ -41,12 +42,12 @@ impl Material for DielectricMaterial {
     fn reflected_light(
         &self,
         _ray: &Ray,
-        _intersection: &Intersection,
+        intersection: &Intersection,
         _future_ray: &Ray,
         future_col: &Pixel,
-        _rng: &mut dyn RngCore,
+        rng: &mut dyn RngCore,
     ) -> Pixel {
-        Pixel::map2(&future_col, &self.albedo, Channel::mul)
+        Pixel::map2(&future_col, &self.albedo.value(intersection, rng), Channel::mul)
     }
 }
 

@@ -5,23 +5,21 @@ use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::rng;
-use derivative::Derivative;
 use getset::Getters;
 use rand::Rng;
 use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Point3};
 use smallvec::SmallVec;
 
-#[derive(Derivative)]
-#[derivative(Debug(bound = ""), Clone(bound = ""), Copy)]
-pub struct HomogeneousVolumeBuilder<M: Mesh + Clone> {
+#[derive(Debug, Copy, Clone)]
+pub struct HomogeneousVolumeBuilder<M: Mesh> {
     /// The mesh that gives this volume it's shape
     pub mesh: M,
     /// How dense the volume is. Higher values give a "thicker" volume
     pub density: Number,
 }
 
-impl<M: Mesh + Clone> From<HomogeneousVolumeBuilder<M>> for HomogeneousVolumeMesh<M> {
+impl<M: Mesh> From<HomogeneousVolumeBuilder<M>> for HomogeneousVolumeMesh<M> {
     fn from(value: HomogeneousVolumeBuilder<M>) -> Self {
         Self {
             mesh: value.mesh,
@@ -32,7 +30,7 @@ impl<M: Mesh + Clone> From<HomogeneousVolumeBuilder<M>> for HomogeneousVolumeMes
 }
 
 // VolumeBuilder<T> => MeshInstance
-impl<M: Mesh + Clone + 'static> From<HomogeneousVolumeBuilder<M>> for MeshInstance {
+impl<M: Mesh + 'static> From<HomogeneousVolumeBuilder<M>> for MeshInstance {
     fn from(value: HomogeneousVolumeBuilder<M>) -> Self {
         let HomogeneousVolumeBuilder { mesh: object, density } = value;
         // ObjectInstance uses HomogeneousVolumeObject<DynamicObject>, so cast the builder to dyn mesh
@@ -47,16 +45,15 @@ impl<M: Mesh + Clone + 'static> From<HomogeneousVolumeBuilder<M>> for MeshInstan
 /// An mesh wrapper that treats the wrapped mesh as a constant-density volume
 ///
 /// The volume has the same shape as the wrapped `mesh`, and a constant density at all points in the volume
-#[derive(Derivative, Getters)]
-#[derivative(Debug(bound = ""), Clone(bound = ""), Copy)]
+#[derive(Copy, Clone, Debug, Getters)]
 #[get = "pub"]
-pub struct HomogeneousVolumeMesh<M: Mesh + Clone> {
+pub struct HomogeneousVolumeMesh<M: Mesh> {
     mesh: M,
     density: Number,
     neg_inv_density: Number,
 }
 
-impl<M: Mesh + Clone> Mesh for HomogeneousVolumeMesh<M> {
+impl<M: Mesh> Mesh for HomogeneousVolumeMesh<M> {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
         // Find two samples on surface of volume
         // These should be as the ray enters and exits the mesh
@@ -109,10 +106,10 @@ impl<M: Mesh + Clone> Mesh for HomogeneousVolumeMesh<M> {
     }
 }
 
-impl<M: Mesh + Clone> HasAabb for HomogeneousVolumeMesh<M> {
+impl<M: Mesh> HasAabb for HomogeneousVolumeMesh<M> {
     fn aabb(&self) -> Option<&Aabb> { self.mesh.aabb() }
 }
 
-impl<M: Mesh + Clone> MeshProperties for HomogeneousVolumeMesh<M> {
+impl<M: Mesh> MeshProperties for HomogeneousVolumeMesh<M> {
     fn centre(&self) -> Point3 { self.mesh.centre() }
 }

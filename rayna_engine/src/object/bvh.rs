@@ -3,7 +3,6 @@
 //! These are used to accelerate ray-mesh intersection tests by narrowing the search space,
 //! by skipping objects that obviously can't be intersected.
 
-use derivative::Derivative;
 use getset::Getters;
 use indextree::{Arena, NodeId};
 use std::marker::PhantomData;
@@ -21,14 +20,13 @@ use crate::shared::generic_bvh::{GenericBvh, GenericBvhNode};
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 
-#[derive(Getters, Derivative)]
+#[derive(Getters, Clone, Debug)]
 #[get = "pub"]
-#[derivative(Clone(bound = ""), Debug(bound = ""))]
 pub struct BvhObject<Mesh, Mat, Obj>
 where
-    Mesh: crate::mesh::Mesh + Clone,
-    Mat: Material + Clone,
-    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
+    Mesh: crate::mesh::Mesh,
+    Mat: Material,
+    Obj: Object<Mesh = Mesh, Mat = Mat>,
 {
     inner: GenericBvh<Obj>,
     phantom_mesh: PhantomData<Mesh>,
@@ -36,15 +34,13 @@ where
 }
 
 /// Helper function to unwrap an AABB with a panic message
-fn expect_aabb<Obj: Object + Clone>(o: &Obj) -> &Aabb {
-    o.aabb().as_ref().expect("aabb required as invariant of `Bvh`")
-}
+fn expect_aabb<Obj: Object>(o: &Obj) -> &Aabb { o.aabb().as_ref().expect("aabb required as invariant of `Bvh`") }
 
 impl<Mesh, Mat, Obj> BvhObject<Mesh, Mat, Obj>
 where
-    Mesh: crate::mesh::Mesh + Clone,
-    Mat: Material + Clone,
-    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
+    Mesh: crate::mesh::Mesh,
+    Mat: Material,
+    Obj: Object<Mesh = Mesh, Mat = Mat>,
 {
     /// Creates a new [BvhObject] tree from the given slice of objects
     ///
@@ -62,9 +58,9 @@ where
 
 impl<Mesh, Mat, Obj> BvhObject<Mesh, Mat, Obj>
 where
-    Mesh: crate::mesh::Mesh + Clone,
-    Mat: Material + Clone,
-    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
+    Mesh: crate::mesh::Mesh,
+    Mat: Material,
+    Obj: Object<Mesh = Mesh, Mat = Mat>,
 {
     /// Given a [NodeId] on the [Arena] tree, calculates the nearest intersection for the given `ray` and `bounds`
     ///
@@ -151,9 +147,9 @@ where
 
 impl<Mesh, Mat, Obj> Object for BvhObject<Mesh, Mat, Obj>
 where
-    Mesh: crate::mesh::Mesh + Clone,
-    Mat: Material + Clone,
-    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
+    Mesh: crate::mesh::Mesh,
+    Mat: Material,
+    Obj: Object<Mesh = Mesh, Mat = Mat>,
 {
     type Mesh = Mesh;
     type Mat = Mat;
@@ -182,9 +178,9 @@ where
 
 impl<Mesh, Mat, Obj> HasAabb for BvhObject<Mesh, Mat, Obj>
 where
-    Mesh: crate::mesh::Mesh + Clone,
-    Mat: Material + Clone,
-    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
+    Mesh: crate::mesh::Mesh,
+    Mat: Material,
+    Obj: Object<Mesh = Mesh, Mat = Mat>,
 {
     fn aabb(&self) -> Option<&Aabb> {
         let root = self.inner.root_id()?;

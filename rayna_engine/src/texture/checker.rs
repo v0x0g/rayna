@@ -10,14 +10,14 @@ use crate::texture::dynamic::DynamicTexture;
 use crate::texture::Texture;
 
 #[derive(Clone, Debug)]
-pub struct WorldCheckerTexture<Odd: Texture + Clone = DynamicTexture, Even: Texture + Clone = DynamicTexture> {
+pub struct WorldCheckerTexture<Odd: Texture = DynamicTexture, Even: Texture = DynamicTexture> {
     pub offset: Vector3,
     pub even: Even,
     pub odd: Odd,
     pub scale: Number,
 }
 
-impl<Odd: Texture + Clone, Even: Texture + Clone> Texture for WorldCheckerTexture<Odd, Even> {
+impl<Odd: Texture, Even: Texture> Texture for WorldCheckerTexture<Odd, Even> {
     fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
         let pos = (intersection.pos_w.to_vector() / self.scale) + self.offset;
 
@@ -26,14 +26,14 @@ impl<Odd: Texture + Clone, Even: Texture + Clone> Texture for WorldCheckerTextur
 }
 
 #[derive(Clone, Debug)]
-pub struct UvCheckerTexture<Odd: Texture + Clone = DynamicTexture, Even: Texture + Clone = DynamicTexture> {
+pub struct UvCheckerTexture<Odd: Texture = DynamicTexture, Even: Texture = DynamicTexture> {
     pub offset: Vector2,
     pub even: Even,
     pub odd: Odd,
     pub scale: Number,
 }
 
-impl<Odd: Texture + Clone, Even: Texture + Clone> Texture for UvCheckerTexture<Odd, Even> {
+impl<Odd: Texture, Even: Texture> Texture for UvCheckerTexture<Odd, Even> {
     fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
         let pos = (intersection.uv.to_vector() / self.scale) + self.offset;
 

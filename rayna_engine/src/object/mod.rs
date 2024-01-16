@@ -97,3 +97,17 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> HasAabb for ObjectInstance<
         }
     }
 }
+
+impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> From<SimpleObject<Mesh, Mat>> for ObjectInstance<Mesh, Mat> {
+    fn from(value: SimpleObject<Mesh, Mat>) -> Self { Self::SimpleObject(value) }
+}
+impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> From<ObjectList<Mesh, Mat, ObjectInstance<Mesh, Mat>>>
+    for ObjectInstance<Mesh, Mat>
+{
+    fn from(value: ObjectList<Mesh, Mat, ObjectInstance<Mesh, Mat>>) -> Self { Self::ObjectList(value) }
+}
+impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> From<BvhObject<Mesh, Mat, ObjectInstance<Mesh, Mat>>>
+    for ObjectInstance<Mesh, Mat>
+{
+    fn from(value: BvhObject<Mesh, Mat, ObjectInstance<Mesh, Mat>>) -> Self { Self::Bvh(value) }
+}

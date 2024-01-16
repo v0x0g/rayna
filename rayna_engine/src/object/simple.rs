@@ -1,5 +1,5 @@
-use crate::material::Material;
-use crate::mesh::Mesh as MeshTrait;
+use crate::material::{Material, MaterialInstance};
+use crate::mesh::{Mesh as MeshTrait, MeshInstance};
 use crate::object::Object;
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
@@ -49,7 +49,7 @@ use smallvec::SmallVec;
 /// This pre/post transform is encapsulated in [SimpleObject::new_with_correction()]
 #[derive(Getters, Clone, Debug)]
 #[get = "pub"]
-pub struct SimpleObject<Mesh, Mat>
+pub struct SimpleObject<Mesh = MeshInstance, Mat = MaterialInstance>
 where
     Mesh: MeshTrait + Clone,
     Mat: Material + Clone,

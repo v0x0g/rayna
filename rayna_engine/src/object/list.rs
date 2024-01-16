@@ -169,34 +169,6 @@ impl<Obj: Object> Object for ObjectList<Obj> {
             }
         };
     }
-
-    fn full_intersect_all<'o>(
-        &'o self,
-        orig_ray: &Ray,
-        output: &mut SmallVec<[FullIntersection<'o, Obj::Mat>; 32]>,
-        rng: &mut dyn RngCore,
-    ) {
-        if let (Some(transform), Some(inv_transform)) = (&self.transform, &self.inv_transform) {
-            let trans_ray = transform_incoming_ray(orig_ray, inv_transform);
-
-            let mut inner_intersects = SmallVec::new();
-            self.bvh.full_intersect_all(&trans_ray, &mut inner_intersects, rng);
-            self.unbounded
-                .iter()
-                .for_each(|o| o.full_intersect_all(&trans_ray, &mut inner_intersects, rng));
-
-            // Undo the transform on the intersections
-            output.extend(inner_intersects.into_iter().map(|mut inner| {
-                inner.intersection = transform_outgoing_intersection(orig_ray, inner.intersection, transform);
-                inner
-            }));
-        } else {
-            self.bvh.full_intersect_all(orig_ray, output, rng);
-            self.unbounded
-                .iter()
-                .for_each(|o| o.full_intersect_all(orig_ray, output, rng));
-        }
-    }
 }
 impl<Obj: Object> HasAabb for ObjectList<Obj> {
     fn aabb(&self) -> Option<&Aabb> { self.aabb.as_ref() }

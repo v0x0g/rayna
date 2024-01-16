@@ -34,18 +34,6 @@ pub trait Object: RtRequirement + HasAabb {
         bounds: &Bounds<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Self::Mat>>;
-
-    /// Calculates all of the intersections for the given mesh.
-    ///
-    /// # Return Value
-    /// This should append all the (unbounded) intersections, into the vector `output`.
-    /// It can *not* be assumed this vector will be empty. The existing contents should not be modified
-    fn full_intersect_all<'o>(
-        &'o self,
-        ray: &Ray,
-        output: &mut SmallVec<[FullIntersection<'o, Self::Mat>; 32]>,
-        rng: &mut dyn RngCore,
-    );
 }
 
 // region Static dispatch
@@ -72,19 +60,6 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> Object for ObjectInstance<M
             Self::Bvh(v) => v.full_intersect(ray, bounds, rng),
             Self::SimpleObject(v) => v.full_intersect(ray, bounds, rng),
             Self::ObjectList(v) => v.full_intersect(ray, bounds, rng),
-        }
-    }
-
-    fn full_intersect_all<'o>(
-        &'o self,
-        ray: &Ray,
-        output: &mut SmallVec<[FullIntersection<'o, Self::Mat>; 32]>,
-        rng: &mut dyn RngCore,
-    ) {
-        match self {
-            Self::Bvh(v) => v.full_intersect_all(ray, output, rng),
-            Self::SimpleObject(v) => v.full_intersect_all(ray, output, rng),
-            Self::ObjectList(v) => v.full_intersect_all(ray, output, rng),
         }
     }
 }

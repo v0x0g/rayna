@@ -82,33 +82,6 @@ where
             Some(self.object.intersect(orig_ray, bounds, rng)?.make_full(&self.material))
         }
     }
-
-    fn full_intersect_all<'o>(
-        &'o self,
-        orig_ray: &Ray,
-        output: &mut SmallVec<[FullIntersection<'o, Mat>; 32]>,
-        rng: &mut dyn RngCore,
-    ) {
-        if let (Some(transform), Some(inv_transform)) = (&self.transform, &self.inv_transform) {
-            let trans_ray = transform_incoming_ray(orig_ray, inv_transform);
-            let mut inner_intersects = SmallVec::new();
-            self.object.intersect_all(&trans_ray, &mut inner_intersects, rng);
-
-            output.extend(inner_intersects.into_iter().map(|mut inner| {
-                inner = transform_outgoing_intersection(orig_ray, inner, transform);
-                inner.make_full(&self.material)
-            }));
-        } else {
-            let mut inner_intersects = SmallVec::new();
-            self.object.intersect_all(&orig_ray, &mut inner_intersects, rng);
-
-            output.extend(
-                inner_intersects
-                    .into_iter()
-                    .map(|inner| inner.make_full(&self.material)),
-            );
-        }
-    }
 }
 
 impl<Mesh, Mat> HasAabb for SimpleObject<Mesh, Mat>

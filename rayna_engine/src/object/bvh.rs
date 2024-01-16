@@ -79,47 +79,6 @@ impl<Obj: Object> BvhObject<Obj> {
             }
         };
     }
-
-    /// Given a [NodeId] on the [Arena] tree, calculates the ALL intersection for the given `ray`
-    ///
-    /// If the node is a [BvhNode::Object], it passes on the check to the mesh.
-    /// Otherwise, if it's a [BvhNode::Aabb], it:
-    ///  - Tries to bail early if the [Aabb] is missed
-    ///  - Collects all the child nodes
-    ///  - Intersects on all those children (by calling itself recursively)
-    fn bvh_node_intersect_all<'o>(
-        ray: &Ray,
-        node: NodeId,
-        arena: &'o Arena<GenericBvhNode<Obj>>,
-        output: &mut SmallVec<[FullIntersection<'o, Obj::Mat>; 32]>,
-        rng: &mut dyn RngCore,
-    ) {
-        match arena.get(node).expect("node should exist in arena").get() {
-            // An aabb will need to delegate to child nodes if not missed
-            GenericBvhNode::Nested(aabb) => {
-                if !aabb.hit(ray, &Bounds::FULL) {
-                    return;
-                }
-
-                node.children(arena)
-                    .for_each(|child| Self::bvh_node_intersect_all(ray, child, arena, output, rng));
-            }
-            // Objects can be delegated directly
-            GenericBvhNode::Object(obj) => {
-                if !expect_aabb(obj).hit(ray, &Bounds::FULL) {
-                    return;
-                }
-                obj.full_intersect_all(ray, output, rng)
-            }
-        }
-
-        // // Possibly faster method, doesn't do any tree traversal at all, should be linear
-        // arena
-        //     .iter()
-        //     .filter(|node| !node.is_removed())
-        //     .filter_map(|node| match node.get() {BvhNode::Object(o) => Some(o), _ => None})
-        //     .for_each(|obj| obj.intersect_all(ray, output))
-    }
 }
 
 impl<Obj: Object> Object for BvhObject<Obj> {
@@ -134,17 +93,6 @@ impl<Obj: Object> Object for BvhObject<Obj> {
     ) -> Option<FullIntersection<'o, Obj::Mat>> {
         // Pass everything on to our magical function
         Self::bvh_node_intersect(ray, bounds, self.inner.root_id()?, &self.inner.arena(), rng)
-    }
-
-    fn full_intersect_all<'o>(
-        &'o self,
-        ray: &Ray,
-        output: &mut SmallVec<[FullIntersection<'o, Obj::Mat>; 32]>,
-        rng: &mut dyn RngCore,
-    ) {
-        if let Some(root) = self.inner.root_id() {
-            Self::bvh_node_intersect_all(ray, root, self.inner.arena(), output, rng);
-        }
     }
 }
 

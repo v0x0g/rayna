@@ -69,10 +69,7 @@ impl Camera {
     /// This will return [Option::None] if the `up_vector` points in the same direction as
     /// the forward vector (`look_from -> look_towards`),
     /// equivalent to the case where `cross(look_direction, up_vector) == Vec3::Zero`
-    pub fn calculate_viewport(
-        &self,
-        render_opts: &RenderOpts,
-    ) -> Result<Viewport, CamInvalidError> {
+    pub fn calculate_viewport(&self, render_opts: &RenderOpts) -> Result<Viewport, CamInvalidError> {
         profile_function!();
 
         let img_width = render_opts.width.get() as Number;
@@ -95,10 +92,7 @@ impl Camera {
         let viewport_width = viewport_height * aspect_ratio;
 
         // Calculate the u,v,w unit basis vectors for the camera coordinate frame.
-        let w = -self
-            .fwd
-            .try_normalize()
-            .ok_or(CamInvalidError::ForwardVectorInvalid)?;
+        let w = -self.fwd.try_normalize().ok_or(CamInvalidError::ForwardVectorInvalid)?;
         let u = Vector3::cross(Vector3::Y, w)
             .try_normalize()
             .ok_or(CamInvalidError::ForwardVectorInvalid)?;
@@ -162,14 +156,11 @@ impl Viewport {
     // PERF: This function is a rendering hotspot
     pub fn calc_ray(&self, px: Number, py: Number, rng: &mut impl Rng) -> Ray {
         // Pixel position
-        let pixel_sample =
-            self.pixel_0_0_pos + (self.pixel_delta_u * px) + (self.pixel_delta_v * py);
+        let pixel_sample = self.pixel_0_0_pos + (self.pixel_delta_u * px) + (self.pixel_delta_v * py);
 
         // Ray starts off on the focus disk, and then goes through the pixel position
         let defocus_rand = rng::vector_in_unit_circle(rng);
-        let ray_pos = self.pos
-            + (self.defocus_disk_u * defocus_rand.x)
-            + (self.defocus_disk_v * defocus_rand.y);
+        let ray_pos = self.pos + (self.defocus_disk_u * defocus_rand.x) + (self.defocus_disk_v * defocus_rand.y);
         let ray_dir = pixel_sample - ray_pos;
 
         return Ray::new(ray_pos, ray_dir);

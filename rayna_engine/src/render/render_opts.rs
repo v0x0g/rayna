@@ -17,20 +17,7 @@ pub struct RenderOpts {
     pub bounces: usize,
 }
 
-#[derive(
-    Copy,
-    Clone,
-    Debug,
-    Default,
-    Eq,
-    PartialEq,
-    Ord,
-    PartialOrd,
-    Valuable,
-    Serialize,
-    EnumIter,
-    IntoStaticStr,
-)]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Valuable, Serialize, EnumIter, IntoStaticStr)]
 pub enum RenderMode {
     #[default]
     PBR,
@@ -50,9 +37,7 @@ impl RenderOpts {
             .map(|d| d.expect("image dims failed to fit inside u32"))
     }
 
-    pub fn aspect_ratio(&self) -> Number {
-        self.width.get() as Number / self.height.get() as Number
-    }
+    pub fn aspect_ratio(&self) -> Number { self.width.get() as Number / self.height.get() as Number }
 }
 
 impl Default for RenderOpts {

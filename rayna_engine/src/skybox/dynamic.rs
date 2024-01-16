@@ -9,7 +9,5 @@ pub struct DynamicSkybox {
 }
 
 impl Skybox for DynamicSkybox {
-    fn sky_colour(&self, ray: &Ray) -> Pixel {
-        self.inner.sky_colour(ray)
-    }
+    fn sky_colour(&self, ray: &Ray) -> Pixel { self.inner.sky_colour(ray) }
 }

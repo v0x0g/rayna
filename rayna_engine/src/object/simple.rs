@@ -49,11 +49,7 @@ use smallvec::SmallVec;
 /// This pre/post transform is encapsulated in [SimpleObject::new_with_correction()]
 #[derive(Getters, Clone, Debug)]
 #[get = "pub"]
-pub struct SimpleObject<Mesh, Mat>
-where
-    Mesh: MeshTrait,
-    Mat: Material,
-{
+pub struct SimpleObject<Mesh: MeshTrait, Mat: Material> {
     object: Mesh,
     material: Mat,
     transform: Option<Transform3>,

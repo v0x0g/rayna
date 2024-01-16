@@ -11,19 +11,11 @@ pub struct MiniquadBackend;
 impl UiBackend for MiniquadBackend {
     fn run(self: Box<Self>, _app_name: &str, app_ctor: AppCtor) -> anyhow::Result<()> {
         // TODO: Figure out how to use app_name
-        miniquad::start(
-            Conf {
-                ..Default::default()
-            },
-            move |mq_ctx| {
-                let egui_mq = EguiMq::new(mq_ctx);
-                let box_app = app_ctor(egui_mq.egui_ctx());
-                Box::new(MiniquadWrapper {
-                    egui_mq,
-                    app: box_app,
-                }) as Box<dyn EventHandler>
-            },
-        );
+        miniquad::start(Conf { ..Default::default() }, move |mq_ctx| {
+            let egui_mq = EguiMq::new(mq_ctx);
+            let box_app = app_ctor(egui_mq.egui_ctx());
+            Box::new(MiniquadWrapper { egui_mq, app: box_app }) as Box<dyn EventHandler>
+        });
 
         // miniquad never errors?
         Ok(())
@@ -74,23 +66,11 @@ impl EventHandler for MiniquadWrapper {
         self.egui_mq.mouse_wheel_event(dx, dy);
     }
 
-    fn mouse_button_down_event(
-        &mut self,
-        ctx: &mut miniquad::Context,
-        mb: miniquad::MouseButton,
-        x: f32,
-        y: f32,
-    ) {
+    fn mouse_button_down_event(&mut self, ctx: &mut miniquad::Context, mb: miniquad::MouseButton, x: f32, y: f32) {
         self.egui_mq.mouse_button_down_event(ctx, mb, x, y);
     }
 
-    fn mouse_button_up_event(
-        &mut self,
-        ctx: &mut miniquad::Context,
-        mb: miniquad::MouseButton,
-        x: f32,
-        y: f32,
-    ) {
+    fn mouse_button_up_event(&mut self, ctx: &mut miniquad::Context, mb: miniquad::MouseButton, x: f32, y: f32) {
         self.egui_mq.mouse_button_up_event(ctx, mb, x, y);
     }
 
@@ -114,12 +94,7 @@ impl EventHandler for MiniquadWrapper {
         self.egui_mq.key_down_event(ctx, keycode, keymods);
     }
 
-    fn key_up_event(
-        &mut self,
-        _ctx: &mut miniquad::Context,
-        keycode: miniquad::KeyCode,
-        keymods: miniquad::KeyMods,
-    ) {
+    fn key_up_event(&mut self, _ctx: &mut miniquad::Context, keycode: miniquad::KeyCode, keymods: miniquad::KeyMods) {
         self.egui_mq.key_up_event(keycode, keymods);
     }
 }

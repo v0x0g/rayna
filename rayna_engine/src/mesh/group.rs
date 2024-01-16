@@ -1,7 +1,7 @@
 // use getset::Getters;
 // use crate::mesh;
 // use crate::shared::generic_bvh::GenericBvh;
-// 
+//
 // /// A group of meshes that are rendered as one mesh
 // ///
 // /// # Notes
@@ -13,7 +13,7 @@
 //     unbounded: Vec<Mesh>
 //     bounded: GenericBvh<Mesh>
 // }
-// 
+//
 // impl Object for GroupObject {
-// 
+//
 // }

@@ -147,9 +147,7 @@ impl Integration {
         return match self.render_rx.try_recv() {
             Ok(render) => Some(Ok(render)),
             Err(flume::TryRecvError::Empty) => None,
-            Err(flume::TryRecvError::Disconnected) => {
-                Some(Err(IntegrationError::RenderChannelDisconnected))
-            }
+            Err(flume::TryRecvError::Disconnected) => Some(Err(IntegrationError::RenderChannelDisconnected)),
         };
     }
 
@@ -169,9 +167,7 @@ impl Integration {
         return match self.msg_rx.try_recv() {
             Ok(msg) => Some(Ok(msg)),
             Err(flume::TryRecvError::Empty) => None,
-            Err(flume::TryRecvError::Disconnected) => {
-                Some(Err(IntegrationError::RxChannelDisconnected))
-            }
+            Err(flume::TryRecvError::Disconnected) => Some(Err(IntegrationError::RxChannelDisconnected)),
         };
     }
 

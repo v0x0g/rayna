@@ -11,9 +11,7 @@ use rayna_shared::def::types::{Channel, Pixel, Vector2, Vector3};
 #[derive(Copy, Clone, Debug, Default)]
 pub struct RngPoolAllocator;
 impl<R: SeedableRng> opool::PoolAllocator<R> for RngPoolAllocator {
-    fn allocate(&self) -> R {
-        R::from_entropy()
-    }
+    fn allocate(&self) -> R { R::from_entropy() }
 }
 
 // region 3D
@@ -159,10 +157,7 @@ pub fn colour_rgb<R: Rng + ?Sized>(rng: &mut R) -> Pixel {
     arr.into()
 }
 /// Returns a random RGB colour with a given range for the channels
-pub fn colour_rgb_range<R: Rng + ?Sized, Ra: SampleRange<Channel> + Clone>(
-    rng: &mut R,
-    range: Ra,
-) -> Pixel {
+pub fn colour_rgb_range<R: Rng + ?Sized, Ra: SampleRange<Channel> + Clone>(rng: &mut R, range: Ra) -> Pixel {
     let mut arr: [Channel; Pixel::CHANNEL_COUNT as usize] = Default::default();
     arr.fill_with(|| rng.gen_range(range.clone()));
     arr.into()

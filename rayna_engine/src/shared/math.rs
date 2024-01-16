@@ -21,9 +21,7 @@ pub fn lerp_px(a: Pixel, b: Pixel, t: Number) -> Pixel {
 }
 
 /// Calculates the vector reflection of vector `d` across the surface normal `n`
-pub fn reflect(d: Vector3, n: Vector3) -> Vector3 {
-    d - n * (2. * d.dot(n))
-}
+pub fn reflect(d: Vector3, n: Vector3) -> Vector3 { d - n * (2. * d.dot(n)) }
 
 pub fn refract(vec: Vector3, n: Vector3, ir_ratio: Number) -> Vector3 {
     let cos_theta = Vector3::dot(-vec, n).min(1.);

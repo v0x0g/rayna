@@ -39,11 +39,7 @@ impl UiBackend for EframeBackend {
 }
 
 impl eframe::App for Box<dyn crate::backend::app::App> {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        self.on_update(ctx);
-    }
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) { self.on_update(ctx); }
 
-    fn on_exit(&mut self, _glow: Option<&eframe::glow::Context>) {
-        self.on_shutdown();
-    }
+    fn on_exit(&mut self, _glow: Option<&eframe::glow::Context>) { self.on_shutdown(); }
 }

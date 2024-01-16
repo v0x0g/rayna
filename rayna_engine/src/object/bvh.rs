@@ -5,13 +5,9 @@
 
 use getset::Getters;
 use indextree::{Arena, NodeId};
-use std::marker::PhantomData;
-
 use rand_core::RngCore;
-use smallvec::SmallVec;
-
-use crate::material::Material;
 use rayna_shared::def::types::Number;
+use smallvec::SmallVec;
 
 use crate::object::Object;
 use crate::shared::aabb::{Aabb, HasAabb};
@@ -22,14 +18,8 @@ use crate::shared::ray::Ray;
 
 #[derive(Getters, Clone, Debug)]
 #[get = "pub"]
-pub struct BvhObject<
-    Obj: Object<Mesh = Mesh, Mat = Mat>,
-    Mesh: crate::mesh::Mesh = <Obj as Object>::Mesh,
-    Mat: Material = <Obj as Object>::Mat,
-> {
+pub struct BvhObject<Obj: Object> {
     inner: GenericBvh<Obj>,
-    phantom_mesh: PhantomData<Mesh>,
-    phantom_mat: PhantomData<Mat>,
 }
 
 /// Helper function to unwrap an AABB with a panic message
@@ -44,8 +34,6 @@ impl<Obj: Object> BvhObject<Obj> {
     pub fn new(objects: Vec<Obj>) -> Self {
         Self {
             inner: GenericBvh::new(objects),
-            phantom_mat: PhantomData,
-            phantom_mesh: PhantomData,
         }
     }
 }

@@ -15,12 +15,7 @@ use rayna_shared::def::types::{Number, Point3, Transform3};
 
 #[derive(Getters, Clone, Debug)]
 #[get = "pub"]
-pub struct ObjectList<Mesh, Mat, Obj>
-where
-    Mesh: mesh::Mesh,
-    Mat: Material,
-    Obj: Object<Mesh = Mesh, Mat = Mat>,
-{
+pub struct ObjectList<Obj: Object> {
     /// BVH-optimised tree of objects
     bvh: BvhObject<Obj>,
     /// All the unbounded objects in the list (objects where [Object::aabb()] returned [None]
@@ -35,13 +30,7 @@ where
 // region From<> Impl
 
 // Iter<Into<ObjType>> => ObjectList
-impl<Mesh, Mat, Obj, Iter> From<Iter> for ObjectList<Mesh, Mat, Obj>
-where
-    Mesh: mesh::Mesh,
-    Mat: Material,
-    Obj: Object<Mesh = Mesh, Mat = Mat>,
-    Iter: IntoIterator<Item = Obj>,
-{
+impl<Obj: Object, Iter: IntoIterator<Item = Obj>> From<Iter> for ObjectList<Obj> {
     fn from(value: Iter) -> Self { Self::new(value) }
 }
 
@@ -66,12 +55,7 @@ where
 
 // region Constructors
 
-impl<Mesh, Mat, Obj> ObjectList<Mesh, Mat, Obj>
-where
-    Mesh: mesh::Mesh,
-    Mat: Material,
-    Obj: Object<Mesh = Mesh, Mat = Mat>,
-{
+impl<Obj: Object> ObjectList<Obj> {
     /// Creates a new transformed mesh instance, using the given mesh and transform matrix.
     ///
     /// Unlike [Self::new_without_correction()], this *does* account for the mesh's translation from the origin,
@@ -150,21 +134,16 @@ where
 
 // endregion Constructors
 
-impl<Mesh, Mat, Obj> Object for ObjectList<Mesh, Mat, Obj>
-where
-    Mesh: mesh::Mesh,
-    Mat: Material,
-    Obj: Object<Mesh = Mesh, Mat = Mat>,
-{
-    type Mesh = Mesh;
-    type Mat = Mat;
+impl<Obj: Object> Object for ObjectList<Obj> {
+    type Mesh = Obj::Mesh;
+    type Mat = Obj::Mat;
 
     fn full_intersect<'o>(
         &'o self,
         orig_ray: &Ray,
         bounds: &Bounds<Number>,
         rng: &mut dyn RngCore,
-    ) -> Option<FullIntersection<'o, Mat>> {
+    ) -> Option<FullIntersection<'o, Obj::Mat>> {
         // NOTE: This transformation code is practically the same as SimpleObject's implementation
         return match (&self.transform, &self.inv_transform) {
             (Some(transform), Some(inv_transform)) => {
@@ -194,7 +173,7 @@ where
     fn full_intersect_all<'o>(
         &'o self,
         orig_ray: &Ray,
-        output: &mut SmallVec<[FullIntersection<'o, Mat>; 32]>,
+        output: &mut SmallVec<[FullIntersection<'o, Obj::Mat>; 32]>,
         rng: &mut dyn RngCore,
     ) {
         if let (Some(transform), Some(inv_transform)) = (&self.transform, &self.inv_transform) {
@@ -219,11 +198,6 @@ where
         }
     }
 }
-impl<Mesh, Mat, Obj> HasAabb for ObjectList<Mesh, Mat, Obj>
-where
-    Mesh: mesh::Mesh,
-    Mat: Material,
-    Obj: Object<Mesh = Mesh, Mat = Mat>,
-{
+impl<Obj: Object> HasAabb for ObjectList<Obj> {
     fn aabb(&self) -> Option<&Aabb> { self.aabb.as_ref() }
 }

@@ -53,7 +53,7 @@ pub trait Object: RtRequirement + HasAabb {
 #[derive(Clone, Debug)]
 pub enum ObjectInstance<Mesh: MeshTrait + Clone, Mat: Material + Clone> {
     SimpleObject(SimpleObject<Mesh, Mat>),
-    ObjectList(ObjectList<Mesh, Mat, ObjectInstance<Mesh, Mat>>),
+    ObjectList(ObjectList<ObjectInstance<Mesh, Mat>>),
     Bvh(BvhObject<ObjectInstance<Mesh, Mat>>),
 }
 
@@ -108,10 +108,10 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> HasAabb for ObjectInstance<
 impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> From<SimpleObject<Mesh, Mat>> for ObjectInstance<Mesh, Mat> {
     fn from(value: SimpleObject<Mesh, Mat>) -> Self { Self::SimpleObject(value) }
 }
-impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> From<ObjectList<Mesh, Mat, ObjectInstance<Mesh, Mat>>>
+impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> From<ObjectList<ObjectInstance<Mesh, Mat>>>
     for ObjectInstance<Mesh, Mat>
 {
-    fn from(value: ObjectList<Mesh, Mat, ObjectInstance<Mesh, Mat>>) -> Self { Self::ObjectList(value) }
+    fn from(value: ObjectList<ObjectInstance<Mesh, Mat>>) -> Self { Self::ObjectList(value) }
 }
 impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> From<BvhObject<ObjectInstance<Mesh, Mat>>>
     for ObjectInstance<Mesh, Mat>

@@ -24,7 +24,7 @@
 //! - Add an entry to [MeshInstance] to correspond to the `SphereObject` for static-dispatch
 //! - See [sphere] for an example
 
-use crate::shared::aabb::Aabb;
+use crate::shared::aabb::HasAabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -76,7 +76,7 @@ pub trait Mesh: MeshProperties + RtRequirement {
 /// An optimised implementation of [Mesh].
 ///
 /// See [crate::material::MaterialInstance] for an explanation of the [macro@enum_dispatch] macro usage
-#[enum_dispatch(Mesh, MeshProperties)]
+#[enum_dispatch(Mesh, MeshProperties, HasAabb)]
 #[derive(Clone, Debug)]
 pub enum MeshInstance {
     SphereMesh,
@@ -92,10 +92,7 @@ dyn_clone::clone_trait_object!(MeshProperties);
 
 /// This trait describes an [Mesh], and the properties it has
 #[enum_dispatch]
-pub trait MeshProperties: RtRequirement {
-    /// Gets the bounding box for this mesh. If the mesh can't be bounded (e.g. infinite plane), return [None]
-    fn aabb(&self) -> Option<&Aabb>;
-
+pub trait MeshProperties: RtRequirement + HasAabb {
     /// Gets the centre of the mesh.
     ///
     /// Scaling and rotation will happen around this point

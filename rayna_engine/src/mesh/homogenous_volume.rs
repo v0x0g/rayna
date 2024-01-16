@@ -1,6 +1,6 @@
 use crate::mesh::dynamic::DynamicMesh;
 use crate::mesh::{Mesh, MeshInstance, MeshProperties};
-use crate::shared::aabb::Aabb;
+use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -109,7 +109,10 @@ impl<M: Mesh + Clone> Mesh for HomogeneousVolumeMesh<M> {
     }
 }
 
-impl<M: Mesh + Clone> MeshProperties for HomogeneousVolumeMesh<M> {
+impl<M: Mesh + Clone> HasAabb for HomogeneousVolumeMesh<M> {
     fn aabb(&self) -> Option<&Aabb> { self.mesh.aabb() }
+}
+
+impl<M: Mesh + Clone> MeshProperties for HomogeneousVolumeMesh<M> {
     fn centre(&self) -> Point3 { self.mesh.centre() }
 }

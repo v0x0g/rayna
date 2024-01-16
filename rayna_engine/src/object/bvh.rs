@@ -15,7 +15,7 @@ use crate::material::Material;
 use rayna_shared::def::types::Number;
 
 use crate::object::Object;
-use crate::shared::aabb::Aabb;
+use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::generic_bvh::{GenericBvh, GenericBvhNode};
 use crate::shared::intersect::FullIntersection;
@@ -178,7 +178,14 @@ where
             Self::bvh_node_intersect_all(ray, root, self.inner.arena(), output, rng);
         }
     }
+}
 
+impl<Mesh, Mat, Obj> HasAabb for BvhObject<Mesh, Mat, Obj>
+where
+    Mesh: crate::mesh::Mesh + Clone,
+    Mat: Material + Clone,
+    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
+{
     fn aabb(&self) -> Option<&Aabb> {
         let root = self.inner.root_id()?;
         match self

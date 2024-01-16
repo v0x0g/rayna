@@ -6,7 +6,7 @@ use rayna_shared::def::types::{Number, Point2, Point3};
 
 use crate::mesh::planar::{Planar, PlanarBuilder};
 use crate::mesh::{Mesh, MeshInstance, MeshProperties};
-use crate::shared::aabb::Aabb;
+use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -87,7 +87,10 @@ impl Mesh for InfinitePlaneMesh {
     }
 }
 
-impl MeshProperties for InfinitePlaneMesh {
+impl HasAabb for InfinitePlaneMesh {
     fn aabb(&self) -> Option<&Aabb> { None }
+}
+
+impl MeshProperties for InfinitePlaneMesh {
     fn centre(&self) -> Point3 { self.plane.p() }
 }

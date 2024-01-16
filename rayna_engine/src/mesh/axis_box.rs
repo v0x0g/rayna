@@ -8,7 +8,7 @@ use smallvec::SmallVec;
 use rayna_shared::def::types::{Number, Point2, Point3, Vector2, Vector3};
 
 use crate::mesh::{Mesh, MeshInstance, MeshProperties};
-use crate::shared::aabb::Aabb;
+use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -217,7 +217,9 @@ impl Mesh for AxisBoxMesh {
     }
 }
 
-impl MeshProperties for AxisBoxMesh {
+impl HasAabb for AxisBoxMesh {
     fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
+}
+impl MeshProperties for AxisBoxMesh {
     fn centre(&self) -> Point3 { self.centre }
 }

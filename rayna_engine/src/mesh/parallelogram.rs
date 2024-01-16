@@ -6,7 +6,7 @@ use rayna_shared::def::types::{Number, Point2, Point3};
 
 use crate::mesh::planar::{Planar, PlanarBuilder};
 use crate::mesh::{Mesh, MeshInstance, MeshProperties};
-use crate::shared::aabb::Aabb;
+use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -58,7 +58,9 @@ impl Mesh for ParallelogramMesh {
     }
 }
 
-impl MeshProperties for ParallelogramMesh {
+impl HasAabb for ParallelogramMesh {
     fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
+}
+impl MeshProperties for ParallelogramMesh {
     fn centre(&self) -> Point3 { self.plane.p() }
 }

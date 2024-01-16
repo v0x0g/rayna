@@ -1,5 +1,5 @@
 use crate::mesh::{Mesh, MeshInstance, MeshProperties};
-use crate::shared::aabb::Aabb;
+use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -152,8 +152,10 @@ impl Mesh for SphereMesh {
     }
 }
 
-impl MeshProperties for SphereMesh {
+impl HasAabb for SphereMesh {
     fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
+}
+impl MeshProperties for SphereMesh {
     fn centre(&self) -> Point3 { self.pos }
 }
 

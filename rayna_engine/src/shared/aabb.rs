@@ -1,3 +1,5 @@
+use crate::shared::RtRequirement;
+use enum_dispatch::enum_dispatch;
 use std::borrow::Borrow;
 
 use getset::*;
@@ -148,3 +150,21 @@ impl Aabb {
     }
 }
 // endregion Impl
+
+// Sometimes `enum_dispatch` tries to generate the enum implementations in this file's scope,
+// so have to import the names here
+// Don't really like it but it's what must be done
+
+#[allow(unused)]
+use crate::{material::MaterialInstance, mesh::MeshInstance};
+
+/// Trait that requires some type possibly has an AABB
+///
+#[enum_dispatch]
+pub trait HasAabb: RtRequirement {
+    /// Gets the bounding box for this mesh. If the mesh can't be bounded (e.g. infinite plane), return [None]
+    fn aabb(&self) -> Option<&Aabb>;
+
+    /// Helper function to unwrap an AABB with a panic message
+    fn expect_aabb(&self) -> &Aabb { self.aabb().expect("aabb required as invariant of `GenericBvh`") }
+}

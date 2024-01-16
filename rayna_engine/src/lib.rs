@@ -4,6 +4,7 @@
 #![feature(array_try_map)]
 #![feature(array_methods)]
 #![feature(box_patterns)]
+#![feature(negative_impls)]
 
 pub mod material;
 pub mod mesh;

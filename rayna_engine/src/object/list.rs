@@ -7,7 +7,7 @@ use crate::material::Material;
 use crate::mesh;
 use crate::object::bvh::BvhObject;
 use crate::object::{Object, ObjectInstance};
-use crate::shared::aabb::Aabb;
+use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
@@ -30,6 +30,7 @@ where
     transform: Option<Transform3>,
     inv_transform: Option<Transform3>,
     /// The [Aabb] for all of the enclosed objects. Will be [None] if there are unbounded objects
+    #[get(skip)]
     aabb: Option<Aabb>,
 }
 
@@ -139,9 +140,7 @@ where
         }
         let aabb = if unbounded.is_empty() && !bounded.is_empty() {
             // All objects were checked for AABB so can unwrap
-            Some(Aabb::encompass_iter(
-                bounded.iter().map(Object::aabb).map(Option::unwrap),
-            ))
+            Some(Aabb::encompass_iter(bounded.iter().map(Obj::aabb).map(Option::unwrap)))
         } else {
             None
         };
@@ -221,6 +220,12 @@ where
                 .for_each(|o| o.full_intersect_all(orig_ray, output, rng));
         }
     }
-
+}
+impl<Mesh, Mat, Obj> HasAabb for ObjectList<Mesh, Mat, Obj>
+where
+    Mesh: mesh::Mesh + Clone,
+    Mat: Material + Clone,
+    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
+{
     fn aabb(&self) -> Option<&Aabb> { self.aabb.as_ref() }
 }

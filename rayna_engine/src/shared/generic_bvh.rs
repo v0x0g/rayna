@@ -3,50 +3,17 @@
 //! These are used to accelerate ray-mesh intersection tests by narrowing the search space,
 //! by skipping objects that obviously can't be intersected.
 
-use derivative::Derivative;
 use getset::{CopyGetters, Getters};
 use indextree::{Arena, NodeId};
 use std::cmp::Ordering;
 
-use crate::material::Material;
-use crate::mesh;
-use crate::mesh::MeshProperties;
 use itertools::{zip_eq, Itertools};
 use rayna_shared::def::types::Number;
 
-use crate::object::Object;
-use crate::shared::aabb::Aabb;
-use crate::shared::RtRequirement;
+use crate::shared::aabb::{Aabb, HasAabb};
 
-// region BvhNode Trait
-
-/// Trait that constrains what types can be an element of a generic BVH tree
-/// Currently all it requires is that some type has an AABB
-pub trait BvhNode: RtRequirement {
-    type SelfMarker;
-    fn aabb(value: &Self::SelfMarker) -> Option<&Aabb>;
-}
-
-impl<Mesh, Mat, Obj> BvhNode for Obj
-where
-    Mesh: mesh::Mesh + Clone,
-    Mat: Material + Clone,
-    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
-{
-    type SelfMarker = Obj;
-    fn aabb(value: &Obj) -> Option<&Aabb> { <Obj as Object<Mesh = Mesh, Mat = Mat>>::aabb(value) }
-}
-
-impl<Mesh: mesh::Mesh + MeshProperties + Clone> BvhNode for Mesh {
-    type SelfMarker = Mesh;
-    fn aabb(value: &Mesh) -> Option<&Aabb> { <Mesh as MeshProperties>::aabb(value) }
-}
-
-// endregion BvhNode Trait
-
-#[derive(Getters, CopyGetters, Derivative)]
-#[derivative(Clone(bound = ""), Debug(bound = ""))]
-pub struct GenericBvh<Node: BvhNode> {
+#[derive(Getters, CopyGetters, Clone, Debug)]
+pub struct GenericBvh<Node: HasAabb> {
     /// The backing store containing all of our objects, as well as their hierarchy
     #[get = "pub"]
     arena: Arena<GenericBvhNode<Node>>,
@@ -68,20 +35,17 @@ enum SplitAxis {
 /// Nodes are either a branch point [GenericBvhNode::Nested] (which has children),
 /// or a leaf [GenericBvhNode::Object] (which is an object)
 #[derive(Clone, Debug)]
-pub enum GenericBvhNode<Node: BvhNode> {
+pub enum GenericBvhNode<Node: HasAabb> {
     // Don't need to keep track of children since the tree does that for us
     Nested(Aabb),
     Object(Node),
 }
 
-/// Helper function to unwrap an AABB with a panic message
-fn expect_aabb<N: BvhNode>(o: &N) -> &Aabb { o.aabb().expect("aabb required as invariant of `GenericBvh`") }
-
-impl<BNode: BvhNode> GenericBvh<BNode> {
+impl<BNode: HasAabb> GenericBvh<BNode> {
     /// Creates a new [BvhObject] tree from the given slice of objects
     ///
     /// # Note
-    /// The given slice of `objects` should only contain *bounded* objects (i.e. [BvhNode::aabb()] returns [`Some(_)`]).
+    /// The given slice of `objects` should only contain *bounded* objects (i.e. [HasAabb::aabb()] returns [`Some(_)`]).
     /// The exact behaviour is not specified, but will most likely result in a panic during building/accessing the tree
     pub fn new(objects: Vec<BNode>) -> Self {
         assert!(
@@ -105,15 +69,15 @@ impl<BNode: BvhNode> GenericBvh<BNode> {
     /// This sort is *unstable* (see [sort_unstable_by](https://doc.rust-lang.org/std/primitive.slice.html#method.sort_unstable_by))
     fn sort_along_aabb_axis(axis: SplitAxis, objects: &mut [BNode]) {
         let sort_x = |a: &BNode, b: &BNode| -> Ordering {
-            PartialOrd::partial_cmp(&expect_aabb(a).min().x, &expect_aabb(b).min().x)
+            PartialOrd::partial_cmp(&a.expect_aabb().min().x, &b.expect_aabb().min().x)
                 .expect("should be able to cmp AABB x-bounds: should not be nan")
         };
         let sort_y = |a: &BNode, b: &BNode| -> Ordering {
-            PartialOrd::partial_cmp(&expect_aabb(a).min().y, &expect_aabb(b).min().y)
+            PartialOrd::partial_cmp(&a.expect_aabb().min().y, &b.expect_aabb().min().y)
                 .expect("should be able to cmp AABB y-bounds: should not be nan")
         };
         let sort_z = |a: &BNode, b: &BNode| -> Ordering {
-            PartialOrd::partial_cmp(&expect_aabb(a).min().z, &expect_aabb(b).min().z)
+            PartialOrd::partial_cmp(&a.expect_aabb().min().z, &b.expect_aabb().min().z)
                 .expect("should be able to cmp AABB z-bounds: should not be nan")
         };
 
@@ -151,7 +115,7 @@ impl<BNode: BvhNode> GenericBvh<BNode> {
 
         objects = match <[BNode; 2]>::try_from(objects) {
             Ok([a, b]) => {
-                let aabb = Aabb::encompass(expect_aabb(&a), expect_aabb(&b));
+                let aabb = Aabb::encompass(a.expect_aabb(), b.expect_aabb());
 
                 let node = arena.new_node(GenericBvhNode::Nested(aabb));
                 node.append_value(GenericBvhNode::Object(a), arena);
@@ -167,7 +131,7 @@ impl<BNode: BvhNode> GenericBvh<BNode> {
             // https://3.bp.blogspot.com/-PMG6dWk1i60/VuG9UHjsdlI/AAAAAAAACEo/BS1qJyut7LE/s1600/Screen%2BShot%2B2016-03-10%2Bat%2B11.25.08%2BAM.png
 
             let n = objects.len();
-            let aabbs = objects.iter().map(|o| *expect_aabb(o)).collect_vec();
+            let aabbs = objects.iter().map(HasAabb::expect_aabb).copied().collect_vec();
             let main_aabb = Aabb::encompass_iter(&aabbs);
 
             // Find the longest axis to split along, and sort for that axis

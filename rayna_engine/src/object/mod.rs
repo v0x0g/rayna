@@ -5,6 +5,7 @@ pub mod simple;
 use crate::material::Material;
 use crate::mesh::Mesh as MeshTrait;
 use crate::shared::aabb::Aabb;
+use crate::shared::aabb::HasAabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
@@ -17,12 +18,11 @@ use smallvec::SmallVec;
 use self::{bvh::BvhObject, list::ObjectList, simple::SimpleObject};
 
 dyn_clone::clone_trait_object!(<Mesh: MeshTrait + Clone, Mat: Material + Clone> Object<Mesh=Mesh, Mat=Mat>);
-
 /// This trait is essentially an extension of [Mesh], but with a [FullIntersection] not [Intersection],
 /// meaning the material of the mesh is also included.
 ///
 /// This should only be implemented on [SimpleObject], and any objects that group multiple objects together.
-pub trait Object: RtRequirement {
+pub trait Object: RtRequirement + HasAabb {
     type Mesh: MeshTrait + Clone;
     type Mat: Material + Clone;
     /// Attempts to perform an intersection between the given ray and the target mesh
@@ -47,8 +47,6 @@ pub trait Object: RtRequirement {
         output: &mut SmallVec<[FullIntersection<'o, Self::Mat>; 32]>,
         rng: &mut dyn RngCore,
     );
-
-    fn aabb(&self) -> Option<&Aabb>;
 }
 
 #[derive(Clone, Debug)]
@@ -88,7 +86,9 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> Object for ObjectInstance<M
             Self::ObjectList(v) => v.full_intersect_all(ray, output, rng),
         }
     }
+}
 
+impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> HasAabb for ObjectInstance<Mesh, Mat> {
     fn aabb(&self) -> Option<&Aabb> {
         match self {
             Self::Bvh(v) => v.aabb(),

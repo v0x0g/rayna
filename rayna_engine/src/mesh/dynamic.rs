@@ -1,5 +1,5 @@
 use crate::mesh::{Mesh, MeshProperties};
-use crate::shared::aabb::Aabb;
+use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -34,7 +34,9 @@ impl Mesh for DynamicMesh {
     }
 }
 
-impl MeshProperties for DynamicMesh {
+impl HasAabb for DynamicMesh {
     fn aabb(&self) -> Option<&Aabb> { self.inner.aabb() }
+}
+impl MeshProperties for DynamicMesh {
     fn centre(&self) -> Point3 { self.inner.centre() }
 }

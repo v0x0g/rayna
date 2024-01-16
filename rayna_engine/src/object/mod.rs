@@ -49,6 +49,8 @@ pub trait Object: RtRequirement + HasAabb {
     );
 }
 
+// region Static dispatch
+
 #[derive(Clone, Debug)]
 pub enum ObjectInstance<Mesh: MeshTrait + Clone, Mat: Material + Clone> {
     SimpleObject(SimpleObject<Mesh, Mat>),
@@ -98,6 +100,10 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> HasAabb for ObjectInstance<
     }
 }
 
+// endregion Static dispatch
+
+// region impl From<_> for ObjectInstance
+
 impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> From<SimpleObject<Mesh, Mat>> for ObjectInstance<Mesh, Mat> {
     fn from(value: SimpleObject<Mesh, Mat>) -> Self { Self::SimpleObject(value) }
 }
@@ -111,3 +117,5 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> From<BvhObject<Mesh, Mat, O
 {
     fn from(value: BvhObject<Mesh, Mat, ObjectInstance<Mesh, Mat>>) -> Self { Self::Bvh(value) }
 }
+
+// endregion impl From<_> for ObjectInstance

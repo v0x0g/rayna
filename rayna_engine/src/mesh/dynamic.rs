@@ -5,7 +5,7 @@ use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Point3};
-use smallvec::SmallVec;
+
 use std::sync::Arc;
 
 /// Object wrapper around a `dyn` [Mesh]; Delegates everything to the inner mesh.

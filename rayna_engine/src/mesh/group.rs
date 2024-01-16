@@ -7,7 +7,7 @@ use crate::shared::ray::Ray;
 use getset::Getters;
 use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Point3};
-use smallvec::SmallVec;
+
 
 /// A group of meshes that are rendered as one mesh
 ///
@@ -33,5 +33,5 @@ impl<Mesh: MeshTrait> HasAabb for GroupMesh<Mesh> {
 }
 
 impl<Mesh: MeshTrait> MeshTrait for GroupMesh<Mesh> {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {}
+    fn intersect(&self, _ray: &Ray, _bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> { todo!() }
 }

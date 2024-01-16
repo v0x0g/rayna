@@ -7,7 +7,7 @@ use getset::CopyGetters;
 use glamour::AngleConsts;
 use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
-use smallvec::SmallVec;
+
 
 /// A builder struct used to create a sphere
 ///

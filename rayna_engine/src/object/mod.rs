@@ -12,7 +12,7 @@ use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use rand_core::RngCore;
 use rayna_shared::def::types::Number;
-use smallvec::SmallVec;
+
 
 // noinspection ALL
 use self::{bvh::BvhObject, list::ObjectList, simple::SimpleObject};

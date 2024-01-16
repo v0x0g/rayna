@@ -9,7 +9,7 @@ use getset::Getters;
 use rand::Rng;
 use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Point3};
-use smallvec::SmallVec;
+
 
 #[derive(Debug, Copy, Clone)]
 pub struct HomogeneousVolumeBuilder<M: Mesh> {

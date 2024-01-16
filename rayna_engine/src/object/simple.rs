@@ -9,7 +9,7 @@ use crate::shared::transform_utils::{transform_incoming_ray, transform_outgoing_
 use getset::Getters;
 use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Transform3};
-use smallvec::SmallVec;
+
 
 /// The main struct that encapsulates all the different "components" that make up an mesh
 ///

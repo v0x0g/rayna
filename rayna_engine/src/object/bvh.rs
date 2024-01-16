@@ -7,7 +7,7 @@ use getset::Getters;
 use indextree::{Arena, NodeId};
 use rand_core::RngCore;
 use rayna_shared::def::types::Number;
-use smallvec::SmallVec;
+
 
 use crate::object::Object;
 use crate::shared::aabb::{Aabb, HasAabb};

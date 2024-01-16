@@ -3,9 +3,9 @@ use glam::swizzles::*;
 use glamour::FromRaw;
 use glamour::ToRaw;
 use rand_core::RngCore;
-use smallvec::SmallVec;
 
-use rayna_shared::def::types::{Number, Point2, Point3, Vector2, Vector3};
+
+use rayna_shared::def::types::{Number, Point3, Vector2, Vector3};
 
 use crate::mesh::{Mesh, MeshInstance, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};

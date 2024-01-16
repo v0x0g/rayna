@@ -229,26 +229,64 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         let py = y as Number;
         let sample_count = opts.msaa.get();
 
-        let samples: SmallVec<[Pixel; 32]> = (0..sample_count)
+        type SmolVec<T> = SmallVec<[T; 64]>;
+
+        let samples: SmolVec<Pixel> = (0..sample_count)
             .into_iter()
             .map(|_s| Self::apply_msaa_shift(px, py, rng_1))
             .map(|[px, py]| Self::render_px_once(scene, viewport, opts, bounds, px, py, rng_2))
             .inspect(|p| validate::colour(p))
             .collect();
 
-        // Pixel doesn't implement [core::ops::Add], so have to manually do it with slices
-        // TODO: Implement something better than just averaging
-        let accum = samples
-            .iter()
-            .copied()
-            .reduce(|a, b| Pixel::map2(&a, &b, Channel::add))
-            .unwrap_or_else(|| [0.; 3].into());
+        // let overall_colour = {
+        //     // Pixel doesn't implement [core::ops::Add], so have to manually do it with slices
+        //     // TODO: Implement something better than just averaging
+        //     let accum = samples
+        //         .iter()
+        //         .copied()
+        //         .reduce(|a, b| Pixel::map2(&a, &b, Channel::add))
+        //         .unwrap_or_else(|| [0.; 3].into());
+        //
+        //     let mean = accum.map(|c| c / (sample_count as Channel));
+        //     let pix = Pixel::from(mean);
+        //     pix
+        // };
 
-        let mean = accum.map(|c| c / (sample_count as Channel));
-        let pix = Pixel::from(mean);
+        let overall_colour = {
+            // Split into RGB
+            let mut samples_r: SmolVec<_> = samples.iter().map(|p| p.0[0]).collect();
+            let mut samples_g: SmolVec<_> = samples.iter().map(|p| p.0[1]).collect();
+            let mut samples_b: SmolVec<_> = samples.iter().map(|p| p.0[2]).collect();
 
-        validate::colour(pix);
-        pix
+            // Sort
+            let sample_sorter = Channel::total_cmp;
+            samples_r.sort_unstable_by(sample_sorter);
+            samples_g.sort_unstable_by(sample_sorter);
+            samples_b.sort_unstable_by(sample_sorter);
+
+            // For each pair of points, get the difference between those points, and the midpoint
+            let density_fn = |&[a, b]: &[&Channel; 2]| (a - b, (a + b) / 2.);
+            let mut distances_r: SmolVec<_> = samples_r.iter().map_windows(density_fn).collect();
+            let mut distances_g: SmolVec<_> = samples_g.iter().map_windows(density_fn).collect();
+            let mut distances_b: SmolVec<_> = samples_b.iter().map_windows(density_fn).collect();
+
+            // // Sort by distance
+            // let distances_sorter = |&(a, _), &(b, _)| Channel::total_cmp(&a, &b);
+            // distances_r.sort_unstable_by(distances_sorter);
+            // distances_g.sort_unstable_by(distances_sorter);
+            // distances_b.sort_unstable_by(distances_sorter);
+
+            // Find smallest distance (aka max density)
+            let distance_comparer = |a: &&(Channel, Channel), b: &&(Channel, Channel)| Channel::total_cmp(&a.0, &b.0);
+            let r = distances_r.iter().min_by(distance_comparer).unwrap_or(&(1., 0.)).1;
+            let g = distances_g.iter().min_by(distance_comparer).unwrap_or(&(1., 0.)).1;
+            let b = distances_b.iter().min_by(distance_comparer).unwrap_or(&(1., 0.)).1;
+
+            Pixel::from([r, g, b])
+        };
+
+        validate::colour(overall_colour);
+        overall_colour
     }
 
     /// Renders a given pixel a single time

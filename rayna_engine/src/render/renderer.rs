@@ -27,7 +27,7 @@ use std::ops::{Add, DerefMut};
 use std::sync::OnceLock;
 use std::time::Duration;
 use thiserror::Error;
-use tracing::{debug, error, trace};
+use tracing::{error, trace};
 
 #[derive(Derivative)]
 #[derivative(Debug)]
@@ -237,10 +237,6 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             .map(|[px, py]| Self::render_px_once(scene, viewport, opts, bounds, px, py, rng_2))
             .inspect(|p| validate::colour(p))
             .collect();
-
-        if rng_1.gen_ratio(sample_count as u32, 1_000_000) {
-            debug!(target: RENDERER, "sample pixel values ({x}, {y}):\n{:?}", samples.as_slice());
-        }
 
         let overall_colour = {
             // Pixel doesn't implement [core::ops::Add], so have to manually do it with slices

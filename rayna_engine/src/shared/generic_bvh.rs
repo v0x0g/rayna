@@ -23,23 +23,23 @@ use crate::shared::RtRequirement;
 /// Trait that constrains what types can be an element of a generic BVH tree
 /// Currently all it requires is that some type has an AABB
 pub trait BvhNode: RtRequirement {
-    type SelfMarker: BvhNode;
-    fn aabb(&self) -> Option<&Aabb>;
+    type SelfMarker;
+    fn aabb(value: &Self::SelfMarker) -> Option<&Aabb>;
 }
 
-impl<Mesh, Mat, Obj> BvhNode for Obj
+impl<Mesh, Mat, Obj> BvhNode for Obj<Mesh>
 where
     Mesh: mesh::Mesh + Clone,
     Mat: Material + Clone,
     Obj: Object<Mesh, Mat> + Clone,
 {
-    type SelfMarker = (Mesh, Mat, Obj);
-    fn aabb(&self) -> Option<&Aabb> { <Obj as Object<Mesh, Mat>>::aabb(self) }
+    type SelfMarker = Obj;
+    fn aabb(value: &Obj) -> Option<&Aabb> { <Obj as Object<Mesh, Mat>>::aabb(value) }
 }
 
 impl<Mesh: mesh::Mesh + MeshProperties + Clone> BvhNode for Mesh {
     type SelfMarker = Mesh;
-    fn aabb(&self) -> Option<&Aabb> { <Mesh as MeshProperties>::aabb(self) }
+    fn aabb(value: &Mesh) -> Option<&Aabb> { <Mesh as MeshProperties>::aabb(value) }
 }
 
 // endregion BvhNode Trait

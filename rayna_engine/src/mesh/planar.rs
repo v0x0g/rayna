@@ -177,7 +177,8 @@ impl Planar {
             pos_l,
             dist: t,
             normal: self.n,
-            front_face: true,
+            // Positive => ray and normal same dir => must be behind plane => backface
+            front_face: denominator.is_sign_negative(),
             ray_normal: -self.n * denominator.signum(),
             uv: Point2::new(alpha, beta),
             face: 0,

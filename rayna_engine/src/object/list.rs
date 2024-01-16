@@ -21,7 +21,7 @@ pub struct ObjectList<Mesh, Mat, Obj>
 where
     Mesh: mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat> + Clone,
+    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
 {
     /// BVH-optimised tree of objects
     bvh: BvhObject<Mesh, Mat, Obj>,
@@ -40,7 +40,7 @@ impl<Mesh, Mat, Obj, Iter> From<Iter> for ObjectList<Mesh, Mat, Obj>
 where
     Mesh: mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat> + Clone,
+    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
     Iter: IntoIterator<Item = Obj>,
 {
     fn from(value: Iter) -> Self { Self::new(value) }
@@ -71,7 +71,7 @@ impl<Mesh, Mat, Obj> ObjectList<Mesh, Mat, Obj>
 where
     Mesh: mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat> + Clone,
+    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
 {
     /// Creates a new transformed mesh instance, using the given mesh and transform matrix.
     ///
@@ -153,12 +153,15 @@ where
 
 // endregion Constructors
 
-impl<Mesh, Mat, Obj> Object<Mesh, Mat> for ObjectList<Mesh, Mat, Obj>
+impl<Mesh, Mat, Obj> Object for ObjectList<Mesh, Mat, Obj>
 where
     Mesh: mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat> + Clone,
+    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
 {
+    type Mesh = Mesh;
+    type Mat = Mat;
+
     fn full_intersect<'o>(
         &'o self,
         orig_ray: &Ray,

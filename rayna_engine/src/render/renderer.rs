@@ -35,7 +35,7 @@ pub struct Renderer<Mesh, Mat, Obj, Sky>
 where
     Mesh: crate::mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat> + Clone,
+    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
     Sky: Skybox + Clone,
 {
     /// A thread pool used to distribute the workload
@@ -59,7 +59,7 @@ impl<Mesh, Mat, Obj, Sky> Renderer<Mesh, Mat, Obj, Sky>
 where
     Mesh: crate::mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat> + Clone,
+    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
     Sky: Skybox + Clone,
 {
     pub fn new() -> Result<Self, RendererCreateError> {
@@ -411,7 +411,7 @@ impl<Mesh, Mat, Obj, Sky> Clone for Renderer<Mesh, Mat, Obj, Sky>
 where
     Mesh: crate::mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat> + Clone,
+    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
     Sky: Skybox + Clone,
 {
     fn clone(&self) -> Self { Self::new().expect("could not clone: couldn't create renderer") }

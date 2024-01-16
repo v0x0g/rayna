@@ -12,7 +12,7 @@ pub struct Scene<Mesh = MeshInstance, Mat = MaterialInstance, Obj = ObjectInstan
 where
     Mesh: crate::mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat> + Clone,
+    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
     Sky: Skybox + Clone,
 {
     pub objects: Obj,

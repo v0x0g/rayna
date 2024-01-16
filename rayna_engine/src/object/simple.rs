@@ -62,11 +62,14 @@ where
     // TODO: Add a string identifier to this (name?)
 }
 
-impl<Mesh, Mat> Object<Mesh, Mat> for SimpleObject<Mesh, Mat>
+impl<Mesh, Mat> Object for SimpleObject<Mesh, Mat>
 where
     Mesh: MeshTrait + Clone,
     Mat: Material + Clone,
 {
+    type Mesh = Mesh;
+    type Mat = Mat;
+
     fn full_intersect<'o>(
         &'o self,
         orig_ray: &Ray,

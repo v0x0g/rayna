@@ -28,7 +28,7 @@ pub struct BvhObject<Mesh, Mat, Obj>
 where
     Mesh: crate::mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat> + Clone,
+    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
 {
     inner: GenericBvh<Obj>,
     phantom_mesh: PhantomData<Mesh>,
@@ -36,9 +36,7 @@ where
 }
 
 /// Helper function to unwrap an AABB with a panic message
-fn expect_aabb<Mesh: crate::mesh::Mesh + Clone, Mat: Material + Clone, Obj: Object<Mesh, Mat> + Clone>(
-    o: &Obj,
-) -> &Aabb {
+fn expect_aabb<Obj: Object + Clone>(o: &Obj) -> &Aabb {
     o.aabb().as_ref().expect("aabb required as invariant of `Bvh`")
 }
 
@@ -46,7 +44,7 @@ impl<Mesh, Mat, Obj> BvhObject<Mesh, Mat, Obj>
 where
     Mesh: crate::mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat> + Clone,
+    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
 {
     /// Creates a new [BvhObject] tree from the given slice of objects
     ///
@@ -66,7 +64,7 @@ impl<Mesh, Mat, Obj> BvhObject<Mesh, Mat, Obj>
 where
     Mesh: crate::mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat> + Clone,
+    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
 {
     /// Given a [NodeId] on the [Arena] tree, calculates the nearest intersection for the given `ray` and `bounds`
     ///
@@ -151,12 +149,15 @@ where
     }
 }
 
-impl<Mesh, Mat, Obj> Object<Mesh, Mat> for BvhObject<Mesh, Mat, Obj>
+impl<Mesh, Mat, Obj> Object for BvhObject<Mesh, Mat, Obj>
 where
     Mesh: crate::mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat> + Clone,
+    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
 {
+    type Mesh = Mesh;
+    type Mat = Mat;
+
     fn full_intersect<'o>(
         &'o self,
         ray: &Ray,

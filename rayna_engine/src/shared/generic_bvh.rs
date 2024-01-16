@@ -27,14 +27,14 @@ pub trait BvhNode: RtRequirement {
     fn aabb(value: &Self::SelfMarker) -> Option<&Aabb>;
 }
 
-impl<Mesh, Mat, Obj> BvhNode for Obj<Mesh>
+impl<Mesh, Mat, Obj> BvhNode for Obj
 where
     Mesh: mesh::Mesh + Clone,
     Mat: Material + Clone,
-    Obj: Object<Mesh, Mat> + Clone,
+    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
 {
     type SelfMarker = Obj;
-    fn aabb(value: &Obj) -> Option<&Aabb> { <Obj as Object<Mesh, Mat>>::aabb(value) }
+    fn aabb(value: &Obj) -> Option<&Aabb> { <Obj as Object<Mesh = Mesh, Mat = Mat>>::aabb(value) }
 }
 
 impl<Mesh: mesh::Mesh + MeshProperties + Clone> BvhNode for Mesh {

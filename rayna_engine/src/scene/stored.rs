@@ -274,19 +274,22 @@ pub static RTTNW_DEMO: Scene = {
 
     {
         // BOXES (FLOOR)
-        const BOXES_PER_SIDE: usize = 20;
+        const COUNT: usize = 20;
+        const HALF_COUNT: Number = COUNT as Number / 2.;
         const WIDTH: Number = 1.;
         const GROUND_MATERIAL: LambertianMaterial = LambertianMaterial {
             albedo: solid_texture([0.48, 0.83, 0.53]),
             emissive: BLACK_TEX,
         };
 
-        for i in 0..BOXES_PER_SIDE {
-            for j in 0..BOXES_PER_SIDE {
-                let low = Point3::new(-10., 0., -10.) + Vector3::new(i as Number * WIDTH, 0., j as Number * WIDTH);
+        let mut floor = vec![];
+        for i in 0..COUNT {
+            for j in 0..COUNT {
+                let low = Point3::new(-HALF_COUNT * WIDTH, 0., -HALF_COUNT * WIDTH)
+                    + Vector3::new(i as Number * WIDTH, 0., j as Number * WIDTH);
                 let high = low + Vector3::new(WIDTH, rng.gen_range(0.0..=1.0), WIDTH);
 
-                objects.push(
+                floor.push(
                     SimpleObject::new(
                         AxisBoxBuilder {
                             corner_1: low,
@@ -298,6 +301,8 @@ pub static RTTNW_DEMO: Scene = {
                 );
             }
         }
+
+        objects.push(ObjectList::new(floor).into());
     }
 
     {
@@ -388,7 +393,7 @@ pub static RTTNW_DEMO: Scene = {
                         radius: 0.6,
                     }
                     .into(),
-                    density: 40.,
+                    density: 80.,
                 },
                 IsotropicMaterial {
                     albedo: [0.01, 0.02, 0.6].into(),

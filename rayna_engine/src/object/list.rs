@@ -1,7 +1,6 @@
 use getset::Getters;
 use rand_core::RngCore;
 
-
 use crate::material::Material;
 use crate::mesh;
 use crate::object::bvh::BvhObject;

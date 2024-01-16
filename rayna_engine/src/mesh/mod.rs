@@ -41,13 +41,14 @@ use self::{
 
 pub mod axis_box;
 pub mod dynamic;
-pub mod group;
+pub mod list;
 pub mod homogenous_volume;
 pub mod infinite_plane;
 pub mod parallelogram;
 pub mod planar;
 pub mod sphere;
 pub mod triangle;
+mod bvh;
 
 // region Object traits
 

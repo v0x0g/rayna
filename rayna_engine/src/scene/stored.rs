@@ -18,13 +18,13 @@ use crate::material::light::LightMaterial;
 use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::mesh::axis_box::*;
+use crate::mesh::bvh::BvhMesh;
 use crate::mesh::homogenous_volume::HomogeneousVolumeBuilder;
 use crate::mesh::infinite_plane::{InfinitePlaneBuilder, UvWrappingMode};
 use crate::mesh::parallelogram::*;
 use crate::mesh::planar::PlanarBuilder;
 use crate::mesh::sphere::*;
 use crate::mesh::MeshInstance;
-use crate::object::list::ObjectList;
 use crate::object::ObjectInstance;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
@@ -271,12 +271,7 @@ pub static RTTNW_DEMO: Scene = {
         const HALF_COUNT: Number = COUNT as Number / 2.;
         const WIDTH: Number = 1.;
 
-        let ground_material = LambertianMaterial {
-            albedo: solid_texture([0.48, 0.83, 0.53]),
-            emissive: BLACK_TEX,
-        };
-
-        let mut floor = vec![];
+        let mut floor: Vec<MeshInstance> = vec![];
         for i in 0..COUNT {
             for j in 0..COUNT {
                 let low = Point3::new(-HALF_COUNT * WIDTH, 0., -HALF_COUNT * WIDTH)
@@ -284,19 +279,25 @@ pub static RTTNW_DEMO: Scene = {
                 let high = low + Vector3::new(WIDTH, rng.gen_range(0.0..=1.0), WIDTH);
 
                 floor.push(
-                    SimpleObject::new(
-                        AxisBoxBuilder {
-                            corner_1: low,
-                            corner_2: high,
-                        },
-                        ground_material.clone(),
-                    )
+                    AxisBoxBuilder {
+                        corner_1: low,
+                        corner_2: high,
+                    }
                     .into(),
                 );
             }
         }
 
-        objects.push(ObjectList::new(floor).into());
+        objects.push(
+            SimpleObject::new(
+                crate::mesh::bvh::BvhMesh::new(floor),
+                LambertianMaterial {
+                    albedo: solid_texture([0.48, 0.83, 0.53]),
+                    emissive: BLACK_TEX,
+                },
+            )
+            .into(),
+        );
     }
 
     {
@@ -440,33 +441,35 @@ pub static RTTNW_DEMO: Scene = {
 
         const COUNT: usize = 1000;
         const SPREAD: Number = 0.825;
-        let white = LambertianMaterial {
-            albedo: solid_texture([0.85; 3]),
-            emissive: BLACK_TEX,
-        };
 
-        let balls_iter = (0..COUNT).into_iter().map(|_| {
-            SimpleObject::new(
+        let balls = (0..COUNT)
+            .into_iter()
+            .map(|_| {
                 SphereBuilder {
                     pos: (rng::vector_in_unit_cube(rng) * SPREAD).to_point(),
                     radius: 0.1,
-                },
-                white.clone(),
-            )
-            .into()
-        });
+                }
+                .into()
+            })
+            .collect();
 
-        let balls_list = ObjectList::new_without_correction(
-            balls_iter,
-            Transform3::from_scale_rotation_translation(
-                Vector3::ONE,
-                Vector3::Y,
-                Angle::from_degrees(15.),
-                // The original cube was not centred at middle, but "centred" at the corner
-                Vector3::new(-1.0, 2.7, 3.95) + Vector3::splat(SPREAD),
-            ),
+        objects.push(
+            SimpleObject::new_without_correction(
+                BvhMesh::new(balls),
+                LambertianMaterial {
+                    albedo: solid_texture([0.85; 3]),
+                    emissive: BLACK_TEX,
+                },
+                Transform3::from_scale_rotation_translation(
+                    Vector3::ONE,
+                    Vector3::Y,
+                    Angle::from_degrees(15.),
+                    // The original cube was not centred at middle, but "centred" at the corner
+                    Vector3::new(-1.0, 2.7, 3.95) + Vector3::splat(SPREAD),
+                ),
+            )
+            .into(),
         );
-        objects.push(ObjectInstance::ObjectList(balls_list));
     }
 
     {

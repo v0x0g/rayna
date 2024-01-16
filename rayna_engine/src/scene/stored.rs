@@ -411,7 +411,7 @@ pub static RTTNW_DEMO: Scene = {
                 },
                 LambertianMaterial {
                     albedo: ImageTexture::from(
-                        image::load_from_memory(include_bytes!("../../../media/textures/earthmap.jpg"))
+                        image::load_from_memory(include_bytes!("../../../media/textures/earthmap/earthmap.jpg"))
                             .expect("compile-time image resource should be valid")
                             .into_rgb32f(),
                     )

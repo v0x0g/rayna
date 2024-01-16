@@ -15,7 +15,7 @@ use rayna_shared::def::types::Number;
 use smallvec::SmallVec;
 
 // noinspection ALL
-use self::{bvh::Bvh, list::ObjectList, simple::SimpleObject};
+use self::{bvh::BvhObject, list::ObjectList, simple::SimpleObject};
 
 dyn_clone::clone_trait_object!(<Mesh: MeshTrait + Clone, Mat: Material + Clone> Object<Mesh, Mat>);
 
@@ -56,5 +56,5 @@ pub trait Object<Mesh: MeshTrait + Clone, Mat: Material + Clone>: RtRequirement 
 pub enum ObjectInstance<Mesh: MeshTrait + Clone, Mat: Material + Clone> {
     SimpleObject(SimpleObject<Mesh, Mat>),
     ObjectList(ObjectList<Mesh, Mat, ObjectInstance<Mesh, Mat>>),
-    Bvh(Bvh<Mesh, Mat, ObjectInstance<Mesh, Mat>>),
+    Bvh(BvhObject<Mesh, Mat, ObjectInstance<Mesh, Mat>>),
 }

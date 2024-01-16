@@ -4,6 +4,7 @@ use std::fmt::Debug;
 pub mod aabb;
 pub mod bounds;
 pub mod camera;
+pub mod generic_bvh;
 pub mod intersect;
 pub mod math;
 pub mod ray;

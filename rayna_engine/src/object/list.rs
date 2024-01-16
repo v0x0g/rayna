@@ -5,7 +5,7 @@ use smallvec::SmallVec;
 
 use crate::material::Material;
 use crate::mesh;
-use crate::object::bvh::Bvh;
+use crate::object::bvh::BvhObject;
 use crate::object::{Object, ObjectInstance};
 use crate::shared::aabb::Aabb;
 use crate::shared::bounds::Bounds;
@@ -24,7 +24,7 @@ where
     Obj: Object<Mesh, Mat> + Clone,
 {
     /// BVH-optimised tree of objects
-    bvh: Bvh<Mesh, Mat, Obj>,
+    bvh: BvhObject<Mesh, Mat, Obj>,
     /// All the unbounded objects in the list (objects where [Object::aabb()] returned [None]
     unbounded: Vec<Obj>,
     transform: Option<Transform3>,
@@ -126,8 +126,8 @@ where
         }
     }
 
-    /// A helper method for transforming an iterator of objects into a [Bvh] tree, a [Vec] of unbounded objects, and an AABB
-    fn process_objects(objects: impl IntoIterator<Item = Obj>) -> (Bvh<Mesh, Mat, Obj>, Vec<Obj>, Option<Aabb>) {
+    /// A helper method for transforming an iterator of objects into a [BvhObject] tree, a [Vec] of unbounded objects, and an AABB
+    fn process_objects(objects: impl IntoIterator<Item = Obj>) -> (BvhObject<Mesh, Mat, Obj>, Vec<Obj>, Option<Aabb>) {
         let mut bounded = vec![];
         let mut unbounded = vec![];
         for obj in objects.into_iter() {
@@ -145,7 +145,7 @@ where
         } else {
             None
         };
-        let bvh = Bvh::new(bounded);
+        let bvh = BvhObject::new(bounded);
 
         (bvh, unbounded, aabb)
     }

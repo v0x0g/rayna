@@ -6,6 +6,7 @@ use self::{
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
+use crate::texture::{Texture, TextureInstance};
 use enum_dispatch::enum_dispatch;
 use rand::RngCore;
 use rayna_shared::def::types::{Pixel, Vector3};
@@ -149,15 +150,15 @@ pub trait Material: RtRequirement {
 /// and only use `T = ` [MaterialInstance] at the highest level where possible
 #[enum_dispatch(Material)]
 #[derive(Clone, Debug)]
-pub enum MaterialInstance {
-    LambertianMaterial,
-    MetalMaterial,
-    DielectricMaterial,
-    IsotropicMaterial,
-    LightMaterial,
+pub enum MaterialInstance<Tex: Texture> {
+    LambertianMaterial(LambertianMaterial<Tex, Tex>),
+    MetalMaterial(MetalMaterial<Tex>),
+    DielectricMaterial(DielectricMaterial<Tex>),
+    IsotropicMaterial(IsotropicMaterial<Tex>),
+    LightMaterial(LightMaterial<Tex>),
     DynamicMaterial,
 }
 
-impl Default for MaterialInstance {
+impl Default for MaterialInstance<TextureInstance> {
     fn default() -> Self { LambertianMaterial::default().into() }
 }

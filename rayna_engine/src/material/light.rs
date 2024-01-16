@@ -1,7 +1,7 @@
 use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use crate::texture::{Texture, TextureInstance};
+use crate::texture::Texture;
 use rand_core::RngCore;
 use rayna_shared::def::types::{Pixel, Vector3};
 
@@ -9,11 +9,11 @@ use rayna_shared::def::types::{Pixel, Vector3};
 ///
 /// Does not scatter.
 #[derive(Clone, Debug)]
-pub struct LightMaterial {
-    pub emissive: TextureInstance,
+pub struct LightMaterial<Tex: Texture> {
+    pub emissive: Tex,
 }
 
-impl Material for LightMaterial {
+impl<Tex: Texture> Material for LightMaterial<Tex> {
     fn scatter(&self, _ray: &Ray, _intersection: &Intersection, _rng: &mut dyn RngCore) -> Option<Vector3> { None }
 
     fn emitted_light(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {

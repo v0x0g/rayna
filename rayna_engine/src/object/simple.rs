@@ -6,6 +6,7 @@ use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 use crate::shared::transform_utils::{transform_incoming_ray, transform_outgoing_intersection};
+use crate::texture::TextureInstance;
 use getset::Getters;
 use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Transform3};
@@ -49,7 +50,7 @@ use smallvec::SmallVec;
 /// This pre/post transform is encapsulated in [SimpleObject::new_with_correction()]
 #[derive(Getters, Clone, Debug)]
 #[get = "pub"]
-pub struct SimpleObject<Mesh = MeshInstance, Mat = MaterialInstance>
+pub struct SimpleObject<Mesh = MeshInstance, Mat = MaterialInstance<TextureInstance>>
 where
     Mesh: MeshTrait,
     Mat: Material,

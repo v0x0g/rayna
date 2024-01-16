@@ -11,6 +11,7 @@ use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
 use rayna_engine::scene::Scene;
 use rayna_engine::skybox::SkyboxInstance;
+use rayna_engine::texture::TextureInstance;
 use rayna_shared::def::targets::BG_WORKER;
 use rayna_shared::def::types::{Channel, ImgBuf};
 use rayon::iter::IntoParallelIterator;
@@ -29,8 +30,7 @@ pub(super) struct BgWorker {
     /// Receiver for messages from the UI, to the worker
     pub msg_rx: flume::Receiver<MessageToWorker>,
     pub render_tx: flume::Sender<Render<ColorImage>>,
-    pub renderer:
-        Renderer<MeshInstance, MaterialInstance, ObjectInstance<MeshInstance, MaterialInstance>, SkyboxInstance>,
+    pub renderer: Renderer<ObjectInstance<MeshInstance, MaterialInstance<TextureInstance>>, SkyboxInstance>,
 }
 
 impl BgWorker {

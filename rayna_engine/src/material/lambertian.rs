@@ -10,12 +10,12 @@ use rayna_shared::def::types::{Channel, Pixel, Vector3};
 use std::ops::Mul;
 
 #[derive(Clone, Debug)]
-pub struct LambertianMaterial {
-    pub albedo: TextureInstance,
-    pub emissive: TextureInstance,
+pub struct LambertianMaterial<TexAlbedo: Texture, TexEmissive: Texture> {
+    pub albedo: TexAlbedo,
+    pub emissive: TexEmissive,
 }
 
-impl Default for LambertianMaterial {
+impl Default for LambertianMaterial<TextureInstance, TextureInstance> {
     fn default() -> Self {
         Self {
             albedo: [0.5; 3].into(),
@@ -24,7 +24,7 @@ impl Default for LambertianMaterial {
     }
 }
 
-impl Material for LambertianMaterial {
+impl<TexAlbedo: Texture, TexEmissive: Texture> Material for LambertianMaterial<TexAlbedo, TexEmissive> {
     fn scatter(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
         // Completely random scatter direction, in same hemisphere as normal
         let rand = rng::vector_in_unit_sphere(rng);

@@ -2,19 +2,19 @@ use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::{math, rng};
-use crate::texture::{Texture, TextureInstance};
+use crate::texture::Texture;
 use image::Pixel as _;
 use rand::RngCore;
 use rayna_shared::def::types::{Channel, Number, Pixel, Vector3};
 use std::ops::Mul;
 
 #[derive(Clone, Debug)]
-pub struct MetalMaterial {
-    pub albedo: TextureInstance,
+pub struct MetalMaterial<Tex: Texture> {
+    pub albedo: Tex,
     pub fuzz: Number,
 }
 
-impl Material for MetalMaterial {
+impl<Tex: Texture> Material for MetalMaterial<Tex> {
     fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
         let reflected = math::reflect(ray.dir(), intersection.ray_normal);
         let rand = rng::vector_on_unit_sphere(rng);

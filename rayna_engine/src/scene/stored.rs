@@ -10,7 +10,6 @@ use noise::*;
 use rand::{thread_rng, Rng};
 use rayna_shared::def::types::{Angle, Channel, Number, Pixel, Point3, Transform3, Vector3};
 use static_init::*;
-use std::marker::PhantomData;
 
 use crate::material::dielectric::DielectricMaterial;
 use crate::material::isotropic::IsotropicMaterial;
@@ -74,8 +73,6 @@ pub static SIMPLE: Scene = {
         ]
         .into(),
         skybox: SkyboxInstance::default(),
-        phantom_mat: PhantomData,
-        phantom_mesh: PhantomData,
     }
 };
 
@@ -137,8 +134,6 @@ pub static TESTING: Scene = {
         },
         objects: objects.into(),
         skybox: SkyboxInstance::default(),
-        phantom_mat: PhantomData,
-        phantom_mesh: PhantomData,
     }
 };
 
@@ -161,7 +156,7 @@ pub static RTIAW_DEMO: Scene = {
             }
 
             let material_choice = rng.gen::<Number>();
-            let material: MaterialInstance = if material_choice < 0.7 {
+            let material: MaterialInstance<TextureInstance> = if material_choice < 0.7 {
                 LambertianMaterial {
                     albedo: Pixel::map2(&rng::colour_rgb(rng), &rng::colour_rgb(rng), |a, b| a * b).into(),
                     emissive: Default::default(),
@@ -250,8 +245,6 @@ pub static RTIAW_DEMO: Scene = {
         },
         objects: objects.into(),
         skybox: SkyboxInstance::default(),
-        phantom_mat: PhantomData,
-        phantom_mesh: PhantomData,
     }
 };
 
@@ -259,7 +252,7 @@ pub static RTIAW_DEMO: Scene = {
 /// From **RayTracing The Next Week**, the demo scene at the end of the chapter (extended of course)
 #[dynamic]
 pub static RTTNW_DEMO: Scene = {
-    let mut objects: Vec<ObjectInstance<MeshInstance, MaterialInstance>> = Vec::new();
+    let mut objects: Vec<ObjectInstance<MeshInstance, MaterialInstance<TextureInstance>>> = Vec::new();
     let rng = &mut thread_rng();
 
     // Const trait impls aren't yet stabilised, so we can't call TextureInstance::From(Pixel) yet
@@ -277,7 +270,8 @@ pub static RTTNW_DEMO: Scene = {
         const COUNT: usize = 20;
         const HALF_COUNT: Number = COUNT as Number / 2.;
         const WIDTH: Number = 1.;
-        const GROUND_MATERIAL: LambertianMaterial = LambertianMaterial {
+
+        let ground_material = LambertianMaterial {
             albedo: solid_texture([0.48, 0.83, 0.53]),
             emissive: BLACK_TEX,
         };
@@ -295,7 +289,7 @@ pub static RTTNW_DEMO: Scene = {
                             corner_1: low,
                             corner_2: high,
                         },
-                        GROUND_MATERIAL,
+                        ground_material.clone(),
                     )
                     .into(),
                 );
@@ -504,8 +498,6 @@ pub static RTTNW_DEMO: Scene = {
         },
         objects: objects.into(),
         skybox: None.into(),
-        phantom_mat: PhantomData,
-        phantom_mesh: PhantomData,
     }
 };
 
@@ -523,7 +515,7 @@ pub static CORNELL: Scene = {
     let mut objects = Vec::new();
 
     fn quad(
-        objs: &mut Vec<SimpleObject<MeshInstance, MaterialInstance>>,
+        objs: &mut Vec<SimpleObject<MeshInstance, MaterialInstance<TextureInstance>>>,
         p: impl Into<Point3>,
         u: impl Into<Vector3>,
         v: impl Into<Vector3>,
@@ -612,7 +604,5 @@ pub static CORNELL: Scene = {
         objects: objects.into(),
         skybox: None.into(),
         // skybox: SkyboxInstance::default(),
-        phantom_mat: PhantomData,
-        phantom_mesh: PhantomData,
     }
 };

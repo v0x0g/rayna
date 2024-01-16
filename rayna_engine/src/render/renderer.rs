@@ -31,18 +31,12 @@ use tracing::{error, trace};
 
 #[derive(Derivative)]
 #[derivative(Debug)]
-pub struct Renderer<Mesh, Mat, Obj, Sky>
-where
-    Mesh: crate::mesh::Mesh + Clone,
-    Mat: Material + Clone,
-    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
-    Sky: Skybox + Clone,
-{
+pub struct Renderer<Obj: Object + Clone, Sky: Skybox + Clone> {
     /// A thread pool used to distribute the workload
     thread_pool: ThreadPool,
     #[derivative(Debug = "ignore")]
     rng_pool: opool::Pool<RngPoolAllocator, SmallRng>,
-    phantom: PhantomData<Scene<Mesh, Mat, Obj, Sky>>,
+    phantom: PhantomData<Scene<Obj, Sky>>,
 }
 
 #[derive(Error, Debug)]
@@ -55,13 +49,7 @@ pub enum RendererCreateError {
     },
 }
 
-impl<Mesh, Mat, Obj, Sky> Renderer<Mesh, Mat, Obj, Sky>
-where
-    Mesh: crate::mesh::Mesh + Clone,
-    Mat: Material + Clone,
-    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
-    Sky: Skybox + Clone,
-{
+impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
     pub fn new() -> Result<Self, RendererCreateError> {
         let thread_pool = ThreadPoolBuilder::new()
             .num_threads(10)
@@ -87,7 +75,7 @@ where
     }
 
     // TODO: Should `render()` be fallible?
-    pub fn render(&mut self, scene: &Scene<Mesh, Mat, Obj, Sky>, render_opts: &RenderOpts) -> Render<ImgBuf> {
+    pub fn render(&mut self, scene: &Scene<Obj, Sky>, render_opts: &RenderOpts) -> Render<ImgBuf> {
         profile_function!();
 
         let viewport = match scene.camera.calculate_viewport(render_opts) {
@@ -146,7 +134,7 @@ where
     /// This is only called when the viewport is valid, and therefore an image can be rendered
     fn render_actual(
         &mut self,
-        scene: &Scene<Mesh, Mat, Obj, Sky>,
+        scene: &Scene<Obj, Sky>,
         render_opts: &RenderOpts,
         viewport: &Viewport,
         bounds: &Bounds<Number>,
@@ -228,7 +216,7 @@ where
     ///
     /// Takes into account [`RenderOpts::msaa`]
     fn render_px(
-        scene: &Scene<Mesh, Mat, Obj, Sky>,
+        scene: &Scene<Obj, Sky>,
         opts: &RenderOpts,
         viewport: &Viewport,
         bounds: &Bounds<Number>,
@@ -267,7 +255,7 @@ where
     ///
     /// This handles the switching between render modes
     fn render_px_once(
-        scene: &Scene<Mesh, Mat, Obj, Sky>,
+        scene: &Scene<Obj, Sky>,
         viewport: &Viewport,
         opts: &RenderOpts,
         bounds: &Bounds<Number>,
@@ -350,16 +338,16 @@ where
 
     /// Calculates the nearest intersection in the scene for the given ray
     fn calculate_intersection<'o>(
-        scene: &'o Scene<Mesh, Mat, Obj, Sky>,
+        scene: &'o Scene<Obj, Sky>,
         ray: &Ray,
         bounds: &Bounds<Number>,
         rng: &mut dyn RngCore,
-    ) -> Option<FullIntersection<'o, Mat>> {
+    ) -> Option<FullIntersection<'o, Obj::Mat>> {
         scene.objects.full_intersect(ray, bounds, rng)
     }
 
     fn ray_colour_recursive(
-        scene: &Scene<Mesh, Mat, Obj, Sky>,
+        scene: &Scene<Obj, Sky>,
         ray: &Ray,
         opts: &RenderOpts,
         bounds: &Bounds<Number>,
@@ -407,12 +395,6 @@ where
     }
 }
 
-impl<Mesh, Mat, Obj, Sky> Clone for Renderer<Mesh, Mat, Obj, Sky>
-where
-    Mesh: crate::mesh::Mesh + Clone,
-    Mat: Material + Clone,
-    Obj: Object<Mesh = Mesh, Mat = Mat> + Clone,
-    Sky: Skybox + Clone,
-{
+impl<Obj: Object + Clone, Sky: Skybox + Clone> Clone for Renderer<Obj, Sky> {
     fn clone(&self) -> Self { Self::new().expect("could not clone: couldn't create renderer") }
 }

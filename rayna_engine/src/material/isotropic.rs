@@ -12,11 +12,11 @@ use std::ops::Mul;
 ///
 /// Normally this is paired with a [crate::mesh::homogenous_volume::HomogeneousVolumeMesh]
 #[derive(Clone, Debug)]
-pub struct IsotropicMaterial {
-    pub albedo: TextureInstance,
+pub struct IsotropicMaterial<Tex: Texture> {
+    pub albedo: Tex,
 }
 
-impl Default for IsotropicMaterial {
+impl Default for IsotropicMaterial<TextureInstance> {
     fn default() -> Self {
         Self {
             albedo: [0.5; 3].into(),
@@ -24,7 +24,7 @@ impl Default for IsotropicMaterial {
     }
 }
 
-impl Material for IsotropicMaterial {
+impl<Tex: Texture> Material for IsotropicMaterial<Tex> {
     fn scatter(&self, _ray: &Ray, _intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
         Some(rng::vector_on_unit_sphere(rng))
     }

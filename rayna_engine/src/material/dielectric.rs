@@ -2,7 +2,7 @@ use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::math;
 use crate::shared::ray::Ray;
-use crate::texture::{Texture, TextureInstance};
+use crate::texture::Texture;
 use image::Pixel as _;
 use num_traits::Pow;
 use rand::{Rng, RngCore};
@@ -10,12 +10,12 @@ use rayna_shared::def::types::{Channel, Number, Pixel, Vector3};
 use std::ops::Mul;
 
 #[derive(Clone, Debug)]
-pub struct DielectricMaterial {
-    pub albedo: TextureInstance,
+pub struct DielectricMaterial<Tex: Texture> {
+    pub albedo: Tex,
     pub refractive_index: Number,
 }
 
-impl Material for DielectricMaterial {
+impl<Tex: Texture> Material for DielectricMaterial<Tex> {
     fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
         let index_ratio = if intersection.front_face {
             1.0 / self.refractive_index
@@ -51,7 +51,7 @@ impl Material for DielectricMaterial {
     }
 }
 
-impl DielectricMaterial {
+impl<Tex: Texture> DielectricMaterial<Tex> {
     fn reflectance(cosine: Number, ref_idx: Number) -> Number {
         // Use Schlick's approximation for reflectance.
         let r0 = (1. - ref_idx) / (1. + ref_idx);

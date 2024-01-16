@@ -22,7 +22,7 @@ where
     Obj: Object<Mesh = Mesh, Mat = Mat>,
 {
     /// BVH-optimised tree of objects
-    bvh: BvhObject<Mesh, Mat, Obj>,
+    bvh: BvhObject<Obj>,
     /// All the unbounded objects in the list (objects where [Object::aabb()] returned [None]
     unbounded: Vec<Obj>,
     transform: Option<Transform3>,
@@ -126,7 +126,7 @@ where
     }
 
     /// A helper method for transforming an iterator of objects into a [BvhObject] tree, a [Vec] of unbounded objects, and an AABB
-    fn process_objects(objects: impl IntoIterator<Item = Obj>) -> (BvhObject<Mesh, Mat, Obj>, Vec<Obj>, Option<Aabb>) {
+    fn process_objects(objects: impl IntoIterator<Item = Obj>) -> (BvhObject<Obj>, Vec<Obj>, Option<Aabb>) {
         let mut bounded = vec![];
         let mut unbounded = vec![];
         for obj in objects.into_iter() {

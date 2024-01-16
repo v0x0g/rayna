@@ -54,7 +54,7 @@ pub trait Object: RtRequirement + HasAabb {
 pub enum ObjectInstance<Mesh: MeshTrait + Clone, Mat: Material + Clone> {
     SimpleObject(SimpleObject<Mesh, Mat>),
     ObjectList(ObjectList<Mesh, Mat, ObjectInstance<Mesh, Mat>>),
-    Bvh(BvhObject<Mesh, Mat, ObjectInstance<Mesh, Mat>>),
+    Bvh(BvhObject<ObjectInstance<Mesh, Mat>>),
 }
 
 // `enum_dispatch` doesn't support associated type bounds, so we have to do manual impl
@@ -113,10 +113,10 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> From<ObjectList<Mesh, Mat, 
 {
     fn from(value: ObjectList<Mesh, Mat, ObjectInstance<Mesh, Mat>>) -> Self { Self::ObjectList(value) }
 }
-impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> From<BvhObject<Mesh, Mat, ObjectInstance<Mesh, Mat>>>
+impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> From<BvhObject<ObjectInstance<Mesh, Mat>>>
     for ObjectInstance<Mesh, Mat>
 {
-    fn from(value: BvhObject<Mesh, Mat, ObjectInstance<Mesh, Mat>>) -> Self { Self::Bvh(value) }
+    fn from(value: BvhObject<ObjectInstance<Mesh, Mat>>) -> Self { Self::Bvh(value) }
 }
 
 // endregion impl From<_> for ObjectInstance

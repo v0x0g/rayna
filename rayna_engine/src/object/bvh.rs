@@ -22,12 +22,11 @@ use crate::shared::ray::Ray;
 
 #[derive(Getters, Clone, Debug)]
 #[get = "pub"]
-pub struct BvhObject<Mesh, Mat, Obj>
-where
-    Mesh: crate::mesh::Mesh,
-    Mat: Material,
+pub struct BvhObject<
     Obj: Object<Mesh = Mesh, Mat = Mat>,
-{
+    Mesh: crate::mesh::Mesh = <Obj as Object>::Mesh,
+    Mat: Material = <Obj as Object>::Mat,
+> {
     inner: GenericBvh<Obj>,
     phantom_mesh: PhantomData<Mesh>,
     phantom_mat: PhantomData<Mat>,
@@ -36,12 +35,7 @@ where
 /// Helper function to unwrap an AABB with a panic message
 fn expect_aabb<Obj: Object>(o: &Obj) -> &Aabb { o.aabb().as_ref().expect("aabb required as invariant of `Bvh`") }
 
-impl<Mesh, Mat, Obj> BvhObject<Mesh, Mat, Obj>
-where
-    Mesh: crate::mesh::Mesh,
-    Mat: Material,
-    Obj: Object<Mesh = Mesh, Mat = Mat>,
-{
+impl<Obj: Object> BvhObject<Obj> {
     /// Creates a new [BvhObject] tree from the given slice of objects
     ///
     /// # Note
@@ -56,12 +50,7 @@ where
     }
 }
 
-impl<Mesh, Mat, Obj> BvhObject<Mesh, Mat, Obj>
-where
-    Mesh: crate::mesh::Mesh,
-    Mat: Material,
-    Obj: Object<Mesh = Mesh, Mat = Mat>,
-{
+impl<Obj: Object> BvhObject<Obj> {
     /// Given a [NodeId] on the [Arena] tree, calculates the nearest intersection for the given `ray` and `bounds`
     ///
     /// If the node is a [BvhNode::Object], it passes on the check to the mesh.
@@ -76,7 +65,7 @@ where
         node: NodeId,
         arena: &'o Arena<GenericBvhNode<Obj>>,
         rng: &mut dyn RngCore,
-    ) -> Option<FullIntersection<'o, Mat>> {
+    ) -> Option<FullIntersection<'o, Obj::Mat>> {
         return match arena.get(node).expect("node should exist in arena").get() {
             // An aabb will need to delegate to child nodes if not missed
             GenericBvhNode::Nested(aabb) => {
@@ -114,7 +103,7 @@ where
         ray: &Ray,
         node: NodeId,
         arena: &'o Arena<GenericBvhNode<Obj>>,
-        output: &mut SmallVec<[FullIntersection<'o, Mat>; 32]>,
+        output: &mut SmallVec<[FullIntersection<'o, Obj::Mat>; 32]>,
         rng: &mut dyn RngCore,
     ) {
         match arena.get(node).expect("node should exist in arena").get() {
@@ -145,21 +134,16 @@ where
     }
 }
 
-impl<Mesh, Mat, Obj> Object for BvhObject<Mesh, Mat, Obj>
-where
-    Mesh: crate::mesh::Mesh,
-    Mat: Material,
-    Obj: Object<Mesh = Mesh, Mat = Mat>,
-{
-    type Mesh = Mesh;
-    type Mat = Mat;
+impl<Obj: Object> Object for BvhObject<Obj> {
+    type Mesh = <Obj as Object>::Mesh;
+    type Mat = <Obj as Object>::Mat;
 
     fn full_intersect<'o>(
         &'o self,
         ray: &Ray,
         bounds: &Bounds<Number>,
         rng: &mut dyn RngCore,
-    ) -> Option<FullIntersection<'o, Mat>> {
+    ) -> Option<FullIntersection<'o, Obj::Mat>> {
         // Pass everything on to our magical function
         Self::bvh_node_intersect(ray, bounds, self.inner.root_id()?, &self.inner.arena(), rng)
     }
@@ -167,7 +151,7 @@ where
     fn full_intersect_all<'o>(
         &'o self,
         ray: &Ray,
-        output: &mut SmallVec<[FullIntersection<'o, Mat>; 32]>,
+        output: &mut SmallVec<[FullIntersection<'o, Obj::Mat>; 32]>,
         rng: &mut dyn RngCore,
     ) {
         if let Some(root) = self.inner.root_id() {
@@ -176,12 +160,7 @@ where
     }
 }
 
-impl<Mesh, Mat, Obj> HasAabb for BvhObject<Mesh, Mat, Obj>
-where
-    Mesh: crate::mesh::Mesh,
-    Mat: Material,
-    Obj: Object<Mesh = Mesh, Mat = Mat>,
-{
+impl<Obj: Object> HasAabb for BvhObject<Obj> {
     fn aabb(&self) -> Option<&Aabb> {
         let root = self.inner.root_id()?;
         match self

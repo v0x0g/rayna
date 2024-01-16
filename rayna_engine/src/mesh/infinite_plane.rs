@@ -80,11 +80,6 @@ impl Mesh for InfinitePlaneMesh {
         self.uv_wrap.apply_mut(&mut i.uv);
         Some(i)
     }
-
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, rng: &mut dyn RngCore) {
-        // Ignores infinite intersection case
-        self.intersect(ray, &Bounds::FULL, rng).map(|i| output.push(i));
-    }
 }
 
 impl HasAabb for InfinitePlaneMesh {

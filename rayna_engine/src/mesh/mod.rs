@@ -32,7 +32,6 @@ use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
 use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Point3};
-use smallvec::SmallVec;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
 use self::{
@@ -60,14 +59,6 @@ pub trait Mesh: MeshProperties + RtRequirement {
     /// This should return the *first* intersection that is within the given range, else [None]
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection>;
 
-    /// Returns (possibly) an iterator over all of the intersections for the given mesh.
-    ///
-    /// # Return Value
-    /// This should place all the (unbounded) intersections, into the vector `output`.
-    /// It can be assumed this vector will be empty.
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, rng: &mut dyn RngCore);
-
-    // TODO: Should I remove `intersect_all()`?
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
 }
 

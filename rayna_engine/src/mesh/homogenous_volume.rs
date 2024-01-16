@@ -94,16 +94,6 @@ impl<M: Mesh> Mesh for HomogeneousVolumeMesh<M> {
             front_face: true,
         })
     }
-
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, rng: &mut dyn RngCore) {
-        // TODO: iter with fold()?
-        let mut ray = *ray;
-        while let Some(i) = self.intersect(&ray, &Bounds::FULL, rng) {
-            output.push(i);
-            // ray.dir is arbitrary
-            ray = Ray::new(i.pos_w, i.normal)
-        }
-    }
 }
 
 impl<M: Mesh> HasAabb for HomogeneousVolumeMesh<M> {

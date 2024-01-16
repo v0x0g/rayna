@@ -28,10 +28,6 @@ impl Mesh for DynamicMesh {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
         self.inner.intersect(ray, bounds, rng)
     }
-
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, rng: &mut dyn RngCore) {
-        self.inner.intersect_all(ray, output, rng)
-    }
 }
 
 impl HasAabb for DynamicMesh {

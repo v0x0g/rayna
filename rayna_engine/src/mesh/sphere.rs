@@ -106,50 +106,6 @@ impl Mesh for SphereMesh {
             face: 0,
         });
     }
-
-    fn intersect_all(&self, ray: &Ray, output: &mut SmallVec<[Intersection; 32]>, _rng: &mut dyn RngCore) {
-        //Do some ray-sphere intersection math to find if the ray intersects
-        let ray_pos = ray.pos();
-        let ray_dir = ray.dir();
-        let ray_rel_pos = ray_pos - self.pos;
-
-        // Quadratic formula
-        let a = ray_dir.length_squared();
-        let half_b = Vector3::dot(ray_rel_pos, ray_dir);
-        let c = ray_rel_pos.length_squared() - (self.radius * self.radius);
-        let discriminant = (half_b * half_b) - (a * c);
-
-        //No solutions to where ray intersects with sphere because of negative square root
-        if discriminant < 0. {
-            return;
-        }
-
-        let sqrt_d = discriminant.sqrt();
-
-        let root_1 = (-half_b - sqrt_d) / a;
-        let root_2 = (-half_b + sqrt_d) / a;
-
-        output.extend([root_1, root_2].map(|k| {
-            let world_point = ray.at(k);
-            let local_point = (world_point - self.pos) / self.radius;
-            let outward_normal = local_point;
-            let inside = Vector3::dot(ray_dir, outward_normal) > 0.;
-            //This flips the normal if the ray is inside the sphere
-            //This forces the normal to always be going against the ray
-            let ray_normal = if inside { -outward_normal } else { outward_normal };
-
-            Intersection {
-                pos_w: world_point,
-                pos_l: local_point.to_point(),
-                dist: k,
-                normal: outward_normal,
-                ray_normal,
-                front_face: !inside,
-                uv: sphere_uv(local_point),
-                face: 0,
-            }
-        }));
-    }
 }
 
 impl HasAabb for SphereMesh {

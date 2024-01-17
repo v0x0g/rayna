@@ -26,9 +26,11 @@ pub struct Aabb {
 }
 
 // region Constructors
+
 impl Aabb {
     /// Creates a new [Aabb] from two points, which do *not* have to be sorted by min/max
-    pub fn new(a: Point3, b: Point3) -> Self {
+    pub fn new(a: impl Into<Point3>, b: impl Into<Point3>) -> Self {
+        let (a, b) = (a.into(), b.into());
         let min = Point3::min(a, b);
         let max = Point3::max(a, b);
         let size = max - min;
@@ -43,14 +45,15 @@ impl Aabb {
         }
     }
 
-    pub fn new_centred(centre: Point3, size: Vector3) -> Self {
+    pub fn new_centred(centre: impl Into<Point3>, size: impl Into<Vector3>) -> Self {
+        let (centre, size) = (centre.into(), size.into());
         let min = centre - size / 2.;
         let max = centre + size / 2.;
         Self::new(min, max)
     }
 
     /// Returns an [Aabb] that surrounds the two given boxes
-    pub fn encompass<B: Borrow<Self>>(a: B, b: B) -> Self {
+    pub fn encompass(a: impl Borrow<Self>, b: impl Borrow<Self>) -> Self {
         let (a, b) = (a.borrow(), b.borrow());
         let min = Point3::min(a.min, b.min);
         let max = Point3::max(a.max, b.max);
@@ -149,7 +152,10 @@ impl Aabb {
         return bounds.range_overlaps(&tmin, &tmax);
     }
 }
+
 // endregion Impl
+
+// region HasAabb trait
 
 // Sometimes `enum_dispatch` tries to generate the enum implementations in this file's scope,
 // so have to import the names here
@@ -168,3 +174,5 @@ pub trait HasAabb: RtRequirement {
     /// Helper function to unwrap an AABB with a panic message
     fn expect_aabb(&self) -> &Aabb { self.aabb().expect("aabb required as invariant of `GenericBvh`") }
 }
+
+// endregion HasAabb trait

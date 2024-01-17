@@ -229,9 +229,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         let py = y as Number;
         let sample_count = opts.msaa.get();
 
-        type SmolVec<T> = SmallVec<[T; 64]>;
-
-        let samples: SmolVec<Pixel> = (0..sample_count)
+        let samples: SmallVec<[Pixel; 64]> = (0..sample_count)
             .into_iter()
             .map(|_s| Self::apply_msaa_shift(px, py, rng_1))
             .map(|[px, py]| Self::render_px_once(scene, viewport, opts, bounds, px, py, rng_2))
@@ -239,11 +237,11 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             .collect();
 
         let overall_colour = {
-            // Pixel doesn't implement [core::ops::Add], so have to manually do it with slices
-            // TODO: Implement something better than just averaging
+            // Find mean of all samples
             let accum = samples
                 .iter()
                 .copied()
+                // Pixel doesn't implement [core::ops::Add], so have to manually do it with slices
                 .reduce(|a, b| Pixel::map2(&a, &b, Channel::add))
                 .unwrap_or_else(|| [0.; 3].into());
 

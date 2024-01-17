@@ -18,6 +18,7 @@ use crate::material::light::LightMaterial;
 use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::mesh::axis_box::AxisBoxMesh;
+use crate::mesh::bvh::BvhMesh;
 use crate::mesh::homogenous_volume::HomogeneousVolumeMesh;
 use crate::mesh::infinite_plane::{InfinitePlaneMesh, UvWrappingMode};
 use crate::mesh::parallelogram::ParallelogramMesh;
@@ -243,7 +244,7 @@ pub static RTTNW_DEMO: Scene = {
 
         objects.push(
             SimpleObject::new(
-                crate::mesh::bvh::BvhMesh::new(floor),
+                BvhMesh::new(floor),
                 LambertianMaterial {
                     albedo: solid_texture([0.48, 0.83, 0.53]),
                     emissive: BLACK_TEX,
@@ -270,7 +271,7 @@ pub static RTTNW_DEMO: Scene = {
         // BROWN SPHERE
         objects.push(
             SimpleObject::new(
-                ParallelogramMesh::new((4., 4., 2.), 0.5),
+                SphereMesh::new((4., 4., 2.), 0.5),
                 LambertianMaterial {
                     albedo: solid_texture([0.7, 0.3, 0.1]),
                     emissive: BLACK_TEX,
@@ -294,7 +295,7 @@ pub static RTTNW_DEMO: Scene = {
         // METAL SPHERE (RIGHT)
         objects.push(
             SimpleObject::new(
-                SphereMesh::new((0., 1.5, 1.45).into(), 0.5),
+                SphereMesh::new((0., 1.5, 1.45), 0.5),
                 MetalMaterial {
                     albedo: [0.8, 0.8, 0.9].into(),
                     fuzz: 1.,
@@ -317,7 +318,7 @@ pub static RTTNW_DEMO: Scene = {
         objects.push(
             SimpleObject::new(
                 // BLUE HAZE INSIDE
-                HomogeneousVolumeMesh::new(SphereMesh::new((3.6, 1.5, 1.45), 0.6), 80.),
+                HomogeneousVolumeMesh::new_dyn(SphereMesh::new((3.6, 1.5, 1.45), 0.6), 80.),
                 IsotropicMaterial {
                     albedo: [0.01, 0.02, 0.6].into(),
                 },
@@ -393,7 +394,7 @@ pub static RTTNW_DEMO: Scene = {
 
         objects.push(
             SimpleObject::new(
-                HomogeneousVolumeMesh::new(SphereMesh::new(Point3::ZERO, 50.), 0.8),
+                HomogeneousVolumeMesh::new_dyn(SphereMesh::new(Point3::ZERO, 50.), 0.8),
                 IsotropicMaterial { albedo: [1.; 3].into() },
             )
             .into(),
@@ -486,7 +487,7 @@ pub static CORNELL: Scene = {
 
         // Ball on Small
         o.push(SimpleObject::new(
-            HomogeneousVolumeMesh::new(SphereMesh::new((0.6255, 0.43, 0.680), 0.1), 8.),
+            HomogeneousVolumeMesh::new_dyn(SphereMesh::new((0.6255, 0.43, 0.680), 0.1), 8.),
             IsotropicMaterial {
                 albedo: [0.3; 3].into(),
             },

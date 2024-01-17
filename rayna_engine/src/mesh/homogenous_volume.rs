@@ -1,5 +1,5 @@
 use crate::mesh::dynamic::DynamicMesh;
-use crate::mesh::{Mesh, MeshProperties};
+use crate::mesh::{Mesh, MeshInstance, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -35,6 +35,8 @@ impl<M: Mesh> HomogeneousVolumeMesh<M> {
 }
 
 impl HomogeneousVolumeMesh<DynamicMesh> {
+    /// Use this method as an alternative to [Self::new()], since it wraps the mesh in a [DynamicMesh] wrapper.
+    /// Can be used directly as a [MeshInstance]
     pub fn new_dyn<M: Mesh + 'static>(mesh: M, density: Number) -> Self { Self::new(DynamicMesh::new(mesh), density) }
 }
 

@@ -40,7 +40,7 @@ use super::Scene;
 pub static SIMPLE: Scene = {
     Scene {
         camera: Camera {
-             Point3::new(0., 0.5, -3.),
+            pos: Point3::new(0., 0.5, -3.),
             fwd: Vector3::Z,
             v_fov: Angle::from_degrees(45.),
             focus_dist: 3.,
@@ -101,7 +101,7 @@ pub static TESTING: Scene = {
     ));
     Scene {
         camera: Camera {
-             Point3::new(0., 0.5, -3.),
+            pos: Point3::new(0., 0.5, -3.),
             fwd: Vector3::Z,
             v_fov: Angle::from_degrees(45.),
             focus_dist: 3.,
@@ -196,7 +196,7 @@ pub static RTIAW_DEMO: Scene = {
 
     Scene {
         camera: Camera {
-             Point3::new(13., 2., 3.),
+            pos: Point3::new(13., 2., 3.),
             fwd: Vector3::new(-13., -2., -3.).normalize(),
             v_fov: Angle::from_degrees(20.),
             focus_dist: 10.,
@@ -294,10 +294,7 @@ pub static RTTNW_DEMO: Scene = {
         // METAL SPHERE (RIGHT)
         objects.push(
             SimpleObject::new(
-                SphereMesh::new(
-             (0., 1.5, 1.45).into(),
-             0.5,
-            ),
+                SphereMesh::new((0., 1.5, 1.45).into(), 0.5),
                 MetalMaterial {
                     albedo: [0.8, 0.8, 0.9].into(),
                     fuzz: 1.,
@@ -309,10 +306,7 @@ pub static RTTNW_DEMO: Scene = {
         // SUBSURFACE SCATTER BLUE SPHERE (LEFT)
         objects.push(
             SimpleObject::new(
-              SphereMesh::new(
-                     (3.6, 1.5, 1.45),
-                     0.7,
-              ),
+                SphereMesh::new((3.6, 1.5, 1.45), 0.7),
                 DielectricMaterial {
                     albedo: [1.; 3].into(),
                     refractive_index: 1.5,
@@ -323,13 +317,7 @@ pub static RTTNW_DEMO: Scene = {
         objects.push(
             SimpleObject::new(
                 // BLUE HAZE INSIDE
-                HomogeneousVolumeMesh::new(
-                    SphereMesh::new(
-                         (3.6, 1.5, 1.45),
-                         0.6,
-                    ),
-                 80.,
-                ),
+                HomogeneousVolumeMesh::new(SphereMesh::new((3.6, 1.5, 1.45), 0.6), 80.),
                 IsotropicMaterial {
                     albedo: [0.01, 0.02, 0.6].into(),
                 },
@@ -340,10 +328,7 @@ pub static RTTNW_DEMO: Scene = {
         // EARTH SPHERE
         objects.push(
             SimpleObject::new(
-              SphereMesh::new(
-                     (4., 2., 4.),
-                     1.0,
-              ),
+                SphereMesh::new((4., 2., 4.), 1.0),
                 LambertianMaterial {
                     albedo: ImageTexture::from(
                         image::load_from_memory(include_bytes!("../../../media/textures/earthmap/earthmap.jpg"))
@@ -360,10 +345,7 @@ pub static RTTNW_DEMO: Scene = {
         // NOISE SPHERE
         objects.push(
             SimpleObject::new(
-              SphereMesh::new(
-                     (2.2, 2.8, 3.0),
-                     0.8,
-              ),
+                SphereMesh::new((2.2, 2.8, 3.0), 0.8),
                 LambertianMaterial {
                     albedo: WorldNoiseTexture {
                         source: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69)).set_scale(4.)).to_dyn_box(),
@@ -384,13 +366,7 @@ pub static RTTNW_DEMO: Scene = {
 
         let balls = (0..COUNT)
             .into_iter()
-            .map(|_| {
-              SphereMesh::new(
-                     (rng::vector_in_unit_cube(rng) * SPREAD).to_point(),
-                     0.1,
-              )
-                .into()
-            })
+            .map(|_| SphereMesh::new((rng::vector_in_unit_cube(rng) * SPREAD).to_point(), 0.1).into())
             .collect();
 
         objects.push(
@@ -417,14 +393,7 @@ pub static RTTNW_DEMO: Scene = {
 
         objects.push(
             SimpleObject::new(
-                HomogeneousVolumeMesh::new(
-                    SphereMesh::new(
-                         Point3::ZERO,
-                         50.,
-                    )
-                    ,
-                    0.8,
-                    ),
+                HomogeneousVolumeMesh::new(SphereMesh::new(Point3::ZERO, 50.), 0.8),
                 IsotropicMaterial { albedo: [1.; 3].into() },
             )
             .into(),
@@ -433,7 +402,7 @@ pub static RTTNW_DEMO: Scene = {
 
     Scene {
         camera: Camera {
-             Point3::new(4.78, 2.78, -6.0),
+            pos: Point3::new(4.78, 2.78, -6.0),
             fwd: Vector3::new(-1., 0., 3.).normalize(),
             v_fov: Angle::from_degrees(40.),
             focus_dist: 1.,
@@ -448,7 +417,7 @@ pub static RTTNW_DEMO: Scene = {
 #[dynamic]
 pub static CORNELL: Scene = {
     let camera = Camera {
-         Point3::new(0.5, 0.5, 2.3),
+        pos: Point3::new(0.5, 0.5, 2.3),
         fwd: Vector3::new(0., 0., -1.).normalize(),
         v_fov: Angle::from_degrees(40.),
         focus_dist: 1.,
@@ -466,7 +435,7 @@ pub static CORNELL: Scene = {
         emissive: impl Into<TextureInstance>,
     ) {
         objs.push(SimpleObject::new(
-            ParallelogramMesh::new(Planar::new(p,u,v)),
+            ParallelogramMesh::new(Planar::new(p, u, v)),
             LambertianMaterial {
                 albedo: albedo.into(),
                 emissive: emissive.into(),
@@ -498,10 +467,7 @@ pub static CORNELL: Scene = {
 
         // Big
         o.push(SimpleObject::new_with_correction(
-AxisBoxMesh::new(
-                (0.231, 0., 0.117),
-                (0.531, 0.595, 0.414),
-),
+            AxisBoxMesh::new((0.231, 0., 0.117), (0.531, 0.595, 0.414)),
             MetalMaterial {
                 albedo: warm_grey.into(),
                 fuzz: 0.,
@@ -510,10 +476,7 @@ AxisBoxMesh::new(
         ));
         // Small
         o.push(SimpleObject::new_with_correction(
-            AxisBoxMesh::new(
-            (0.477, 0., 0.531),
-            (0.774, 0.297, 0.829),
-                ),
+            AxisBoxMesh::new((0.477, 0., 0.531), (0.774, 0.297, 0.829)),
             LambertianMaterial {
                 albedo: warm_grey.into(),
                 emissive: [0.; 3].into(),
@@ -523,13 +486,7 @@ AxisBoxMesh::new(
 
         // Ball on Small
         o.push(SimpleObject::new(
-            HomogeneousVolumeMesh::new(
-                SphereMesh::new(
-                     (0.6255, 0.43, 0.680),
-                     0.1,
-                ),
-                8.,
-            ),
+            HomogeneousVolumeMesh::new(SphereMesh::new((0.6255, 0.43, 0.680), 0.1), 8.),
             IsotropicMaterial {
                 albedo: [0.3; 3].into(),
             },

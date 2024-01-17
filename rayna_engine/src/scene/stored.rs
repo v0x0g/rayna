@@ -17,12 +17,11 @@ use crate::material::lambertian::LambertianMaterial;
 use crate::material::light::LightMaterial;
 use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
-use crate::mesh::axis_box::*;
-use crate::mesh::bvh::BvhMesh;
-use crate::mesh::homogenous_volume::HomogeneousVolumeBuilder;
-use crate::mesh::infinite_plane::{InfinitePlaneBuilder, UvWrappingMode};
-use crate::mesh::parallelogram::*;
-use crate::mesh::planar::PlanarBuilder;
+use crate::mesh::axis_box::AxisBoxMesh;
+use crate::mesh::homogenous_volume::HomogeneousVolumeMesh;
+use crate::mesh::infinite_plane::{InfinitePlaneMesh, UvWrappingMode};
+use crate::mesh::parallelogram::ParallelogramMesh;
+use crate::mesh::planar::Planar;
 use crate::mesh::sphere::*;
 use crate::mesh::MeshInstance;
 use crate::object::ObjectInstance;
@@ -41,7 +40,7 @@ use super::Scene;
 pub static SIMPLE: Scene = {
     Scene {
         camera: Camera {
-            pos: Point3::new(0., 0.5, -3.),
+             Point3::new(0., 0.5, -3.),
             fwd: Vector3::Z,
             v_fov: Angle::from_degrees(45.),
             focus_dist: 3.,
@@ -49,22 +48,16 @@ pub static SIMPLE: Scene = {
         },
         objects: [
             SimpleObject::new(
-                SphereBuilder {
-                    // Small, top
-                    pos: Point3::new(0., 0., 1.),
-                    radius: 0.5,
-                },
+                // Small, top
+                SphereMesh::new((0., 0., 1.), 0.5),
                 MetalMaterial {
                     albedo: [0.8; 3].into(),
                     fuzz: 1.,
                 },
             ),
             SimpleObject::new(
-                SphereBuilder {
-                    // Ground
-                    pos: Point3::new(0., -100.5, -1.),
-                    radius: 100.,
-                },
+                // Ground
+                SphereMesh::new((0., -100.5, -1.), 100.),
                 LambertianMaterial {
                     albedo: [0.5; 3].into(),
                     emissive: Default::default(),
@@ -82,14 +75,7 @@ pub static TESTING: Scene = {
 
     objects.push(SimpleObject::new(
         // Ground
-        InfinitePlaneBuilder {
-            plane: PlanarBuilder::Vectors {
-                p: Point3::ZERO,
-                u: Vector3::X,
-                v: Vector3::Z,
-            },
-            uv_wrap: UvWrappingMode::Wrap,
-        },
+        InfinitePlaneMesh::new(Planar::new(Point3::ZERO, Vector3::X, Vector3::Z), UvWrappingMode::Wrap),
         LambertianMaterial {
             albedo: [0.5; 3].into(),
             emissive: [0.; 3].into(),
@@ -97,14 +83,10 @@ pub static TESTING: Scene = {
     ));
     objects.push(SimpleObject::new(
         // Slope
-        InfinitePlaneBuilder {
-            plane: PlanarBuilder::Vectors {
-                p: (0., -0.1, 0.).into(),
-                u: (1., 0.1, 0.).into(),
-                v: Vector3::Z,
-            },
-            uv_wrap: UvWrappingMode::Wrap,
-        },
+        InfinitePlaneMesh::new(
+            Planar::new((0., -0.1, 0.), (1., 0.1, 0.), Vector3::Z),
+            UvWrappingMode::Wrap,
+        ),
         LambertianMaterial {
             albedo: [0.2; 3].into(),
             emissive: [0.1; 3].into(),
@@ -112,21 +94,14 @@ pub static TESTING: Scene = {
     ));
     objects.push(SimpleObject::new(
         // Ball
-        HomogeneousVolumeBuilder::<SphereMesh> {
-            mesh: SphereBuilder {
-                pos: (0., 1., 0.).into(),
-                radius: 1.,
-            }
-            .into(),
-            density: 1.,
-        },
+        HomogeneousVolumeMesh::new_dyn(SphereMesh::new((0., 1., 0.), 1.), 1.),
         IsotropicMaterial {
             albedo: [0.5; 3].into(),
         },
     ));
     Scene {
         camera: Camera {
-            pos: Point3::new(0., 0.5, -3.),
+             Point3::new(0., 0.5, -3.),
             fwd: Vector3::Z,
             v_fov: Angle::from_degrees(45.),
             focus_dist: 3.,
@@ -178,43 +153,30 @@ pub static RTIAW_DEMO: Scene = {
 
             let obj_choice = rng.gen::<Number>();
             let obj: MeshInstance = if obj_choice < 0.7 {
-                SphereBuilder {
-                    pos: centre,
-                    radius: 0.2,
-                }
-                .into()
+                SphereMesh::new(centre, 0.2).into()
             } else {
-                AxisBoxBuilder::new_centred(centre, rng::vector_in_unit_cube_01(rng) * 0.8).into()
+                AxisBoxMesh::new_centred(centre, rng::vector_in_unit_cube_01(rng) * 0.8).into()
             };
             objects.push(SimpleObject::new(obj, material));
         }
     }
 
     objects.push(SimpleObject::new(
-        SphereBuilder {
-            pos: Point3::new(0., 1., 0.),
-            radius: 1.,
-        },
+        SphereMesh::new((0., 1., 0.), 1.),
         DielectricMaterial {
             refractive_index: 1.5,
             albedo: [1.; 3].into(),
         },
     ));
     objects.push(SimpleObject::new(
-        SphereBuilder {
-            pos: Point3::new(-4., 1., 0.),
-            radius: 1.,
-        },
+        SphereMesh::new((-4., 1., 0.), 1.),
         LambertianMaterial {
             albedo: [0.4, 0.2, 0.1].into(),
             emissive: Default::default(),
         },
     ));
     objects.push(SimpleObject::new(
-        SphereBuilder {
-            pos: Point3::new(4., 1., 0.),
-            radius: 1.,
-        },
+        SphereMesh::new((4., 1., 0.), 1.),
         MetalMaterial {
             albedo: [0.7, 0.6, 0.5].into(),
             fuzz: 0.,
@@ -222,10 +184,7 @@ pub static RTIAW_DEMO: Scene = {
     ));
 
     objects.push(SimpleObject::new(
-        SphereBuilder {
-            pos: Point3::new(0., -1000., 0.),
-            radius: 1000.,
-        },
+        SphereMesh::new((0., -1000., 0.), 1000.),
         LambertianMaterial {
             albedo: LocalNoiseTexture {
                 source: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69u32)).set_scale(10000.)).to_dyn_box(),
@@ -237,7 +196,7 @@ pub static RTIAW_DEMO: Scene = {
 
     Scene {
         camera: Camera {
-            pos: Point3::new(13., 2., 3.),
+             Point3::new(13., 2., 3.),
             fwd: Vector3::new(-13., -2., -3.).normalize(),
             v_fov: Angle::from_degrees(20.),
             focus_dist: 10.,
@@ -278,13 +237,7 @@ pub static RTTNW_DEMO: Scene = {
                     + Vector3::new(i as Number * WIDTH, 0., j as Number * WIDTH);
                 let high = low + Vector3::new(WIDTH, rng.gen_range(0.0..=1.0), WIDTH);
 
-                floor.push(
-                    AxisBoxBuilder {
-                        corner_1: low,
-                        corner_2: high,
-                    }
-                    .into(),
-                );
+                floor.push(AxisBoxMesh::new(low, high).into());
             }
         }
 
@@ -304,13 +257,7 @@ pub static RTTNW_DEMO: Scene = {
         // LIGHT
         objects.push(
             SimpleObject::new(
-                ParallelogramBuilder {
-                    plane: PlanarBuilder::Vectors {
-                        p: (1.23, 5.54, 1.47).into(),
-                        u: (3., 0., 0.).into(),
-                        v: (0., 0., 2.65).into(),
-                    },
-                },
+                ParallelogramMesh::new(Planar::new((1.23, 5.54, 1.47), (3., 0., 0.), (0., 0., 2.65))),
                 LightMaterial {
                     emissive: solid_texture([7.; 3]),
                 },
@@ -323,10 +270,7 @@ pub static RTTNW_DEMO: Scene = {
         // BROWN SPHERE
         objects.push(
             SimpleObject::new(
-                SphereBuilder {
-                    pos: (4., 4., 2.).into(),
-                    radius: 0.5,
-                },
+                ParallelogramMesh::new((4., 4., 2.), 0.5),
                 LambertianMaterial {
                     albedo: solid_texture([0.7, 0.3, 0.1]),
                     emissive: BLACK_TEX,
@@ -338,10 +282,7 @@ pub static RTTNW_DEMO: Scene = {
         // GLASS SPHERE
         objects.push(
             SimpleObject::new(
-                SphereBuilder {
-                    pos: (2.6, 1.5, 0.45).into(),
-                    radius: 0.5,
-                },
+                SphereMesh::new((2.6, 1.5, 0.45), 0.5),
                 DielectricMaterial {
                     albedo: [1.; 3].into(),
                     refractive_index: 1.5,
@@ -353,10 +294,10 @@ pub static RTTNW_DEMO: Scene = {
         // METAL SPHERE (RIGHT)
         objects.push(
             SimpleObject::new(
-                SphereBuilder {
-                    pos: (0., 1.5, 1.45).into(),
-                    radius: 0.5,
-                },
+                SphereMesh::new(
+             (0., 1.5, 1.45).into(),
+             0.5,
+            ),
                 MetalMaterial {
                     albedo: [0.8, 0.8, 0.9].into(),
                     fuzz: 1.,
@@ -368,10 +309,10 @@ pub static RTTNW_DEMO: Scene = {
         // SUBSURFACE SCATTER BLUE SPHERE (LEFT)
         objects.push(
             SimpleObject::new(
-                SphereBuilder {
-                    pos: (3.6, 1.5, 1.45).into(),
-                    radius: 0.7,
-                },
+              SphereMesh::new(
+                     (3.6, 1.5, 1.45),
+                     0.7,
+              ),
                 DielectricMaterial {
                     albedo: [1.; 3].into(),
                     refractive_index: 1.5,
@@ -382,14 +323,13 @@ pub static RTTNW_DEMO: Scene = {
         objects.push(
             SimpleObject::new(
                 // BLUE HAZE INSIDE
-                HomogeneousVolumeBuilder::<SphereMesh> {
-                    mesh: SphereBuilder {
-                        pos: (3.6, 1.5, 1.45).into(),
-                        radius: 0.6,
-                    }
-                    .into(),
-                    density: 80.,
-                },
+                HomogeneousVolumeMesh::new(
+                    SphereMesh::new(
+                         (3.6, 1.5, 1.45),
+                         0.6,
+                    ),
+                 80.,
+                ),
                 IsotropicMaterial {
                     albedo: [0.01, 0.02, 0.6].into(),
                 },
@@ -400,10 +340,10 @@ pub static RTTNW_DEMO: Scene = {
         // EARTH SPHERE
         objects.push(
             SimpleObject::new(
-                SphereBuilder {
-                    pos: (4., 2., 4.).into(),
-                    radius: 1.0,
-                },
+              SphereMesh::new(
+                     (4., 2., 4.),
+                     1.0,
+              ),
                 LambertianMaterial {
                     albedo: ImageTexture::from(
                         image::load_from_memory(include_bytes!("../../../media/textures/earthmap/earthmap.jpg"))
@@ -420,10 +360,10 @@ pub static RTTNW_DEMO: Scene = {
         // NOISE SPHERE
         objects.push(
             SimpleObject::new(
-                SphereBuilder {
-                    pos: (2.2, 2.8, 3.0).into(),
-                    radius: 0.8,
-                },
+              SphereMesh::new(
+                     (2.2, 2.8, 3.0),
+                     0.8,
+              ),
                 LambertianMaterial {
                     albedo: WorldNoiseTexture {
                         source: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69)).set_scale(4.)).to_dyn_box(),
@@ -445,10 +385,10 @@ pub static RTTNW_DEMO: Scene = {
         let balls = (0..COUNT)
             .into_iter()
             .map(|_| {
-                SphereBuilder {
-                    pos: (rng::vector_in_unit_cube(rng) * SPREAD).to_point(),
-                    radius: 0.1,
-                }
+              SphereMesh::new(
+                     (rng::vector_in_unit_cube(rng) * SPREAD).to_point(),
+                     0.1,
+              )
                 .into()
             })
             .collect();
@@ -477,14 +417,14 @@ pub static RTTNW_DEMO: Scene = {
 
         objects.push(
             SimpleObject::new(
-                HomogeneousVolumeBuilder::<SphereMesh> {
-                    mesh: SphereBuilder {
-                        pos: Point3::ZERO,
-                        radius: 50.,
-                    }
-                    .into(),
-                    density: 0.8,
-                },
+                HomogeneousVolumeMesh::new(
+                    SphereMesh::new(
+                         Point3::ZERO,
+                         50.,
+                    )
+                    ,
+                    0.8,
+                    ),
                 IsotropicMaterial { albedo: [1.; 3].into() },
             )
             .into(),
@@ -493,7 +433,7 @@ pub static RTTNW_DEMO: Scene = {
 
     Scene {
         camera: Camera {
-            pos: Point3::new(4.78, 2.78, -6.0),
+             Point3::new(4.78, 2.78, -6.0),
             fwd: Vector3::new(-1., 0., 3.).normalize(),
             v_fov: Angle::from_degrees(40.),
             focus_dist: 1.,
@@ -508,7 +448,7 @@ pub static RTTNW_DEMO: Scene = {
 #[dynamic]
 pub static CORNELL: Scene = {
     let camera = Camera {
-        pos: Point3::new(0.5, 0.5, 2.3),
+         Point3::new(0.5, 0.5, 2.3),
         fwd: Vector3::new(0., 0., -1.).normalize(),
         v_fov: Angle::from_degrees(40.),
         focus_dist: 1.,
@@ -525,13 +465,8 @@ pub static CORNELL: Scene = {
         albedo: impl Into<TextureInstance>,
         emissive: impl Into<TextureInstance>,
     ) {
-        let p = p.into();
-        let u = u.into();
-        let v = v.into();
         objs.push(SimpleObject::new(
-            ParallelogramBuilder {
-                plane: PlanarBuilder::Vectors { p, u, v },
-            },
+            ParallelogramMesh::new(Planar::new(p,u,v)),
             LambertianMaterial {
                 albedo: albedo.into(),
                 emissive: emissive.into(),
@@ -563,10 +498,10 @@ pub static CORNELL: Scene = {
 
         // Big
         o.push(SimpleObject::new_with_correction(
-            AxisBoxBuilder {
-                corner_1: (0.231, 0., 0.117).into(),
-                corner_2: (0.531, 0.595, 0.414).into(),
-            },
+AxisBoxMesh::new(
+                (0.231, 0., 0.117),
+                (0.531, 0.595, 0.414),
+),
             MetalMaterial {
                 albedo: warm_grey.into(),
                 fuzz: 0.,
@@ -575,10 +510,10 @@ pub static CORNELL: Scene = {
         ));
         // Small
         o.push(SimpleObject::new_with_correction(
-            AxisBoxBuilder {
-                corner_1: (0.477, 0., 0.531).into(),
-                corner_2: (0.774, 0.297, 0.829).into(),
-            },
+            AxisBoxMesh::new(
+            (0.477, 0., 0.531),
+            (0.774, 0.297, 0.829),
+                ),
             LambertianMaterial {
                 albedo: warm_grey.into(),
                 emissive: [0.; 3].into(),
@@ -588,14 +523,13 @@ pub static CORNELL: Scene = {
 
         // Ball on Small
         o.push(SimpleObject::new(
-            HomogeneousVolumeBuilder::<SphereMesh> {
-                mesh: SphereBuilder {
-                    pos: (0.6255, 0.43, 0.680).into(),
-                    radius: 0.1,
-                }
-                .into(),
-                density: 8.,
-            },
+            HomogeneousVolumeMesh::new(
+                SphereMesh::new(
+                     (0.6255, 0.43, 0.680),
+                     0.1,
+                ),
+                8.,
+            ),
             IsotropicMaterial {
                 albedo: [0.3; 3].into(),
             },

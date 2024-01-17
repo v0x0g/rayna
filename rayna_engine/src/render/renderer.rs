@@ -228,7 +228,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         let px = x as Number;
         let py = y as Number;
         let sample_count = opts.msaa.get();
-
+        // TODO: Smart choose MSAA if pixel has lots of variation
         let samples: SmallVec<[Pixel; 64]> = (0..sample_count)
             .into_iter()
             .map(|_s| Self::apply_msaa_shift(px, py, rng_1))

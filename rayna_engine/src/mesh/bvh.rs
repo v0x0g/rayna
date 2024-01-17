@@ -23,6 +23,8 @@ pub struct BvhMesh<Mesh: MeshTrait> {
     centre: Point3,
 }
 
+// region Constructors
+
 impl<Mesh: MeshTrait> BvhMesh<Mesh> {
     /// Creates a new [BvhMesh] tree from the given slice of meshes
     ///
@@ -42,6 +44,10 @@ impl<Mesh: MeshTrait> BvhMesh<Mesh> {
         }
     }
 }
+
+// endregion Constructors
+
+// region Mesh Impl
 
 impl<Mesh: MeshTrait> BvhMesh<Mesh> {
     /// Given a [NodeId] on the [Arena] tree, calculates the nearest intersection for the given `ray` and `bounds`
@@ -112,3 +118,5 @@ impl<Obj: MeshTrait> HasAabb for BvhMesh<Obj> {
         }
     }
 }
+
+// endregion Mesh Impl

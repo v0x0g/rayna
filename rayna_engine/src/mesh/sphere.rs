@@ -8,16 +8,6 @@ use glamour::AngleConsts;
 use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 
-
-/// A builder struct used to create a sphere
-///
-/// Call [Into::into] or [SphereMesh::from] to create the actual sphere mesh
-#[derive(Copy, Clone, Debug)]
-pub struct SphereBuilder {
-    pub pos: Point3,
-    pub radius: Number,
-}
-
 /// The actual instance of a sphere that can be rendered.
 /// Has precomputed values and therefore cannot be mutated
 #[derive(Copy, Clone, Debug, CopyGetters)]
@@ -30,26 +20,27 @@ pub struct SphereMesh {
     aabb: Aabb,
 }
 
-/// Builds the sphere
-impl From<SphereBuilder> for SphereMesh {
-    fn from(value: SphereBuilder) -> Self {
+// region Constructors
+
+impl SphereMesh {
+    pub fn new(pos: impl Into<Point3>, radius: impl Into<Number>) -> Self {
+        let (pos, radius) = (pos.into(), radius.into());
         Self {
-            pos: value.pos,
-            radius: value.radius,
-            radius_sqr: value.radius * value.radius,
+            pos,
+            radius,
+            radius_sqr: radius * radius,
             // Cube centred around self
             aabb: Aabb::new(
-                value.pos - Vector3::splat(value.radius),
-                value.pos + Vector3::splat(value.radius),
+                pos - Vector3::splat(radius),
+                pos + Vector3::splat(radius),
             ),
         }
     }
 }
 
-/// Converts the sphere builder into an [MeshInstance]
-impl From<SphereBuilder> for MeshInstance {
-    fn from(value: SphereBuilder) -> MeshInstance { SphereMesh::from(value).into() }
-}
+// endregion Constructors
+
+// region Mesh Impl
 
 impl Mesh for SphereMesh {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
@@ -115,6 +106,10 @@ impl MeshProperties for SphereMesh {
     fn centre(&self) -> Point3 { self.pos }
 }
 
+// endregion Mesh Impl
+
+// region Helper
+
 /// Converts a point on a sphere (centred at [Point3::ZERO], radius `1`), into a UV coordinate
 pub fn sphere_uv(p: Vector3) -> Point2 {
     let theta = Number::acos(-p.y);
@@ -124,3 +119,5 @@ pub fn sphere_uv(p: Vector3) -> Point2 {
     let v = theta / Number::PI;
     return Point2::new(u, v);
 }
+
+//endregion Helper

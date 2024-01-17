@@ -3,6 +3,9 @@
 //!
 //! You should store an instance of [Planar] inside your mesh struct, and then simply validate the UV coordinates
 //! of the planar intersection for whichever shape your dreams do so desire...
+//!
+//! Most planar types ([super::parallelogram], [super::triangle], [super::infinite_plane]) can't be instantiated directly,
+//! but can be easily converted via the [From<Planar>] conversion.
 
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -14,50 +17,29 @@ use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
 /// The recommended amount of padding around AABB's for planar objects
 pub const AABB_PADDING: Number = 1e-6;
 
-#[derive(Copy, Clone, Debug)]
-pub enum PlanarBuilder {
-    /// Creates a [Planar] mesh from three points on the surface.
-    ///
-    /// For a 2D plane in the `XY` plane, the point layout would be:
-    ///
-    /// ```text
-    ///              A ▓▓██▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓██▒▒                                    
-    ///              ▓▓                               ▓▓                                    
-    ///            ░░░░                             ░░░░                                    
-    ///            ██                               ▓▓                                      
-    ///            ▒▒                               ░░                                      
-    ///          ▒▒                               ▓▓                                        
-    ///          ▓▓                               ▒▒                                        
-    ///        ░░░░                             ▒▒                                          
-    ///        ██                               ▓▓                                          
-    ///        ▒▒                             ░░                                            
-    ///      ▒▒                               ▓▓                                            
-    ///      ██                               ▒▒                                            
-    ///    ▒▒░░                             ▒▒                                              
-    ///    ▓▓                               ▓▓                                              
-    ///  ░░░░                             ░░░░                                              
-    ///  ██                               ▓▓                                                
-    ///  ▒▒                             ░░▒▒                                                
-    ///  P ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ B                                                  
-    /// ```
-    ///
-    /// TEXT ART CREDITS:
-    ///
-    /// Author: Textart.sh
-    ///
-    /// URL: https://textart.sh/topic/parallelogram
-    Points {
-        /// The 'origin' point on the plane
-        p: Point3,
-        /// One of the corners.
-        ///
-        /// This corner is adjacent to `p`, and opposite to `b`
-        a: Point3,
-        /// One of the corners.
-        ///
-        /// This corner is adjacent to `p`, and opposite to `a`
-        b: Point3,
-    },
+/// A helper struct that is used in planar objects (objects that exist in a subsection of a 2D plane
+///
+/// Use this for calculating the ray-plane intersection, instead of reimplementing for each type.
+/// Then, you can restrict by validating the UV coordinates returned by the intersection
+#[derive(Copy, Clone, Debug, CopyGetters)]
+#[get_copy = "pub"]
+pub struct Planar {
+    p: Point3,
+    /// The vector for the `U` direction, typically the 'right' direction
+    u: Vector3,
+    /// The vector for the `V` direction, typically the 'up' direction
+    v: Vector3,
+    /// The normal vector for the plane, perpendicular to [u] and [v], and normalised
+    n: Vector3,
+    /// Part of the plane equation
+    d: Number,
+    /// Precalculated vector `n / dot(n, cross(u,v))` (using un-normalised `n`)
+    w: Vector3,
+}
+
+// region Constructors
+
+impl Planar {
     /// Creates a plane from the origin point `p`, and the two side vectors `u`, `v`
     ///
     /// For a 2D plane in the `XY` plane, the point layout would be:
@@ -88,37 +70,8 @@ pub enum PlanarBuilder {
     /// Author: Textart.sh
     ///
     /// URL: https://textart.sh/topic/parallelogram
-    Vectors { p: Point3, u: Vector3, v: Vector3 },
-}
-
-/// A helper struct that is used in planar objects (objects that exist in a subsection of a 2D plane
-///
-/// Use this for calculating the ray-plane intersection, instead of reimplementing for each type.
-/// Then, you can restrict by validating the UV coordinates returned by the intersection
-#[derive(Copy, Clone, Debug, CopyGetters)]
-#[get_copy = "pub"]
-pub struct Planar {
-    p: Point3,
-    /// The vector for the `U` direction, typically the 'right' direction
-    u: Vector3,
-    /// The vector for the `V` direction, typically the 'up' direction
-    v: Vector3,
-    /// The normal vector for the plane, perpendicular to [u] and [v], and normalised
-    n: Vector3,
-    /// Part of the plane equation
-    d: Number,
-    /// Precalculated vector `n / dot(n, cross(u,v))` (using un-normalised `n`)
-    w: Vector3,
-}
-
-// region Constructors
-
-impl From<PlanarBuilder> for Planar {
-    fn from(value: PlanarBuilder) -> Self {
-        let (p, u, v) = match value {
-            PlanarBuilder::Points { p, a, b } => (p, a - p, b - p),
-            PlanarBuilder::Vectors { p, u, v } => (p, u, v),
-        };
+    pub fn new(p: impl Into<Point3>, u: impl Into<Vector3>, v: impl Into<Vector3>) -> Self {
+        let (p, u, v) = (p.into(), u.into(), v.into());
 
         let n_raw = Vector3::cross(u, v);
         let n = n_raw
@@ -129,11 +82,56 @@ impl From<PlanarBuilder> for Planar {
         let w = n_raw / n_raw.length_squared();
         Self { p, u, v, n, d, w }
     }
+
+    /// Creates a [Planar] mesh from three points on the surface.
+    ///
+    /// For a 2D plane in the `XY` plane, the point layout would be:
+    ///
+    /// ```text
+    ///              A ▓▓██▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓██▒▒                                    
+    ///              ▓▓                               ▓▓                                    
+    ///            ░░░░                             ░░░░                                    
+    ///            ██                               ▓▓                                      
+    ///            ▒▒                               ░░                                      
+    ///          ▒▒                               ▓▓                                        
+    ///          ▓▓                               ▒▒                                        
+    ///        ░░░░                             ▒▒                                          
+    ///        ██                               ▓▓                                          
+    ///        ▒▒                             ░░                                            
+    ///      ▒▒                               ▓▓                                            
+    ///      ██                               ▒▒                                            
+    ///    ▒▒░░                             ▒▒                                              
+    ///    ▓▓                               ▓▓                                              
+    ///  ░░░░                             ░░░░                                              
+    ///  ██                               ▓▓                                                
+    ///  ▒▒                             ░░▒▒                                                
+    ///  P ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ B                                                  
+    /// ```
+    ///
+    /// TEXT ART CREDITS:
+    ///
+    /// Author: Textart.sh
+    ///
+    /// URL: https://textart.sh/topic/parallelogram
+    pub fn new_points(p: impl Into<Point3>, a: impl Into<Point3>, b: impl Into<Point3>) -> Self {
+        let (p, a, b) = (p.into(), a.into(), b.into());
+        Self::new(p, a - p, b - p)
+    }
+}
+
+/// Create from three point array
+impl From<[Point3; 3]> for Planar {
+    fn from([p, a, b]: [Point3; 3]) -> Self { Self::new_points(p, a, b) }
+}
+/// Create from three point tuple
+impl From<(Point3, Point3, Point3)> for Planar {
+    fn from((p, a, b): (Point3, Point3, Point3)) -> Self { Self::new_points(p, a, b) }
 }
 
 // endregion
 
 // region Intersection
+
 impl Planar {
     /// Does a full ray-plane intersection check, returning the intersection if possible. If an intersection is not found,
     /// it means that the ray is perfectly parallel to the plane, or outside the given bounds.

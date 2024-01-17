@@ -1,20 +1,14 @@
 use getset::CopyGetters;
 use rand_core::RngCore;
 
-
 use rayna_shared::def::types::{Number, Point2, Point3};
 
-use crate::mesh::planar::{Planar, PlanarBuilder};
-use crate::mesh::{Mesh, MeshInstance, MeshProperties};
+use crate::mesh::planar::Planar;
+use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-
-#[derive(Copy, Clone, Debug)]
-pub struct ParallelogramBuilder {
-    pub plane: PlanarBuilder,
-}
 
 #[derive(Copy, Clone, Debug, CopyGetters)]
 #[get_copy = "pub"]
@@ -25,9 +19,10 @@ pub struct ParallelogramMesh {
     centre: Point3,
 }
 
-impl From<ParallelogramBuilder> for ParallelogramMesh {
-    fn from(builder: ParallelogramBuilder) -> Self {
-        let plane = Planar::from(builder.plane);
+// region Constructors
+
+impl ParallelogramMesh {
+    pub fn new(plane: Planar) -> Self {
         let (p, a, b) = (plane.p(), plane.p() + plane.u(), plane.p() + plane.v());
         let centre = p + (plane.u() / 2.) + (plane.v() / 2.);
         let aabb = Aabb::encompass_points([p, a, b]).min_padded(super::planar::AABB_PADDING);
@@ -36,9 +31,13 @@ impl From<ParallelogramBuilder> for ParallelogramMesh {
     }
 }
 
-impl From<ParallelogramBuilder> for MeshInstance {
-    fn from(value: ParallelogramBuilder) -> Self { ParallelogramMesh::from(value).into() }
+impl From<Planar> for ParallelogramMesh {
+    fn from(plane: Planar) -> Self { Self::new(plane) }
 }
+
+// endregion Constructors
+
+// region Mesh Impl
 
 impl Mesh for ParallelogramMesh {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
@@ -58,3 +57,5 @@ impl HasAabb for ParallelogramMesh {
 impl MeshProperties for ParallelogramMesh {
     fn centre(&self) -> Point3 { self.plane.p() }
 }
+
+// endregion Mesh Impl

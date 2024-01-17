@@ -1,24 +1,26 @@
 use getset::CopyGetters;
 use rand_core::RngCore;
 
-
 use rayna_shared::def::types::{Number, Point2, Point3};
 
-use crate::mesh::planar::{Planar, PlanarBuilder};
+use crate::mesh::planar::Planar;
 use crate::mesh::{Mesh, MeshInstance, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 
+// region UV Wrap
+
+/// Enum for different ways UV coordinates can be wrapped (or not) on a plane
 #[derive(Copy, Clone, Debug, Default, Ord, PartialOrd, Eq, PartialEq)]
 pub enum UvWrappingMode {
     /// Don't wrap UV coords, keep them unbounded
-    #[default]
     None,
     /// Wrap the UV coordinates when they reach `1.0`
     ///
     /// Equivalent to `x % 1.0`
+    #[default]
     Wrap,
     /// Mirror the UV coordinates when they reach `1.0`, repeating each interval
     ///
@@ -45,11 +47,7 @@ impl UvWrappingMode {
     pub fn apply_mut(self, uvs: &mut Point2) { *uvs = self.apply(*uvs); }
 }
 
-#[derive(Copy, Clone, Debug)]
-pub struct InfinitePlaneBuilder {
-    pub plane: PlanarBuilder,
-    pub uv_wrap: UvWrappingMode,
-}
+// endregion UV Wrap
 
 #[derive(Copy, Clone, Debug, CopyGetters)]
 #[get_copy = "pub"]
@@ -59,19 +57,19 @@ pub struct InfinitePlaneMesh {
     uv_wrap: UvWrappingMode,
 }
 
-impl From<InfinitePlaneBuilder> for InfinitePlaneMesh {
-    fn from(builder: InfinitePlaneBuilder) -> Self {
-        let plane = builder.plane.into();
-        Self {
-            plane,
-            uv_wrap: builder.uv_wrap,
-        }
-    }
+// region Constructors
+
+impl InfinitePlaneMesh {
+    pub fn new(plane: Planar, uv_wrap: UvWrappingMode) -> Self { Self { plane, uv_wrap } }
 }
 
-impl From<InfinitePlaneBuilder> for MeshInstance {
-    fn from(value: InfinitePlaneBuilder) -> Self { InfinitePlaneMesh::from(value).into() }
+impl From<Planar> for InfinitePlaneMesh {
+    fn from(plane: Planar) -> Self { Self::new(plane, UvWrappingMode::default()) }
 }
+
+// endregion Constructors
+
+// region Mesh Impl
 
 impl Mesh for InfinitePlaneMesh {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
@@ -89,3 +87,5 @@ impl HasAabb for InfinitePlaneMesh {
 impl MeshProperties for InfinitePlaneMesh {
     fn centre(&self) -> Point3 { self.plane.p() }
 }
+
+// endregion Mesh Impl

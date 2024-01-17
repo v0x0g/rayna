@@ -20,6 +20,10 @@ impl DynamicMesh {
     pub fn new(value: impl Mesh + 'static) -> Self { Self { inner: Arc::new(value) } }
 }
 
+// TODO: Create an `impl<T: Mesh> From<T> for DynamicMesh`
+//  This will probably need specialisation or type inequality bounds
+//  else it will overlap with `impl<T> From<T> for T`, where `T == DynamicMesh`
+
 impl super::MeshInstance {
     pub fn from_dyn(value: impl Mesh + 'static) -> Self { Self::from(DynamicMesh::new(value)) }
 }

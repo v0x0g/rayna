@@ -11,16 +11,16 @@
 //!
 //! ## Object Modules
 //! Objects (and their corresponding types) are placed into named submodules, and those submodules
-//! are publicly exported. Objects should be split into a "Builder" struct, which contains the publicly accessible properties
-//! for the type, and an "Object" struct which contains the 'built' mesh (which may contain cached values for performance, and
-//! should be immutable/private fields)
+//! are publicly exported. The object type should have an entry placed in [MeshInstance]
+//!
+//! TODO: Move this to a readme, or the project-level documentation
 //!
 //! ## Example
 //! Considering a "Sphere" mesh:
 //!
 //! - File: `./sphere.rs`
 //! - Add module: `pub mod sphere;`
-//! - Structs: `SphereBuilder`, which is translated into `SphereObject`, where `SphereObject: Object`
+//! - Structs: `SphereObject`, with constructors `SphereObject::new()` etc
 //! - Add an entry to [MeshInstance] to correspond to the `SphereObject` for static-dispatch
 //! - See [sphere] for an example
 

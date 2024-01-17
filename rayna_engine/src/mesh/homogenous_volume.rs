@@ -1,5 +1,5 @@
 use crate::mesh::dynamic::DynamicMesh;
-use crate::mesh::{Mesh, MeshInstance, MeshProperties};
+use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -9,38 +9,6 @@ use getset::Getters;
 use rand::Rng;
 use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Point3};
-
-
-#[derive(Debug, Copy, Clone)]
-pub struct HomogeneousVolumeBuilder<M: Mesh> {
-    /// The mesh that gives this volume it's shape
-    pub mesh: M,
-    /// How dense the volume is. Higher values give a "thicker" volume
-    pub density: Number,
-}
-
-impl<M: Mesh> From<HomogeneousVolumeBuilder<M>> for HomogeneousVolumeMesh<M> {
-    fn from(value: HomogeneousVolumeBuilder<M>) -> Self {
-        Self {
-            mesh: value.mesh,
-            density: value.density,
-            neg_inv_density: -1.0 / value.density,
-        }
-    }
-}
-
-// VolumeBuilder<T> => MeshInstance
-impl<M: Mesh + 'static> From<HomogeneousVolumeBuilder<M>> for MeshInstance {
-    fn from(value: HomogeneousVolumeBuilder<M>) -> Self {
-        let HomogeneousVolumeBuilder { mesh: object, density } = value;
-        // ObjectInstance uses HomogeneousVolumeObject<DynamicObject>, so cast the builder to dyn mesh
-        let dyn_builder = HomogeneousVolumeBuilder {
-            density,
-            mesh: DynamicMesh::new(object),
-        };
-        MeshInstance::HomogeneousVolumeMesh(HomogeneousVolumeMesh::from(dyn_builder))
-    }
-}
 
 /// An mesh wrapper that treats the wrapped mesh as a constant-density volume
 ///
@@ -52,6 +20,27 @@ pub struct HomogeneousVolumeMesh<M: Mesh> {
     density: Number,
     neg_inv_density: Number,
 }
+
+// region Constructors
+
+impl<M: Mesh> HomogeneousVolumeMesh<M> {
+    pub fn new(mesh: M, density: Number) -> Self {
+        let neg_inv_density = -1.0 / density;
+        Self {
+            mesh,
+            density,
+            neg_inv_density,
+        }
+    }
+}
+
+impl HomogeneousVolumeMesh<DynamicMesh> {
+    pub fn new_dyn<M: Mesh + 'static>(mesh: M, density: Number) -> Self { Self::new(DynamicMesh::new(mesh), density) }
+}
+
+// endregion Constructors
+
+// region Mesh Impl
 
 impl<M: Mesh> Mesh for HomogeneousVolumeMesh<M> {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
@@ -103,3 +92,5 @@ impl<M: Mesh> HasAabb for HomogeneousVolumeMesh<M> {
 impl<M: Mesh> MeshProperties for HomogeneousVolumeMesh<M> {
     fn centre(&self) -> Point3 { self.mesh.centre() }
 }
+
+// endregion Mesh Impl

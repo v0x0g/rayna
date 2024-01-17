@@ -4,36 +4,15 @@ use glamour::FromRaw;
 use glamour::ToRaw;
 use rand_core::RngCore;
 
+use rayna_shared::def::types::{Number, Point3, Size3, Vector2, Vector3};
 
-use rayna_shared::def::types::{Number, Point3, Vector2, Vector3};
-
-use crate::mesh::{Mesh, MeshInstance, MeshProperties};
+use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::validate;
 
-/// A builder struct used to create a box
-///
-/// Call [Into::into] or [AxisBoxMesh::from] to create the actual mesh
-#[derive(Copy, Clone, Debug)]
-pub struct AxisBoxBuilder {
-    pub corner_1: Point3,
-    pub corner_2: Point3,
-}
-
-// TODO: Convert this to the enum builder style like in [Planar]
-impl AxisBoxBuilder {
-    pub fn new_corners(corner_1: Point3, corner_2: Point3) -> Self { Self { corner_1, corner_2 } }
-    pub fn new_centred(centre: Point3, size: Vector3) -> Self {
-        Self {
-            corner_1: centre + size / 2.,
-            corner_2: centre - size / 2.,
-        }
-    }
-}
-//TODO: Add getters to other objects
 /// Built instance of a box mesh
 #[derive(Copy, Clone, Debug, CopyGetters)]
 #[get_copy = "pub"]
@@ -44,9 +23,11 @@ pub struct AxisBoxMesh {
     aabb: Aabb,
 }
 
-impl From<AxisBoxBuilder> for AxisBoxMesh {
-    fn from(value: AxisBoxBuilder) -> Self {
-        let aabb = Aabb::new(value.corner_1, value.corner_2);
+// region Constructors
+
+impl AxisBoxMesh {
+    pub fn new(a: impl Into<Point3>, b: impl Into<Point3>) -> Self {
+        let aabb = Aabb::new(a, b);
         Self {
             centre: Point3::from((aabb.min().to_vector() + aabb.max().to_vector()) / 2.),
             radius: aabb.size() / 2.,
@@ -54,13 +35,30 @@ impl From<AxisBoxBuilder> for AxisBoxMesh {
             aabb,
         }
     }
+
+    pub fn new_centred(centre: impl Into<Point3>, size: impl Into<Size3>) -> Self {
+        let (centre, size) = (centre.into(), size.into().to_vector());
+        Self::new(centre + size / 2., centre - size / 2.)
+    }
 }
 
-impl From<AxisBoxBuilder> for MeshInstance {
-    fn from(value: AxisBoxBuilder) -> MeshInstance { AxisBoxMesh::from(value).into() }
+impl From<(Point3, Point3)> for AxisBoxMesh {
+    fn from((a, b): (Point3, Point3)) -> Self { Self::new(a, b) }
 }
 
-#[allow(unused_variables)]
+impl From<[Point3; 2]> for AxisBoxMesh {
+    fn from([a, b]: [Point3; 2]) -> Self { Self::new(a, b) }
+}
+
+impl From<(Point3, Size3)> for AxisBoxMesh {
+    /// Creates a box with the given centre and dimensions
+    fn from((centre, size): (Point3, Size3)) -> Self { Self::new_centred(centre, size) }
+}
+
+// endregion Constructors
+
+// region Mesh Implementation
+
 impl Mesh for AxisBoxMesh {
     //noinspection RsLiveness
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
@@ -153,3 +151,5 @@ impl HasAabb for AxisBoxMesh {
 impl MeshProperties for AxisBoxMesh {
     fn centre(&self) -> Point3 { self.centre }
 }
+
+// endregion Mesh Implementation

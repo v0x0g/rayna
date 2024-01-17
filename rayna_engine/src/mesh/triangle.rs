@@ -1,20 +1,14 @@
 use getset::CopyGetters;
 use rand_core::RngCore;
 
-
 use rayna_shared::def::types::{Number, Point3};
 
-use crate::mesh::planar::{Planar, PlanarBuilder};
-use crate::mesh::{Mesh, MeshInstance, MeshProperties};
+use crate::mesh::planar::Planar;
+use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-
-#[derive(Copy, Clone, Debug)]
-pub struct TriangleBuilder {
-    pub plane: PlanarBuilder,
-}
 
 #[derive(Copy, Clone, Debug, CopyGetters)]
 #[get_copy = "pub"]
@@ -25,9 +19,10 @@ pub struct TriangleMesh {
     centre: Point3,
 }
 
-impl From<TriangleBuilder> for TriangleMesh {
-    fn from(builder: TriangleBuilder) -> Self {
-        let plane = Planar::from(builder.plane);
+// region Constructors
+
+impl TriangleMesh {
+    pub fn new(plane: Planar) -> Self {
         let (p, a, b) = (plane.p(), plane.p() + plane.u(), plane.p() + plane.v());
         let centre = p + (plane.u() / 2.) + (plane.v() / 2.);
         let aabb = Aabb::encompass_points([p, a, b]).min_padded(super::planar::AABB_PADDING);
@@ -36,9 +31,13 @@ impl From<TriangleBuilder> for TriangleMesh {
     }
 }
 
-impl From<TriangleBuilder> for MeshInstance {
-    fn from(value: TriangleBuilder) -> Self { TriangleMesh::from(value).into() }
+// endregion Constructors
+
+impl From<Planar> for TriangleMesh {
+    fn from(plane: Planar) -> Self { Self::new(plane) }
 }
+
+// region Mesh Impl
 
 impl Mesh for TriangleMesh {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
@@ -59,3 +58,5 @@ impl HasAabb for TriangleMesh {
 impl MeshProperties for TriangleMesh {
     fn centre(&self) -> Point3 { self.plane.p() }
 }
+
+// endregion Mesh Impl

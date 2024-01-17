@@ -1,5 +1,10 @@
+use crate::material::Material;
+use crate::mesh;
 use crate::mesh::bvh::BvhMesh;
-use crate::mesh::{Mesh as MeshTrait, MeshProperties};
+use crate::mesh::{Mesh as MeshTrait, MeshInstance, MeshProperties};
+use crate::object::bvh::BvhObject;
+use crate::object::list::ObjectList;
+use crate::object::{Object, ObjectInstance};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -23,6 +28,55 @@ pub struct MeshList<Mesh: MeshTrait> {
     aabb: Option<Aabb>,
 }
 
+// region Constructors
+
+impl<Mesh: MeshTrait> MeshList<Mesh> {
+    pub fn new<IntoMesh: Into<Mesh>>(meshes: impl IntoIterator<Item = IntoMesh>) -> Self {
+        let mut bounded = vec![];
+        let mut unbounded = vec![];
+        let mut centre = Point3::ZERO;
+
+        for mesh in meshes.into_iter().map(IntoMesh::into) {
+            centre += mesh.centre().to_vector();
+            if let Some(_) = mesh.aabb() {
+                bounded.push(mesh);
+            } else {
+                unbounded.push(mesh);
+            }
+        }
+
+        let aabb = if unbounded.is_empty() && !bounded.is_empty() {
+            // All objects were checked for AABB so can unwrap
+            Some(Aabb::encompass_iter(bounded.iter().map(Mesh::aabb).map(Option::unwrap)))
+        } else {
+            None
+        };
+
+        let bvh = BvhMesh::new(bounded);
+
+        Self {
+            unbounded,
+            bounded: bvh,
+            centre,
+            aabb,
+        }
+    }
+}
+
+/// Create MeshList<M> from iterator
+impl<Mesh: MeshTrait, IntoMesh: Into<Mesh>, Iter: IntoIterator<Item = IntoMesh>> From<Iter> for MeshList<Mesh> {
+    fn from(meshes: Iter) -> Self { Self::new(meshes) }
+}
+
+/// Create (MeshList<M> as MeshInstance) from iterator of MeshInstance
+impl<IntoMesh: Into<MeshInstance>, Iter: IntoIterator<Item = IntoMesh>> From<Iter> for MeshInstance {
+    fn from(meshes: Iter) -> Self { MeshList::<MeshInstance>::new(meshes.into_iter().map(IntoMesh::into)).into() }
+}
+
+// endregion Constructors
+
+// region Mesh Impl
+
 impl<Mesh: MeshTrait> MeshProperties for MeshList<Mesh> {
     fn centre(&self) -> Point3 { self.centre }
 }
@@ -38,3 +92,5 @@ impl<Mesh: MeshTrait> MeshTrait for MeshList<Mesh> {
         Iterator::chain(bvh_int, unbound_int).min()
     }
 }
+
+// endregion Mesh Impl

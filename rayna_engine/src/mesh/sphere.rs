@@ -1,4 +1,4 @@
-use crate::mesh::{Mesh, MeshInstance, MeshProperties};
+use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;

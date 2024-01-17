@@ -4,7 +4,7 @@ use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Point2, Point3};
 
 use crate::mesh::planar::Planar;
-use crate::mesh::{Mesh, MeshInstance, MeshProperties};
+use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;

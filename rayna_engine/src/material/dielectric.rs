@@ -37,7 +37,7 @@ impl<Tex: Texture> Material for DielectricMaterial<Tex> {
 
         return Some(dir);
     }
-
+    // TODO: Beer's law?
     //noinspection DuplicatedCode
     fn reflected_light(
         &self,

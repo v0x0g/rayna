@@ -28,7 +28,7 @@ impl<Tex: Texture> Material for IsotropicMaterial<Tex> {
     fn scatter(&self, _ray: &Ray, _intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
         Some(rng::vector_on_unit_sphere(rng))
     }
-
+    //TODO: Take into account distance along travelled ray (beer's law?)
     fn reflected_light(
         &self,
         _ray: &Ray,

@@ -117,10 +117,10 @@ impl crate::backend::app::App for RaynaApp {
 
                 // MSAA
 
-                let mut msaa = self.render_opts.msaa.get();
+                let mut msaa = self.render_opts.samples.get();
                 ui.label("MSAA");
                 render_opts_dirty |= egui::DragValue::new(&mut msaa).ui(ui).changed();
-                self.render_opts.msaa = NonZeroUsize::new(msaa).unwrap_or(NonZeroUsize::MIN);
+                self.render_opts.samples = NonZeroUsize::new(msaa).unwrap_or(NonZeroUsize::MIN);
 
                 ui.label("Mode");
                 egui::ComboBox::from_id_source("mode")
@@ -210,9 +210,13 @@ impl crate::backend::app::App for RaynaApp {
                 ui.heading("Stats");
 
                 let stats = self.render_stats;
-                ui.label(format!("num pixels: {}", stats.num_px));
+                ui.label(format!("width:\t\t\t {}", stats.opts.width.get()));
+                ui.label(format!("height:\t\t\t {}", stats.opts.height.get()));
+                ui.label(format!("bounces:\t\t\t {}", stats.opts.bounces));
+                ui.label(format!("mode:\t\t\t {}", stats.opts.mode));
+                ui.label(format!("samples:\t\t {}", stats.opts.samples));
                 ui.label(format!("num threads: {}", stats.num_threads));
-                ui.label(format!("duration: {:?}", stats.duration));
+                ui.label(format!("duration:\t\t {}", humantime::format_duration(stats.duration)));
             });
         });
 

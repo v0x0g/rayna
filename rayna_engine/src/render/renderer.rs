@@ -91,23 +91,40 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
     pub fn render(&mut self, scene: &Scene<Obj, Sky>, render_opts: &RenderOpts) -> Render<ImgBuf> {
         profile_function!();
 
-        let viewport = match scene.camera.calculate_viewport(render_opts) {
-            Ok(v) => v,
+        // Render image, and collect stats
+
+        let start = puffin::now_ns();
+        let num_threads = self.thread_pool.current_num_threads();
+
+        let image = match scene.camera.calculate_viewport(render_opts) {
             Err(err) => {
                 trace!(target: RENDERER, ?err, "couldn't calculate viewport");
                 let [w, h] = render_opts.dims_u32_slice();
-                return Self::render_failed(w, h);
+                Self::render_failed(w, h)
+            }
+            Ok(viewport) => {
+                let bounds = Bounds::from(1e-3..Number::MAX);
+                self.render_actual(scene, render_opts, &viewport, &bounds)
             }
         };
-        let bounds = Bounds::from(1e-3..Number::MAX);
 
-        self.render_actual(scene, render_opts, &viewport, &bounds)
+        let end = puffin::now_ns();
+        let duration = Duration::from_nanos(end.abs_diff(start));
+
+        Render {
+            img: image,
+            stats: RenderStats {
+                duration,
+                num_threads,
+                opts: *render_opts,
+            },
+        }
     }
 
     /// Helper function for returning a render in case of a failure
     /// (and so we can't make an actual render)
     /// Probably only called if the viewport couldn't be calculated
-    fn render_failed(w: u32, h: u32) -> Render<ImgBuf> {
+    fn render_failed(w: u32, h: u32) -> ImgBuf {
         profile_function!();
 
         #[memoize::memoize(Capacity: 8)] // Keep cap small since images can be huge
@@ -126,20 +143,10 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             })
         }
 
-        let img = if w > 16 && h > 16 {
-            internal(w / 4, h / 4)
-        } else {
-            internal(w, h)
-        };
+        // log2 so the pixels are still clearly visible even when the dimensions are huge
+        let img = internal(w.ilog2(), h.ilog2());
 
-        Render {
-            img,
-            stats: RenderStats {
-                num_threads: 0,
-                duration: Duration::ZERO,
-                num_px: (w * h) as usize,
-            },
-        }
+        return img;
     }
 
     /// Does the actual rendering
@@ -151,81 +158,63 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         render_opts: &RenderOpts,
         viewport: &Viewport,
         bounds: &Bounds<Number>,
-    ) -> Render<ImgBuf> {
+    ) -> ImgBuf {
         profile_function!();
 
         let [w, h] = render_opts.dims_u32_slice();
 
         let mut img = ImgBuf::new(w, h);
 
-        let duration;
-        let num_threads;
-        {
-            let start = puffin::now_ns();
-            num_threads = self.thread_pool.current_num_threads();
+        self.thread_pool.install(|| {
+            let rng_pool = &self.rng_pool;
 
-            self.thread_pool.install(|| {
-                let rng_pool = &self.rng_pool;
+            let pixels = img
+                .deref_mut()
+                .par_chunks_exact_mut(3)
+                .enumerate()
+                .map(|(idx, chans)| {
+                    let (y, x) = num_integer::Integer::div_rem(&idx, &(w as usize));
+                    let p = Pixel::from_slice_mut(chans);
+                    (x, y, p)
+                })
+                // Return on panic as fast as possible; don't keep processing all the pixels on panic
+                // Otherwise we get (literally) millions of panics (1 per pixel) which just hangs the renderer as it prints
+                .panic_fuse();
 
-                let pixels = img
-                    .deref_mut()
-                    .par_chunks_exact_mut(3)
-                    .enumerate()
-                    .map(|(idx, chans)| {
-                        let (y, x) = num_integer::Integer::div_rem(&idx, &(w as usize));
-                        let p = Pixel::from_slice_mut(chans);
-                        (x, y, p)
-                    })
-                    // Return on panic as fast as possible; don't keep processing all the pixels on panic
-                    // Otherwise we get (literally) millions of panics (1 per pixel) which just hangs the renderer as it prints
-                    .panic_fuse();
+            pixels.for_each_init(
+                move || {
+                    // Can't use puffin's macro because of macro hygiene :(
+                    let profiler_scope = if puffin::are_scopes_on() {
+                        static LOCATION: OnceLock<String> = OnceLock::new();
+                        let location = LOCATION.get_or_init(|| format!("{}:{}", puffin::current_file_name!(), line!()));
+                        Some(puffin::ProfilerScope::new("inner", location, ""))
+                    } else {
+                        None
+                    };
 
-                pixels.for_each_init(
-                    move || {
-                        // Can't use puffin's macro because of macro hygiene :(
-                        let profiler_scope = if puffin::are_scopes_on() {
-                            static LOCATION: OnceLock<String> = OnceLock::new();
-                            let location =
-                                LOCATION.get_or_init(|| format!("{}:{}", puffin::current_file_name!(), line!()));
-                            Some(puffin::ProfilerScope::new("inner", location, ""))
-                        } else {
-                            None
-                        };
+                    // Pull values from our thread pool
 
-                        // Pull values from our thread pool
+                    let rng_1 = rng_pool.get();
+                    let rng_2 = rng_pool.get();
+                    (rng_1, rng_2, profiler_scope)
+                },
+                // Process each pixel
+                |(rng_1, rng_2, _), (x, y, p)| {
+                    *p = Self::render_px(
+                        scene,
+                        render_opts,
+                        viewport,
+                        bounds,
+                        x,
+                        y,
+                        rng_1.deref_mut(),
+                        rng_2.deref_mut(),
+                    );
+                },
+            );
+        });
 
-                        let rng_1 = rng_pool.get();
-                        let rng_2 = rng_pool.get();
-                        (rng_1, rng_2, profiler_scope)
-                    },
-                    // Process each pixel
-                    |(rng_1, rng_2, _), (x, y, p)| {
-                        *p = Self::render_px(
-                            scene,
-                            render_opts,
-                            viewport,
-                            bounds,
-                            x,
-                            y,
-                            rng_1.deref_mut(),
-                            rng_2.deref_mut(),
-                        );
-                    },
-                );
-            });
-
-            let end = puffin::now_ns();
-            duration = Duration::from_nanos(end.abs_diff(start));
-        }
-
-        Render {
-            img,
-            stats: RenderStats {
-                num_threads,
-                duration,
-                num_px: (w * h) as usize,
-            },
-        }
+        return img;
     }
 }
 
@@ -249,7 +238,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
     ) -> Pixel {
         let px = x as Number;
         let py = y as Number;
-        let sample_count = opts.msaa.get();
+        let sample_count = opts.samples.get();
 
         // TODO: Smart choose MSAA if pixel has lots of variation
         let samples: SmallVec<[Pixel; 64]> = (0..sample_count)

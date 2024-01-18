@@ -43,6 +43,7 @@ valuable = { workspace = true }
 derivative = { workspace = true }
 strum = { workspace = true }
 throttle = "0.1.0"
+humantime = "2.1.0"
 
 # Perf
 puffin = { workspace = true }

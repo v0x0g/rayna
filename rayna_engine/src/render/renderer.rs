@@ -49,7 +49,9 @@ pub enum RendererCreateError {
     },
 }
 
+// region Construction
 impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
+    /// Creates a new renderer instance
     pub fn new() -> Result<Self, RendererCreateError> {
         let thread_pool = ThreadPoolBuilder::new()
             .num_threads(10)
@@ -73,7 +75,18 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             phantom: PhantomData {},
         })
     }
+}
 
+/// Clone Renderer
+impl<Obj: Object + Clone, Sky: Skybox + Clone> Clone for Renderer<Obj, Sky> {
+    fn clone(&self) -> Self { Self::new().expect("could not clone: couldn't create renderer") }
+}
+
+// endregion Construction
+
+// region High-level Rendering
+
+impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
     // TODO: Should `render()` be fallible?
     pub fn render(&mut self, scene: &Scene<Obj, Sky>, render_opts: &RenderOpts) -> Render<ImgBuf> {
         profile_function!();
@@ -169,7 +182,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
                 pixels.for_each_init(
                     move || {
-                        // Can't use macro because of macro hygiene :(
+                        // Can't use puffin's macro because of macro hygiene :(
                         let profiler_scope = if puffin::are_scopes_on() {
                             static LOCATION: OnceLock<String> = OnceLock::new();
                             let location =
@@ -178,6 +191,9 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
                         } else {
                             None
                         };
+
+                        // Pull values from our thread pool
+
                         let rng_1 = rng_pool.get();
                         let rng_2 = rng_pool.get();
                         (rng_1, rng_2, profiler_scope)
@@ -211,7 +227,13 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             },
         }
     }
+}
 
+// endregion High-level Rendering
+
+// region Low-level Rendering
+
+impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
     /// Renders a single pixel in the scene, and returns the colour
     ///
     /// Takes into account [`RenderOpts::msaa`]
@@ -228,6 +250,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         let px = x as Number;
         let py = y as Number;
         let sample_count = opts.msaa.get();
+
         // TODO: Smart choose MSAA if pixel has lots of variation
         let samples: SmallVec<[Pixel; 64]> = (0..sample_count)
             .into_iter()
@@ -390,14 +413,10 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         };
     }
 
-    /// Calculates a random pixel shift (for MSAA), and applies it to the (pixel) coordinates
-
     #[inline /* Hot path */]
     fn apply_msaa_shift(px: Number, py: Number, rng: &mut impl Rng) -> [Number; 2] {
         [px + rng.gen_range(-0.5..=0.5), py + rng.gen_range(-0.5..=0.5)]
     }
 }
 
-impl<Obj: Object + Clone, Sky: Skybox + Clone> Clone for Renderer<Obj, Sky> {
-    fn clone(&self) -> Self { Self::new().expect("could not clone: couldn't create renderer") }
-}
+// endregion Low-level Rendering

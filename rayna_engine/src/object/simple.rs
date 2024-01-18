@@ -46,43 +46,11 @@ use rayna_shared::def::types::{Number, Transform3};
 #[derive(Getters, Clone, Debug)]
 #[get = "pub"]
 pub struct SimpleObject<Mesh: MeshTrait, Mat: Material> {
-    object: Mesh,
+    mesh: Mesh,
     material: Mat,
     transform: Option<ObjectTransform>,
     #[get(skip)]
     aabb: Option<Aabb>,
-    // TODO: Add a string identifier to this (name?)
-}
-
-impl<Mesh, Mat> Object for SimpleObject<Mesh, Mat>
-where
-    Mesh: MeshTrait,
-    Mat: Material,
-{
-    type Mesh = Mesh;
-    type Mat = Mat;
-
-    fn full_intersect<'o>(
-        &'o self,
-        orig_ray: &Ray,
-        bounds: &Bounds<Number>,
-        rng: &mut dyn RngCore,
-    ) -> Option<FullIntersection<'o, Mat>> {
-        let trans_ray = ObjectTransform::maybe_incoming_ray(&self.transform, orig_ray);
-        let inner = self.object.intersect(&trans_ray, bounds, rng)?;
-        let intersect = ObjectTransform::maybe_outgoing_intersection(&self.transform, orig_ray, inner);
-        Some(intersect.make_full(&self.material))
-    }
-}
-
-impl<Mesh, Mat> HasAabb for SimpleObject<Mesh, Mat>
-where
-    Mesh: MeshTrait,
-    Mat: Material,
-{
-    fn aabb(&self) -> Option<&Aabb> { self.aabb.as_ref() }
-
-    // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
 }
 
 // region Constructors
@@ -125,7 +93,7 @@ where
             .map(Aabb::encompass_points);
 
         Self {
-            object,
+            mesh: object,
             aabb,
             transform: Some(transform.into()),
             material: material.into(),
@@ -140,9 +108,44 @@ where
             aabb: object.aabb().copied(),
             transform: None,
             material: material.into(),
-            object,
+            mesh: object,
         }
     }
 }
 
 // endregion Constructors
+
+// region Object Impl
+
+impl<Mesh, Mat> Object for SimpleObject<Mesh, Mat>
+where
+    Mesh: MeshTrait,
+    Mat: Material,
+{
+    type Mesh = Mesh;
+    type Mat = Mat;
+
+    fn full_intersect<'o>(
+        &'o self,
+        orig_ray: &Ray,
+        bounds: &Bounds<Number>,
+        rng: &mut dyn RngCore,
+    ) -> Option<FullIntersection<'o, Mat>> {
+        let trans_ray = ObjectTransform::maybe_incoming_ray(&self.transform, orig_ray);
+        let inner = self.mesh.intersect(&trans_ray, bounds, rng)?;
+        let intersect = ObjectTransform::maybe_outgoing_intersection(&self.transform, orig_ray, inner);
+        Some(intersect.make_full(&self.material))
+    }
+}
+
+impl<Mesh, Mat> HasAabb for SimpleObject<Mesh, Mat>
+where
+    Mesh: MeshTrait,
+    Mat: Material,
+{
+    fn aabb(&self) -> Option<&Aabb> { self.aabb.as_ref() }
+
+    // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
+}
+
+// endregion Object Impl

@@ -64,25 +64,37 @@ impl<M: Mesh> Mesh for HomogeneousVolumeMesh<M> {
             }
         };
         // Have to add a slight offset so we don't intersect with the same point twice
-        let exiting_dist = self
-            .mesh
-            .intersect(ray, &Bounds { } rng)?
-            .dist;
+        let exiting_dist = {
+            let d = self
+                .mesh
+                .intersect(ray, &Bounds::from(entering_dist + 0.001..), rng)?
+                .dist;
 
-        if !bounds.contains(&entering_dist) || !bounds.contains(&exiting_dist) {
-            return None;
-        }
+            if let Some(end) = bounds.end {
+                d.min(end)
+            } else {
+                d
+            }
+        };
 
         // Distance between entry and exit of mesh along ray
         let dist_inside = exiting_dist - entering_dist;
+
+        // if dist_inside < 0. { unreachable!() }
+
         // Random distance at which we will hit
         let hit_dist = self.neg_inv_density * Number::ln(rng.gen());
 
+        // NOTE: We don't do normal bounds checks on intersections here, due to concavity issues given above.
+        // Also, even if `exiting_dist` is outside of the range, the value `hit_dist` might be inside
+        // And `hit_dist` is the one we actually use, so check that instead
+        // We don't need to check `if !bounds.contains(&dist)`, it's guaranteed to be inside `bounds`
         if hit_dist > dist_inside {
             return None;
         }
 
         let dist = entering_dist + hit_dist;
+
         let pos_w = ray.at(dist);
         let pos_l = pos_w;
 

@@ -318,9 +318,9 @@ pub static RTTNW_DEMO: Scene = {
         objects.push(
             SimpleObject::new(
                 // BLUE HAZE INSIDE
-                HomogeneousVolumeMesh::new_dyn(SphereMesh::new((3.6, 1.5, 1.45), 0.6), 0.2),
+                HomogeneousVolumeMesh::new_dyn(SphereMesh::new((3.6, 1.5, 1.45), 0.6), 20.0),
                 IsotropicMaterial {
-                    albedo: [0.01, 0.02, 0.6].into(),
+                    albedo: [0.2, 0.4, 0.9].into(),
                 },
             )
             .into(),
@@ -394,7 +394,7 @@ pub static RTTNW_DEMO: Scene = {
 
         objects.push(
             SimpleObject::new(
-                HomogeneousVolumeMesh::new_dyn(SphereMesh::new(Point3::ZERO, 50.), 0.0001),
+                HomogeneousVolumeMesh::new_dyn(SphereMesh::new(Point3::ZERO, 50.), 0.003),
                 IsotropicMaterial { albedo: [1.; 3].into() },
             )
             .into(),

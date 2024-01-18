@@ -1,15 +1,14 @@
 use crate::material::Material;
 use crate::mesh::Mesh as MeshTrait;
+use crate::object::transform::ObjectTransform;
 use crate::object::Object;
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
-use crate::shared::transform_utils::{transform_incoming_ray, transform_outgoing_intersection};
 use getset::Getters;
 use rand_core::RngCore;
 use rayna_shared::def::types::{Number, Transform3};
-
 
 /// The main struct that encapsulates all the different "components" that make up an mesh
 ///
@@ -25,15 +24,12 @@ use rayna_shared::def::types::{Number, Transform3};
 /// Alternatively, you can also apply a post and pre-transform, to counteract the mesh's position offset:
 /// ```
 /// # use rayna_engine::material::lambertian::LambertianMaterial;
-/// # use rayna_engine::mesh::axis_box::{AxisBoxBuilder, AxisBoxMesh};
+/// # use rayna_engine::mesh::axis_box::AxisBoxMesh;
 /// # use rayna_shared::def::types::{Angle, Point3, Transform3, Vector3};
 /// #
 /// # let a: Point3 = [5., 1., 2.].into();
 /// # let b: Point3 = [3., 4., -7.].into();
-/// # let mesh: AxisBoxMesh = AxisBoxBuilder {
-/// #     corner_1: a,
-/// #     corner_2: b,
-/// # }.into();
+/// # let mesh = AxisBoxMesh::new(a,b);
 ///
 /// let transform = Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(69.0));
 ///
@@ -52,8 +48,7 @@ use rayna_shared::def::types::{Number, Transform3};
 pub struct SimpleObject<Mesh: MeshTrait, Mat: Material> {
     object: Mesh,
     material: Mat,
-    transform: Option<Transform3>,
-    inv_transform: Option<Transform3>,
+    transform: Option<ObjectTransform>,
     #[get(skip)]
     aabb: Option<Aabb>,
     // TODO: Add a string identifier to this (name?)
@@ -73,14 +68,10 @@ where
         bounds: &Bounds<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Mat>> {
-        if let (Some(transform), Some(inv_transform)) = (&self.transform, &self.inv_transform) {
-            let trans_ray = transform_incoming_ray(orig_ray, inv_transform);
-            let inner = self.object.intersect(&trans_ray, bounds, rng)?;
-            let intersect = transform_outgoing_intersection(orig_ray, inner, transform);
-            Some(intersect.make_full(&self.material))
-        } else {
-            Some(self.object.intersect(orig_ray, bounds, rng)?.make_full(&self.material))
-        }
+        let trans_ray = ObjectTransform::maybe_incoming_ray(&self.transform, orig_ray);
+        let inner = self.object.intersect(&trans_ray, bounds, rng)?;
+        let intersect = ObjectTransform::maybe_outgoing_intersection(&self.transform, orig_ray, inner);
+        Some(intersect.make_full(&self.material))
     }
 }
 
@@ -133,13 +124,10 @@ where
             .map(|corners| corners.map(|c| transform.map_point(c)))
             .map(Aabb::encompass_points);
 
-        let inv_transform = transform.inverse();
-
         Self {
             object,
             aabb,
-            transform: Some(transform),
-            inv_transform: Some(inv_transform),
+            transform: Some(transform.into()),
             material: material.into(),
         }
     }
@@ -151,7 +139,6 @@ where
         Self {
             aabb: object.aabb().copied(),
             transform: None,
-            inv_transform: None,
             material: material.into(),
             object,
         }

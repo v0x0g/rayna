@@ -1,6 +1,8 @@
 pub mod bvh;
 pub mod list;
 pub mod simple;
+pub mod transform;
+pub mod volumetric;
 
 use crate::material::Material;
 use crate::mesh::Mesh as MeshTrait;
@@ -12,7 +14,6 @@ use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use rand_core::RngCore;
 use rayna_shared::def::types::Number;
-
 
 // noinspection ALL
 use self::{bvh::BvhObject, list::ObjectList, simple::SimpleObject};

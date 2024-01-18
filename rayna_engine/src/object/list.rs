@@ -1,6 +1,7 @@
 use getset::Getters;
 use rand_core::RngCore;
 
+use super::transform::ObjectTransform;
 use crate::material::Material;
 use crate::mesh;
 use crate::object::bvh::BvhObject;
@@ -9,7 +10,6 @@ use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
-use crate::shared::transform_utils::{transform_incoming_ray, transform_outgoing_intersection};
 use rayna_shared::def::types::{Number, Point3, Transform3};
 
 #[derive(Getters, Clone, Debug)]
@@ -19,8 +19,7 @@ pub struct ObjectList<Obj: Object> {
     bvh: BvhObject<Obj>,
     /// All the unbounded objects in the list (objects where [Object::aabb()] returned [None]
     unbounded: Vec<Obj>,
-    transform: Option<Transform3>,
-    inv_transform: Option<Transform3>,
+    transform: Option<ObjectTransform>,
     /// The [Aabb] for all of the enclosed objects. Will be [None] if there are unbounded objects
     #[get(skip)]
     aabb: Option<Aabb>,
@@ -84,12 +83,9 @@ impl<Obj: Object> ObjectList<Obj> {
             .map(|corners| corners.map(|c| transform.map_point(c)))
             .map(Aabb::encompass_points);
 
-        let inv_transform = transform.inverse();
-
         Self {
             aabb,
-            transform: Some(transform),
-            inv_transform: Some(inv_transform),
+            transform: Some(transform.into()),
             bvh,
             unbounded,
         }
@@ -104,7 +100,6 @@ impl<Obj: Object> ObjectList<Obj> {
             unbounded,
             aabb,
             transform: None,
-            inv_transform: None,
         }
     }
 
@@ -143,30 +138,18 @@ impl<Obj: Object> Object for ObjectList<Obj> {
         bounds: &Bounds<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Obj::Mat>> {
-        // NOTE: This transformation code is practically the same as SimpleObject's implementation
-        return match (&self.transform, &self.inv_transform) {
-            (Some(transform), Some(inv_transform)) => {
-                let trans_ray = transform_incoming_ray(orig_ray, inv_transform);
+        let trans_ray = ObjectTransform::maybe_incoming_ray(&self.transform, orig_ray);
 
-                let bvh_int = self.bvh.full_intersect(&trans_ray, bounds, rng).into_iter();
-                let unbound_int = self
-                    .unbounded
-                    .iter()
-                    .filter_map(|o| o.full_intersect(&trans_ray, bounds, rng));
-                let mut intersect = Iterator::chain(bvh_int, unbound_int).min()?;
+        let bvh_int = self.bvh.full_intersect(&trans_ray, bounds, rng).into_iter();
+        let unbound_int = self
+            .unbounded
+            .iter()
+            .filter_map(|o| o.full_intersect(&trans_ray, bounds, rng));
+        let mut intersect = Iterator::chain(bvh_int, unbound_int).min()?;
 
-                intersect.intersection = transform_outgoing_intersection(orig_ray, intersect.intersection, transform);
-                Some(intersect)
-            }
-            _ => {
-                let bvh_int = self.bvh.full_intersect(orig_ray, bounds, rng).into_iter();
-                let unbound_int = self
-                    .unbounded
-                    .iter()
-                    .filter_map(|o| o.full_intersect(orig_ray, bounds, rng));
-                Iterator::chain(bvh_int, unbound_int).min()
-            }
-        };
+        intersect.intersection =
+            ObjectTransform::maybe_outgoing_intersection(&self.transform, orig_ray, intersect.intersection);
+        Some(intersect)
     }
 }
 impl<Obj: Object> HasAabb for ObjectList<Obj> {

@@ -17,7 +17,9 @@ pub struct RenderOpts {
     pub bounces: usize,
 }
 
-#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Valuable, Serialize, EnumIter, IntoStaticStr, Display)]
+#[derive(
+    Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Valuable, Serialize, EnumIter, IntoStaticStr, Display,
+)]
 pub enum RenderMode {
     #[default]
     PBR,

@@ -158,6 +158,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
                 left_areas.resize(n, 0.);
                 let mut right_areas = Vec::new();
                 right_areas.resize(n, 0.);
+
                 //Calculate the area from the left towards right
                 let mut left_aabb = Aabb::default();
                 for (area, obj_aabb) in zip_eq(left_areas.iter_mut(), aabbs.iter()) {

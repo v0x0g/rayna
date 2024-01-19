@@ -88,6 +88,8 @@ opt-level = 3
 inherits = "dev"
 debug = "full"
 opt-level = 0
+[profile.dbg.package.rayna_engine]
+opt-level = 0
 [profile.dbg.package."*"]
 opt-level = 1
 codegen-units = 32

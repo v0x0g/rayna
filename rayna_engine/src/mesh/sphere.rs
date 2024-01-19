@@ -30,10 +30,7 @@ impl SphereMesh {
             radius,
             radius_sqr: radius * radius,
             // Cube centred around self
-            aabb: Aabb::new(
-                pos - Vector3::splat(radius),
-                pos + Vector3::splat(radius),
-            ),
+            aabb: Aabb::new(pos - Vector3::splat(radius), pos + Vector3::splat(radius)),
         }
     }
 }

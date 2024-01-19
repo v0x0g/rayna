@@ -1,9 +1,5 @@
-
-
 use crate::mesh::bvh::BvhMesh;
 use crate::mesh::{Mesh as MeshTrait, MeshInstance, MeshProperties};
-
-
 
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;

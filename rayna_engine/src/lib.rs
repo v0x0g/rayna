@@ -6,6 +6,7 @@
 #![feature(box_patterns)]
 #![feature(negative_impls)]
 #![feature(iter_map_windows)]
+#![feature(iter_collect_into)]
 
 pub mod material;
 pub mod mesh;

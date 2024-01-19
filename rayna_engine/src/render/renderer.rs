@@ -12,6 +12,7 @@ use crate::skybox::Skybox;
 use derivative::Derivative;
 use image::Pixel as _;
 use puffin::profile_function;
+use rand::distributions::Distribution;
 use rand::distributions::Uniform;
 use rand::rngs::SmallRng;
 use rand::Rng;
@@ -21,7 +22,6 @@ use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel, Vector2};
 use rayna_shared::profiler;
 use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
-use smallvec::SmallVec;
 use std::marker::PhantomData;
 use std::ops::{Add, DerefMut};
 use std::sync::OnceLock;
@@ -93,9 +93,9 @@ struct PooledData<R: RngCore + SeedableRng = SmallRng> {
     /// PRNG's
     pub rngs: [R; 2],
     /// Buffer of [Vector2] values
-    pub vec2: Vec<Vector2>,
+    pub px_coords: Vec<Vector2>,
     /// Buffer of [Pixel] values
-    pub colours: Vec<Pixel>,
+    pub samples: Vec<Pixel>,
     /// The [Uniform] number distribution for creating MSAA values
     pub msaa_distr: Uniform<Number>,
 }
@@ -108,11 +108,11 @@ impl<R: SeedableRng + RngCore> opool::PoolAllocator<PooledData<R>> for PooledDat
         let rngs = [(); 2].map(|()| R::from_entropy());
         let vec2 = vec![];
         let colours = vec![];
-        let msaa_dist = Uniform::new_inclusive(-1., 1.);
+        let msaa_dist = Uniform::new_inclusive(-0.5, 0.5);
         PooledData {
             rngs,
-            vec2,
-            colours,
+            px_coords: vec2,
+            samples: colours,
             msaa_distr: msaa_dist,
         }
     }
@@ -263,22 +263,31 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         let px = x as Number;
         let py = y as Number;
         let sample_count = opts.samples.get();
-        let [rng1, rng2] = pooled_data.rngs.each_mut();
+
+        let PooledData {
+            px_coords,
+            samples,
+            msaa_distr,
+            rngs: [rng1, rng2],
+        } = pooled_data;
+
+        samples.clear();
+        px_coords.resize(sample_count, Vector2::ZERO);
+        px_coords.fill_with(|| [px + msaa_distr.sample(rng1), py + msaa_distr.sample(rng1)].into());
 
         // TODO: Smart choose MSAA if pixel has lots of variation
-        let samples: SmallVec<[Pixel; 64]> = (0..sample_count)
+        px_coords
             .into_iter()
-            .map(|_s| Self::apply_msaa_shift(px, py, rng1))
-            .map(|[px, py]| Self::render_px_once(scene, viewport, opts, bounds, px, py, rng2))
+            .map(|&mut Vector2 { x, y }| Self::render_px_once(scene, viewport, opts, bounds, x, y, rng2))
             .inspect(|p| validate::colour(p))
-            .collect();
+            .collect_into(samples);
 
         let overall_colour = {
             // Find mean of all samples
             let accum = samples
                 .iter()
                 .copied()
-                // Pixel doesn't implement [core::ops::Add], so have to manually do it with slices
+                // Pixel doesn't implement [core::ops::Add], so have to manually
                 .reduce(|a, b| Pixel::map2(&a, &b, Channel::add))
                 .unwrap_or_else(|| [0.; 3].into());
 
@@ -425,11 +434,6 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
                 emitted_col
             }
         };
-    }
-
-    #[inline /* Hot path */]
-    fn apply_msaa_shift(px: Number, py: Number, rng: &mut impl Rng) -> [Number; 2] {
-        [px + rng.gen_range(-0.5..=0.5), py + rng.gen_range(-0.5..=0.5)]
     }
 }
 

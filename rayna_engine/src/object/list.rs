@@ -78,7 +78,7 @@ impl<Obj: Object> ObjectList<Obj> {
         } else {
             None
         };
-        let bvh = BvhObject::new(bounded);
+        let bvh = BvhObject::new_uncorrected(bounded, None);
 
         (bvh, unbounded, aabb)
     }

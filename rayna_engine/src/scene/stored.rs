@@ -55,6 +55,7 @@ pub static SIMPLE: Scene = {
                     albedo: [0.8; 3].into(),
                     fuzz: 1.,
                 },
+                None,
             ),
             SimpleObject::new(
                 // Ground
@@ -63,6 +64,7 @@ pub static SIMPLE: Scene = {
                     albedo: [0.5; 3].into(),
                     emissive: Default::default(),
                 },
+                None,
             ),
         ]
         .into(),
@@ -81,6 +83,7 @@ pub static TESTING: Scene = {
             albedo: [0.5; 3].into(),
             emissive: [0.; 3].into(),
         },
+        None,
     ));
     objects.push(SimpleObject::new(
         // Slope
@@ -92,6 +95,7 @@ pub static TESTING: Scene = {
             albedo: [0.2; 3].into(),
             emissive: [0.1; 3].into(),
         },
+        None,
     ));
     objects.push(SimpleObject::new(
         // Ball
@@ -99,6 +103,7 @@ pub static TESTING: Scene = {
         IsotropicMaterial {
             albedo: [0.5; 3].into(),
         },
+        None,
     ));
     Scene {
         camera: Camera {
@@ -158,7 +163,7 @@ pub static RTIAW_DEMO: Scene = {
             } else {
                 AxisBoxMesh::new_centred(centre, rng::vector_in_unit_cube_01(rng) * 0.8).into()
             };
-            objects.push(SimpleObject::new(obj, material));
+            objects.push(SimpleObject::new(obj, material, None));
         }
     }
 
@@ -168,6 +173,7 @@ pub static RTIAW_DEMO: Scene = {
             refractive_index: 1.5,
             albedo: [1.; 3].into(),
         },
+        None,
     ));
     objects.push(SimpleObject::new(
         SphereMesh::new((-4., 1., 0.), 1.),
@@ -175,6 +181,7 @@ pub static RTIAW_DEMO: Scene = {
             albedo: [0.4, 0.2, 0.1].into(),
             emissive: Default::default(),
         },
+        None,
     ));
     objects.push(SimpleObject::new(
         SphereMesh::new((4., 1., 0.), 1.),
@@ -182,6 +189,7 @@ pub static RTIAW_DEMO: Scene = {
             albedo: [0.7, 0.6, 0.5].into(),
             fuzz: 0.,
         },
+        None,
     ));
 
     objects.push(SimpleObject::new(
@@ -193,6 +201,7 @@ pub static RTIAW_DEMO: Scene = {
             .into(),
             emissive: Default::default(),
         },
+        None,
     ));
 
     Scene {
@@ -249,6 +258,7 @@ pub static RTTNW_DEMO: Scene = {
                     albedo: solid_texture([0.48, 0.83, 0.53]),
                     emissive: BLACK_TEX,
                 },
+                None,
             )
             .into(),
         );
@@ -262,6 +272,7 @@ pub static RTTNW_DEMO: Scene = {
                 LightMaterial {
                     emissive: solid_texture([7.; 3]),
                 },
+                None,
             )
             .into(),
         );
@@ -276,6 +287,7 @@ pub static RTTNW_DEMO: Scene = {
                     albedo: solid_texture([0.7, 0.3, 0.1]),
                     emissive: BLACK_TEX,
                 },
+                None,
             )
             .into(),
         );
@@ -288,6 +300,7 @@ pub static RTTNW_DEMO: Scene = {
                     albedo: [1.; 3].into(),
                     refractive_index: 1.5,
                 },
+                None,
             )
             .into(),
         );
@@ -300,6 +313,7 @@ pub static RTTNW_DEMO: Scene = {
                     albedo: [0.8, 0.8, 0.9].into(),
                     fuzz: 1.,
                 },
+                None,
             )
             .into(),
         );
@@ -312,6 +326,7 @@ pub static RTTNW_DEMO: Scene = {
                     albedo: [1.; 3].into(),
                     refractive_index: 1.5,
                 },
+                None,
             )
             .into(),
         );
@@ -322,6 +337,7 @@ pub static RTTNW_DEMO: Scene = {
                 IsotropicMaterial {
                     albedo: [0.2, 0.4, 0.9].into(),
                 },
+                None,
             )
             .into(),
         );
@@ -339,6 +355,7 @@ pub static RTTNW_DEMO: Scene = {
                     .into(),
                     emissive: BLACK_TEX,
                 },
+                None,
             )
             .into(),
         );
@@ -354,6 +371,7 @@ pub static RTTNW_DEMO: Scene = {
                     .into(),
                     emissive: BLACK_TEX,
                 },
+                None,
             )
             .into(),
         );
@@ -371,7 +389,7 @@ pub static RTTNW_DEMO: Scene = {
             .collect();
 
         objects.push(
-            SimpleObject::new_without_correction(
+            SimpleObject::new(
                 BvhMesh::new(balls),
                 LambertianMaterial {
                     albedo: solid_texture([0.85; 3]),
@@ -396,6 +414,7 @@ pub static RTTNW_DEMO: Scene = {
             SimpleObject::new(
                 HomogeneousVolumeMesh::new_dyn(SphereMesh::new(Point3::ZERO, 50.), 0.003),
                 IsotropicMaterial { albedo: [1.; 3].into() },
+                None,
             )
             .into(),
         );
@@ -441,6 +460,7 @@ pub static CORNELL: Scene = {
                 albedo: albedo.into(),
                 emissive: emissive.into(),
             },
+            None,
         ));
     }
 
@@ -467,7 +487,7 @@ pub static CORNELL: Scene = {
         // INNER BOXES
 
         // Big
-        o.push(SimpleObject::new_with_correction(
+        o.push(SimpleObject::new(
             AxisBoxMesh::new((0.231, 0., 0.117), (0.531, 0.595, 0.414)),
             MetalMaterial {
                 albedo: warm_grey.into(),
@@ -476,7 +496,7 @@ pub static CORNELL: Scene = {
             Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(15.)),
         ));
         // Small
-        o.push(SimpleObject::new_with_correction(
+        o.push(SimpleObject::new(
             AxisBoxMesh::new((0.477, 0., 0.531), (0.774, 0.297, 0.829)),
             LambertianMaterial {
                 albedo: warm_grey.into(),
@@ -491,6 +511,7 @@ pub static CORNELL: Scene = {
             IsotropicMaterial {
                 albedo: [0.3; 3].into(),
             },
+            None,
         ));
     }
 

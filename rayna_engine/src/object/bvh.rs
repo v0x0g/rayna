@@ -21,6 +21,7 @@ use crate::shared::ray::Ray;
 pub struct BvhObject<Obj: Object> {
     inner: GenericBvh<Obj>,
     transform: ObjectTransform,
+    #[get(skip)]
     aabb: Option<Aabb>,
 }
 

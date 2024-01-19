@@ -140,9 +140,6 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             // TODO: maybe choose the axis that gives the smallest overlap between the left & right splits?
             //  This means why try `product_of(all 3 axes, all split positions)` and find the optimal by `left.len()^2 + right.len()^2`
 
-            // TODO: Sometimes this seems to generate a node with a single mesh.
-            //  It creates an (AABB->Object) node, which does double ray-aabb intersects (this is slow)
-
             // Sort along longest axis
             {
                 let max_side = match main_aabb.size().into_iter().position_max_by(Number::total_cmp) {

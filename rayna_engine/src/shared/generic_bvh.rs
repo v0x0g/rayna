@@ -153,7 +153,8 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
                 Self::sort_along_aabb_axis(axis, &mut objects);
 
                 // Calculate the areas of the left/right AABBs, for each given split position
-                for pos in 0..n {
+                // We make sure the splits are at least 1 element each side, hence `(1)..(n-1)`
+                for pos in 1..(n - 1) {
                     let split_l = &aabbs[..pos];
                     let split_r = &aabbs[pos + 1..];
 

@@ -8,7 +8,8 @@ use indextree::{Arena, NodeId};
 use std::cmp::Ordering;
 
 use itertools::{zip_eq, Itertools};
-use rayna_shared::def::types::Number;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
 use crate::shared::aabb::{Aabb, HasAabb};
 
@@ -23,7 +24,7 @@ pub struct GenericBvh<Node: HasAabb> {
 }
 
 /// Enum for which axis we split along when doing SAH
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, EnumIter)]
 enum SplitAxis {
     X,
     Y,
@@ -132,6 +133,90 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             // https://psgraphics.blogspot.com/2016/03/a-simple-sah-bvh-build.html
             // https://3.bp.blogspot.com/-PMG6dWk1i60/VuG9UHjsdlI/AAAAAAAACEo/BS1qJyut7LE/s1600/Screen%2BShot%2B2016-03-10%2Bat%2B11.25.08%2BAM.png
 
+            // Normally with SAH, we would choose the longest axis to split along.
+            // Instead, this calculates the cartesian product of all axes and positions, and chooses the best from them
+
+            let n = objects.len();
+            let aabbs = objects.iter().map(HasAabb::expect_aabb).copied().collect_vec();
+
+            pub struct BvhSplit {
+                pub axis: SplitAxis,
+                pub pos: usize,
+                pub cost: usize,
+            }
+
+            for split_axis in SplitAxis::iter() {
+                Self::sort_along_aabb_axis(split_axis, &mut objects);
+
+                // Calculate the areas of the left/right AABBs, for each given split position
+                let (left_areas, right_areas) = {
+                    let mut left_areas = Vec::new();
+                    left_areas.resize(n, 0.);
+                    let mut right_areas = Vec::new();
+                    right_areas.resize(n, 0.);
+
+                    // NOTE: The variables `left_aabb`, `right_aabb` are used so we don't have to keep recalculating
+                    //  the entire encompassed AABB each time. Each iteration we only do one `O(1)` Aabb::encompass()
+
+                    //Calculate the area from the left towards right
+                    let mut left_aabb = Aabb::default();
+                    for (area, obj_aabb) in zip_eq(left_areas.iter_mut(), aabbs.iter()) {
+                        left_aabb = Aabb::encompass(&left_aabb, obj_aabb);
+                        *area = left_aabb.area();
+                    }
+
+                    //Calculate the area from the right towards the left
+                    let mut right_aabb = Aabb::default();
+                    for (area, obj_aabb) in zip_eq(right_areas.iter_mut().rev(), aabbs.iter().rev()) {
+                        right_aabb = Aabb::encompass(&right_aabb, obj_aabb);
+                        *area = right_aabb.area();
+                    }
+
+                    (left_areas, right_areas)
+                };
+
+                // Calculate costs for positions
+                {}
+            }
+
+            // Find the most optimal split index, using the areas calculated above
+            let split_index = {
+                // NOTE: If doing in a for loop this would be `i: 0..n-1`, and `l=left[i], r=right[i+1]`
+                // This way we have non-overlapping left & right areas
+                let left_trimmed = left_areas.split_last().expect("left_area is empty").1;
+                let right_trimmed = right_areas.split_first().expect("right_area is empty").1;
+                let min_sa_idx = zip_eq(left_trimmed, right_trimmed)
+                    .enumerate()
+                    // calculate SA
+                    .map(|(i, (&l, &r))| (i as Number * l) + ((n - i - 1) as Number * r))
+                    .position_min_by(Number::total_cmp)
+                    .expect("area iters have >1 elem");
+                min_sa_idx
+            };
+
+            // Split the vector into the two halves. Annoyingly there is no nice API for boxed slices or vectors
+            let (left_split, right_split) = {
+                let mut l = Vec::from(objects);
+                let r = l.split_off(split_index + 1);
+                (l, r)
+            };
+
+            let left_node = Self::generate_nodes_sah(left_split, arena);
+            let right_node = Self::generate_nodes_sah(right_split, arena);
+
+            let node = arena.new_node(GenericBvhNode::Nested(main_aabb));
+            node.append(left_node, arena);
+            node.append(right_node, arena);
+            return node;
+        }
+
+        /*
+
+               {
+            // This is a port of [my C# port of] [Pete Shirley's code]
+            // https://psgraphics.blogspot.com/2016/03/a-simple-sah-bvh-build.html
+            // https://3.bp.blogspot.com/-PMG6dWk1i60/VuG9UHjsdlI/AAAAAAAACEo/BS1qJyut7LE/s1600/Screen%2BShot%2B2016-03-10%2Bat%2B11.25.08%2BAM.png
+
             let n = objects.len();
             let aabbs = objects.iter().map(HasAabb::expect_aabb).copied().collect_vec();
             let main_aabb = Aabb::encompass_iter(&aabbs);
@@ -204,5 +289,8 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             node.append(right_node, arena);
             return node;
         }
+
+
+         */
     }
 }

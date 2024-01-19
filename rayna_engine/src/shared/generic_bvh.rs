@@ -6,8 +6,10 @@
 use getset::{CopyGetters, Getters};
 use indextree::{Arena, NodeId};
 use std::cmp::Ordering;
+use std::ops::Range;
 
 use itertools::{zip_eq, Itertools};
+use rayna_shared::def::types::Number;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
@@ -139,41 +141,33 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             let n = objects.len();
             let aabbs = objects.iter().map(HasAabb::expect_aabb).copied().collect_vec();
 
-            pub struct BvhSplit {
+            pub struct BvhSplit<const N: usize> {
                 pub axis: SplitAxis,
-                pub pos: usize,
-                pub cost: usize,
+                pub pos: [usize; N],
+                pub cost: Number,
             }
 
-            for split_axis in SplitAxis::iter() {
-                Self::sort_along_aabb_axis(split_axis, &mut objects);
+            const NUM_SPLITS: usize = 2;
+            let mut splits = Vec::new();
+            for axis in SplitAxis::iter() {
+                Self::sort_along_aabb_axis(axis, &mut objects);
 
+                // Array of [0..n; NUM_SPLITS]
+                let split_ranges = [0; NUM_SPLITS].map(|_| 0..n);
                 // Calculate the areas of the left/right AABBs, for each given split position
-                let (left_areas, right_areas) = {
-                    let mut left_areas = Vec::new();
-                    left_areas.resize(n, 0.);
-                    let mut right_areas = Vec::new();
-                    right_areas.resize(n, 0.);
+                for split_pos in split_ranges.iter().combinations(NUM_SPLITS) {
+                    let aabb_l = Aabb::encompass_iter(&aabbs[..pos]);
+                    let aabb_r = Aabb::encompass_iter(&aabbs[pos + 1..]);
 
-                    // NOTE: The variables `left_aabb`, `right_aabb` are used so we don't have to keep recalculating
-                    //  the entire encompassed AABB each time. Each iteration we only do one `O(1)` Aabb::encompass()
+                    let area_l = aabb_l.area();
+                    let area_r = aabb_l.area();
 
-                    //Calculate the area from the left towards right
-                    let mut left_aabb = Aabb::default();
-                    for (area, obj_aabb) in zip_eq(left_areas.iter_mut(), aabbs.iter()) {
-                        left_aabb = Aabb::encompass(&left_aabb, obj_aabb);
-                        *area = left_aabb.area();
-                    }
+                    let p_l = pos as Number * area_l;
+                    let p_r = (n - pos - 1) as Number * area_r;
 
-                    //Calculate the area from the right towards the left
-                    let mut right_aabb = Aabb::default();
-                    for (area, obj_aabb) in zip_eq(right_areas.iter_mut().rev(), aabbs.iter().rev()) {
-                        right_aabb = Aabb::encompass(&right_aabb, obj_aabb);
-                        *area = right_aabb.area();
-                    }
-
-                    (left_areas, right_areas)
-                };
+                    let cost = (area_l * p_l) + (area_r * p_r);
+                    splits.push(BvhSplit { pos, cost, axis });
+                }
 
                 // Calculate costs for positions
                 {}

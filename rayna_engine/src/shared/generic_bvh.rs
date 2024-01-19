@@ -6,9 +6,8 @@
 use getset::{CopyGetters, Getters};
 use indextree::{Arena, NodeId};
 use std::cmp::Ordering;
-use std::ops::Range;
 
-use itertools::{zip_eq, Itertools};
+use itertools::Itertools;
 use rayna_shared::def::types::Number;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
@@ -140,58 +139,47 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
 
             let n = objects.len();
             let aabbs = objects.iter().map(HasAabb::expect_aabb).copied().collect_vec();
+            let main_aabb = Aabb::encompass_iter(objects.iter().map(BNode::expect_aabb));
 
-            pub struct BvhSplit<const N: usize> {
+            #[derive(Copy, Clone, Debug)]
+            pub struct BvhSplit {
                 pub axis: SplitAxis,
-                pub pos: [usize; N],
+                pub pos: usize,
                 pub cost: Number,
             }
 
-            const NUM_SPLITS: usize = 2;
             let mut splits = Vec::new();
             for axis in SplitAxis::iter() {
                 Self::sort_along_aabb_axis(axis, &mut objects);
 
-                // Array of [0..n; NUM_SPLITS]
-                let split_ranges = [0; NUM_SPLITS].map(|_| 0..n);
                 // Calculate the areas of the left/right AABBs, for each given split position
-                for split_pos in split_ranges.iter().combinations(NUM_SPLITS) {
-                    let aabb_l = Aabb::encompass_iter(&aabbs[..pos]);
-                    let aabb_r = Aabb::encompass_iter(&aabbs[pos + 1..]);
+                for pos in 0..n {
+                    let split_l = &aabbs[..pos];
+                    let split_r = &aabbs[pos + 1..];
+
+                    let aabb_l = Aabb::encompass_iter(split_l);
+                    let aabb_r = Aabb::encompass_iter(split_r);
 
                     let area_l = aabb_l.area();
-                    let area_r = aabb_l.area();
+                    let area_r = aabb_r.area();
 
-                    let p_l = pos as Number * area_l;
-                    let p_r = (n - pos - 1) as Number * area_r;
+                    let p_l = (split_l.len() as Number) * area_l;
+                    let p_r = (split_r.len() as Number) * area_r;
 
                     let cost = (area_l * p_l) + (area_r * p_r);
                     splits.push(BvhSplit { pos, cost, axis });
                 }
-
-                // Calculate costs for positions
-                {}
             }
 
-            // Find the most optimal split index, using the areas calculated above
-            let split_index = {
-                // NOTE: If doing in a for loop this would be `i: 0..n-1`, and `l=left[i], r=right[i+1]`
-                // This way we have non-overlapping left & right areas
-                let left_trimmed = left_areas.split_last().expect("left_area is empty").1;
-                let right_trimmed = right_areas.split_first().expect("right_area is empty").1;
-                let min_sa_idx = zip_eq(left_trimmed, right_trimmed)
-                    .enumerate()
-                    // calculate SA
-                    .map(|(i, (&l, &r))| (i as Number * l) + ((n - i - 1) as Number * r))
-                    .position_min_by(Number::total_cmp)
-                    .expect("area iters have >1 elem");
-                min_sa_idx
-            };
+            let &optimal_split = splits
+                .iter()
+                .min_by(|&a, &b| Number::total_cmp(&a.cost, &b.cost))
+                .expect("should have >1 split index");
 
             // Split the vector into the two halves. Annoyingly there is no nice API for boxed slices or vectors
             let (left_split, right_split) = {
                 let mut l = Vec::from(objects);
-                let r = l.split_off(split_index + 1);
+                let r = l.split_off(optimal_split.pos + 1);
                 (l, r)
             };
 

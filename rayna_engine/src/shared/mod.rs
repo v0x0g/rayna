@@ -8,7 +8,6 @@ pub mod intersect;
 pub mod math;
 pub mod ray;
 pub mod rng;
-pub mod transform_utils;
 pub mod validate;
 
 /// A simple marker trait that enforces a few other traits we need

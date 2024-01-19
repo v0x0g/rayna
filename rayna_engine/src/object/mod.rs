@@ -2,7 +2,7 @@ pub mod bvh;
 pub mod list;
 pub mod simple;
 pub mod transform;
-pub mod volumetric;
+// pub mod volumetric;
 
 use crate::material::Material;
 use crate::mesh::Mesh as MeshTrait;
@@ -17,6 +17,8 @@ use rayna_shared::def::types::Number;
 
 // noinspection ALL
 use self::{bvh::BvhObject, list::ObjectList, simple::SimpleObject};
+
+// TODO: Should objects (as well as other traits) have some sort of identifier?
 
 /// This trait is essentially an extension of [Mesh], but with a [FullIntersection] not [Intersection],
 /// meaning the material of the mesh is also included.

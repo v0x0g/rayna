@@ -6,9 +6,9 @@
 use getset::Getters;
 use indextree::{Arena, NodeId};
 use rand_core::RngCore;
-use rayna_shared::def::types::Number;
+use rayna_shared::def::types::{Number, Point3};
 
-
+use crate::object::transform::ObjectTransform;
 use crate::object::Object;
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
@@ -20,21 +20,36 @@ use crate::shared::ray::Ray;
 #[get = "pub"]
 pub struct BvhObject<Obj: Object> {
     inner: GenericBvh<Obj>,
+    transform: ObjectTransform,
+    aabb: Option<Aabb>,
 }
 
-/// Helper function to unwrap an AABB with a panic message
-fn expect_aabb<Obj: Object>(o: &Obj) -> &Aabb { o.aabb().as_ref().expect("aabb required as invariant of `Bvh`") }
-
 impl<Obj: Object> BvhObject<Obj> {
-    /// Creates a new [BvhObject] tree from the given slice of objects
+    /// Creates a new [BvhObject] tree from the given slice of objects, correcting the transform
+    pub fn new(
+        objects: impl IntoIterator<Item = Obj>,
+        transform: impl Into<ObjectTransform>,
+        correct_centre: impl Into<Point3>,
+    ) -> Self {
+        let transform = transform.into().with_correction(correct_centre);
+
+        Self::new_uncorrected(objects, transform)
+    }
+
+    /// Creates a new [BvhObject] tree from the given slice of objects, without transform correction
     ///
     /// # Note
-    /// The given slice of `objects` should only contain *bounded* objects (i.e. [Object::aabb()] returns [`Some(_)`]).
+    /// The given iterator of `objects` should only contain *bounded* objects (i.e. [Object::aabb()] returns [`Some(_)`]).
     /// The exact behaviour is not specified, but will most likely result in a panic during building/accessing the tree
-    pub fn new(objects: Vec<Obj>) -> Self {
-        Self {
-            inner: GenericBvh::new(objects),
-        }
+    pub fn new_uncorrected(objects: impl IntoIterator<Item = Obj>, transform: impl Into<ObjectTransform>) -> Self {
+        let transform = transform.into();
+        let inner = GenericBvh::new(objects);
+        let aabb = inner.root_id().map(|root| match inner.arena()[root].get() {
+            GenericBvhNode::Nested(aabb) => *aabb,
+            GenericBvhNode::Object(o) => *o.expect_aabb(),
+        });
+
+        Self { inner, transform, aabb }
     }
 }
 
@@ -71,7 +86,7 @@ impl<Obj: Object> BvhObject<Obj> {
             }
             // Objects can be delegated directly
             GenericBvhNode::Object(obj) => {
-                if !obj.aabb().expect("aabb missing").hit(ray, bounds) {
+                if !obj.expect_aabb().hit(ray, bounds) {
                     None
                 } else {
                     obj.full_intersect(ray, bounds, rng)
@@ -87,27 +102,18 @@ impl<Obj: Object> Object for BvhObject<Obj> {
 
     fn full_intersect<'o>(
         &'o self,
-        ray: &Ray,
+        orig_ray: &Ray,
         bounds: &Bounds<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Obj::Mat>> {
+        let trans_ray = self.transform.incoming_ray(orig_ray);
         // Pass everything on to our magical function
-        Self::bvh_node_intersect(ray, bounds, self.inner.root_id()?, &self.inner.arena(), rng)
+        let mut inner = Self::bvh_node_intersect(&trans_ray, bounds, self.inner.root_id()?, &self.inner.arena(), rng)?;
+        inner.intersection = self.transform.outgoing_intersection(orig_ray, inner.intersection);
+        Some(inner)
     }
 }
 
 impl<Obj: Object> HasAabb for BvhObject<Obj> {
-    fn aabb(&self) -> Option<&Aabb> {
-        let root = self.inner.root_id()?;
-        match self
-            .inner
-            .arena()
-            .get(root)
-            .expect(&format!("arena should contain root node {root}"))
-            .get()
-        {
-            GenericBvhNode::Nested(aabb) => Some(aabb),
-            GenericBvhNode::Object(o) => Some(expect_aabb(o)),
-        }
-    }
+    fn aabb(&self) -> Option<&Aabb> { self.aabb.as_ref() }
 }

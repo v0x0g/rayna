@@ -47,7 +47,9 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
     /// # Note
     /// The given slice of `objects` should only contain *bounded* objects (i.e. [HasAabb::aabb()] returns [`Some(_)`]).
     /// The exact behaviour is not specified, but will most likely result in a panic during building/accessing the tree
-    pub fn new(objects: Vec<BNode>) -> Self {
+    pub fn new(objects: impl IntoIterator<Item = BNode>) -> Self {
+        let objects = objects.into_iter().collect::<Vec<BNode>>();
+
         assert!(
             objects.iter().all(|o| o.aabb().is_some()),
             "objects should all be bounded"

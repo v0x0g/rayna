@@ -60,7 +60,7 @@ impl Ord for Intersection {
 /// A small wrapper class that includes a reference to a material as well as
 /// the actual intersection with the model.
 ///
-/// Mainly used internally.
+/// Only really used to provide a nicer return value for [crate::object::Object::full_intersect()].
 #[derive(Clone, Debug, Derivative)]
 #[derivative(Ord, PartialOrd, Eq, PartialEq)]
 pub struct FullIntersection<'mat, Mat: Material + 'mat> {
@@ -76,6 +76,7 @@ impl<'mat, Mat: Material + 'mat> From<(&'mat Mat, Intersection)> for FullInterse
 }
 
 impl Intersection {
+    /// Converts a partial [Intersection] into a [FullIntersection<Mat>]
     pub fn make_full<Mat: Material>(self, material: &Mat) -> FullIntersection<Mat> {
         FullIntersection {
             intersection: self,

@@ -8,7 +8,7 @@ use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 use getset::Getters;
 use rand_core::RngCore;
-use rayna_shared::def::types::{Number, Transform3};
+use rayna_shared::def::types::Number;
 
 /// The main struct that encapsulates all the different "components" that make up an mesh
 ///
@@ -48,7 +48,7 @@ use rayna_shared::def::types::{Number, Transform3};
 pub struct SimpleObject<Mesh: MeshTrait, Mat: Material> {
     mesh: Mesh,
     material: Mat,
-    transform: Option<ObjectTransform>,
+    transform: ObjectTransform,
     #[get(skip)]
     aabb: Option<Aabb>,
 }
@@ -60,20 +60,18 @@ where
     Mesh: MeshTrait,
     Mat: Material,
 {
-    /// Creates a new transformed mesh instance, using the given mesh and transform matrix.
+    /// Creates a new transformed mesh instance, using the given mesh and transform
     ///
-    /// Unlike [Self::new()], this *does* account for the mesh's translation from the origin,
-    /// using the `obj_centre` parameter. See field documentation ([Self::transform]) for explanation
-    /// and example of this position offset correction
-    pub fn new_with_correction(object: impl Into<Mesh>, material: impl Into<Mat>, transform: Transform3) -> Self {
-        let object = object.into();
+    /// This will apply translation-correction to the given transform (see field [Self::transform]), using the
+    /// mesh's [Mesh::centre()]
+    pub fn new(mesh: impl Into<Mesh>, material: impl Into<Mat>, transform: impl Into<ObjectTransform>) -> Self {
+        let mesh = mesh.into();
 
-        let obj_centre = object.centre();
-        let correct_transform = Transform3::from_translation(-obj_centre.to_vector())
-            .then(transform)
-            .then_translate(obj_centre.to_vector());
+        // Apply translation correction
+        let transform = transform.into().with_correction(mesh.centre());
 
-        Self::new_without_correction(object, material, correct_transform)
+        // Pass on to other ctor
+        Self::new_uncorrected(mesh, material, transform)
     }
 
     /// Creates a new transformed mesh instance, using the given mesh and transform
@@ -81,34 +79,21 @@ where
     /// It is assumed that the mesh is either centred at the origin and the translation is stored in
     /// the transform, or that the transform correctly accounts for the mesh's translation.
     /// See field documentation ([Self::transform]) for explanation
-    pub fn new_without_correction(object: impl Into<Mesh>, material: impl Into<Mat>, transform: Transform3) -> Self {
-        let object = object.into();
-
+    pub fn new_uncorrected(
+        mesh: impl Into<Mesh>,
+        material: impl Into<Mat>,
+        transform: impl Into<ObjectTransform>,
+    ) -> Self {
+        let (mesh, material, transform) = (mesh.into(), material.into(), transform.into());
         // Calculate the resulting AABB by transforming the corners of the input AABB.
         // And then we encompass those
-        let aabb = object
-            .aabb()
-            .map(Aabb::corners)
-            .map(|corners| corners.map(|c| transform.map_point(c)))
-            .map(Aabb::encompass_points);
+        let aabb = transform.calculate_aabb(mesh.aabb());
 
         Self {
-            mesh: object,
+            mesh,
             aabb,
-            transform: Some(transform.into()),
-            material: material.into(),
-        }
-    }
-
-    /// Creates a new transformed mesh instance, using the given mesh. This method does not transform the [SimpleObject]
-    pub fn new(object: impl Into<Mesh>, material: impl Into<Mat>) -> Self {
-        // Calculate the resulting AABB by transforming the corners of the input AABB.
-        let object = object.into();
-        Self {
-            aabb: object.aabb().copied(),
-            transform: None,
-            material: material.into(),
-            mesh: object,
+            transform,
+            material,
         }
     }
 }
@@ -131,9 +116,9 @@ where
         bounds: &Bounds<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Mat>> {
-        let trans_ray = ObjectTransform::maybe_incoming_ray(&self.transform, orig_ray);
+        let trans_ray = self.transform.incoming_ray(orig_ray);
         let inner = self.mesh.intersect(&trans_ray, bounds, rng)?;
-        let intersect = ObjectTransform::maybe_outgoing_intersection(&self.transform, orig_ray, inner);
+        let intersect = self.transform.outgoing_intersection(orig_ray, inner);
         Some(intersect.make_full(&self.material))
     }
 }

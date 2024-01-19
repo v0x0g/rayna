@@ -2,6 +2,11 @@ use std::cmp::Ordering;
 use std::fmt::{Display, Formatter};
 use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 
+/// Represents a (possible) bounding on some range of values. There may/not be a `start` and/or `end` bound.
+///
+/// # Requirements
+/// It is a logic error for `start > end`. This requirement may not necessarily be enforced due to performance reasons,
+/// and is considered UB.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Bounds<T> {
     pub start: Option<T>,

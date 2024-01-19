@@ -35,15 +35,13 @@ use rayna_shared::def::types::{Number, Point3};
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
 use self::{
-    axis_box::AxisBoxMesh, bvh::BvhMesh, dynamic::DynamicMesh, homogenous_volume::HomogeneousVolumeMesh,
-    infinite_plane::InfinitePlaneMesh, list::MeshList, parallelogram::ParallelogramMesh, sphere::SphereMesh,
-    triangle::TriangleMesh,
+    axis_box::AxisBoxMesh, bvh::BvhMesh, dynamic::DynamicMesh, infinite_plane::InfinitePlaneMesh, list::MeshList,
+    parallelogram::ParallelogramMesh, sphere::SphereMesh, triangle::TriangleMesh,
 };
 
 pub mod axis_box;
 pub mod bvh;
 pub mod dynamic;
-pub mod homogenous_volume;
 pub mod infinite_plane;
 pub mod list;
 pub mod parallelogram;
@@ -75,7 +73,6 @@ pub enum MeshInstance {
     ParallelogramMesh,
     InfinitePlaneMesh,
     TriangleMesh,
-    HomogeneousVolumeMesh(HomogeneousVolumeMesh<DynamicMesh>),
     BvhMesh(BvhMesh<MeshInstance>),
     MeshList(MeshList<MeshInstance>),
     DynamicMesh,

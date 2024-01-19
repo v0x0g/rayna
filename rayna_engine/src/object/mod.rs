@@ -16,7 +16,7 @@ use rand_core::RngCore;
 use rayna_shared::def::types::Number;
 
 // noinspection ALL
-use self::{bvh::BvhObject, list::ObjectList, simple::SimpleObject};
+use self::{bvh::BvhObject, list::ObjectList, simple::SimpleObject, volumetric::VolumetricObject};
 
 // TODO: Should objects (as well as other traits) have some sort of identifier?
 
@@ -44,6 +44,7 @@ pub trait Object: RtRequirement + HasAabb {
 #[derive(Clone, Debug)]
 pub enum ObjectInstance<Mesh: MeshTrait + Clone, Mat: Material + Clone> {
     SimpleObject(SimpleObject<Mesh, Mat>),
+    VolumetricObject(VolumetricObject<Mesh, Mat>),
     ObjectList(ObjectList<ObjectInstance<Mesh, Mat>>),
     Bvh(BvhObject<ObjectInstance<Mesh, Mat>>),
 }
@@ -62,6 +63,7 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> Object for ObjectInstance<M
         match self {
             Self::Bvh(v) => v.full_intersect(ray, bounds, rng),
             Self::SimpleObject(v) => v.full_intersect(ray, bounds, rng),
+            Self::VolumetricObject(v) => v.full_intersect(ray, bounds, rng),
             Self::ObjectList(v) => v.full_intersect(ray, bounds, rng),
         }
     }
@@ -72,6 +74,7 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> HasAabb for ObjectInstance<
         match self {
             Self::Bvh(v) => v.aabb(),
             Self::SimpleObject(v) => v.aabb(),
+            Self::VolumetricObject(v) => v.aabb(),
             Self::ObjectList(v) => v.aabb(),
         }
     }
@@ -85,6 +88,9 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> HasAabb for ObjectInstance<
 
 impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> From<SimpleObject<Mesh, Mat>> for ObjectInstance<Mesh, Mat> {
     fn from(value: SimpleObject<Mesh, Mat>) -> Self { Self::SimpleObject(value) }
+}
+impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> From<VolumetricObject<Mesh, Mat>> for ObjectInstance<Mesh, Mat> {
+    fn from(value: VolumetricObject<Mesh, Mat>) -> Self { Self::VolumetricObject(value) }
 }
 impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> From<ObjectList<ObjectInstance<Mesh, Mat>>>
     for ObjectInstance<Mesh, Mat>

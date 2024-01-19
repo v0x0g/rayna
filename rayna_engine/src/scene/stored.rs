@@ -19,12 +19,12 @@ use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::mesh::axis_box::AxisBoxMesh;
 use crate::mesh::bvh::BvhMesh;
-use crate::mesh::homogenous_volume::HomogeneousVolumeMesh;
 use crate::mesh::infinite_plane::{InfinitePlaneMesh, UvWrappingMode};
 use crate::mesh::parallelogram::ParallelogramMesh;
 use crate::mesh::planar::Planar;
 use crate::mesh::sphere::*;
 use crate::mesh::MeshInstance;
+use crate::object::volumetric::VolumetricObject;
 use crate::object::ObjectInstance;
 use crate::shared::camera::Camera;
 use crate::shared::rng;
@@ -74,37 +74,47 @@ pub static SIMPLE: Scene = {
 
 #[dynamic]
 pub static TESTING: Scene = {
-    let mut objects = Vec::new();
+    let mut objects = Vec::<ObjectInstance<_, _>>::new();
 
-    objects.push(SimpleObject::new(
-        // Ground
-        InfinitePlaneMesh::new(Planar::new(Point3::ZERO, Vector3::X, Vector3::Z), UvWrappingMode::Wrap),
-        LambertianMaterial {
-            albedo: [0.5; 3].into(),
-            emissive: [0.; 3].into(),
-        },
-        None,
-    ));
-    objects.push(SimpleObject::new(
-        // Slope
-        InfinitePlaneMesh::new(
-            Planar::new((0., -0.1, 0.), (1., 0.1, 0.), Vector3::Z),
-            UvWrappingMode::Wrap,
-        ),
-        LambertianMaterial {
-            albedo: [0.2; 3].into(),
-            emissive: [0.1; 3].into(),
-        },
-        None,
-    ));
-    objects.push(SimpleObject::new(
-        // Ball
-        HomogeneousVolumeMesh::new_dyn(SphereMesh::new((0., 1., 0.), 1.), 1.),
-        IsotropicMaterial {
-            albedo: [0.5; 3].into(),
-        },
-        None,
-    ));
+    objects.push(
+        SimpleObject::new(
+            // Ground
+            InfinitePlaneMesh::new(Planar::new(Point3::ZERO, Vector3::X, Vector3::Z), UvWrappingMode::Wrap),
+            LambertianMaterial {
+                albedo: [0.5; 3].into(),
+                emissive: [0.; 3].into(),
+            },
+            None,
+        )
+        .into(),
+    );
+    objects.push(
+        SimpleObject::new(
+            // Slope
+            InfinitePlaneMesh::new(
+                Planar::new((0., -0.1, 0.), (1., 0.1, 0.), Vector3::Z),
+                UvWrappingMode::Wrap,
+            ),
+            LambertianMaterial {
+                albedo: [0.2; 3].into(),
+                emissive: [0.1; 3].into(),
+            },
+            None,
+        )
+        .into(),
+    );
+    objects.push(
+        VolumetricObject::new(
+            // Ball
+            SphereMesh::new((0., 1., 0.), 1.),
+            IsotropicMaterial {
+                albedo: [0.5; 3].into(),
+            },
+            1.,
+            None,
+        )
+        .into(),
+    );
     Scene {
         camera: Camera {
             pos: Point3::new(0., 0.5, -3.),
@@ -331,12 +341,13 @@ pub static RTTNW_DEMO: Scene = {
             .into(),
         );
         objects.push(
-            SimpleObject::new(
+            VolumetricObject::new(
                 // BLUE HAZE INSIDE
-                HomogeneousVolumeMesh::new_dyn(SphereMesh::new((3.6, 1.5, 1.45), 0.6), 20.0),
+                SphereMesh::new((3.6, 1.5, 1.45), 0.6),
                 IsotropicMaterial {
                     albedo: [0.2, 0.4, 0.9].into(),
                 },
+                8.0,
                 None,
             )
             .into(),
@@ -411,9 +422,10 @@ pub static RTTNW_DEMO: Scene = {
         // HAZE
 
         objects.push(
-            SimpleObject::new(
-                HomogeneousVolumeMesh::new_dyn(SphereMesh::new(Point3::ZERO, 50.), 0.003),
+            VolumetricObject::new(
+                SphereMesh::new(Point3::ZERO, 50.),
                 IsotropicMaterial { albedo: [1.; 3].into() },
+                0.003,
                 None,
             )
             .into(),
@@ -503,15 +515,6 @@ pub static CORNELL: Scene = {
                 emissive: [0.; 3].into(),
             },
             Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(-18.)),
-        ));
-
-        // Ball on Small
-        o.push(SimpleObject::new(
-            HomogeneousVolumeMesh::new_dyn(SphereMesh::new((0.6255, 0.43, 0.680), 0.1), 8.),
-            IsotropicMaterial {
-                albedo: [0.3; 3].into(),
-            },
-            None,
         ));
     }
 

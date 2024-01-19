@@ -111,8 +111,8 @@ where
                 d
             }
         };
-        // Have to add a slight offset so we don't intersect with the same point twice
         let exiting_dist = {
+            // Have to add a slight offset so we don't intersect with the same point twice
             let exit_bounds = Bounds::from(entering_dist + 0.001..);
             let d = self.mesh.intersect(&ray, &exit_bounds, rng)?.dist;
 
@@ -125,9 +125,6 @@ where
 
         // Distance between entry and exit of mesh along ray
         let dist_inside = exiting_dist - entering_dist;
-
-        // if dist_inside < 0. { unreachable!() }
-
         // Random distance at which we will hit
         let hit_dist = self.neg_inv_density * Number::ln(rng.gen());
 

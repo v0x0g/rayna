@@ -9,7 +9,7 @@ use rand::{Rng, RngCore};
 use rayna_shared::def::types::{Channel, Number, Pixel, Vector3};
 use std::ops::Mul;
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct DielectricMaterial<Tex: Texture> {
     pub albedo: Tex,
     pub refractive_index: Number,

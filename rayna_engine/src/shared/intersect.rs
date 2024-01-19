@@ -65,8 +65,7 @@ impl Ord for Intersection {
 #[derivative(Ord, PartialOrd, Eq, PartialEq)]
 pub struct FullIntersection<'mat, Mat: Material + 'mat> {
     pub intersection: Intersection,
-    /// NOTE:
-    /// For all comparisons, this field is ignored ([PartialEq], [Ord], [PartialOrd])
+    /// NOTE: For all comparisons, this field is ignored ([PartialEq], [Ord], [PartialOrd])
     #[derivative(PartialOrd = "ignore", Ord = "ignore", PartialEq = "ignore")]
     pub material: &'mat Mat,
 }

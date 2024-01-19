@@ -11,7 +11,7 @@ use std::ops::Mul;
 /// A material that uniformly scatters rays in all directions
 ///
 /// Normally this is paired with a [crate::mesh::homogenous_volume::HomogeneousVolumeMesh]
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct IsotropicMaterial<Tex: Texture> {
     pub albedo: Tex,
 }

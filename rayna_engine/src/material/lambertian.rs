@@ -9,7 +9,7 @@ use rand::RngCore;
 use rayna_shared::def::types::{Channel, Pixel, Vector3};
 use std::ops::Mul;
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct LambertianMaterial<TexAlbedo: Texture, TexEmissive: Texture> {
     pub albedo: TexAlbedo,
     pub emissive: TexEmissive,

@@ -14,7 +14,6 @@ pub struct Camera {
     pub pos: Point3,
     /// Vertical FOV
     pub v_fov: Angle,
-    // TODO: DOF
     pub fwd: Vector3,
     pub focus_dist: Number,
     pub defocus_angle: Angle,
@@ -153,7 +152,7 @@ impl Viewport {
     /// The values `px` and `py` should already have an appropriate pixel shift (+-0.5) applied,
     /// if MSAA is desired
 
-    // PERF: This function is a rendering hotspot
+    // FIXME: This function is a rendering hotspot
     pub fn calc_ray(&self, px: Number, py: Number, rng: &mut impl Rng) -> Ray {
         // Pixel position
         let pixel_sample = self.pixel_0_0_pos + (self.pixel_delta_u * px) + (self.pixel_delta_v * py);

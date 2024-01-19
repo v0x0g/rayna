@@ -8,7 +8,7 @@ use rand::RngCore;
 use rayna_shared::def::types::{Channel, Number, Pixel, Vector3};
 use std::ops::Mul;
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct MetalMaterial<Tex: Texture> {
     pub albedo: Tex,
     pub fuzz: Number,

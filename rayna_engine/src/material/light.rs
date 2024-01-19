@@ -8,7 +8,7 @@ use rayna_shared::def::types::{Pixel, Vector3};
 /// A simple emissive material for turning an mesh into a light.
 ///
 /// Does not scatter.
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct LightMaterial<Tex: Texture> {
     pub emissive: Tex,
 }

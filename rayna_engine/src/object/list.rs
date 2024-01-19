@@ -28,9 +28,7 @@ pub struct ObjectList<Obj: Object> {
 // region Constructors
 
 impl<Obj: Object> ObjectList<Obj> {
-    /// Creates a new [ObjectList] instance.
-    ///
-    /// Does do transformation corrections - see [super::simple::SimpleObject::new()]
+    /// See [super::simple::SimpleObject::new()]
     pub fn new(
         objects: impl IntoIterator<Item = Obj>,
         transform: impl Into<ObjectTransform>,
@@ -41,16 +39,12 @@ impl<Obj: Object> ObjectList<Obj> {
         Self::new_uncorrected(objects, transform)
     }
 
-    /// Creates a new [ObjectList] instance.
-    ///
-    /// Does *not* do transformation corrections - see [super::simple::SimpleObject::new_uncorrected()]
+    /// See [super::simple::SimpleObject::new_uncorrected()]
     pub fn new_uncorrected(objects: impl IntoIterator<Item = Obj>, transform: impl Into<ObjectTransform>) -> Self {
         let transform = transform.into();
 
         let (bvh, unbounded, aabb) = Self::process_objects(objects);
 
-        // Calculate the resulting AABB by transforming the corners of the input AABB.
-        // And then we encompass those
         let aabb = transform.calculate_aabb(aabb.as_ref());
 
         Self {

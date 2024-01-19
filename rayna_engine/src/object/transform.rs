@@ -135,6 +135,8 @@ impl ObjectTransform {
         if self.is_identity {
             aabb.copied()
         } else {
+            // Calculate the resulting AABB by transforming the corners of the input AABB.
+            // And then we encompass those
             aabb.map(Aabb::corners)
                 .map(|corners| corners.map(|c| self.transform.map_point(c)))
                 .map(Aabb::encompass_points)

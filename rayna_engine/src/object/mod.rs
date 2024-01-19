@@ -2,7 +2,7 @@ pub mod bvh;
 pub mod list;
 pub mod simple;
 pub mod transform;
-// pub mod volumetric;
+pub mod volumetric;
 
 use crate::material::Material;
 use crate::mesh::Mesh as MeshTrait;

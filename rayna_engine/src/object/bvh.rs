@@ -26,7 +26,10 @@ pub struct BvhObject<Obj: Object> {
 }
 
 impl<Obj: Object> BvhObject<Obj> {
-    /// Creates a new [BvhObject] tree from the given slice of objects, correcting the transform
+    /// See [super::simple::SimpleObject::new()]
+    ///
+    /// # Panics
+    /// See [Self::new_uncorrected()]
     pub fn new(
         objects: impl IntoIterator<Item = Obj>,
         transform: impl Into<ObjectTransform>,
@@ -37,9 +40,9 @@ impl<Obj: Object> BvhObject<Obj> {
         Self::new_uncorrected(objects, transform)
     }
 
-    /// Creates a new [BvhObject] tree from the given slice of objects, without transform correction
+    /// See [super::simple::SimpleObject::new_uncorrected()]
     ///
-    /// # Note
+    /// # Panics
     /// The given iterator of `objects` should only contain *bounded* objects (i.e. [Object::aabb()] returns [`Some(_)`]).
     /// The exact behaviour is not specified, but will most likely result in a panic during building/accessing the tree
     pub fn new_uncorrected(objects: impl IntoIterator<Item = Obj>, transform: impl Into<ObjectTransform>) -> Self {

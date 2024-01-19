@@ -66,11 +66,7 @@ where
     /// mesh's [Mesh::centre()]
     pub fn new(mesh: impl Into<Mesh>, material: impl Into<Mat>, transform: impl Into<ObjectTransform>) -> Self {
         let mesh = mesh.into();
-
-        // Apply translation correction
         let transform = transform.into().with_correction(mesh.centre());
-
-        // Pass on to other ctor
         Self::new_uncorrected(mesh, material, transform)
     }
 
@@ -85,8 +81,6 @@ where
         transform: impl Into<ObjectTransform>,
     ) -> Self {
         let (mesh, material, transform) = (mesh.into(), material.into(), transform.into());
-        // Calculate the resulting AABB by transforming the corners of the input AABB.
-        // And then we encompass those
         let aabb = transform.calculate_aabb(mesh.aabb());
 
         Self {

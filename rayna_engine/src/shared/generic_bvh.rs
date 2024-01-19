@@ -138,58 +138,83 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             // Instead, this calculates the cartesian product of all axes and positions, and chooses the best from them
 
             let n = objects.len();
-            let aabbs = objects.iter().map(HasAabb::expect_aabb).copied().collect_vec();
+            let object_aabbs = objects.iter().map(HasAabb::expect_aabb).copied().collect_vec();
             let main_aabb = Aabb::encompass_iter(objects.iter().map(BNode::expect_aabb));
 
+            /// How many splits we do. `N=1` gives two slices, etc
+            const N_SPLIT: usize = 1;
             #[derive(Copy, Clone, Debug)]
             pub struct BvhSplit {
                 pub axis: SplitAxis,
-                pub pos: usize,
+                /// Split positions in `objects` slice
+                pub pos: [usize; N_SPLIT],
                 pub cost: Number,
             }
 
-            let mut splits = Vec::new();
+            // Vec of all the split positions we calculated
+            let mut bvh_splits = Vec::new();
             for axis in SplitAxis::iter() {
                 Self::sort_along_aabb_axis(axis, &mut objects);
 
                 // Calculate the areas of the left/right AABBs, for each given split position
                 // We make sure the splits are at least 1 element each side, hence `(1)..(n-1)`
-                for pos in 1..(n - 1) {
-                    let split_l = &aabbs[..pos];
-                    let split_r = &aabbs[pos + 1..];
+                let pos_range = 1..(n - 1);
+                // Use combinations on the range to ensure we never try to split where `end <= start`
+                // TODO: To avoid the `Vec` allocation, can we use a macro?
+                for _positions in pos_range.combinations(N_SPLIT) {
+                    // Can `.unwrap()` here because we have a constant size
+                    let positions: [usize; N_SPLIT] = _positions.try_into().unwrap();
+                    let mut slices = vec![];
 
-                    let aabb_l = Aabb::encompass_iter(split_l);
-                    let aabb_r = Aabb::encompass_iter(split_r);
+                    let mut cur_pos = 0;
+                    for p in positions {
+                        slices.push(&object_aabbs[cur_pos..p]);
+                        cur_pos = p + 1;
+                    }
+                    slices.push(&object_aabbs[cur_pos - 1..]);
 
-                    let area_l = aabb_l.area();
-                    let area_r = aabb_r.area();
+                    let slice_costs = slices
+                        .iter()
+                        .map(|&s| (s.len() as Number) * Aabb::encompass_iter(s).area())
+                        .collect_vec();
 
-                    let p_l = (split_l.len() as Number) * area_l;
-                    let p_r = (split_r.len() as Number) * area_r;
-
-                    let cost = (area_l * p_l) + (area_r * p_r);
-                    splits.push(BvhSplit { pos, cost, axis });
+                    let cost = slice_costs.iter().sum();
+                    bvh_splits.push(BvhSplit {
+                        pos: positions,
+                        cost,
+                        axis,
+                    });
                 }
             }
 
-            let &optimal_split = splits
+            let &optimal_split = bvh_splits
                 .iter()
                 .min_by(|&a, &b| Number::total_cmp(&a.cost, &b.cost))
                 .expect("should have >1 split index");
 
             // Split the vector into the two halves. Annoyingly there is no nice API for boxed slices or vectors
-            let (left_split, right_split) = {
-                let mut l = Vec::from(objects);
-                let r = l.split_off(optimal_split.pos + 1);
-                (l, r)
+            let splits = {
+                // remaining objects to be split
+                let mut remaining = objects;
+                // how many we have split off, keeps indices valid
+                let mut split_count = 0;
+                let mut splits = vec![];
+                for i in 0..optimal_split.pos.len() {
+                    let mut slice = remaining.split_off(optimal_split.pos[i] - split_count);
+                    // split_off returns the right slice (remainder), but we want the left slice, so swap
+                    std::mem::swap(&mut slice, &mut remaining);
+                    split_count += slice.len();
+                    splits.push(slice);
+                }
+                splits
             };
 
-            let left_node = Self::generate_nodes_sah(left_split, arena);
-            let right_node = Self::generate_nodes_sah(right_split, arena);
-
             let node = arena.new_node(GenericBvhNode::Nested(main_aabb));
-            node.append(left_node, arena);
-            node.append(right_node, arena);
+            let nodes = splits
+                .into_iter()
+                .map(|split| Self::generate_nodes_sah(split, arena))
+                .collect_vec();
+            nodes.into_iter().for_each(|n| node.append(n, arena));
             return node;
         }
 

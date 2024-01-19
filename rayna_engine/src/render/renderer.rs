@@ -7,17 +7,17 @@ use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
-use crate::shared::rng::RngPoolAllocator;
 use crate::shared::{math, validate};
 use crate::skybox::Skybox;
 use derivative::Derivative;
 use image::Pixel as _;
 use puffin::profile_function;
+use rand::distributions::Uniform;
 use rand::rngs::SmallRng;
 use rand::Rng;
-use rand_core::RngCore;
+use rand_core::{RngCore, SeedableRng};
 use rayna_shared::def::targets::*;
-use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel};
+use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel, Vector2};
 use rayna_shared::profiler;
 use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
@@ -35,7 +35,7 @@ pub struct Renderer<Obj: Object + Clone, Sky: Skybox + Clone> {
     /// A thread pool used to distribute the workload
     thread_pool: ThreadPool,
     #[derivative(Debug = "ignore")]
-    rng_pool: opool::Pool<RngPoolAllocator, SmallRng>,
+    data_pool: opool::Pool<PooledDataAllocator, PooledData>,
     phantom: PhantomData<Scene<Obj, Sky>>,
 }
 
@@ -50,6 +50,7 @@ pub enum RendererCreateError {
 }
 
 // region Construction
+
 impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
     /// Creates a new renderer instance
     pub fn new() -> Result<Self, RendererCreateError> {
@@ -67,11 +68,11 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         // Create a pool that should have enough RNGs stored for all of our threads
         // We pool randoms so we don't have to init/create them in hot paths
         // `SmallRng` is the (slightly) fastest of all RNGs tested
-        let rng_pool = opool::Pool::new_prefilled(256, RngPoolAllocator);
+        let data_pool = opool::Pool::new_prefilled(256, PooledDataAllocator);
 
         Ok(Self {
             thread_pool,
-            rng_pool,
+            data_pool,
             phantom: PhantomData {},
         })
     }
@@ -83,6 +84,41 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Clone for Renderer<Obj, Sky> {
 }
 
 // endregion Construction
+
+// region Pooled/Cached Data
+
+/// A helper struct that holds data we want to be pooled
+#[derive(Clone, Debug)]
+struct PooledData<R: RngCore + SeedableRng = SmallRng> {
+    /// PRNG's
+    pub rngs: [R; 2],
+    /// Buffer of [Vector2] values
+    pub vec2: Vec<Vector2>,
+    /// Buffer of [Pixel] values
+    pub colours: Vec<Pixel>,
+    /// The [Uniform] number distribution for creating MSAA values
+    pub msaa_distr: Uniform<Number>,
+}
+
+#[derive(Copy, Clone, Debug, Default)]
+struct PooledDataAllocator;
+impl<R: SeedableRng + RngCore> opool::PoolAllocator<PooledData<R>> for PooledDataAllocator {
+    fn allocate(&self) -> PooledData<R> {
+        // I will admit I have no idea if you can fill an array from a function like this
+        let rngs = [(); 2].map(|()| R::from_entropy());
+        let vec2 = vec![];
+        let colours = vec![];
+        let msaa_dist = Uniform::new_inclusive(-1., 1.);
+        PooledData {
+            rngs,
+            vec2,
+            colours,
+            msaa_distr: msaa_dist,
+        }
+    }
+}
+
+// endregion Pooled/Cached Data
 
 // region High-level Rendering
 
@@ -166,7 +202,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         let mut img = ImgBuf::new(w, h);
 
         self.thread_pool.install(|| {
-            let rng_pool = &self.rng_pool;
+            let data_pool = &self.data_pool;
 
             let pixels = img
                 .deref_mut()
@@ -193,23 +229,12 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
                     };
 
                     // Pull values from our thread pool
-
-                    let rng_1 = rng_pool.get();
-                    let rng_2 = rng_pool.get();
-                    (rng_1, rng_2, profiler_scope)
+                    // We hold them for the duration of each work segment, so we don't pull/push each pixel
+                    (profiler_scope, data_pool.get())
                 },
                 // Process each pixel
-                |(rng_1, rng_2, _), (x, y, p)| {
-                    *p = Self::render_px(
-                        scene,
-                        render_opts,
-                        viewport,
-                        bounds,
-                        x,
-                        y,
-                        rng_1.deref_mut(),
-                        rng_2.deref_mut(),
-                    );
+                |(_scope, pooled), (x, y, p)| {
+                    *p = Self::render_px(scene, render_opts, viewport, bounds, x, y, pooled.deref_mut());
                 },
             );
         });
@@ -233,18 +258,18 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         bounds: &Bounds<Number>,
         x: usize,
         y: usize,
-        rng_1: &mut impl Rng,
-        rng_2: &mut impl Rng,
+        pooled_data: &mut PooledData,
     ) -> Pixel {
         let px = x as Number;
         let py = y as Number;
         let sample_count = opts.samples.get();
+        let [rng1, rng2] = pooled_data.rngs.each_mut();
 
         // TODO: Smart choose MSAA if pixel has lots of variation
         let samples: SmallVec<[Pixel; 64]> = (0..sample_count)
             .into_iter()
-            .map(|_s| Self::apply_msaa_shift(px, py, rng_1))
-            .map(|[px, py]| Self::render_px_once(scene, viewport, opts, bounds, px, py, rng_2))
+            .map(|_s| Self::apply_msaa_shift(px, py, rng1))
+            .map(|[px, py]| Self::render_px_once(scene, viewport, opts, bounds, px, py, rng2))
             .inspect(|p| validate::colour(p))
             .collect();
 

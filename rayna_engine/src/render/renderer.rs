@@ -293,22 +293,21 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
             let means = ests.clone().map(|e| e.mean() as Channel);
             let vars = ests.map(|e| e.variance_of_mean());
-
-            break means.into();
+            let noisiness = vars.iter().sum::<f64>();
 
             // Are the samples generally consistent with one another, or is there a lot of noise?
-            let samples_are_noisy = vars.iter().sum::<f64>() > 0.5;
+            let samples_are_noisy = noisiness > 0.5;
 
             if rng1.gen::<f32>() < 1e-4 && means != [0.; 3] {
                 println!(
-                    "means={means:<10?}; vars={vars:<20?}; noisy={samples_are_noisy}; len={len}",
+                    "means={means:<14?}; vars={vars:<20?}; noisiness={noisiness}; len={len}",
                     len = samples.len()
                 );
             }
 
             // Enough good samples, or we've sampled up to threshold
             if !samples_are_noisy || samples.len() > samples_max {
-                break Pixel::from([samples.len() as Channel / samples_max as Channel; 3]);
+                break means.into();
             }
         };
 

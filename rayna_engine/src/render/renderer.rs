@@ -9,10 +9,8 @@ use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 use crate::shared::{math, validate};
 use crate::skybox::Skybox;
-use average::{Estimate, Variance};
 use derivative::Derivative;
 use image::Pixel as _;
-use itertools::Itertools;
 use puffin::profile_function;
 use rand::distributions::Distribution;
 use rand::distributions::Uniform;
@@ -20,11 +18,10 @@ use rand::rngs::SmallRng;
 use rand::Rng;
 use rand_core::{RngCore, SeedableRng};
 use rayna_shared::def::targets::*;
-use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel};
+use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel, Vector2};
 use rayna_shared::profiler;
 use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
-use std::array;
 use std::marker::PhantomData;
 use std::ops::{Add, DerefMut};
 use std::sync::OnceLock;
@@ -95,6 +92,8 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Clone for Renderer<Obj, Sky> {
 struct PooledData<R: RngCore + SeedableRng = SmallRng> {
     /// PRNG's
     pub rngs: [R; 2],
+    /// Buffer of [Vector2] values
+    pub px_coords: Vec<Vector2>,
     /// Buffer of [Pixel] values
     pub samples: Vec<Pixel>,
     /// The [Uniform] number distribution for creating MSAA values
@@ -105,11 +104,16 @@ struct PooledData<R: RngCore + SeedableRng = SmallRng> {
 struct PooledDataAllocator;
 impl<R: SeedableRng + RngCore> opool::PoolAllocator<PooledData<R>> for PooledDataAllocator {
     fn allocate(&self) -> PooledData<R> {
+        // I will admit I have no idea if you can fill an array from a function like this
+        let rngs = [(); 2].map(|()| R::from_entropy());
+        let vec2 = vec![];
+        let colours = vec![];
+        let msaa_dist = Uniform::new_inclusive(-0.5, 0.5);
         PooledData {
-            // I will admit I have no idea how to fill an array from a closure lol
-            rngs: array::from_fn(|_| R::from_entropy()),
-            samples: vec![],
-            msaa_distr: Uniform::new_inclusive(-0.5, 0.5),
+            rngs,
+            px_coords: vec2,
+            samples: colours,
+            msaa_distr: msaa_dist,
         }
     }
 }
@@ -258,57 +262,38 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
     ) -> Pixel {
         let px = x as Number;
         let py = y as Number;
-        let target_sample_count = opts.samples.get();
+        let sample_count = opts.samples.get();
 
         let PooledData {
+            px_coords,
             samples,
             msaa_distr,
             rngs: [rng1, rng2],
         } = pooled_data;
 
         samples.clear();
+        px_coords.resize(sample_count, Vector2::ZERO);
+        px_coords.fill_with(|| [px + msaa_distr.sample(rng1), py + msaa_distr.sample(rng1)].into());
 
-        // NOTE: This is "Smart MSAA". It optimises MSAA by doing slightly fewer than required samples for most pixels,
-        //  but sampling again if the samples have a lot of variance
-        let samples_per_iteration = (target_sample_count / 4).max(target_sample_count);
-        let samples_max = target_sample_count * 2;
-        debug_assert!(samples_per_iteration >= 1 && samples_max >= target_sample_count);
+        // TODO: Smart choose MSAA if pixel has lots of variation
+        px_coords
+            .into_iter()
+            .map(|&mut Vector2 { x, y }| Self::render_px_once(scene, viewport, opts, bounds, x, y, rng2))
+            .inspect(|p| validate::colour(p))
+            .collect_into(samples);
 
-        let overall_colour = loop {
-            // Do a bunch of samples
-            std::iter::repeat_with(|| [px + msaa_distr.sample(rng1), py + msaa_distr.sample(rng1)])
-                .take(target_sample_count)
-                .map(|[x, y]| Self::render_px_once(scene, viewport, opts, bounds, x, y, rng2))
-                .inspect(|p| validate::colour(p))
-                .collect_into(samples);
-
-            // Find mean of all samples. Don't have anything better than this ATM
-            let ests: [_; 3] = samples
+        let overall_colour = {
+            // Find mean of all samples
+            let accum = samples
                 .iter()
-                .map(|p| p.0)
-                .fold(array::from_fn(|_| Variance::new()), |mut est, col| {
-                    est.iter_mut().zip_eq(col).for_each(|(e, c)| e.add(c as f64));
-                    est
-                });
+                .copied()
+                // Pixel doesn't implement [core::ops::Add], so have to manually
+                .reduce(|a, b| Pixel::map2(&a, &b, Channel::add))
+                .unwrap_or_else(|| [0.; 3].into());
 
-            let means = ests.clone().map(|e| e.mean() as Channel);
-            let vars = ests.map(|e| e.variance_of_mean());
-            let noisiness = vars.iter().sum::<f64>();
-
-            // Are the samples generally consistent with one another, or is there a lot of noise?
-            let samples_are_noisy = noisiness > 0.5;
-
-            if rng1.gen::<f32>() < 1e-4 && means != [0.; 3] {
-                println!(
-                    "means={means:<14?}; vars={vars:<20?}; noisiness={noisiness}; len={len}",
-                    len = samples.len()
-                );
-            }
-
-            // Enough good samples, or we've sampled up to threshold
-            if !samples_are_noisy || samples.len() > samples_max {
-                break means.into();
-            }
+            let mean = accum.map(|c| c / (sample_count as Channel));
+            let pix = Pixel::from(mean);
+            pix
         };
 
         validate::colour(overall_colour);

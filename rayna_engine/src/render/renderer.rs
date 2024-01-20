@@ -277,7 +277,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         let overall_colour = loop {
             // Do a bunch of samples
             std::iter::repeat_with(|| [px + msaa_distr.sample(rng1), py + msaa_distr.sample(rng1)])
-                .take(samples_per_iteration)
+                .take(target_sample_count)
                 .map(|[x, y]| Self::render_px_once(scene, viewport, opts, bounds, x, y, rng2))
                 .inspect(|p| validate::colour(p))
                 .collect_into(samples);
@@ -293,6 +293,8 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
             let means = ests.clone().map(|e| e.mean() as Channel);
             let vars = ests.map(|e| e.variance_of_mean());
+
+            break means.into();
 
             // Are the samples generally consistent with one another, or is there a lot of noise?
             let samples_are_noisy = vars.iter().sum::<f64>() > 0.5;

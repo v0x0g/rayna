@@ -11,7 +11,10 @@ pub struct RenderOpts {
     /// The target dimensions of the render, stored as `[width, height]`
     pub width: NonZeroUsize,
     pub height: NonZeroUsize,
-    /// How many samples to take for each pixel (MSAA)
+    /// A scalar to increase the number of samples taken for each pixel.
+    ///
+    /// # Note
+    /// This value does not necessarily increase the number of samples linearly.
     pub samples: NonZeroUsize,
     pub mode: RenderMode,
     pub bounces: usize,

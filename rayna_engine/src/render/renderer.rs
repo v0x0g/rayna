@@ -271,10 +271,28 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             rngs: [rng1, rng2],
         } = pooled_data;
 
-        samples.clear();
-        px_coords.resize(sample_count, Vector2::ZERO);
-        px_coords.fill_with(|| [px + msaa_distr.sample(rng1), py + msaa_distr.sample(rng1)].into());
+        // TODO: See if it's possible to *cleanly* and *simply* make `sample_count` linearly increase the number
+        //  of samples, as opposed to quadratically as it does not
+        // let (stratify_dim, stratify_remainder) = (sample_count.sqrt(), sample_count - sample_count.sqrt().pow(2) )
+        // let samples_recip_sqrt = .recip()
 
+        // Choose random samples for the sample positions, within the area of our pixel
+        // Samples are chosen stratified within the area of the pixel
+        px_coords.resize(sample_count * sample_count, Vector2::ZERO);
+        let px_centre: Vector2 = [px, py].into();
+        let sample_count_f = sample_count as Number;
+        for i in 0..sample_count {
+            for j in 0..sample_count {
+                let rand: Vector2 = [msaa_distr.sample(rng1), msaa_distr.sample(rng1)].into();
+                let stratify_coord: Vector2 = [i as Number, j as Number].into();
+                // Make sure to divide `randomness` and `stratify_coord`
+                // so that it doesn't spill out across the stratified sub-pixels
+                let coord: Vector2 = px_centre + (rand / sample_count_f) + (stratify_coord / sample_count_f);
+                px_coords[i + (sample_count * j)] = coord;
+            }
+        }
+
+        samples.clear();
         px_coords
             .into_iter()
             .map(|&mut Vector2 { x, y }| Self::render_px_once(scene, viewport, opts, bounds, x, y, rng2))
@@ -290,7 +308,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
                 .reduce(|a, b| Pixel::map2(&a, &b, Channel::add))
                 .unwrap_or_else(|| [0.; 3].into());
 
-            let mean = accum.map(|c| c / (sample_count as Channel));
+            let mean = accum.map(|c| c / (samples.len() as Channel));
             let pix = Pixel::from(mean);
             pix
         };

@@ -37,6 +37,9 @@ impl<Tex: Texture> Material for DielectricMaterial<Tex> {
 
         return Some(dir);
     }
+
+    fn scatter_pdf(&self, _ray_in: &Ray, _scattered: &Ray, _intersection: &Intersection) -> Number { todo!() }
+
     // TODO: Beer's law?
     //noinspection DuplicatedCode
     fn reflected_light(

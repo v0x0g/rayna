@@ -32,6 +32,8 @@ impl<Tex: Texture> Material for MetalMaterial<Tex> {
         };
     }
 
+    fn scatter_pdf(&self, _ray_in: &Ray, _scattered: &Ray, _intersection: &Intersection) -> Number { todo!() }
+
     //noinspection DuplicatedCode
     fn reflected_light(
         &self,

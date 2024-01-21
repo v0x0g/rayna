@@ -2,7 +2,7 @@ use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use rand_core::RngCore;
-use rayna_shared::def::types::{Pixel, Vector3};
+use rayna_shared::def::types::{Number, Pixel, Vector3};
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]
@@ -13,6 +13,10 @@ pub struct DynamicMaterial {
 impl Material for DynamicMaterial {
     fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
         self.inner.scatter(ray, intersection, rng)
+    }
+
+    fn scatter_pdf(&self, ray_in: &Ray, scattered: &Ray, intersection: &Intersection) -> Number {
+        self.inner.scatter_pdf(ray_in, scattered, intersection)
     }
 
     fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {

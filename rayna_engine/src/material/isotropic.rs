@@ -5,7 +5,7 @@ use crate::shared::rng;
 use crate::texture::{Texture, TextureInstance};
 use image::Pixel as _;
 use rand_core::RngCore;
-use rayna_shared::def::types::{Channel, Pixel, Vector3};
+use rayna_shared::def::types::{Channel, Number, Pixel, Vector3};
 use std::ops::Mul;
 
 /// A material that uniformly scatters rays in all directions
@@ -28,6 +28,9 @@ impl<Tex: Texture> Material for IsotropicMaterial<Tex> {
     fn scatter(&self, _ray: &Ray, _intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
         Some(rng::vector_on_unit_sphere(rng))
     }
+    // TODO: Should be equal all directions
+    fn scatter_pdf(&self, _ray_in: &Ray, _scattered: &Ray, _intersection: &Intersection) -> Number { todo!() }
+
     //TODO: Take into account distance along travelled ray (beer's law?)
     fn reflected_light(
         &self,

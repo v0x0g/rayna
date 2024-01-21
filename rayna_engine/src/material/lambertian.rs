@@ -4,9 +4,10 @@ use crate::shared::ray::Ray;
 use crate::shared::rng;
 use crate::texture::Texture;
 use crate::texture::TextureInstance;
+use glamour::AngleConsts;
 use image::Pixel as _;
 use rand::RngCore;
-use rayna_shared::def::types::{Channel, Pixel, Vector3};
+use rayna_shared::def::types::{Channel, Number, Pixel, Vector3};
 use std::ops::Mul;
 
 #[derive(Copy, Clone, Debug)]
@@ -32,6 +33,14 @@ impl<TexAlbedo: Texture, TexEmissive: Texture> Material for LambertianMaterial<T
         let vec = intersection.ray_normal + rand;
         // Can't necessarily normalise, since maybe `rand + normal == 0`
         Some(vec.try_normalize().unwrap_or(intersection.ray_normal))
+    }
+
+    fn scatter_pdf(&self, _ray_in: &Ray, scattered: &Ray, intersection: &Intersection) -> Number {
+        // We have a `cos(theta)` lambertian distribution,
+        // Where `P(ray_out) = cos(angle_between(ray_in, ray_out))`
+        // We can factor this using the dot product
+        let cos_theta = intersection.ray_normal.dot(scattered.dir());
+        return (cos_theta / Number::PI).max(0.);
     }
 
     fn emitted_light(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {

@@ -431,6 +431,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             return Pixel::from([0.; 3]);
         }
 
+        // Intersect
         let Some(FullIntersection { intersection, material }) = Self::calculate_intersection(scene, ray, bounds, rng)
         else {
             return scene.skybox.sky_colour(ray);
@@ -439,23 +440,30 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
         let col_emitted = material.emitted_light(ray, &intersection, rng);
 
+        // Calculate scatter
         let Some(scatter_dir) = material.scatter(ray, &intersection, rng) else {
             return col_emitted;
         };
         validate::normal3(&scatter_dir);
-
         let future_ray = Ray::new(intersection.pos_w, scatter_dir);
         validate::ray(future_ray);
 
+        // Follow ray
         let future_col = Self::ray_colour_recursive(scene, &future_ray, opts, bounds, depth + 1, rng);
         validate::colour(&future_col);
+        let col_scattered = material.reflected_light(ray, &intersection, &future_ray, &future_col, rng);
 
-        // Take into account the PDF of that material scattering for that `future_ray` we used, to correctly bias
-        // the colour value
-        let col_scattered_raw = material.reflected_light(ray, &intersection, &future_ray, &future_col, rng);
-        let scatter_pdf = material.scatter_probability(ray, &future_ray, &intersection);
-        let our_pdf = scatter_pdf;
-        let col_scattered = col_scattered_raw.map(|c| (c as Number * scatter_pdf / our_pdf) as Channel);
+        // // PDF value for the scattered ray
+        // let prob_scatter = material.scatter_probability(ray, &future_ray, &intersection);
+        //
+        // // Try calculate a light ray
+        // const N_LIGHTS: usize = 1;
+        // //
+        // let mut prob_light_sum = 1.;
+        // let mut col_lights =
+        // for i in 0..N_LIGHTS{
+        //
+        // }
 
         Pixel::map2(&col_scattered, &col_emitted, Channel::add)
     }

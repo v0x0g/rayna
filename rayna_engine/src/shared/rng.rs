@@ -1,10 +1,17 @@
 //! Helper module for RNG-related functions
 
+use glamour::AngleConsts;
 use image::Pixel as _;
 use rand::distributions::uniform::SampleRange;
 use rand::Rng;
 use rand_core::SeedableRng;
-use rayna_shared::def::types::{Channel, Pixel, Vector2, Vector3};
+use rayna_shared::def::types::{Channel, Number, Pixel, Vector2, Vector3};
+
+const PI: Number = <Number as AngleConsts>::PI;
+
+// TODO: Rework this random a little
+//  - Make it less repetitive (extract to trait?)
+//  - Use inverse CDF's to get rid of the `loop`s
 
 /// A struct that can be used in [opool] to allocate RNGs
 /// using the [SeedableRng::from_entropy] method
@@ -13,6 +20,16 @@ pub struct RngPoolAllocator;
 impl<R: SeedableRng> opool::PoolAllocator<R> for RngPoolAllocator {
     fn allocate(&self) -> R { R::from_entropy() }
 }
+
+// region 1D
+
+/// Returns a number in the range `-1.0..1.0`
+pub fn number_in_unit_line<R: Rng + ?Sized>(rng: &mut R) -> Number { rng.gen_range(-1.0..=1.0) }
+
+/// Returns a number in the range `0.0..1.0`
+pub fn number_in_unit_line_01<R: Rng + ?Sized>(rng: &mut R) -> Number { rng.gen_range(-1.0..=1.0) }
+
+// endregion 1D
 
 // region 3D
 
@@ -41,12 +58,15 @@ pub fn vector_in_unit_sphere<R: Rng + ?Sized>(rng: &mut R) -> Vector3 {
 }
 /// Returns a random vector on a unit sphere (`-1..=1`, `length = 1`)
 pub fn vector_on_unit_sphere<R: Rng + ?Sized>(rng: &mut R) -> Vector3 {
-    loop {
-        let Some(vec) = vector_in_unit_sphere(rng).try_normalize() else {
-            continue;
-        };
-        return vec;
-    }
+    // Adapted from good 'ol Pete
+    let r1 = number_in_unit_line_01(rng);
+    let r2 = number_in_unit_line_01(rng);
+
+    let x = Number::cos(2. * PI * r1) * 2. * Number::sqrt(r2 * (1. - r2));
+    let y = Number::sin(2. * PI * r1) * 2. * Number::sqrt(r2 * (1. - r2));
+    let z = 1. - 2. * r2;
+
+    (x, y, z).into()
 }
 
 /// Returns a random vector in a unit hemisphere (`-1..=1`, `length = 1`)

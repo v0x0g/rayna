@@ -501,9 +501,9 @@ pub static CORNELL: Scene = {
         // Big
         o.push(SimpleObject::new(
             AxisBoxMesh::new((0.231, 0., 0.117), (0.531, 0.595, 0.414)),
-            MetalMaterial {
+            LambertianMaterial {
                 albedo: warm_grey.into(),
-                fuzz: 0.,
+                emissive: [0.; 3].into(),
             },
             Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(15.)),
         ));

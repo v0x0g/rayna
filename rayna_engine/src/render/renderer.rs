@@ -11,6 +11,7 @@ use crate::shared::{math, validate};
 use crate::skybox::Skybox;
 use derivative::Derivative;
 use image::Pixel as _;
+use num_integer::Roots;
 use puffin::profile_function;
 use rand::distributions::Distribution;
 use rand::distributions::Uniform;
@@ -265,35 +266,36 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         let sample_count = opts.samples.get();
 
         let PooledData {
-            px_coords,
+            px_coords: sample_coords,
             samples,
             msaa_distr,
             rngs: [rng1, rng2],
         } = pooled_data;
 
-        // TODO: See if it's possible to *cleanly* and *simply* make `sample_count` linearly increase the number
-        //  of samples, as opposed to quadratically as it does not
-        // let (stratify_dim, stratify_remainder) = (sample_count.sqrt(), sample_count - sample_count.sqrt().pow(2) )
-        // let samples_recip_sqrt = .recip()
-
-        // Choose random samples for the sample positions, within the area of our pixel
-        // Samples are chosen stratified within the area of the pixel
-        px_coords.resize(sample_count * sample_count, Vector2::ZERO);
+        // Samples are chosen stratified within the area of the pixel.
+        // To keep things O(Samples) not O(Samples^2), we might have to skip stratifying some samples
+        sample_coords.resize(sample_count, Vector2::ZERO);
         let px_centre: Vector2 = [px, py].into();
-        let sample_count_f = sample_count as Number;
-        for i in 0..sample_count {
-            for j in 0..sample_count {
+
+        let stratify_dim = sample_count.sqrt();
+        let stratify_dim_f = stratify_dim as Number;
+        for i in 0..stratify_dim {
+            for j in 0..stratify_dim {
                 let rand: Vector2 = [msaa_distr.sample(rng1), msaa_distr.sample(rng1)].into();
                 let stratify_coord: Vector2 = [i as Number, j as Number].into();
                 // Make sure to divide `randomness` and `stratify_coord`
                 // so that it doesn't spill out across the stratified sub-pixels
-                let coord: Vector2 = px_centre + (rand / sample_count_f) + (stratify_coord / sample_count_f);
-                px_coords[i + (sample_count * j)] = coord;
+                let coord: Vector2 = px_centre + (rand / stratify_dim_f) + (stratify_coord / stratify_dim_f);
+                sample_coords[i + (stratify_dim * j)] = coord;
             }
+        }
+        // The remainder are fully random
+        for i in (stratify_dim * stratify_dim)..sample_count {
+            sample_coords[i] = px_centre + Vector2::from([msaa_distr.sample(rng1), msaa_distr.sample(rng1)]);
         }
 
         samples.clear();
-        px_coords
+        sample_coords
             .into_iter()
             .map(|&mut Vector2 { x, y }| Self::render_px_once(scene, viewport, opts, bounds, x, y, rng2))
             .inspect(|p| validate::colour(p))

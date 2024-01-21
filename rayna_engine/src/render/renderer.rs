@@ -432,27 +432,26 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         };
         validate::intersection(ray, &intersection, bounds);
 
-        return match material.scatter(ray, &intersection, rng) {
-            Some(scatter_dir) => {
-                validate::normal3(&scatter_dir);
+        let col_emitted = material.emitted_light(ray, &intersection, rng);
 
-                let future_ray = Ray::new(intersection.pos_w, scatter_dir);
-                validate::ray(future_ray);
-
-                let future_col = Self::ray_colour_recursive(scene, &future_ray, opts, bounds, depth + 1, rng);
-                validate::colour(&future_col);
-
-                let reflected_col = material.reflected_light(ray, &intersection, &future_ray, &future_col, rng);
-                let emitted_col = material.emitted_light(ray, &intersection, rng);
-
-                Pixel::map2(&reflected_col, &emitted_col, Channel::add)
-            }
-            // No scatter, so only emission
-            None => {
-                let emitted_col = material.emitted_light(ray, &intersection, rng);
-                emitted_col
-            }
+        let Some(scatter_dir) = material.scatter(ray, &intersection, rng) else {
+            return col_emitted;
         };
+        validate::normal3(&scatter_dir);
+
+        let future_ray = Ray::new(intersection.pos_w, scatter_dir);
+        validate::ray(future_ray);
+
+        let future_col = Self::ray_colour_recursive(scene, &future_ray, opts, bounds, depth + 1, rng);
+        validate::colour(&future_col);
+
+        // Take into account the PDF of that material scattering for that `future_ray` we used, to correctly bias
+        // the colour value
+        let col_scattered_raw = material.reflected_light(ray, &intersection, &future_ray, &future_col, rng);
+        let scatter_inv_prob = material.scatter_pdf(ray, &future_ray, &intersection);
+        let col_scattered = col_scattered_raw.map(|c| (c as Number / scatter_inv_prob) as Channel);
+
+        Pixel::map2(&col_scattered, &col_emitted, Channel::add)
     }
 }
 

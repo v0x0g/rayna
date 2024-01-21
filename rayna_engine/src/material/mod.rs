@@ -70,7 +70,7 @@ pub trait Material: RtRequirement {
     /// ```
     fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3>;
 
-    /// Calculates the value of the material's scatter **Probability Distribution Function** (**PDF**),
+    /// Calculates the value of the material's scatter **Probability Density Function** (**PDF**),
     /// for the given intersection and ray pair.
     ///
     /// # Arguments

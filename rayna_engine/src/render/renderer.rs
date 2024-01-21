@@ -275,7 +275,6 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         px_coords.resize(sample_count, Vector2::ZERO);
         px_coords.fill_with(|| [px + msaa_distr.sample(rng1), py + msaa_distr.sample(rng1)].into());
 
-        // TODO: Smart choose MSAA if pixel has lots of variation
         px_coords
             .into_iter()
             .map(|&mut Vector2 { x, y }| Self::render_px_once(scene, viewport, opts, bounds, x, y, rng2))

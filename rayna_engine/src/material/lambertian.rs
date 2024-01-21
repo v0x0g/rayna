@@ -34,6 +34,10 @@ impl<TexAlbedo: Texture, TexEmissive: Texture> Material for LambertianMaterial<T
         Some(vec.try_normalize().unwrap_or(intersection.ray_normal))
     }
 
+    fn emitted_light(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
+        self.emissive.value(intersection, rng)
+    }
+
     //noinspection DuplicatedCode
     fn reflected_light(
         &self,

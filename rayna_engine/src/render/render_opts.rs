@@ -12,9 +12,6 @@ pub struct RenderOpts {
     pub width: NonZeroUsize,
     pub height: NonZeroUsize,
     /// A scalar to increase the number of samples taken for each pixel.
-    ///
-    /// # Note
-    /// This value does not necessarily increase the number of samples linearly.
     pub samples: NonZeroUsize,
     pub mode: RenderMode,
     pub bounces: usize,

@@ -35,7 +35,7 @@ impl<TexAlbedo: Texture, TexEmissive: Texture> Material for LambertianMaterial<T
         Some(vec.try_normalize().unwrap_or(intersection.ray_normal))
     }
 
-    fn scatter_pdf(&self, _ray_in: &Ray, scattered: &Ray, intersection: &Intersection) -> Number {
+    fn scatter_probability(&self, _ray_in: &Ray, scattered: &Ray, intersection: &Intersection) -> Number {
         // We have a `cos(theta)` lambertian distribution,
         // Where `P(ray_out) = cos(angle_between(ray_in, ray_out))`
         // We can factor this using the dot product

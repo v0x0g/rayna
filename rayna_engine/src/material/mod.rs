@@ -70,7 +70,9 @@ pub trait Material: RtRequirement {
     /// ```
     fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3>;
 
-    /// Calculates the value of the material's scatter **Probability Density Function** (**PDF**),
+    /// Calculates the value of the probability of the material having scattered a ray in the given direction.
+    ///
+    /// This is equivalent to evaluating the material's scattering **Probability Density Function** (**PDF**),
     /// for the given intersection and ray pair.
     ///
     /// # Arguments
@@ -82,7 +84,7 @@ pub trait Material: RtRequirement {
     /// This should return the value of the material's PDF, for the given variable.
     /// If the given scatter direction is not possible, or invalid, for the material, this should return `0.0`,
     /// and not panic (i.e., a ray in a random direction, on a 'mirror' material, would return zero).
-    fn scatter_pdf(&self, ray_in: &Ray, scattered: &Ray, intersection: &Intersection) -> Number;
+    fn scatter_probability(&self, ray_in: &Ray, scattered: &Ray, intersection: &Intersection) -> Number;
 
     /// This function calculates the amount of light that is emitted by the material
     ///

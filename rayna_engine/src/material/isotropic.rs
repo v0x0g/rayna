@@ -29,7 +29,7 @@ impl<Tex: Texture> Material for IsotropicMaterial<Tex> {
         Some(rng::vector_on_unit_sphere(rng))
     }
     // TODO: Should be equal all directions
-    fn scatter_pdf(&self, _ray_in: &Ray, _scattered: &Ray, _intersection: &Intersection) -> Number { todo!() }
+    fn scatter_probability(&self, _ray_in: &Ray, _scattered: &Ray, _intersection: &Intersection) -> Number { todo!() }
 
     //TODO: Take into account distance along travelled ray (beer's law?)
     fn reflected_light(

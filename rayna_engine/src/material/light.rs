@@ -16,7 +16,7 @@ pub struct LightMaterial<Tex: Texture> {
 impl<Tex: Texture> Material for LightMaterial<Tex> {
     fn scatter(&self, _ray: &Ray, _intersection: &Intersection, _rng: &mut dyn RngCore) -> Option<Vector3> { None }
 
-    fn scatter_pdf(&self, _ray_in: &Ray, _scattered: &Ray, _intersection: &Intersection) -> Number {
+    fn scatter_probability(&self, _ray_in: &Ray, _scattered: &Ray, _intersection: &Intersection) -> Number {
         // Light never scatters
         0.0
     }

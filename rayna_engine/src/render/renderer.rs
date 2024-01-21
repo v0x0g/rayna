@@ -448,8 +448,8 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         // Take into account the PDF of that material scattering for that `future_ray` we used, to correctly bias
         // the colour value
         let col_scattered_raw = material.reflected_light(ray, &intersection, &future_ray, &future_col, rng);
-        let scatter_inv_prob = material.scatter_pdf(ray, &future_ray, &intersection);
-        let col_scattered = col_scattered_raw.map(|c| (c as Number / scatter_inv_prob) as Channel);
+        let scatter_prob = material.scatter_probability(ray, &future_ray, &intersection);
+        let col_scattered = col_scattered_raw.map(|c| (c as Number * scatter_prob) as Channel);
 
         Pixel::map2(&col_scattered, &col_emitted, Channel::add)
     }

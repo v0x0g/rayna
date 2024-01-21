@@ -42,7 +42,7 @@ impl RaynaApp {
     /// Creates a new app instance, with an [`Context`] for configuring the app
     pub fn new_ctx(_ctx: &Context) -> Self {
         info!(target: UI, "ui app init");
-        let scene = scene::stored::RTTNW_DEMO.clone();
+        let scene = scene::stored::CORNELL.clone();
         let render_opts = Default::default();
         Self {
             render_opts,

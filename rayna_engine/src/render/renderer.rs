@@ -56,7 +56,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
     /// Creates a new renderer instance
     pub fn new() -> Result<Self, RendererCreateError> {
         let thread_pool = ThreadPoolBuilder::new()
-            .num_threads(10)
+            .num_threads(4)
             .thread_name(|id| format!("Renderer::worker_{id}"))
             .start_handler(|id| {
                 trace!(target: RENDERER, "renderer worker {id} start");
@@ -414,6 +414,11 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         scene.objects.full_intersect(ray, bounds, rng)
     }
 
+    /// Recursive function that calculates the colour in the scene for a given ray.
+    ///
+    /// # Recursion
+    /// This will recurse each time the ray scatters off an object in the scene, up to a limit imposed by [RenderOpts::bounces].
+    /// It should be fine for all *reasonable* bounce limits (~200), but will most likely overflow the stack past that.
     fn ray_colour_recursive(
         scene: &Scene<Obj, Sky>,
         ray: &Ray,
@@ -448,8 +453,9 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         // Take into account the PDF of that material scattering for that `future_ray` we used, to correctly bias
         // the colour value
         let col_scattered_raw = material.reflected_light(ray, &intersection, &future_ray, &future_col, rng);
-        let scatter_prob = material.scatter_probability(ray, &future_ray, &intersection);
-        let col_scattered = col_scattered_raw.map(|c| (c as Number * scatter_prob) as Channel);
+        let scatter_pdf = material.scatter_probability(ray, &future_ray, &intersection);
+        let our_pdf = scatter_pdf;
+        let col_scattered = col_scattered_raw.map(|c| (c as Number * scatter_pdf / our_pdf) as Channel);
 
         Pixel::map2(&col_scattered, &col_emitted, Channel::add)
     }

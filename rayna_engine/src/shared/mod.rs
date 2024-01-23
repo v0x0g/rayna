@@ -5,6 +5,7 @@ pub mod bounds;
 pub mod camera;
 mod colour;
 pub mod generic_bvh;
+pub mod impl_utils;
 pub mod intersect;
 pub mod math;
 pub mod ray;

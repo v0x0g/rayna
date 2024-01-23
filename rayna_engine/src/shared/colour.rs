@@ -1,3 +1,4 @@
+use crate::shared::impl_utils::{impl_op, impl_op_assign};
 use itertools::Itertools;
 use rayna_shared::def::types::Number;
 use std::array;
@@ -80,73 +81,42 @@ impl<const N: usize> const IndexMut<usize> for Colour<N> {
 // region Operators
 
 impl<const N: usize> Colour<N> {
+    /// Maps each element of the colour with the given closure, and returns the new colour
     #[inline]
     pub fn map(&self, op: impl Fn(Number) -> Number) -> Self { self.0.map(op).into() }
+    /// Maps each element of the colour with the given closure, with the element of another, and returns the new colour.
     #[inline]
     pub fn map2(&self, other: &Self, mut op: impl FnMut(Number, Number) -> Number) -> Self {
         array::from_fn(|i| op(self[i], other[i])).into()
     }
+
+    /// Same as [Self::map], but acts in_place
     #[inline]
-    pub fn map_mut(&mut self, op: impl Fn(&mut Number)) { self.0.iter_mut().for_each(op) }
+    pub fn map_assign(&mut self, op: impl Fn(&mut Number)) { self.0.iter_mut().for_each(op) }
+    /// Same as [Self::map2], but acts in_place
     #[inline]
-    pub fn map2_mut(&mut self, other: &Self, mut op: impl FnMut(&mut Number, Number)) {
+    pub fn map2_assign(&mut self, other: &Self, mut op: impl FnMut(&mut Number, Number)) {
         self.0.iter_mut().zip_eq(other.0).for_each(|(s, o)| op(s, o))
     }
 }
 
-/// Helper macro to provide implementations of operator traits
-///
-/// The function should take in an owned `Self`-type reference.
-///
-/// I would use the [auto_ops]/[impl_ops] crates, but they don't support const generics, so roll my own
-macro_rules! impl_op {
-    (impl $($operator:ident)::+ : fn $fn_name:ident ($a:ident, $b:ident) $body:block) => {
-        impl_op!(@inner impl $($operator)::+ : fn $fn_name ($a:  Colour<N>, $b:  Colour<N>) -> Colour<N> $body);
-        impl_op!(@inner impl $($operator)::+ : fn $fn_name ($a:  Colour<N>, $b: &Colour<N>) -> Colour<N> $body);
-        impl_op!(@inner impl $($operator)::+ : fn $fn_name ($a: &Colour<N>, $b:  Colour<N>) -> Colour<N> $body);
-        impl_op!(@inner impl $($operator)::+ : fn $fn_name ($a: &Colour<N>, $b: &Colour<N>) -> Colour<N> $body);
-    };
+// Basic maths operators
+impl_op!(impl core::ops::Add : fn add(a: Colour<N>, b:Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Number::add) });
+impl_op!(impl core::ops::Sub : fn sub(a: Colour<N>, b:Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Number::sub) });
+impl_op!(impl core::ops::Mul : fn mul(a: Colour<N>, b:Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Number::mul) });
+impl_op!(impl core::ops::Div : fn div(a: Colour<N>, b:Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Number::div) });
 
-    (@inner impl $($operator:ident)::+ : fn $fn_name:ident ($a:ident: $lhs:ty, $b:ident : $rhs:ty) -> $out:ty $body:block) => {
-        impl<const N: usize> $($operator)::+<$rhs> for $lhs {
-            type Output = $out;
+// Assign maths operators
+impl_op_assign!(impl core::ops::AddAssign : fn add_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Number::add_assign) });
+impl_op_assign!(impl core::ops::SubAssign : fn sub_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Number::sub_assign) });
+impl_op_assign!(impl core::ops::MulAssign : fn mul_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Number::mul_assign) });
+impl_op_assign!(impl core::ops::DivAssign : fn div_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Number::div_assign) });
 
-            fn $fn_name(self, rhs: $rhs) -> Self::Output {
-                // Cloning is the easiest way to ensure that we get a owned value, from either a reference or owned val
-                let ($a, $b) = (self.clone(), rhs.clone());
-                $body
-            }
-        }
-    };
-}
+// Shift left/right rotates the channels left/right by `n` places.
+impl_op!(impl core::ops::Shl : fn shl(col: Colour<N>, shift: usize) -> Colour<N> { col.0.rotate_left(shift); col });
+impl_op!(impl core::ops::Shr : fn shr(col: Colour<N>, shift: usize) -> Colour<N> { col.0.rotate_right(shift); col });
 
-/// See [impl_op]
-macro_rules! impl_op_assign {
-    (impl $($operator:ident)::+ : fn $fn_name:ident ($a:ident, $b:ident) $body:block) => {
-        impl_op_assign!(@inner impl $($operator)::+ : fn $fn_name ($a:  Colour<N>, $b:  Colour<N>) $body);
-        impl_op_assign!(@inner impl $($operator)::+ : fn $fn_name ($a:  Colour<N>, $b: &Colour<N>) $body);
-    };
-
-    (@inner impl $($operator:ident)::+ : fn $fn_name:ident ($a:ident: $lhs:ty, $b:ident : $rhs:ty) $body:block) => {
-        impl<const N: usize> $($operator)::+<$rhs> for $lhs {
-            fn $fn_name(&mut self, rhs: $rhs) {
-                // Cloning is the easiest way to ensure that we get a owned value, from either a reference or owned val
-                let (mut $a, $b) = (self.clone(), rhs.clone());
-                $body;
-                *self = $a;
-            }
-        }
-    };
-}
-
-impl_op!(impl core::ops::Add : fn add(a, b) { Colour::map2(&a, &b, Number::add) });
-impl_op!(impl core::ops::Sub : fn sub(a, b) { Colour::map2(&a, &b, Number::sub) });
-impl_op!(impl core::ops::Mul : fn mul(a, b) { Colour::map2(&a, &b, Number::mul) });
-impl_op!(impl core::ops::Div : fn div(a, b) { Colour::map2(&a, &b, Number::div) });
-
-impl_op_assign!(impl core::ops::AddAssign : fn add_assign(a, b) { Colour::map2_mut(&mut a, &b, Number::add_assign) });
-impl_op_assign!(impl core::ops::SubAssign : fn sub_assign(a, b) { Colour::map2_mut(&mut a, &b, Number::sub_assign) });
-impl_op_assign!(impl core::ops::MulAssign : fn mul_assign(a, b) { Colour::map2_mut(&mut a, &b, Number::mul_assign) });
-impl_op_assign!(impl core::ops::DivAssign : fn div_assign(a, b) { Colour::map2_mut(&mut a, &b, Number::div_assign) });
+impl_op_assign!(impl core::ops::ShlAssign : fn shl_assign(col: Colour<N>, shift: usize) { col.0.rotate_left(shift) });
+impl_op_assign!(impl core::ops::ShrAssign : fn shr_assign(col: Colour<N>, shift: usize) { col.0.rotate_right(shift) });
 
 // endregion

@@ -1,7 +1,7 @@
 use crate::shared::intersect::Intersection;
 use crate::texture::Texture;
 use rand_core::RngCore;
-use rayna_shared::def::types::Pixel;
+use rayna_shared::def::types::Colour;
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]
@@ -14,5 +14,7 @@ impl DynamicTexture {
 }
 
 impl Texture for DynamicTexture {
-    fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel { self.inner.value(intersection, rng) }
+    fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
+        self.inner.value(intersection, rng)
+    }
 }

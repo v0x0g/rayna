@@ -6,7 +6,7 @@ use crate::texture::Texture;
 use image::Pixel as _;
 use num_traits::Pow;
 use rand::{Rng, RngCore};
-use rayna_shared::def::types::{Channel, Number, Pixel, Vector3};
+use rayna_shared::def::types::{Channel, Colour, Number, Vector3};
 use std::ops::Mul;
 
 #[derive(Copy, Clone, Debug)]
@@ -47,10 +47,10 @@ impl<Tex: Texture> Material for DielectricMaterial<Tex> {
         _ray: &Ray,
         intersection: &Intersection,
         _future_ray: &Ray,
-        future_col: &Pixel,
+        future_col: &Colour,
         rng: &mut dyn RngCore,
-    ) -> Pixel {
-        Pixel::map2(&future_col, &self.albedo.value(intersection, rng), Channel::mul)
+    ) -> Colour {
+        Colour::map2(&future_col, &self.albedo.value(intersection, rng), Channel::mul)
     }
 }
 

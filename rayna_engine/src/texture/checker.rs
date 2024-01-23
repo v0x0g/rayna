@@ -3,7 +3,7 @@ use num_traits::Euclid;
 use rand_core::RngCore;
 use std::fmt::Debug;
 
-use rayna_shared::def::types::{Number, Pixel, Vector2, Vector3};
+use rayna_shared::def::types::{Colour, Number, Vector2, Vector3};
 
 use crate::shared::intersect::Intersection;
 use crate::texture::dynamic::DynamicTexture;
@@ -18,7 +18,7 @@ pub struct WorldCheckerTexture<Odd: Texture = DynamicTexture, Even: Texture = Dy
 }
 
 impl<Odd: Texture, Even: Texture> Texture for WorldCheckerTexture<Odd, Even> {
-    fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
+    fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
         let pos = (intersection.pos_w.to_vector() / self.scale) + self.offset;
 
         do_checker(pos.to_array(), &self.odd, &self.even, intersection, rng)
@@ -34,7 +34,7 @@ pub struct UvCheckerTexture<Odd: Texture = DynamicTexture, Even: Texture = Dynam
 }
 
 impl<Odd: Texture, Even: Texture> Texture for UvCheckerTexture<Odd, Even> {
-    fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
+    fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
         let pos = (intersection.uv.to_vector() / self.scale) + self.offset;
 
         do_checker(pos.to_array(), &self.odd, &self.even, intersection, rng)
@@ -48,7 +48,7 @@ pub fn do_checker<C: Euclid + FloatCore>(
     even: &impl Texture,
     intersection: &Intersection,
     rng: &mut dyn RngCore,
-) -> Pixel {
+) -> Colour {
     let two: C = C::one() + C::one();
 
     let sum: C = coords.into_iter().map(C::floor).fold(C::zero(), |a: C, b: C| a + b);

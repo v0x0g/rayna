@@ -2,7 +2,7 @@ use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use rand_core::RngCore;
-use rayna_shared::def::types::{Number, Pixel, Vector3};
+use rayna_shared::def::types::{Colour, Number, Vector3};
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]
@@ -19,7 +19,7 @@ impl Material for DynamicMaterial {
         self.inner.scatter_probability(ray_in, scattered, intersection)
     }
 
-    fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
+    fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
         self.inner.emitted_light(ray, intersection, rng)
     }
 
@@ -28,9 +28,9 @@ impl Material for DynamicMaterial {
         ray: &Ray,
         intersection: &Intersection,
         future_ray: &Ray,
-        future_col: &Pixel,
+        future_col: &Colour,
         rng: &mut dyn RngCore,
-    ) -> Pixel {
+    ) -> Colour {
         self.inner
             .reflected_light(ray, intersection, future_ray, future_col, rng)
     }

@@ -9,7 +9,7 @@ use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
 use rand::thread_rng;
 use rand_core::RngCore;
-use rayna_shared::def::types::Pixel;
+use rayna_shared::def::types::Colour;
 //noinspection ALL
 use self::{
     checker::{UvCheckerTexture, WorldCheckerTexture},
@@ -22,7 +22,7 @@ use self::{
 /// The trait that defines what properties a texture has
 #[enum_dispatch]
 pub trait Texture: RtRequirement {
-    fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel;
+    fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour;
 }
 
 /// An optimised implementation of [Texture], using static dispatch
@@ -47,4 +47,4 @@ impl Default for TextureInstance {
 /// and a value cannot be generated. Calling this has an advantage over panicking since it won't crash anything,
 /// and it'll also allow breakpoints to be set to debug the problem.
 #[cold]
-pub fn texture_error_value() -> Pixel { crate::shared::rng::colour_rgb(&mut thread_rng()) }
+pub fn texture_error_value() -> Colour { crate::shared::rng::colour_rgb(&mut thread_rng()) }

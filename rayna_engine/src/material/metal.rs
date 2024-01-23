@@ -5,7 +5,7 @@ use crate::shared::{math, rng};
 use crate::texture::Texture;
 use image::Pixel as _;
 use rand::RngCore;
-use rayna_shared::def::types::{Channel, Number, Pixel, Vector3};
+use rayna_shared::def::types::{Channel, Colour, Number, Vector3};
 use std::ops::Mul;
 
 #[derive(Copy, Clone, Debug)]
@@ -40,9 +40,9 @@ impl<Tex: Texture> Material for MetalMaterial<Tex> {
         _ray: &Ray,
         intersect: &Intersection,
         _future_ray: &Ray,
-        future_col: &Pixel,
+        future_col: &Colour,
         rng: &mut dyn RngCore,
-    ) -> Pixel {
-        Pixel::map2(future_col, &self.albedo.value(intersect, rng), Channel::mul)
+    ) -> Colour {
+        Colour::map2(future_col, &self.albedo.value(intersect, rng), Channel::mul)
     }
 }

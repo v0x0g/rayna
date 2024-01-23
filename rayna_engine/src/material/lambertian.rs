@@ -7,7 +7,7 @@ use crate::texture::TextureInstance;
 use glamour::AngleConsts;
 use image::Pixel as _;
 use rand::RngCore;
-use rayna_shared::def::types::{Channel, Number, Pixel, Vector3};
+use rayna_shared::def::types::{Channel, Colour, Number, Vector3};
 use std::ops::Mul;
 
 #[derive(Copy, Clone, Debug)]
@@ -43,7 +43,7 @@ impl<TexAlbedo: Texture, TexEmissive: Texture> Material for LambertianMaterial<T
         return (cos_theta / Number::PI).max(0.);
     }
 
-    fn emitted_light(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
+    fn emitted_light(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
         self.emissive.value(intersection, rng)
     }
 
@@ -53,9 +53,9 @@ impl<TexAlbedo: Texture, TexEmissive: Texture> Material for LambertianMaterial<T
         _ray: &Ray,
         intersect: &Intersection,
         _future_ray: &Ray,
-        future_col: &Pixel,
+        future_col: &Colour,
         rng: &mut dyn RngCore,
-    ) -> Pixel {
-        Pixel::map2(future_col, &self.albedo.value(intersect, rng), Channel::mul)
+    ) -> Colour {
+        Colour::map2(future_col, &self.albedo.value(intersect, rng), Channel::mul)
     }
 }

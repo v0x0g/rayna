@@ -2,7 +2,7 @@ use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use approx::*;
-use rayna_shared::def::types::{Number, Pixel, Point2, Point3, Vector3};
+use rayna_shared::def::types::{Colour, Number, Point2, Point3, Vector3};
 use std::borrow::Borrow;
 
 macro_rules! debug_assert_only {
@@ -65,7 +65,7 @@ pub fn ray(r: impl Borrow<Ray>) {
 
 #[inline(always)]
 #[track_caller]
-pub fn colour(c: impl Borrow<Pixel>) {
+pub fn colour(c: impl Borrow<Colour>) {
     debug_assert_only!();
     let c = c.borrow();
     assert!(

@@ -1,8 +1,8 @@
 use image::{ImageBuffer, Rgb};
 
 pub type Channel = f32;
-pub type Pixel = Rgb<Channel>;
-pub type ImgBuf = ImageBuffer<Pixel, Vec<Channel>>;
+pub type Colour = Rgb<Channel>;
+pub type ImgBuf = ImageBuffer<Colour, Vec<Channel>>;
 
 pub type Number = f64;
 pub type Angle = glamour::Angle<Number>;

@@ -9,7 +9,7 @@ use crate::shared::RtRequirement;
 use crate::texture::{Texture, TextureInstance};
 use enum_dispatch::enum_dispatch;
 use rand::RngCore;
-use rayna_shared::def::types::{Number, Pixel, Vector3};
+use rayna_shared::def::types::{Colour, Number, Vector3};
 
 pub mod dielectric;
 pub mod dynamic;
@@ -39,7 +39,7 @@ pub trait Material: RtRequirement {
     /// # use rayna_engine::shared::math::reflect;
     /// # use rayna_engine::shared::ray::Ray;
     /// # use rayna_engine::shared::{rng, RtRequirement};
-    /// # use rayna_shared::def::types::{Pixel, Vector3};
+    /// # use rayna_shared::def::types::{Colour, Vector3};
     /// #
     /// # #[derive(Copy, Clone, Eq, PartialEq, Debug)]
     /// pub struct Test;
@@ -59,11 +59,11 @@ pub trait Material: RtRequirement {
     ///             r
     ///         }
     ///     }
-    /// #   fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
+    /// #   fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
     /// #       unimplemented!("code example")
     /// #   }
     /// #
-    /// #   fn reflected_light(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel, rng: &mut dyn RngCore) -> Pixel {
+    /// #   fn reflected_light(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Colour, rng: &mut dyn RngCore) -> Colour {
     /// #       unimplemented!("code example")
     /// #   }
     /// }
@@ -95,8 +95,8 @@ pub trait Material: RtRequirement {
     /// Returns the light (colour) of emission for the given intersection and ray. The default implementation
     /// is to return black (`Pixel([0.; 3])`)
     #[allow(unused_variables)]
-    fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
-        const BLACK: Pixel = Pixel { 0: [0.; 3] };
+    fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
+        const BLACK: Colour = Colour { 0: [0.; 3] };
         BLACK
     }
 
@@ -123,19 +123,19 @@ pub trait Material: RtRequirement {
     /// # use rayna_engine::shared::math::reflect;
     /// # use rayna_engine::shared::ray::Ray;
     /// # use rayna_engine::shared::{rng, RtRequirement};
-    /// # use rayna_shared::def::types::{Pixel, Vector3};
+    /// # use rayna_shared::def::types::{Colour, Vector3};
     /// #
     /// # #[derive(Copy, Clone, Eq, PartialEq, Debug)]
     /// pub struct Test;
     /// #     /// #
     /// impl Material for Test {
     /// #   fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Vector3 { unimplemented!() }
-    /// #   fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel { unimplemented!() }
-    ///     fn reflected_light(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Pixel, rng: &mut dyn RngCore) -> Pixel {
+    /// #   fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour { unimplemented!() }
+    ///     fn reflected_light(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Colour, rng: &mut dyn RngCore) -> Colour {
     ///         // Pure reflection
     ///         return *future_col;
     ///         // Pure absorbtion
-    ///         return Pixel::from([0. ; 3]);
+    ///         return Colour::from([0. ; 3]);
     ///     }
     /// }
     /// ```
@@ -144,9 +144,9 @@ pub trait Material: RtRequirement {
         ray: &Ray,
         intersection: &Intersection,
         future_ray: &Ray,
-        future_col: &Pixel,
+        future_col: &Colour,
         rng: &mut dyn RngCore,
-    ) -> Pixel;
+    ) -> Colour;
 }
 
 /// An optimised implementation of [Material].

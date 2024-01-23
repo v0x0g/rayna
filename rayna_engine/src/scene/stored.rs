@@ -8,7 +8,7 @@ use crate::object::simple::SimpleObject;
 use image::Pixel as _;
 use noise::*;
 use rand::{thread_rng, Rng};
-use rayna_shared::def::types::{Angle, Channel, Number, Pixel, Point3, Transform3, Vector3};
+use rayna_shared::def::types::{Angle, Channel, Colour, Number, Point3, Transform3, Vector3};
 use static_init::*;
 
 use crate::material::dielectric::DielectricMaterial;
@@ -149,7 +149,7 @@ pub static RTIAW_DEMO: Scene = {
             let material_choice = rng.gen::<Number>();
             let material: MaterialInstance<TextureInstance> = if material_choice < 0.7 {
                 LambertianMaterial {
-                    albedo: Pixel::map2(&rng::colour_rgb(rng), &rng::colour_rgb(rng), |a, b| a * b).into(),
+                    albedo: Colour::map2(&rng::colour_rgb(rng), &rng::colour_rgb(rng), |a, b| a * b).into(),
                     emissive: Default::default(),
                 }
                 .into()
@@ -236,7 +236,7 @@ pub static RTTNW_DEMO: Scene = {
 
     // Const trait impls aren't yet stabilised, so we can't call TextureInstance::From(Pixel) yet
     const fn solid_texture(albedo: [Channel; 3]) -> TextureInstance {
-        let pixel = Pixel { 0: albedo };
+        let pixel = Colour { 0: albedo };
         let solid = SolidTexture { albedo: pixel };
         let texture = TextureInstance::SolidTexture(solid);
         texture

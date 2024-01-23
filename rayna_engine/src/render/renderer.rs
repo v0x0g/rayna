@@ -19,7 +19,7 @@ use rand::rngs::SmallRng;
 use rand::Rng;
 use rand_core::{RngCore, SeedableRng};
 use rayna_shared::def::targets::*;
-use rayna_shared::def::types::{Channel, ImgBuf, Number, Pixel, Vector2};
+use rayna_shared::def::types::{Channel, Colour, ImgBuf, Number, Vector2};
 use rayna_shared::profiler;
 use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
@@ -95,8 +95,8 @@ struct PooledData<R: RngCore + SeedableRng = SmallRng> {
     pub rngs: [R; 2],
     /// Buffer of [Vector2] values
     pub px_coords: Vec<Vector2>,
-    /// Buffer of [Pixel] values
-    pub samples: Vec<Pixel>,
+    /// Buffer of [Colour] values
+    pub samples: Vec<Colour>,
     /// The [Uniform] number distribution for creating MSAA values
     pub msaa_distr: Uniform<Number>,
 }
@@ -170,7 +170,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             profile_function!();
 
             ImgBuf::from_fn(w, h, |x, y| {
-                Pixel::from({
+                Colour::from({
                     if (x + y) % 2 == 0 {
                         [0., 0., 0.]
                     } else {
@@ -211,7 +211,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
                 .enumerate()
                 .map(|(idx, chans)| {
                     let (y, x) = num_integer::Integer::div_rem(&idx, &(w as usize));
-                    let p = Pixel::from_slice_mut(chans);
+                    let p = Colour::from_slice_mut(chans);
                     (x, y, p)
                 })
                 // Return on panic as fast as possible; don't keep processing all the pixels on panic
@@ -260,7 +260,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         x: usize,
         y: usize,
         pooled_data: &mut PooledData,
-    ) -> Pixel {
+    ) -> Colour {
         let px = x as Number;
         let py = y as Number;
         let sample_count = opts.samples.get();
@@ -307,11 +307,11 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
                 .iter()
                 .copied()
                 // Pixel doesn't implement [core::ops::Add], so have to manually
-                .reduce(|a, b| Pixel::map2(&a, &b, Channel::add))
+                .reduce(|a, b| Colour::map2(&a, &b, Channel::add))
                 .unwrap_or_else(|| [0.; 3].into());
 
             let mean = accum.map(|c| c / (samples.len() as Channel));
-            let pix = Pixel::from(mean);
+            let pix = Colour::from(mean);
             pix
         };
 
@@ -330,7 +330,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         x: Number,
         y: Number,
         rng: &mut impl Rng,
-    ) -> Pixel {
+    ) -> Colour {
         let ray = viewport.calc_ray(x, y, rng);
         validate::ray(ray);
         let mode = opts.mode;
@@ -350,34 +350,34 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
         // Some colours to help with visualisation
         const N_COL: usize = 13;
-        const COLOURS: [Pixel; N_COL] = [
-            Pixel { 0: [1.0, 1.0, 1.0] },
-            Pixel { 0: [1.0, 0.0, 0.0] },
-            Pixel { 0: [1.0, 0.5, 0.0] },
-            Pixel { 0: [1.0, 1.0, 0.0] },
-            Pixel { 0: [0.5, 1.0, 0.0] },
-            Pixel { 0: [0.0, 1.0, 0.0] },
-            Pixel { 0: [0.0, 1.0, 0.5] },
-            Pixel { 0: [0.0, 1.0, 1.0] },
-            Pixel { 0: [0.0, 0.5, 1.0] },
-            Pixel { 0: [0.0, 0.0, 1.0] },
-            Pixel { 0: [0.5, 0.0, 1.0] },
-            Pixel { 0: [1.0, 0.0, 1.0] },
-            Pixel { 0: [0.0, 0.0, 0.0] },
+        const COLOURS: [Colour; N_COL] = [
+            Colour { 0: [1.0, 1.0, 1.0] },
+            Colour { 0: [1.0, 0.0, 0.0] },
+            Colour { 0: [1.0, 0.5, 0.0] },
+            Colour { 0: [1.0, 1.0, 0.0] },
+            Colour { 0: [0.5, 1.0, 0.0] },
+            Colour { 0: [0.0, 1.0, 0.0] },
+            Colour { 0: [0.0, 1.0, 0.5] },
+            Colour { 0: [0.0, 1.0, 1.0] },
+            Colour { 0: [0.0, 0.5, 1.0] },
+            Colour { 0: [0.0, 0.0, 1.0] },
+            Colour { 0: [0.5, 0.0, 1.0] },
+            Colour { 0: [1.0, 0.0, 1.0] },
+            Colour { 0: [0.0, 0.0, 0.0] },
         ];
 
         return match mode {
             RenderMode::PBR => unreachable!("mode == RenderMode::PBR already checked"),
-            RenderMode::OutwardNormal => Pixel::from(intersect.normal.as_array().map(|f| (f / 2.) as f32 + 0.5)),
-            RenderMode::RayNormal => Pixel::from(intersect.ray_normal.as_array().map(|f| (f / 2.) as Channel + 0.5)),
-            RenderMode::Scatter => Pixel::from(
+            RenderMode::OutwardNormal => Colour::from(intersect.normal.as_array().map(|f| (f / 2.) as f32 + 0.5)),
+            RenderMode::RayNormal => Colour::from(intersect.ray_normal.as_array().map(|f| (f / 2.) as Channel + 0.5)),
+            RenderMode::Scatter => Colour::from(
                 material
                     .scatter(&ray, &intersect, rng)
                     .unwrap_or_default()
                     .as_array()
                     .map(|f| (f / 2.) as Channel + 0.5),
             ),
-            RenderMode::Uv => Pixel::from([
+            RenderMode::Uv => Colour::from([
                 (intersect.uv.x as Channel).clamp(0., 1.),
                 (intersect.uv.y as Channel).clamp(0., 1.),
                 0.,
@@ -426,9 +426,9 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         bounds: &Bounds<Number>,
         depth: usize,
         rng: &mut impl Rng,
-    ) -> Pixel {
+    ) -> Colour {
         if depth > opts.bounces {
-            return Pixel::from([0.; 3]);
+            return Colour::from([0.; 3]);
         }
 
         // Intersect
@@ -465,7 +465,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         //
         // }
 
-        Pixel::map2(&col_scattered, &col_emitted, Channel::add)
+        Colour::map2(&col_scattered, &col_emitted, Channel::add)
     }
 }
 

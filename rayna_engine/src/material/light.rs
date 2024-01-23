@@ -3,7 +3,7 @@ use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::texture::Texture;
 use rand_core::RngCore;
-use rayna_shared::def::types::{Number, Pixel, Vector3};
+use rayna_shared::def::types::{Colour, Number, Vector3};
 
 /// A simple emissive material for turning an mesh into a light.
 ///
@@ -21,7 +21,7 @@ impl<Tex: Texture> Material for LightMaterial<Tex> {
         0.0
     }
 
-    fn emitted_light(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Pixel {
+    fn emitted_light(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
         self.emissive.value(intersection, rng)
     }
 
@@ -30,9 +30,9 @@ impl<Tex: Texture> Material for LightMaterial<Tex> {
         _ray: &Ray,
         _intersection: &Intersection,
         _future_ray: &Ray,
-        _future_col: &Pixel,
+        _future_col: &Colour,
         _rng: &mut dyn RngCore,
-    ) -> Pixel {
+    ) -> Colour {
         [0.; 3].into()
     }
 }

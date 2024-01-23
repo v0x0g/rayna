@@ -3,7 +3,7 @@ use crate::texture::Texture;
 use derivative::Derivative;
 use num_traits::ToPrimitive;
 use rand_core::RngCore;
-use rayna_shared::def::types::{ImgBuf, Number, Pixel, Size2, Vector2};
+use rayna_shared::def::types::{Colour, ImgBuf, Number, Size2, Vector2};
 use std::sync::Arc;
 
 #[derive(Clone, Derivative)]
@@ -30,7 +30,7 @@ impl From<Arc<ImgBuf>> for ImageTexture {
 }
 
 impl Texture for ImageTexture {
-    fn value(&self, intersection: &Intersection, _rng: &mut dyn RngCore) -> Pixel {
+    fn value(&self, intersection: &Intersection, _rng: &mut dyn RngCore) -> Colour {
         // Calculate pixel positions after scale and offset
         let translated = self.offset + (intersection.uv.to_vector() * self.scale.to_vector());
         // Flip y-axis to image coords

@@ -5,7 +5,7 @@ use crate::shared::rng;
 use crate::texture::{Texture, TextureInstance};
 use image::Pixel as _;
 use rand_core::RngCore;
-use rayna_shared::def::types::{Channel, Number, Pixel, Vector3};
+use rayna_shared::def::types::{Channel, Colour, Number, Vector3};
 use std::ops::Mul;
 
 /// A material that uniformly scatters rays in all directions
@@ -37,10 +37,10 @@ impl<Tex: Texture> Material for IsotropicMaterial<Tex> {
         _ray: &Ray,
         intersection: &Intersection,
         _future_ray: &Ray,
-        future_col: &Pixel,
+        future_col: &Colour,
         rng: &mut dyn RngCore,
-    ) -> Pixel {
+    ) -> Colour {
         let albedo = self.albedo.value(intersection, rng);
-        Pixel::map2(future_col, &albedo, Channel::mul)
+        Colour::map2(future_col, &albedo, Channel::mul)
     }
 }

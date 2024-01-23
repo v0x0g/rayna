@@ -6,14 +6,14 @@ use self::{default::DefaultSkybox, dynamic::DynamicSkybox, none::NoSkybox};
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
-use rayna_shared::def::types::Pixel;
+use rayna_shared::def::types::Colour;
 
 /// The main trait for implementing a skybox
 ///
 /// This simply needs to return the sky colour for a given ray
 #[enum_dispatch]
 pub trait Skybox: RtRequirement {
-    fn sky_colour(&self, ray: &Ray) -> Pixel;
+    fn sky_colour(&self, ray: &Ray) -> Colour;
 }
 
 #[enum_dispatch(Skybox)]

@@ -5,7 +5,7 @@ use dyn_clone::DynClone;
 use image::Pixel as _;
 use noise::utils::ColorGradient;
 use rand_core::RngCore;
-use rayna_shared::def::types::{Channel, Number, Pixel};
+use rayna_shared::def::types::{Channel, Colour, Number};
 use std::fmt::Debug;
 
 /// An extended trait what wraps a few other traits.
@@ -32,11 +32,11 @@ pub enum ColourSource<N: RtNoiseFn<D>, const D: usize> {
 }
 
 impl<const D: usize, N: RtNoiseFn<D>> ColourSource<N, D> {
-    pub fn get(&self, point: [Number; D]) -> Pixel {
+    pub fn get(&self, point: [Number; D]) -> Colour {
         match self {
-            Self::Greyscale(n) => Pixel::from([n.get(point) as Channel; 3]),
-            Self::Gradient(n, g) => *Pixel::from_slice(&g.get_color(n.get(point)).map(Into::into)),
-            Self::Rgb(n) => Pixel::from(n.each_ref().map(|n| n.get(point) as Channel)),
+            Self::Greyscale(n) => Colour::from([n.get(point) as Channel; 3]),
+            Self::Gradient(n, g) => *Colour::from_slice(&g.get_color(n.get(point)).map(Into::into)),
+            Self::Rgb(n) => Colour::from(n.each_ref().map(|n| n.get(point) as Channel)),
         }
         // Normalise `-1..1` to `0..1`
         .map_without_alpha(|c| c / 2. + 0.5)
@@ -60,7 +60,7 @@ pub struct UvNoiseTexture<N: RtNoiseFn<2>> {
 }
 
 impl<N: RtNoiseFn<2>> Texture for UvNoiseTexture<N> {
-    fn value(&self, intersection: &Intersection, _rng: &mut dyn RngCore) -> Pixel {
+    fn value(&self, intersection: &Intersection, _rng: &mut dyn RngCore) -> Colour {
         self.source.get(intersection.uv.to_array())
     }
 }
@@ -81,7 +81,7 @@ pub struct WorldNoiseTexture<N: RtNoiseFn<3>> {
 }
 
 impl<N: RtNoiseFn<3>> Texture for WorldNoiseTexture<N> {
-    fn value(&self, intersection: &Intersection, _rng: &mut dyn RngCore) -> Pixel {
+    fn value(&self, intersection: &Intersection, _rng: &mut dyn RngCore) -> Colour {
         self.source.get(intersection.pos_w.to_array())
     }
 }
@@ -101,7 +101,7 @@ pub struct LocalNoiseTexture<N: RtNoiseFn<3>> {
 }
 
 impl<N: RtNoiseFn<3>> Texture for LocalNoiseTexture<N> {
-    fn value(&self, intersection: &Intersection, _rng: &mut dyn RngCore) -> Pixel {
+    fn value(&self, intersection: &Intersection, _rng: &mut dyn RngCore) -> Colour {
         self.source.get(intersection.pos_l.to_array())
     }
 }

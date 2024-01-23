@@ -1,6 +1,6 @@
 use std::ops::{Add, Mul, Sub};
 
-use rayna_shared::def::types::{Channel, Number, Pixel, Vector3};
+use rayna_shared::def::types::{Channel, Colour, Number, Vector3};
 
 /// Your standard linear interpolation function
 pub fn lerp<T>(a: T, b: T, t: Number) -> T
@@ -10,10 +10,10 @@ where
     a.clone() + ((b.clone() - a.clone()) * t)
 }
 
-pub fn lerp_px(a: Pixel, b: Pixel, t: Number) -> Pixel {
+pub fn lerp_px(a: Colour, b: Colour, t: Number) -> Colour {
     let [ra, ga, ba] = a.0;
     let [rb, gb, bb] = b.0;
-    Pixel::from([
+    Colour::from([
         lerp(ra as Number, rb as Number, t) as Channel,
         lerp(ga as Number, gb as Number, t) as Channel,
         lerp(ba as Number, bb as Number, t) as Channel,

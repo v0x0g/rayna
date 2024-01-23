@@ -101,22 +101,21 @@ impl<const N: usize> Colour<N> {
 }
 
 // Basic maths operators
-impl_op!(impl core::ops::Add : fn add(a: Colour<N>, b:Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Number::add) });
-impl_op!(impl core::ops::Sub : fn sub(a: Colour<N>, b:Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Number::sub) });
-impl_op!(impl core::ops::Mul : fn mul(a: Colour<N>, b:Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Number::mul) });
-impl_op!(impl core::ops::Div : fn div(a: Colour<N>, b:Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Number::div) });
-
-// Assign maths operators
-impl_op_assign!(impl core::ops::AddAssign : fn add_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Number::add_assign) });
-impl_op_assign!(impl core::ops::SubAssign : fn sub_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Number::sub_assign) });
-impl_op_assign!(impl core::ops::MulAssign : fn mul_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Number::mul_assign) });
-impl_op_assign!(impl core::ops::DivAssign : fn div_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Number::div_assign) });
+impl_op!(impl {<const N: usize>} core::ops::Add : fn add(a: Colour<N>, b:Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Number::add) });
+impl_op!(impl {<const N: usize>} core::ops::Sub : fn sub(a: Colour<N>, b:Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Number::sub) });
+impl_op!(impl {<const N: usize>} core::ops::Mul : fn mul(a: Colour<N>, b:Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Number::mul) });
+impl_op!(impl {<const N: usize>} core::ops::Div : fn div(a: Colour<N>, b:Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Number::div) });
 
 // Shift left/right rotates the channels left/right by `n` places.
-impl_op!(impl core::ops::Shl : fn shl(col: Colour<N>, shift: usize) -> Colour<N> { col.0.rotate_left(shift); col });
-impl_op!(impl core::ops::Shr : fn shr(col: Colour<N>, shift: usize) -> Colour<N> { col.0.rotate_right(shift); col });
+impl_op!(impl {<const N: usize>} core::ops::Shl : fn shl(col: Colour<N>, shift: usize) -> Colour<N> { col.0.rotate_left(shift); col });
+impl_op!(impl {<const N: usize>} core::ops::Shr : fn shr(col: Colour<N>, shift: usize) -> Colour<N> { col.0.rotate_right(shift); col });
 
-impl_op_assign!(impl core::ops::ShlAssign : fn shl_assign(col: Colour<N>, shift: usize) { col.0.rotate_left(shift) });
-impl_op_assign!(impl core::ops::ShrAssign : fn shr_assign(col: Colour<N>, shift: usize) { col.0.rotate_right(shift) });
+impl_op_assign!(impl {<const N: usize>} core::ops::AddAssign : fn add_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Number::add_assign) });
+impl_op_assign!(impl {<const N: usize>} core::ops::SubAssign : fn sub_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Number::sub_assign) });
+impl_op_assign!(impl {<const N: usize>} core::ops::MulAssign : fn mul_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Number::mul_assign) });
+impl_op_assign!(impl {<const N: usize>} core::ops::DivAssign : fn div_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Number::div_assign) });
+
+impl_op_assign!(impl {<const N: usize>} core::ops::ShlAssign : fn shl_assign(col: Colour<N>, shift: usize) { col.0.rotate_left(shift) });
+impl_op_assign!(impl {<const N: usize>} core::ops::ShrAssign : fn shr_assign(col: Colour<N>, shift: usize) { col.0.rotate_right(shift) });
 
 // endregion

@@ -16,6 +16,10 @@ impl<const N: usize> Colour<N> {
     pub const CHANNEL_COUNT: usize = N;
 }
 
+impl<const N: usize> Default for Colour<N> {
+    fn default() -> Self { Self::new([0.; N]) }
+}
+
 // region Constructors
 
 impl<const N: usize> Colour<N> {

@@ -2,6 +2,7 @@ use crate::shared::impl_utils::{impl_op, impl_op_assign};
 use itertools::Itertools;
 use rayna_shared::def::types::Number;
 use std::array;
+use std::hash::{Hash, Hasher};
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
@@ -119,3 +120,12 @@ impl_op_assign!(impl {<const N: usize>} core::ops::ShlAssign : fn shl_assign(col
 impl_op_assign!(impl {<const N: usize>} core::ops::ShrAssign : fn shr_assign(col: Colour<N>, shift: usize) { col.0.rotate_right(shift) });
 
 // endregion
+
+impl<const N: usize> Hash for Colour<N> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_usize(self.0.len());
+        for c in self.0 {
+            Number::to_ne_bytes(c).hash(state)
+        }
+    }
+}

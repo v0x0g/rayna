@@ -132,6 +132,12 @@ impl<Col> DerefMut for Image<Col> {
 
 // region Iteration
 
+/// An enumerated iterator over the pixels of an image.
+///
+/// Will iterate the pixels row-by-row, returning the position of the pixel as well
+///
+/// # Returns
+/// Each value returned will be `(x, y, colour)`
 pub struct ImageIterator<Col> {
     pixels: std::vec::IntoIter<Col>,
     x: usize,

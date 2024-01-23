@@ -89,19 +89,20 @@ impl<const N: usize> Colour<N> {
 
 /// Helper macro to provide implementations of operator traits
 ///
-/// The functions should take in an owned `Self`-type reference
+/// The function should take in an owned `Self`-type reference.
 ///
 /// I would use the [auto_ops]/[impl_ops] crates, but they don't support const generics, so roll my own
 macro_rules! implement_operator {
-    (($($operator:tt)*), fn $fn_name:ident ($a:ident, $b:ident) $body:block) => {
-        implement_operator!(@inner ($($operator)*), fn $fn_name ($a:  Colour<N>, $b:  Colour<N>) -> Colour<N> $body);
-        implement_operator!(@inner ($($operator)*), fn $fn_name ($a:  Colour<N>, $b: &Colour<N>) -> Colour<N> $body);
-        implement_operator!(@inner ($($operator)*), fn $fn_name ($a: &Colour<N>, $b:  Colour<N>) -> Colour<N> $body);
-        implement_operator!(@inner ($($operator)*), fn $fn_name ($a: &Colour<N>, $b: &Colour<N>) -> Colour<N> $body);
+    (impl $operator:ident : fn $fn_name:ident ($a:ident, $b:ident) $body:block) => {
+        implement_operator!(@inner impl $operator : fn $fn_name ($a:  Colour<N>, $b:  Colour<N>) -> Colour<N> $body);
+        implement_operator!(@inner impl $operator : fn $fn_name ($a:  Colour<N>, $b: &Colour<N>) -> Colour<N> $body);
+        implement_operator!(@inner impl $operator : fn $fn_name ($a: &Colour<N>, $b:  Colour<N>) -> Colour<N> $body);
+        implement_operator!(@inner impl $operator : fn $fn_name ($a: &Colour<N>, $b: &Colour<N>) -> Colour<N> $body);
     };
 
-    (@inner ($($operator:tt)*), fn $fn_name:ident ($a:ident: $lhs:ty, $b:ident : $rhs:ty) -> $out:ty $body:block) => {
-        impl<const N: usize> $($operator)*<$rhs> for $lhs {
+    // Inner
+    (@inner impl $operator:ident : fn $fn_name:ident ($a:ident: $lhs:ty, $b:ident : $rhs:ty) -> $out:ty $body:block) => {
+        impl<const N: usize> ::std::ops::$operator<$rhs> for $lhs {
             type Output = $out;
 
             fn $fn_name(self, rhs: $rhs) -> Self::Output {
@@ -112,6 +113,6 @@ macro_rules! implement_operator {
     };
 }
 
-implement_operator!((std::ops::Add), fn add(a, b) { Colour::map2(&a, &b, Number::add) });
+implement_operator!(impl Add : fn add(a, b) { Colour::map2(&a, &b, Number::add) });
 
 // endregion

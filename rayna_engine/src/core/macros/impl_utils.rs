@@ -45,3 +45,24 @@ macro_rules! impl_op_assign {
         }
     };
 }
+
+#[macro_export]
+macro_rules! forward_fn {
+    ( $(
+
+        impl $({$($bounds:tt)*})? $type:ty {$(
+            $fn:ident($( $arg_name:ident : $arg_type:tt),*) $(,)? );*
+        $(;)? }
+
+    )* ) =>
+
+    {$(
+
+        impl $($($bounds)*)? $type { $(
+            pub fn $fn (&self, $( $arg_name : $arg_type ),* ) -> Self {
+                self.map(|c| c.$fn( $($arg_name),* ))
+            }
+        )* }
+
+    )* };
+}

@@ -1,13 +1,13 @@
 use crate::ext::UiExt;
 use crate::integration::message::MessageToWorker;
 use crate::integration::{Integration, IntegrationError};
+use crate::profiler;
+use crate::targets::*;
 use crate::ui_val::{DRAG_SLOW, UNIT_DEG, UNIT_LEN, UNIT_PX};
 use eframe::epaint::textures::TextureFilter;
 use egui::load::SizedTexture;
 use egui::{Context, CursorIcon, Key, RichText, Sense, TextureHandle, TextureOptions, Vec2, Widget};
 use puffin::{profile_function, profile_scope};
-use rayna_engine::core::profiler;
-use rayna_engine::core::targets::*;
 use rayna_engine::core::types::{Angle, Number, Vector3};
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};

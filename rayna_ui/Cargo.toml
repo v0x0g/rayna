@@ -40,11 +40,13 @@ derivative = { workspace = true }
 strum = { workspace = true }
 throttle = "0.1.0"
 humantime = "2.1.0"
+paste = { workspace = true }
+once_cell = { workspace = true }
 
 # Perf
 puffin = { workspace = true }
+puffin_http = { workspace = true }
 rayon = { workspace = true }
-log = "0.4.20"
 
 # ===== FEATURES =====
 

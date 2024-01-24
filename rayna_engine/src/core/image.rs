@@ -108,7 +108,6 @@ impl From<image::DynamicImage> for Image<Colour> {
 impl<Col> Image<Col> {
     fn compress_index(&self, x: usize, y: usize) -> usize { x + (y * self.width) }
 
-    fn decompress_index(&self, n: usize) -> (usize, usize) { Self::decompress_index_dims(n, [self.width, self.height]) }
     fn decompress_index_dims(n: usize, [width, _height]: [usize; 2]) -> (usize, usize) {
         let (y, x) = usize::div_rem(&n, &width);
         (x, y)
@@ -238,7 +237,6 @@ pub struct ImageIteratorMut<'img, Col> {
     x: usize,
     y: usize,
     width: usize,
-    height: usize,
 }
 
 impl<'img, Col> ImageIteratorMut<'img, Col> {
@@ -247,7 +245,6 @@ impl<'img, Col> ImageIteratorMut<'img, Col> {
             x: 0,
             y: 0,
             width: image.width,
-            height: image.height,
             iter: image.iter_mut(),
         }
     }
@@ -323,3 +320,5 @@ impl<'img, Col> IntoIterator for &'img Image<Col> {
 }
 
 // endregion Iteration (Ref)
+
+// TODO: Parallel iteration?

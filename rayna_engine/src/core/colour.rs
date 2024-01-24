@@ -1,6 +1,6 @@
 use crate::core::types::Channel;
-use crate::impl_op;
 use crate::impl_op_assign;
+use crate::{forward_fn, impl_op};
 use itertools::Itertools;
 use std::array;
 use std::hash::{Hash, Hasher};
@@ -140,6 +140,30 @@ impl_op_assign!(impl {<const N: usize>} core::ops::DivAssign : fn div_assign(a: 
 
 impl_op_assign!(impl {<const N: usize>} core::ops::ShlAssign : fn shl_assign(col: Colour<N>, shift: usize) { col.0.rotate_left(shift) });
 impl_op_assign!(impl {<const N: usize>} core::ops::ShrAssign : fn shr_assign(col: Colour<N>, shift: usize) { col.0.rotate_right(shift) });
+
+// endregion
+
+// region Forwarding Operations
+
+forward_fn! {
+    impl {<const N: usize>} Colour<N> {
+        abs();
+        sqrt();
+        recip();
+
+        min(min: Channel);
+        max(max: Channel);
+        clamp(min: Channel, max: Channel);
+
+        floor();
+        ceil();
+
+        exp();
+        exp2();
+        powf(f: f32);
+        powi(n: i32);
+    }
+}
 
 // endregion
 

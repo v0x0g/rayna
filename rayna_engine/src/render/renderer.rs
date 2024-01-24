@@ -1,6 +1,6 @@
 use crate::core::profiler;
 use crate::core::targets::*;
-use crate::core::types::{Channel, Colour, Image, Number, Vector2};
+use crate::core::types::{Channel, Colour, Image, Number, Point3, Vector2};
 use crate::material::Material;
 use crate::object::Object;
 use crate::render::render::{Render, RenderStats};
@@ -436,20 +436,32 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         };
         validate::intersection(ray, &intersection, bounds);
 
-        let col_emitted = material.emitted_light(ray, &intersection, rng);
+        let col_emitted = {
+            let col = material.emitted_light(ray, &intersection, rng);
+            validate::colour(&col);
+            col
+        };
 
         // Calculate scatter
-        let Some(scatter_dir) = material.scatter(ray, &intersection, rng) else {
-            return col_emitted;
+        let future_ray = {
+            let Some(future_ray_dir) = material.scatter(ray, &intersection, rng) else {
+                return col_emitted;
+            };
+            validate::normal3(&future_ray_dir);
+            let future_ray = Ray::new(intersection.pos_w, future_ray_dir);
+            validate::ray(future_ray);
+            future_ray
         };
-        validate::normal3(&scatter_dir);
-        let future_ray = Ray::new(intersection.pos_w, scatter_dir);
-        validate::ray(future_ray);
 
-        // Follow ray
-        let future_col = Self::ray_colour_recursive(scene, &future_ray, opts, bounds, depth + 1, rng);
-        validate::colour(&future_col);
-        let col_scattered = material.reflected_light(ray, &intersection, &future_ray, &future_col, rng);
+        // Follow ray and calculate future bounces
+        let col_scattered = {
+            let col_future = Self::ray_colour_recursive(scene, &future_ray, opts, bounds, depth + 1, rng);
+            validate::colour(&col_future);
+            let col_scattered = material.reflected_light(ray, &intersection, &future_ray, &col_future, rng);
+            validate::colour(&col_scattered);
+            col_scattered
+        };
+        let prob_scattered = material.scatter_probability(ray, &future_ray, &intersection);
 
         // // PDF value for the scattered ray
         // let prob_scatter = material.scatter_probability(ray, &future_ray, &intersection);
@@ -462,6 +474,26 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         // for i in 0..N_LIGHTS{
         //
         // }
+
+        // Calculate the future colour, including from light sources
+
+        let ray_light = Ray::new(intersection.pos_w, Point3::new(0.5, 1.0, 0.5) - intersection.pos_w);
+        let col_light = Self::ray_colour_recursive(scene, &ray_light, opts, bounds, depth + 1, rng);
+        let prob_light = material.scatter_probability(ray, &ray_light, &intersection);
+
+        let mut col_accum = Colour::BLACK;
+        let mut prob_accum = 0.;
+
+        let samples = [(col_scattered, prob_scattered)];
+
+        // Do a weighted average of each source of light.
+        for (col, prob) in samples {
+            col_accum += col * prob as Channel;
+            prob_accum += prob;
+        }
+
+        // Normalise at the end by dividing by dividing by total probability
+        let col_avg = col_accum / prob_accum;
 
         Colour::map2(&col_scattered, &col_emitted, Channel::add)
     }

@@ -44,6 +44,14 @@ impl const From<ColourRgb> for (Channel, Channel, Channel) {
 
 // endregion RGB Impl
 
+// region Known Colours
+
+impl<const N: usize> Colour<N> {
+    pub const BLACK: Self = Self::new([0.; N]);
+    pub const WHITE: Self = Self::new([1.; N]);
+}
+// endregion Known Colours
+
 // region To/From impls
 
 impl<const N: usize> const From<[Channel; N]> for Colour<N> {

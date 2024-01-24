@@ -1,9 +1,10 @@
 use derivative::Derivative;
 use getset::{CopyGetters, Getters};
 use num_integer::Integer;
+use std::mem::MaybeUninit;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
-#[derive(CopyGetters, Getters, Derivative)]
+#[derive(CopyGetters, Getters, Derivative, Clone)]
 #[derivative(Debug)]
 pub struct Image<Col = crate::core::types::Colour> {
     #[get_copy = "pub"]
@@ -27,6 +28,7 @@ impl<Col: Clone + Default> Image<Col> {
         Self::new_from(width, height, data)
     }
 }
+
 impl<Col: Clone> Image<Col> {
     /// Creates a new image with the specified dimensions, and the given fill pixel value
     pub fn new_filled(width: usize, height: usize, fill: Col) -> Self {
@@ -53,6 +55,28 @@ impl<Col> Image<Col> {
             len,
         }
     }
+
+    /// Creates an image from the image's dimensions, using the given function to calculate pixel values
+    pub fn from_fn(width: usize, height: usize, func: impl FnMut(usize, usize) -> Col) -> Self {
+        let len = width * height;
+        // Annoyingly, there doesn't seem to be a way to create a vec/slice from a `fn (usize) -> T`, only `fn() -> T`
+        // So do it the manual way with `MaybeUninit`
+        let data = unsafe {
+            let mut data = Box::new_uninit_slice(len);
+            data.iter_mut().enumerate().for_each(|(i, px)| {
+                let (x, y) = Self::decompress_index_dims(i, [width, height]);
+                *px = MaybeUninit::new(func(x, y));
+            });
+            Box::<[MaybeUninit<Col>]>::assume_init(data)
+        };
+
+        Self {
+            width,
+            height,
+            data,
+            len,
+        }
+    }
 }
 
 // regions Constructors
@@ -62,8 +86,9 @@ impl<Col> Image<Col> {
 impl<Col> Image<Col> {
     fn compress_index(&self, x: usize, y: usize) -> usize { x + (y * self.width) }
 
-    fn decompress_index(&self, n: usize) -> (usize, usize) {
-        let (y, x) = usize::div_rem(&n, &self.width);
+    fn decompress_index(&self, n: usize) -> (usize, usize) { Self::decompress_index_dims(n, [self.width, self.height]) }
+    fn decompress_index_dims(n: usize, [width, _height]: [usize; 2]) -> (usize, usize) {
+        let (y, x) = usize::div_rem(&n, &width);
         (x, y)
     }
 }
@@ -129,22 +154,22 @@ impl<Col> DerefMut for Image<Col> {
 
 // endregion Deref
 
-// region Iteration
+// region Iteration (Owned)
 
-/// An enumerated iterator over the pixels of an image.
+/// An enumerated iterator over the pixels of an owned image.
 ///
 /// Will iterate the pixels row-by-row, returning the position of the pixel as well
 ///
 /// # Returns
 /// Each value returned will be `(x, y, colour)`
-pub struct ImageIterator<Col> {
+pub struct ImageIteratorOwned<Col> {
     pixels: std::vec::IntoIter<Col>,
     x: usize,
     y: usize,
     width: usize,
 }
 
-impl<Col> ImageIterator<Col> {
+impl<Col> ImageIteratorOwned<Col> {
     pub fn new(image: Image<Col>) -> Self {
         Self {
             width: image.width,
@@ -155,7 +180,7 @@ impl<Col> ImageIterator<Col> {
     }
 }
 
-impl<Col> Iterator for ImageIterator<Col> {
+impl<Col> Iterator for ImageIteratorOwned<Col> {
     type Item = (usize, usize, Col);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -171,9 +196,56 @@ impl<Col> Iterator for ImageIterator<Col> {
 
 impl<Col> IntoIterator for Image<Col> {
     type Item = (usize, usize, Col);
-    type IntoIter = ImageIterator<Col>;
+    type IntoIter = ImageIteratorOwned<Col>;
 
-    fn into_iter(self) -> Self::IntoIter { ImageIterator::new(self) }
+    fn into_iter(self) -> Self::IntoIter { ImageIteratorOwned::new(self) }
 }
 
-// endregion Iteration
+// endregion Iteration (Owned)
+
+// region Iteration (Mut)
+
+/// An enumerated iterator over the pixels of a mutable image reference.
+///
+/// Will iterate the pixels row-by-row, returning the position of the pixel as well
+///
+/// # Returns
+/// Each value returned will be `(x, y, &mut pixel)`
+pub struct ImageIteratorMut<'img, Col> {
+    image: &'img mut Image<Col>,
+    x: usize,
+    y: usize,
+}
+
+impl<'img, Col> ImageIteratorMut<'img, Col> {
+    pub fn new(image: &'img mut Image<Col>) -> Self { Self { x: 0, y: 0, image } }
+}
+
+impl<'img, Col> Iterator for ImageIteratorMut<'img, Col> {
+    type Item = (usize, usize, &'img mut Col);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // Iteration complete
+        if self.y >= self.image.height {
+            return None;
+        }
+
+        if self.x >= self.image.width {
+            self.x = 0;
+            self.y += 1;
+        }
+        let (x, y) = (self.x, self.y);
+        self.x += 1;
+
+        Some((x, y, &mut self.image[(x, y)]))
+    }
+}
+
+impl<'img, Col> IntoIterator for &'img mut Image<Col> {
+    type Item = (usize, usize, &'img mut Col);
+    type IntoIter = ImageIteratorMut<'img, Col>;
+
+    fn into_iter(self) -> Self::IntoIter { ImageIteratorMut::new(self) }
+}
+
+// endregion Iteration (Mut)

@@ -1,3 +1,4 @@
+use crate::core::types::Number;
 use crate::material::Material;
 use crate::mesh::Mesh as MeshTrait;
 use crate::object::transform::ObjectTransform;
@@ -10,7 +11,6 @@ use crate::shared::rng;
 use getset::{CopyGetters, Getters};
 use rand::Rng;
 use rand_core::RngCore;
-use rayna_engine::core::types::Number;
 
 /// An mesh wrapper that treats the wrapped mesh as a constant-density volume
 ///

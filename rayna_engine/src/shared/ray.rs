@@ -1,5 +1,5 @@
+use crate::core::types::{Number, Point3, Vector3};
 use getset::CopyGetters;
-use rayna_engine::core::types::{Number, Point3, Vector3};
 
 #[derive(Copy, Clone, PartialEq, Debug, CopyGetters)]
 #[getset(get_copy = "pub")]

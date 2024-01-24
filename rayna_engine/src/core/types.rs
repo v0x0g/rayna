@@ -1,9 +1,8 @@
 use crate::core::colour::ColourRgb;
-use crate::core::image::Image;
 
 pub type Channel = f32;
 pub type Colour = ColourRgb;
-pub type ImgBuf = Image<Colour>;
+pub type Image = crate::core::image::Image<Colour>;
 
 pub type Number = f64;
 pub type Angle = glamour::Angle<Number>;

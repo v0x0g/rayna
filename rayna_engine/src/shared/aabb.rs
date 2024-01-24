@@ -4,7 +4,7 @@ use std::borrow::Borrow;
 
 use getset::*;
 
-use rayna_engine::core::types::{Number, Point3, Vector3};
+use crate::core::types::{Number, Point3, Vector3};
 
 use crate::shared::bounds::Bounds;
 use crate::shared::ray::Ray;

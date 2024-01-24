@@ -1,3 +1,4 @@
+use crate::core::types::{Number, Point2, Point3, Vector3};
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
@@ -6,7 +7,6 @@ use crate::shared::ray::Ray;
 use getset::CopyGetters;
 use glamour::AngleConsts;
 use rand_core::RngCore;
-use rayna_engine::core::types::{Number, Point2, Point3, Vector3};
 
 /// The actual instance of a sphere that can be rendered.
 /// Has precomputed values and therefore cannot be mutated

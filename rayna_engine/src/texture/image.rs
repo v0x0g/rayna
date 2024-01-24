@@ -1,26 +1,26 @@
+use crate::core::types::{Colour, Image, Number, Size2, Vector2};
 use crate::shared::intersect::Intersection;
 use crate::texture::Texture;
 use derivative::Derivative;
 use num_traits::ToPrimitive;
 use rand_core::RngCore;
-use rayna_engine::core::types::{Colour, ImgBuf, Number, Size2, Vector2};
 use std::sync::Arc;
 
 #[derive(Clone, Derivative)]
 #[derivative(Debug)]
 pub struct ImageTexture {
     #[derivative(Debug = "ignore")]
-    pub image: Arc<ImgBuf>,
+    pub image: Arc<Image>,
     pub scale: Size2,
     pub offset: Vector2,
 }
 
-impl From<ImgBuf> for ImageTexture {
-    fn from(value: ImgBuf) -> Self { Self::from(Arc::new(value)) }
+impl From<Image> for ImageTexture {
+    fn from(value: Image) -> Self { Self::from(Arc::new(value)) }
 }
 
-impl From<Arc<ImgBuf>> for ImageTexture {
-    fn from(value: Arc<ImgBuf>) -> Self {
+impl From<Arc<Image>> for ImageTexture {
+    fn from(value: Arc<Image>) -> Self {
         Self {
             offset: Vector2::ZERO,
             scale: Size2::splat(1.),

@@ -4,6 +4,7 @@ pub mod simple;
 pub mod transform;
 pub mod volumetric;
 
+use crate::core::types::Number;
 use crate::material::Material;
 use crate::mesh::Mesh as MeshTrait;
 use crate::shared::aabb::Aabb;
@@ -13,7 +14,6 @@ use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use rand_core::RngCore;
-use rayna_engine::core::types::Number;
 
 // noinspection ALL
 use self::{bvh::BvhObject, list::ObjectList, simple::SimpleObject, volumetric::VolumetricObject};

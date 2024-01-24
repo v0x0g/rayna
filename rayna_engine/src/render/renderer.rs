@@ -1,6 +1,6 @@
 use crate::core::profiler;
 use crate::core::targets::*;
-use crate::core::types::{Channel, Colour, ImgBuf, Number, Vector2};
+use crate::core::types::{Channel, Colour, Image, Number, Vector2};
 use crate::material::Material;
 use crate::object::Object;
 use crate::render::render::{Render, RenderStats};
@@ -124,7 +124,7 @@ impl<R: SeedableRng + RngCore> opool::PoolAllocator<PooledData<R>> for PooledDat
 
 impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
     // TODO: Should `render()` be fallible?
-    pub fn render(&mut self, scene: &Scene<Obj, Sky>, render_opts: &RenderOpts) -> Render<ImgBuf> {
+    pub fn render(&mut self, scene: &Scene<Obj, Sky>, render_opts: &RenderOpts) -> Render<Image> {
         profile_function!();
 
         // Render image, and collect stats
@@ -135,7 +135,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         let image = match scene.camera.calculate_viewport(render_opts) {
             Err(err) => {
                 trace!(target: RENDERER, ?err, "couldn't calculate viewport");
-                let [w, h] = render_opts.dims_u32_slice();
+                let [w, h] = render_opts.dims();
                 Self::render_failed(w, h)
             }
             Ok(viewport) => {
@@ -160,15 +160,15 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
     /// Helper function for returning a render in case of a failure
     /// (and so we can't make an actual render)
     /// Probably only called if the viewport couldn't be calculated
-    fn render_failed(w: u32, h: u32) -> ImgBuf {
+    fn render_failed(w: usize, h: usize) -> Image {
         profile_function!();
 
         #[memoize::memoize(Capacity: 8)] // Keep cap small since images can be huge
         #[cold]
-        fn internal(w: u32, h: u32) -> ImgBuf {
+        fn internal(w: usize, h: usize) -> Image {
             profile_function!();
 
-            ImgBuf::from_fn(w, h, |x, y| {
+            Image::from_fn(w, h, |x, y| {
                 Colour::from({
                     if (x + y) % 2 == 0 {
                         [0., 0., 0.]
@@ -194,19 +194,18 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         render_opts: &RenderOpts,
         viewport: &Viewport,
         bounds: &Bounds<Number>,
-    ) -> ImgBuf {
+    ) -> Image {
         profile_function!();
 
-        let [w, h] = render_opts.dims_u32_slice();
+        let [w, h] = render_opts.dims();
 
-        let mut img = ImgBuf::new(w, h);
+        let mut img = Image::new_blank(w, h);
 
         self.thread_pool.install(|| {
             let data_pool = &self.data_pool;
 
             let pixels = img
                 .deref_mut()
-                .par_chunks_exact_mut(3)
                 .enumerate()
                 .map(|(idx, chans)| {
                     let (y, x) = num_integer::Integer::div_rem(&idx, &(w as usize));

@@ -4,11 +4,11 @@
 //!
 //! There are some common ones [CORNELL] and [RTIAW_DEMO], that should be well known.
 
+use crate::core::types::{Angle, Channel, Colour, Number, Point3, Transform3, Vector3};
 use crate::object::simple::SimpleObject;
-use image::Pixel as _;
+
 use noise::*;
 use rand::{thread_rng, Rng};
-use rayna_engine::core::types::{Angle, Channel, Colour, Number, Point3, Transform3, Vector3};
 use static_init::*;
 
 use crate::material::dielectric::DielectricMaterial;

@@ -1,8 +1,8 @@
+use crate::core::types::{Colour, Number, Vector3};
 use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use rand_core::RngCore;
-use rayna_engine::core::types::{Colour, Number, Vector3};
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]

@@ -1,7 +1,7 @@
+use crate::core::types::Colour;
 use crate::shared::math;
 use crate::shared::ray::Ray;
 use crate::skybox::Skybox;
-use rayna_engine::core::types::Colour;
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct DefaultSkybox;

@@ -1,11 +1,11 @@
 //! Helper module for RNG-related functions
 
+use crate::core::types::{Channel, Colour, Number, Vector2, Vector3};
 use glamour::AngleConsts;
-use image::Pixel as _;
+
 use rand::distributions::uniform::SampleRange;
 use rand::Rng;
 use rand_core::SeedableRng;
-use rayna_engine::core::types::{Channel, Colour, Number, Vector2, Vector3};
 
 const PI: Number = <Number as AngleConsts>::PI;
 

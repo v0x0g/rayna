@@ -1,10 +1,10 @@
+use crate::core::types::{Number, Point3};
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use rand_core::RngCore;
-use rayna_engine::core::types::{Number, Point3};
 
 use std::sync::Arc;
 

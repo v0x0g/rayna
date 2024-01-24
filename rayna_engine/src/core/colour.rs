@@ -1,4 +1,6 @@
 use crate::core::types::Channel;
+use crate::impl_op;
+use crate::impl_op_assign;
 use itertools::Itertools;
 use std::array;
 use std::hash::{Hash, Hasher};

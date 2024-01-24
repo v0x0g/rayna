@@ -9,6 +9,7 @@
 #![feature(const_for)]
 #![feature(const_trait_impl)]
 #![feature(const_mut_refs)]
+#![feature(new_uninit)]
 
 pub mod core;
 pub mod material;

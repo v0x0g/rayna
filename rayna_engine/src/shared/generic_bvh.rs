@@ -7,8 +7,8 @@ use getset::{CopyGetters, Getters};
 use indextree::{Arena, NodeId};
 use std::cmp::Ordering;
 
+use crate::core::types::Number;
 use itertools::{zip_eq, Itertools};
-use rayna_engine::core::types::Number;
 
 use crate::shared::aabb::{Aabb, HasAabb};
 

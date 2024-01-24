@@ -1,6 +1,6 @@
 use std::ops::{Add, Mul, Sub};
 
-use rayna_engine::core::types::{Channel, Colour, Number, Vector3};
+use crate::core::types::{Channel, Colour, Number, Vector3};
 
 /// Your standard linear interpolation function
 pub fn lerp<T>(a: T, b: T, t: Number) -> T

@@ -1,3 +1,4 @@
+use crate::core::types::Number;
 use crate::material::Material;
 use crate::mesh::Mesh as MeshTrait;
 use crate::object::transform::ObjectTransform;
@@ -8,7 +9,6 @@ use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 use getset::Getters;
 use rand_core::RngCore;
-use rayna_engine::core::types::Number;
 
 /// The main struct that encapsulates all the different "components" that make up an mesh
 ///
@@ -23,9 +23,9 @@ use rayna_engine::core::types::Number;
 ///
 /// Alternatively, you can also apply a post and pre-transform, to counteract the mesh's position offset:
 /// ```
-/// # use rayna_engine::material::lambertian::LambertianMaterial;
-/// # use rayna_engine::mesh::axis_box::AxisBoxMesh;
-/// # use rayna_engine::core::types::{Angle, Point3, Transform3, Vector3};
+/// # use crate::material::lambertian::LambertianMaterial;
+/// # use crate::mesh::axis_box::AxisBoxMesh;
+/// # use crate::core::types::{Angle, Point3, Transform3, Vector3};
 /// #
 /// # let a: Point3 = [5., 1., 2.].into();
 /// # let b: Point3 = [3., 4., -7.].into();

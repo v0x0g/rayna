@@ -1,11 +1,11 @@
+use crate::core::types::{Channel, Colour, Number, Vector3};
 use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::{math, rng};
 use crate::texture::Texture;
-use image::Pixel as _;
+
 use rand::RngCore;
-use rayna_engine::core::types::{Channel, Colour, Number, Vector3};
 use std::ops::Mul;
 
 #[derive(Copy, Clone, Debug)]

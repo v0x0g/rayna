@@ -1,13 +1,13 @@
 use crate::mesh::bvh::BvhMesh;
 use crate::mesh::{Mesh as MeshTrait, MeshInstance, MeshProperties};
 
+use crate::core::types::{Number, Point3};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use getset::Getters;
 use rand_core::RngCore;
-use rayna_engine::core::types::{Number, Point3};
 
 /// A group of meshes that are rendered as one mesh
 ///

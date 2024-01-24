@@ -3,7 +3,7 @@ use crate::targets::BG_WORKER;
 use egui::{Color32, ColorImage};
 use puffin::{profile_function, profile_scope};
 use rayna_engine::core::profiler;
-use rayna_engine::core::types::{Channel, ImgBuf};
+use rayna_engine::core::types::{Channel, Image};
 use rayna_engine::material::MaterialInstance;
 use rayna_engine::mesh::MeshInstance;
 use rayna_engine::object::ObjectInstance;
@@ -124,7 +124,7 @@ impl BgWorker {
 
     /// Converts the image outputted by the renderer into an egui-appropriate one.
     /// Also converts from linear space to SRGB space
-    fn convert_img(mut img: ImgBuf) -> ColorImage {
+    fn convert_img(mut img: Image) -> ColorImage {
         profile_function!();
 
         // Got a rendered image

@@ -24,6 +24,7 @@
 //! - Add an entry to [MeshInstance] to correspond to the `SphereObject` for static-dispatch
 //! - See [sphere] for an example
 
+use crate::core::types::{Number, Point3};
 use crate::shared::aabb::HasAabb;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
@@ -31,7 +32,6 @@ use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
 use rand_core::RngCore;
-use rayna_engine::core::types::{Number, Point3};
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
 use self::{

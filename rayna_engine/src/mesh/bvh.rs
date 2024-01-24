@@ -3,10 +3,10 @@
 //! These are used to accelerate ray-mesh intersection tests by narrowing the search space,
 //! by skipping meshes that obviously can't be intersected.
 
+use crate::core::types::{Number, Point3, Vector3};
 use getset::Getters;
 use indextree::{Arena, NodeId};
 use rand_core::RngCore;
-use rayna_engine::core::types::{Number, Point3, Vector3};
 use std::ops::{Add, Div};
 
 use crate::mesh::{Mesh as MeshTrait, MeshProperties};

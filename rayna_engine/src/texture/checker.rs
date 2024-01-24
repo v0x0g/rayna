@@ -3,7 +3,7 @@ use num_traits::Euclid;
 use rand_core::RngCore;
 use std::fmt::Debug;
 
-use rayna_engine::core::types::{Colour, Number, Vector2, Vector3};
+use crate::core::types::{Colour, Number, Vector2, Vector3};
 
 use crate::shared::intersect::Intersection;
 use crate::texture::dynamic::DynamicTexture;

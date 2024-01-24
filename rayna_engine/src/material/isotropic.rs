@@ -1,11 +1,11 @@
+use crate::core::types::{Channel, Colour, Number, Vector3};
 use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::rng;
 use crate::texture::{Texture, TextureInstance};
-use image::Pixel as _;
+
 use rand_core::RngCore;
-use rayna_engine::core::types::{Channel, Colour, Number, Vector3};
 use std::ops::Mul;
 
 /// A material that uniformly scatters rays in all directions

@@ -2,6 +2,7 @@ use getset::Getters;
 use rand_core::RngCore;
 
 use super::transform::ObjectTransform;
+use crate::core::types::{Number, Point3};
 use crate::material::Material;
 use crate::mesh;
 use crate::object::bvh::BvhObject;
@@ -10,7 +11,6 @@ use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
-use rayna_engine::core::types::{Number, Point3};
 
 #[derive(Getters, Clone, Debug)]
 #[get = "pub"]

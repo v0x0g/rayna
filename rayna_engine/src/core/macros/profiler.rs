@@ -13,7 +13,7 @@ use std::sync::{Mutex, MutexGuard};
 /// # Note
 /// Make sure to import the following
 /// ```
-/// use rayna_engine::core::targets;
+/// use crate::core::targets;
 /// use core::default::Default;
 /// use once_cell::sync::Lazy;
 /// use puffin::{FrameSink, FrameSinkId, GlobalProfiler, StreamInfoRef, ThreadInfo, ThreadProfiler};

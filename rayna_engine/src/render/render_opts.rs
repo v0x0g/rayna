@@ -1,6 +1,6 @@
+use crate::core::types::Number;
 use nonzero::nonzero;
 use num_traits::cast::ToPrimitive;
-use rayna_engine::core::types::Number;
 use serde::Serialize;
 use std::num::NonZeroUsize;
 use strum_macros::{Display, EnumIter, IntoStaticStr};
@@ -32,12 +32,8 @@ pub enum RenderMode {
 }
 
 impl RenderOpts {
-    /// Returns the dimensions of the render (width and height) as a [u32] slice
-    pub fn dims_u32_slice(&self) -> [u32; 2] {
-        [self.width, self.height]
-            .map(|x| x.get().to_u32())
-            .map(|d| d.expect("image dims failed to fit inside u32"))
-    }
+    /// Returns the dimensions of the render (width and height) as a [usize] slice
+    pub fn dims(&self) -> [usize; 2] { [self.width.get(), self.height.get()] }
 
     pub fn aspect_ratio(&self) -> Number { self.width.get() as Number / self.height.get() as Number }
 }

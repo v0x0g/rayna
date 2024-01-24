@@ -5,7 +5,7 @@ use crate::shared::{math, rng};
 use crate::texture::Texture;
 use image::Pixel as _;
 use rand::RngCore;
-use rayna_shared::def::types::{Channel, Colour, Number, Vector3};
+use rayna_engine::core::types::{Channel, Colour, Number, Vector3};
 use std::ops::Mul;
 
 #[derive(Copy, Clone, Debug)]

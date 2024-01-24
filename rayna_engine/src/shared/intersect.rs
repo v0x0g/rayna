@@ -1,6 +1,6 @@
 use crate::material::Material;
 use derivative::Derivative;
-use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
+use rayna_engine::core::types::{Number, Point2, Point3, Vector3};
 use std::cmp::Ordering;
 
 /// A struct representing a ray-mesh intersection

@@ -6,7 +6,7 @@ use self::{default::DefaultSkybox, dynamic::DynamicSkybox, none::NoSkybox};
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
-use rayna_shared::def::types::Colour;
+use rayna_engine::core::types::Colour;
 
 /// The main trait for implementing a skybox
 ///

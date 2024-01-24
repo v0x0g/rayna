@@ -1,7 +1,7 @@
 //! Strings for use in the UI, such as units or labels
 
 #![allow(unused_variables, dead_code)]
-use rayna_shared::def::types::Number;
+use rayna_engine::core::types::Number;
 
 pub const APP_NAME: &'static str = "rayna";
 

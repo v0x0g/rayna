@@ -12,7 +12,7 @@ use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use getset::CopyGetters;
 use num_traits::Zero;
-use rayna_shared::def::types::{Number, Point2, Point3, Vector3};
+use rayna_engine::core::types::{Number, Point2, Point3, Vector3};
 
 /// The recommended amount of padding around AABB's for planar objects
 pub const AABB_PADDING: Number = 1e-6;

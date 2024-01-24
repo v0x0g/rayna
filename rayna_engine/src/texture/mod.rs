@@ -9,7 +9,7 @@ use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
 use rand::thread_rng;
 use rand_core::RngCore;
-use rayna_shared::def::types::Colour;
+use rayna_engine::core::types::Colour;
 //noinspection ALL
 use self::{
     checker::{UvCheckerTexture, WorldCheckerTexture},

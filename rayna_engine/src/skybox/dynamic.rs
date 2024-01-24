@@ -1,6 +1,6 @@
 use crate::shared::ray::Ray;
 use crate::skybox::Skybox;
-use rayna_shared::def::types::Colour;
+use rayna_engine::core::types::Colour;
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]

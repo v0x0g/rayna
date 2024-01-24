@@ -13,7 +13,7 @@ use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use rand_core::RngCore;
-use rayna_shared::def::types::Number;
+use rayna_engine::core::types::Number;
 
 // noinspection ALL
 use self::{bvh::BvhObject, list::ObjectList, simple::SimpleObject, volumetric::VolumetricObject};

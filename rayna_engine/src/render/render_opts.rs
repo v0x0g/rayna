@@ -1,6 +1,6 @@
 use nonzero::nonzero;
 use num_traits::cast::ToPrimitive;
-use rayna_shared::def::types::Number;
+use rayna_engine::core::types::Number;
 use serde::Serialize;
 use std::num::NonZeroUsize;
 use strum_macros::{Display, EnumIter, IntoStaticStr};

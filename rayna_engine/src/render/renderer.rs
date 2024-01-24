@@ -1,5 +1,6 @@
 use crate::core::profiler;
 use crate::core::targets::*;
+use crate::core::types::{Channel, Colour, ImgBuf, Number, Vector2};
 use crate::material::Material;
 use crate::object::Object;
 use crate::render::render::{Render, RenderStats};
@@ -12,7 +13,6 @@ use crate::shared::ray::Ray;
 use crate::shared::{math, validate};
 use crate::skybox::Skybox;
 use derivative::Derivative;
-use image::Pixel as _;
 use num_integer::Roots;
 use puffin::profile_function;
 use rand::distributions::Distribution;
@@ -20,7 +20,6 @@ use rand::distributions::Uniform;
 use rand::rngs::SmallRng;
 use rand::Rng;
 use rand_core::{RngCore, SeedableRng};
-use rayna_shared::def::types::{Channel, Colour, ImgBuf, Number, Vector2};
 use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use std::marker::PhantomData;
@@ -60,7 +59,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             .thread_name(|id| format!("Renderer::worker_{id}"))
             .start_handler(|id| {
                 trace!(target: RENDERER, "renderer worker {id} start");
-                profiler::worker_profiler_init();
+                profiler::renderer_profiler_init();
             })
             .exit_handler(|id| trace!(target: RENDERER, "renderer worker {id} exit"))
             .build()
@@ -351,24 +350,24 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         // Some colours to help with visualisation
         const N_COL: usize = 13;
         const COLOURS: [Colour; N_COL] = [
-            Colour { 0: [1.0, 1.0, 1.0] },
-            Colour { 0: [1.0, 0.0, 0.0] },
-            Colour { 0: [1.0, 0.5, 0.0] },
-            Colour { 0: [1.0, 1.0, 0.0] },
-            Colour { 0: [0.5, 1.0, 0.0] },
-            Colour { 0: [0.0, 1.0, 0.0] },
-            Colour { 0: [0.0, 1.0, 0.5] },
-            Colour { 0: [0.0, 1.0, 1.0] },
-            Colour { 0: [0.0, 0.5, 1.0] },
-            Colour { 0: [0.0, 0.0, 1.0] },
-            Colour { 0: [0.5, 0.0, 1.0] },
-            Colour { 0: [1.0, 0.0, 1.0] },
-            Colour { 0: [0.0, 0.0, 0.0] },
+            [1.0, 1.0, 1.0].into(),
+            [1.0, 0.0, 0.0].into(),
+            [1.0, 0.5, 0.0].into(),
+            [1.0, 1.0, 0.0].into(),
+            [0.5, 1.0, 0.0].into(),
+            [0.0, 1.0, 0.0].into(),
+            [0.0, 1.0, 0.5].into(),
+            [0.0, 1.0, 1.0].into(),
+            [0.0, 0.5, 1.0].into(),
+            [0.0, 0.0, 1.0].into(),
+            [0.5, 0.0, 1.0].into(),
+            [1.0, 0.0, 1.0].into(),
+            [0.0, 0.0, 0.0].into(),
         ];
 
         return match mode {
             RenderMode::PBR => unreachable!("mode == RenderMode::PBR already checked"),
-            RenderMode::OutwardNormal => Colour::from(intersect.normal.as_array().map(|f| (f / 2.) as f32 + 0.5)),
+            RenderMode::OutwardNormal => Colour::from(intersect.normal.as_array().map(|f| (f / 2.) as Channel + 0.5)),
             RenderMode::RayNormal => Colour::from(intersect.ray_normal.as_array().map(|f| (f / 2.) as Channel + 0.5)),
             RenderMode::Scatter => Colour::from(
                 material

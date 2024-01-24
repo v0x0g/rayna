@@ -3,7 +3,7 @@ use crate::shared::ray::Ray;
 use crate::shared::{rng, validate};
 use puffin::profile_function;
 use rand::Rng;
-use rayna_shared::def::types::{Angle, Number, Point3, Transform3, Vector3};
+use rayna_engine::core::types::{Angle, Number, Point3, Transform3, Vector3};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use valuable::Valuable;

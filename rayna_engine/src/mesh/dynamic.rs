@@ -4,7 +4,7 @@ use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use rand_core::RngCore;
-use rayna_shared::def::types::{Number, Point3};
+use rayna_engine::core::types::{Number, Point3};
 
 use std::sync::Arc;
 

@@ -1,7 +1,7 @@
 use crate::shared::intersect::Intersection;
 use crate::texture::Texture;
 use rand_core::RngCore;
-use rayna_shared::def::types::Colour;
+use rayna_engine::core::types::Colour;
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]

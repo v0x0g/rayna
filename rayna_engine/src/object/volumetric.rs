@@ -10,7 +10,7 @@ use crate::shared::rng;
 use getset::{CopyGetters, Getters};
 use rand::Rng;
 use rand_core::RngCore;
-use rayna_shared::def::types::Number;
+use rayna_engine::core::types::Number;
 
 /// An mesh wrapper that treats the wrapped mesh as a constant-density volume
 ///

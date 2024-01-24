@@ -10,7 +10,7 @@ use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
-use rayna_shared::def::types::{Number, Point3};
+use rayna_engine::core::types::{Number, Point3};
 
 #[derive(Getters, Clone, Debug)]
 #[get = "pub"]

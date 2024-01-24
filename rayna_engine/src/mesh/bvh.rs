@@ -6,7 +6,7 @@
 use getset::Getters;
 use indextree::{Arena, NodeId};
 use rand_core::RngCore;
-use rayna_shared::def::types::{Number, Point3, Vector3};
+use rayna_engine::core::types::{Number, Point3, Vector3};
 use std::ops::{Add, Div};
 
 use crate::mesh::{Mesh as MeshTrait, MeshProperties};

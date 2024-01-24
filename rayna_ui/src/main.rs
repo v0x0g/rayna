@@ -7,9 +7,8 @@
 
 use crate::backend::UiBackend;
 use crate::rayna_app::RaynaApp;
+use crate::targets::*;
 use crate::ui_val::APP_NAME;
-use rayna_engine::core::profiler;
-use rayna_engine::core::targets::*;
 use std::collections::HashMap;
 use tracing::metadata::LevelFilter;
 use tracing::{debug, trace};
@@ -18,8 +17,9 @@ use tracing_subscriber::util::SubscriberInitExt;
 mod backend;
 mod ext;
 mod integration;
+mod profiler;
 mod rayna_app;
-mod targets;
+pub(crate) mod targets;
 mod ui_val;
 
 /// Gets a map of all the [`UiBackend`] implementations available

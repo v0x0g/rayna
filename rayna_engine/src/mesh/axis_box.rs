@@ -4,7 +4,7 @@ use glamour::FromRaw;
 use glamour::ToRaw;
 use rand_core::RngCore;
 
-use rayna_shared::def::types::{Number, Point3, Size3, Vector2, Vector3};
+use rayna_engine::core::types::{Number, Point3, Size3, Vector2, Vector3};
 
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};

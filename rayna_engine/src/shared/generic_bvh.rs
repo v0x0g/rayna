@@ -8,7 +8,7 @@ use indextree::{Arena, NodeId};
 use std::cmp::Ordering;
 
 use itertools::{zip_eq, Itertools};
-use rayna_shared::def::types::Number;
+use rayna_engine::core::types::Number;
 
 use crate::shared::aabb::{Aabb, HasAabb};
 

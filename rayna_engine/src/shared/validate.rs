@@ -2,7 +2,7 @@ use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use approx::*;
-use rayna_shared::def::types::{Colour, Number, Point2, Point3, Vector3};
+use rayna_engine::core::types::{Colour, Number, Point2, Point3, Vector3};
 use std::borrow::Borrow;
 
 macro_rules! debug_assert_only {

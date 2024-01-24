@@ -5,7 +5,7 @@ use dyn_clone::DynClone;
 use image::Pixel as _;
 use noise::utils::ColorGradient;
 use rand_core::RngCore;
-use rayna_shared::def::types::{Channel, Colour, Number};
+use rayna_engine::core::types::{Channel, Colour, Number};
 use std::fmt::Debug;
 
 /// An extended trait what wraps a few other traits.

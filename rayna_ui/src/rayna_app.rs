@@ -8,10 +8,10 @@ use egui::{Context, CursorIcon, Key, RichText, Sense, TextureHandle, TextureOpti
 use puffin::{profile_function, profile_scope};
 use rayna_engine::core::profiler;
 use rayna_engine::core::targets::*;
+use rayna_engine::core::types::{Angle, Number, Vector3};
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
 use rayna_engine::scene::{self, Scene};
-use rayna_shared::def::types::{Angle, Number, Vector3};
 use std::num::NonZeroUsize;
 use std::ops::Deref;
 use std::time::Duration;

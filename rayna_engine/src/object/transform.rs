@@ -15,7 +15,7 @@ use crate::shared::aabb::Aabb;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use getset::Getters;
-use rayna_shared::def::types::{Point3, Transform3, Vector3};
+use rayna_engine::core::types::{Point3, Transform3, Vector3};
 
 /// A struct that holds both a [Transform3] and it's inverse.
 #[derive(Copy, Clone, Debug, Getters)]

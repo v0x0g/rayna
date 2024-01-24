@@ -31,7 +31,7 @@ use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
 use rand_core::RngCore;
-use rayna_shared::def::types::{Number, Point3};
+use rayna_engine::core::types::{Number, Point3};
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
 use self::{

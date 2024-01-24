@@ -3,7 +3,7 @@ use crate::texture::Texture;
 use derivative::Derivative;
 use num_traits::ToPrimitive;
 use rand_core::RngCore;
-use rayna_shared::def::types::{Colour, ImgBuf, Number, Size2, Vector2};
+use rayna_engine::core::types::{Colour, ImgBuf, Number, Size2, Vector2};
 use std::sync::Arc;
 
 #[derive(Clone, Derivative)]

@@ -1,7 +1,7 @@
 use getset::CopyGetters;
 use rand_core::RngCore;
 
-use rayna_shared::def::types::{Number, Point2, Point3};
+use rayna_engine::core::types::{Number, Point2, Point3};
 
 use crate::mesh::planar::Planar;
 use crate::mesh::{Mesh, MeshProperties};

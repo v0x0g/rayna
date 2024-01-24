@@ -8,14 +8,27 @@ use once_cell::sync::Lazy;
 use puffin::{FrameSink, FrameSinkId, GlobalProfiler, StreamInfoRef, ThreadInfo, ThreadProfiler};
 use puffin_http::Server;
 use std::stringify;
+use std::sync::{Mutex, MutexGuard};
 
+/// # Note
+/// Make sure to import the following
+/// ```
+/// use rayna_engine::core::targets;
+/// use core::default::Default;
+/// use once_cell::sync::Lazy;
+/// use puffin::{FrameSink, FrameSinkId, GlobalProfiler, StreamInfoRef, ThreadInfo, ThreadProfiler};
+/// use puffin_http::Server;
+/// use std::stringify;
+/// use std::sync::{Mutex, MutexGuard};
+/// ```
+#[macro_export]
 macro_rules! profiler {
     ($(
         {name: $name:ident, port: $port:expr $(,install: |$install_var:ident| $install:block, drop: |$drop_var:ident| $drop:block)? $(,)?}),*
     $(,)?)
     => {
         $(
-            profiler!(@inner {name: $name, port: $port $(,install: |$install_var| $install, drop: |$drop_var| $drop)?});
+            $crate::profiler!(@inner {name: $name, port: $port $(,install: |$install_var| $install, drop: |$drop_var| $drop)?});
         )*
     };
 
@@ -73,21 +86,4 @@ macro_rules! profiler {
                 }
         }
     };
-}
-
-use std::sync::{Arc, Mutex, MutexGuard};
-
-/// A special flag used to mark whether [egui][egui] (or [eframe][eframe] are calling
-/// [GlobalProfiler::new_frame()] for us. It controls (in `rayna_ui`) whether the
-/// app calls `new_frame` itself, or lets [egui][egui] do so, as well as the pass-through to
-/// our custom profiler (since egui calls [GlobalProfiler::lock()], which locks the global
-/// profiler, not our own.
-///
-/// [egui]: <crates.io/crates/egui>
-/// [eframe]: <crates.io/crates/eframe>
-pub static EGUI_CALLS_PUFFIN: bool = false;
-
-profiler! {
-    {name: MAIN,     port: 8587},
-    {name: RENDERER, port: 8588},
 }

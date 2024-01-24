@@ -1,6 +1,6 @@
 use crate::ui_val::*;
 use egui::{Response, Widget};
-use rayna_shared::def::types::Number;
+use rayna_engine::core::types::Number;
 use std::borrow::BorrowMut;
 
 pub trait UiExt {

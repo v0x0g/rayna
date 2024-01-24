@@ -9,7 +9,7 @@ use crate::shared::RtRequirement;
 use crate::texture::{Texture, TextureInstance};
 use enum_dispatch::enum_dispatch;
 use rand::RngCore;
-use rayna_shared::def::types::{Colour, Number, Vector3};
+use rayna_engine::core::types::{Colour, Number, Vector3};
 
 pub mod dielectric;
 pub mod dynamic;
@@ -39,7 +39,7 @@ pub trait Material: RtRequirement {
     /// # use rayna_engine::shared::math::reflect;
     /// # use rayna_engine::shared::ray::Ray;
     /// # use rayna_engine::shared::{rng, RtRequirement};
-    /// # use rayna_shared::def::types::{Colour, Vector3};
+    /// # use rayna_engine::core::types::{Colour, Vector3};
     /// #
     /// # #[derive(Copy, Clone, Eq, PartialEq, Debug)]
     /// pub struct Test;
@@ -123,7 +123,7 @@ pub trait Material: RtRequirement {
     /// # use rayna_engine::shared::math::reflect;
     /// # use rayna_engine::shared::ray::Ray;
     /// # use rayna_engine::shared::{rng, RtRequirement};
-    /// # use rayna_shared::def::types::{Colour, Vector3};
+    /// # use rayna_engine::core::types::{Colour, Vector3};
     /// #
     /// # #[derive(Copy, Clone, Eq, PartialEq, Debug)]
     /// pub struct Test;

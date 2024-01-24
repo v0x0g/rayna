@@ -4,9 +4,9 @@
 #[macro_export]
 macro_rules! tracing_targets {
     {$( $name:ident $(=$val:expr)? ),* $(,)?} => {
-        $( tracing_targets!(@value $name $(=$val)? ); )*
+        $( $crate::tracing_targets!(@value $name $(=$val)? ); )*
     };
 
     (@value $name:ident = $val:expr) => {pub const $name: &'static str = concat!(env!("CARGO_PKG_NAME"), "::", $val);};
-    (@value $name:ident)             => {tracing_targets!($name = stringify!($name));};
+    (@value $name:ident)             => {$crate::tracing_targets!($name = stringify!($name));};
 }

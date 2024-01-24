@@ -6,7 +6,7 @@
 use getset::Getters;
 use indextree::{Arena, NodeId};
 use rand_core::RngCore;
-use rayna_shared::def::types::{Number, Point3};
+use rayna_engine::core::types::{Number, Point3};
 
 use crate::object::transform::ObjectTransform;
 use crate::object::Object;

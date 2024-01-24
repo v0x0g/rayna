@@ -1,9 +1,9 @@
 use crate::integration::message::{MessageToUi, MessageToWorker};
+use crate::targets::BG_WORKER;
 use egui::{Color32, ColorImage};
-use image::RgbaImage;
 use puffin::{profile_function, profile_scope};
 use rayna_engine::core::profiler;
-use rayna_engine::core::targets::BG_WORKER;
+use rayna_engine::core::types::{Channel, ImgBuf};
 use rayna_engine::material::MaterialInstance;
 use rayna_engine::mesh::MeshInstance;
 use rayna_engine::object::ObjectInstance;
@@ -13,7 +13,6 @@ use rayna_engine::render::renderer::Renderer;
 use rayna_engine::scene::Scene;
 use rayna_engine::skybox::SkyboxInstance;
 use rayna_engine::texture::TextureInstance;
-use rayna_shared::def::types::{Channel, ImgBuf};
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
 use std::ops::DerefMut;
@@ -46,7 +45,7 @@ impl BgWorker {
     #[instrument(level = tracing::Level::DEBUG, skip(self), parent = None)]
     pub fn thread_run(self) {
         info!(target: BG_WORKER, "BgWorker thread start");
-        profiler::worker_profiler_init();
+        profiler::renderer_profiler_init();
 
         let Self {
             msg_tx,
@@ -58,7 +57,7 @@ impl BgWorker {
         } = self;
 
         loop {
-            profiler::worker_profiler_lock().new_frame();
+            profiler::renderer_profiler_lock().new_frame();
 
             profile_function!(); // place here not at the start since we are looping
 
@@ -141,7 +140,7 @@ impl BgWorker {
         }
 
         // Convert
-        let img_as_rgba: RgbaImage = {
+        let img_as_rgba_u8: RgbaImage = {
             profile_scope!("convert_channels_u8");
             let mut buffer: RgbaImage = RgbaImage::new(img.width(), img.height());
             for (to, from) in buffer.pixels_mut().zip(img.pixels()) {
@@ -156,7 +155,7 @@ impl BgWorker {
         let img_as_egui = {
             profile_scope!("transmute_egui");
 
-            let size = [img.width() as usize, img.height() as usize];
+            let size = [img.width(), img.height()];
 
             // PERFORMANCE:
             // This is massively faster than calling
@@ -166,11 +165,11 @@ impl BgWorker {
 
             // SAFETY:
             // Color32 is defined as being a `[u8; 4]` internally anyway
-            // And we know that RgbaImage stores pixels as [r, g, b, a]
+            // And we know that we have stored pixels `[r, g, b, a] : [u8; 4]`
             // So we can safely transmute the vector, because they have the same
             // internal representation and layout
-            let (ptr, len, cap) = img_as_rgba.into_vec().into_raw_parts();
-            let px = unsafe { Vec::from_raw_parts(ptr as *mut Color32, len / 4, cap / 4) };
+            let (ptr, len, cap) = img_as_rgba_u8.into_vec().into_raw_parts();
+            let px = unsafe { Vec::from_raw_parts(ptr, len / 4, cap / 4) };
 
             ColorImage { size, pixels: px }
         };

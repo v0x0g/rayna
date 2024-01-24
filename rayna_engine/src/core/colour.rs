@@ -5,7 +5,7 @@ use std::hash::{Hash, Hasher};
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
-pub struct Colour<const N: usize>([Channel; N]);
+pub struct Colour<const N: usize>(pub [Channel; N]);
 
 pub type ColourRgb = Colour<3>;
 

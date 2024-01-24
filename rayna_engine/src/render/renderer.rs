@@ -494,7 +494,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         // Normalise at the end by dividing by dividing by total probability
         let col_avg = col_accum / prob_accum as Channel;
 
-        col_emitted + col_scattered
+        col_emitted + col_avg
     }
 }
 

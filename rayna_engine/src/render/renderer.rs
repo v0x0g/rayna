@@ -10,7 +10,7 @@ use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
-use crate::shared::{math, validate};
+use crate::shared::{math, rng, validate};
 use crate::skybox::Skybox;
 use derivative::Derivative;
 use num_integer::Roots;
@@ -472,8 +472,12 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
         // Calculate the future colour, including from light sources
 
-        let ray_light = Ray::new(intersection.pos_w, Point3::new(0.5, 1.0, 0.5) - intersection.pos_w);
-        let col_light = Self::ray_colour_recursive(scene, &ray_light, opts, bounds, depth + 1, rng);
+        let ray_light = Ray::new(
+            intersection.pos_w,
+            Point3::new(0.5, 1.0, 0.5) + rng::vector_in_unit_cube_01(rng) * 0.01 - intersection.pos_w,
+        );
+        // depth=opts.bounces so it don't recurse again
+        let col_light = Self::ray_colour_recursive(scene, &ray_light, opts, bounds, opts.bounces, rng);
         let prob_light = material.scatter_probability(ray, &ray_light, &intersection);
 
         let mut col_accum = Colour::BLACK;

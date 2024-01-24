@@ -33,6 +33,6 @@ impl<Tex: Texture> Material for LightMaterial<Tex> {
         _future_col: &Colour,
         _rng: &mut dyn RngCore,
     ) -> Colour {
-        [0.; 3].into()
+        Colour::BLACK
     }
 }

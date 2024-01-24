@@ -23,7 +23,7 @@ use rand_core::{RngCore, SeedableRng};
 use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use std::marker::PhantomData;
-use std::ops::{Add, DerefMut};
+use std::ops::DerefMut;
 use std::sync::OnceLock;
 use std::time::Duration;
 use thiserror::Error;

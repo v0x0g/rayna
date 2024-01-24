@@ -1,4 +1,4 @@
-use crate::core::types::{Channel, Colour, Number, Vector3};
+use crate::core::types::{Colour, Number, Vector3};
 use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -8,7 +8,6 @@ use crate::texture::TextureInstance;
 use glamour::AngleConsts;
 
 use rand::RngCore;
-use std::ops::Mul;
 
 #[derive(Copy, Clone, Debug)]
 pub struct LambertianMaterial<TexAlbedo: Texture, TexEmissive: Texture> {

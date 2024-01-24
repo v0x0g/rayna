@@ -1,4 +1,4 @@
-use crate::core::types::{Channel, Colour, Number, Vector3};
+use crate::core::types::{Colour, Number, Vector3};
 use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -6,7 +6,6 @@ use crate::shared::{math, rng};
 use crate::texture::Texture;
 
 use rand::RngCore;
-use std::ops::Mul;
 
 #[derive(Copy, Clone, Debug)]
 pub struct MetalMaterial<Tex: Texture> {

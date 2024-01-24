@@ -1,4 +1,4 @@
-use crate::core::types::{Channel, Colour, Number, Vector3};
+use crate::core::types::{Colour, Number, Vector3};
 use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::math;
@@ -7,7 +7,6 @@ use crate::texture::Texture;
 
 use num_traits::Pow;
 use rand::{Rng, RngCore};
-use std::ops::Mul;
 
 #[derive(Copy, Clone, Debug)]
 pub struct DielectricMaterial<Tex: Texture> {

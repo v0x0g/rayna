@@ -1,13 +1,11 @@
 use derivative::Derivative;
 use getset::{CopyGetters, Getters};
 use num_integer::Integer;
-use rayna_shared::colour::ColourRgb;
-use rayna_shared::def::types::Channel;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
 #[derive(CopyGetters, Getters, Derivative)]
 #[derivative(Debug)]
-pub struct Image<Col = ColourRgb> {
+pub struct Image<Col = crate::core::types::Colour> {
     #[get_copy = "pub"]
     width: usize,
     #[get_copy = "pub"]

@@ -19,6 +19,7 @@ mod backend;
 mod ext;
 mod integration;
 mod rayna_app;
+mod targets;
 mod ui_val;
 
 /// Gets a map of all the [`UiBackend`] implementations available

@@ -45,6 +45,8 @@ getset = { workspace = true }
 itertools = { workspace = true }
 indextree = "4.6.0"
 auto_ops = { workspace = true }
+once_cell = { workspace = true }
+paste = { workspace = true }
 
 # Perf
 puffin = { workspace = true }

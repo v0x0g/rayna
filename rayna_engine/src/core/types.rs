@@ -1,5 +1,5 @@
-use crate::colour::ColourRgb;
-use crate::image::Image;
+use crate::core::colour::ColourRgb;
+use crate::core::image::Image;
 
 pub type Channel = f32;
 pub type Colour = ColourRgb;

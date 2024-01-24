@@ -12,7 +12,6 @@ edition = "2021"
 
 # Raytracing deps
 rayna_engine = { path = "../rayna_engine" }
-rayna_shared = { path = "../rayna_shared" }
 
 # Math
 #glam = { workspace = true }

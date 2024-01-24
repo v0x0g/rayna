@@ -10,8 +10,6 @@ edition = "2021"
 
 [dependencies]
 
-rayna_shared = { path = "../rayna_shared" }
-
 # Maths
 glam = { workspace = true }
 glamour = { workspace = true }

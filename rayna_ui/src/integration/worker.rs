@@ -1,9 +1,9 @@
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::targets::BG_WORKER;
-use egui::ColorImage;
+use egui::{Color32, ColorImage};
 use puffin::{profile_function, profile_scope};
 use rayna_engine::core::profiler;
-use rayna_engine::core::types::{Channel, Colour, Image};
+use rayna_engine::core::types::{Channel, Image};
 use rayna_engine::material::MaterialInstance;
 use rayna_engine::mesh::MeshInstance;
 use rayna_engine::object::ObjectInstance;
@@ -13,8 +13,8 @@ use rayna_engine::render::renderer::Renderer;
 use rayna_engine::scene::Scene;
 use rayna_engine::skybox::SkyboxInstance;
 use rayna_engine::texture::TextureInstance;
-use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
+use rayon::iter::{IndexedParallelIterator, IntoParallelIterator};
 use std::ops::{Deref, DerefMut};
 use std::thread::JoinHandle;
 use std::time::Duration;
@@ -140,19 +140,21 @@ impl BgWorker {
         }
 
         // Convert each pixel into array of u8 channels
-        let pixels_rgb_u8: Vec<[u8; Colour::CHANNEL_COUNT]> = {
+        let pixels_egui = {
             profile_scope!("convert_channels_u8");
-            let mut buffer: Vec<[u8; Colour::CHANNEL_COUNT]> = vec![];
-            buffer.extend(img.deref().into_iter().map(|col| col.0.map(|c| (c * 255.0) as u8)));
+            let mut buffer = vec![];
+            img.deref()
+                .into_par_iter()
+                .map(|col| {
+                    let [r, g, b] = col.0.map(|c| (c * 255.0) as u8);
+                    Color32::from_rgb(r, g, b)
+                })
+                .collect_into_vec(&mut buffer);
             buffer
         };
-
-        let img_as_egui = {
-            profile_scope!("convert_egui");
-
-            ColorImage::from_rgb([img.width(), img.height()], pixels_rgb_u8.flatten())
-        };
-
-        img_as_egui
+        ColorImage {
+            size: [img.width(), img.height()],
+            pixels: pixels_egui,
+        }
     }
 }

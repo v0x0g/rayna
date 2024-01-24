@@ -1,7 +1,7 @@
-use crate::shared::colour::ColourRgb;
 use derivative::Derivative;
 use getset::{CopyGetters, Getters};
 use num_integer::Integer;
+use rayna_shared::colour::ColourRgb;
 use rayna_shared::def::types::Channel;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 

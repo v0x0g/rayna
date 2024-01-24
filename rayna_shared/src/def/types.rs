@@ -1,8 +1,9 @@
-use image::{ImageBuffer, Rgb};
+use crate::colour::ColourRgb;
+use crate::image::Image;
 
 pub type Channel = f32;
-pub type Colour = Rgb<Channel>;
-pub type ImgBuf = ImageBuffer<Colour, Vec<Channel>>;
+pub type Colour = ColourRgb;
+pub type ImgBuf = Image<Colour>;
 
 pub type Number = f64;
 pub type Angle = glamour::Angle<Number>;

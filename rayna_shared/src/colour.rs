@@ -1,6 +1,6 @@
-use crate::shared::impl_utils::{impl_op, impl_op_assign};
+use crate::def::types::Channel;
+use crate::{impl_op, impl_op_assign};
 use itertools::Itertools;
-use rayna_shared::def::types::Channel;
 use std::array;
 use std::hash::{Hash, Hasher};
 use std::ops::{Deref, DerefMut, Index, IndexMut};

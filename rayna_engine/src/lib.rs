@@ -6,13 +6,9 @@
 #![feature(negative_impls)]
 #![feature(iter_map_windows)]
 #![feature(iter_collect_into)]
-#![feature(maybe_uninit_uninit_array)]
-#![feature(maybe_uninit_array_assume_init)]
 #![feature(const_for)]
 #![feature(const_trait_impl)]
 #![feature(const_mut_refs)]
-#![feature(const_maybe_uninit_uninit_array)]
-#![feature(const_maybe_uninit_array_assume_init)]
 
 pub mod material;
 pub mod mesh;

@@ -4,7 +4,7 @@ use crate::{forward_fn, impl_op};
 use itertools::Itertools;
 use std::array;
 use std::hash::{Hash, Hasher};
-use std::ops::{Deref, DerefMut, Index, IndexMut};
+use std::ops::{Add, Deref, DerefMut, Index, IndexMut, Mul};
 
 // TODO: Make this generic over the channel type
 
@@ -158,6 +158,13 @@ impl_op!(impl {<const N: usize>} core::ops::Shr : fn shr(col: Colour<N>, shift: 
 
 impl_op_assign!(impl {<const N: usize>} core::ops::ShlAssign : fn shl_assign(col: Colour<N>, shift: usize) { col.0.rotate_left(shift) });
 impl_op_assign!(impl {<const N: usize>} core::ops::ShrAssign : fn shr_assign(col: Colour<N>, shift: usize) { col.0.rotate_right(shift) });
+
+impl<const N: usize> core::iter::Sum for Colour<N> {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self { iter.fold(Self::BLACK, Self::add) }
+}
+impl<const N: usize> core::iter::Product for Colour<N> {
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self { iter.fold(Self::BLACK, Self::mul) }
+}
 
 // endregion
 

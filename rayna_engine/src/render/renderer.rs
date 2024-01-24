@@ -301,12 +301,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
         let overall_colour = {
             // Find mean of all samples
-            let accum = samples
-                .iter()
-                .copied()
-                // Pixel doesn't implement [core::ops::Add], so have to manually
-                .reduce(|a, b| Colour::map2(&a, &b, Channel::add))
-                .unwrap_or_else(|| [0.; 3].into());
+            let accum: Colour = samples.iter().copied().sum();
 
             let mean = accum.map(|c| c / (samples.len() as Channel));
             let pix = Colour::from(mean);
@@ -495,7 +490,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         // Normalise at the end by dividing by dividing by total probability
         let col_avg = col_accum / prob_accum as Channel;
 
-        Colour::map2(&col_scattered, &col_emitted, Channel::add)
+        col_emitted + col_scattered
     }
 }
 

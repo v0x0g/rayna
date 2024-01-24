@@ -41,6 +41,6 @@ impl<Tex: Texture> Material for IsotropicMaterial<Tex> {
         rng: &mut dyn RngCore,
     ) -> Colour {
         let albedo = self.albedo.value(intersection, rng);
-        Colour::map2(future_col, &albedo, Channel::mul)
+        future_col * albedo
     }
 }

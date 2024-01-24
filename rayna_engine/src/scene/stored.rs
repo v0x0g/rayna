@@ -149,7 +149,7 @@ pub static RTIAW_DEMO: Scene = {
             let material_choice = rng.gen::<Number>();
             let material: MaterialInstance<TextureInstance> = if material_choice < 0.7 {
                 LambertianMaterial {
-                    albedo: Colour::map2(&rng::colour_rgb(rng), &rng::colour_rgb(rng), |a, b| a * b).into(),
+                    albedo: rng::colour_rgb(rng) * rng::colour_rgb(rng),
                     emissive: Default::default(),
                 }
                 .into()

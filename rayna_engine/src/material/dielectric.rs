@@ -50,7 +50,7 @@ impl<Tex: Texture> Material for DielectricMaterial<Tex> {
         future_col: &Colour,
         rng: &mut dyn RngCore,
     ) -> Colour {
-        Colour::map2(&future_col, &self.albedo.value(intersection, rng), Channel::mul)
+        future_col * self.albedo.value(intersection, rng)
     }
 }
 

@@ -7,9 +7,9 @@
 
 use crate::backend::UiBackend;
 use crate::rayna_app::RaynaApp;
-use rayna_shared::def::constants::APP_NAME;
-use rayna_shared::def::targets::*;
-use rayna_shared::profiler;
+use crate::ui_val::APP_NAME;
+use rayna_engine::core::profiler;
+use rayna_engine::core::targets::*;
 use std::collections::HashMap;
 use tracing::metadata::LevelFilter;
 use tracing::{debug, trace};

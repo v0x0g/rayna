@@ -6,11 +6,11 @@
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::integration::worker::BgWorker;
 use egui::ColorImage;
+use rayna_engine::core::targets::INTEGRATION;
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
 use rayna_engine::scene::Scene;
-use rayna_shared::def::targets::INTEGRATION;
 use std::any::Any;
 use std::sync::Arc;
 use std::thread::JoinHandle;

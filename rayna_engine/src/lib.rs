@@ -10,6 +10,8 @@
 #![feature(const_trait_impl)]
 #![feature(const_mut_refs)]
 
+pub mod core;
+mod core;
 pub mod material;
 pub mod mesh;
 pub mod object;

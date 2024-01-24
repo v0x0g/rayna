@@ -26,9 +26,6 @@ rand_hc = { workspace = true }
 rand_isaac = { workspace = true }
 noise = { workspace = true}
 
-# Raytracing
-image = { workspace = true }
-
 # Logs
 tracing = { workspace = true }
 
@@ -53,5 +50,6 @@ auto_ops = { workspace = true }
 
 # Perf
 puffin = { workspace = true }
+puffin_http = { workspace = true }
 rayon = { workspace = true }
 opool = "0.1.1"

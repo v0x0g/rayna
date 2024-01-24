@@ -1,3 +1,5 @@
+use crate::core::profiler;
+use crate::core::targets::*;
 use crate::material::Material;
 use crate::object::Object;
 use crate::render::render::{Render, RenderStats};
@@ -18,9 +20,7 @@ use rand::distributions::Uniform;
 use rand::rngs::SmallRng;
 use rand::Rng;
 use rand_core::{RngCore, SeedableRng};
-use rayna_shared::def::targets::*;
 use rayna_shared::def::types::{Channel, Colour, ImgBuf, Number, Vector2};
-use rayna_shared::profiler;
 use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use std::marker::PhantomData;

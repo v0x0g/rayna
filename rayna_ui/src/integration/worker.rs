@@ -1,8 +1,9 @@
 use crate::integration::message::{MessageToUi, MessageToWorker};
-use crate::profiler;
 use egui::{Color32, ColorImage};
 use image::RgbaImage;
 use puffin::{profile_function, profile_scope};
+use rayna_engine::core::profiler;
+use rayna_engine::core::targets::BG_WORKER;
 use rayna_engine::material::MaterialInstance;
 use rayna_engine::mesh::MeshInstance;
 use rayna_engine::object::ObjectInstance;
@@ -12,7 +13,6 @@ use rayna_engine::render::renderer::Renderer;
 use rayna_engine::scene::Scene;
 use rayna_engine::skybox::SkyboxInstance;
 use rayna_engine::texture::TextureInstance;
-use rayna_shared::def::targets::BG_WORKER;
 use rayna_shared::def::types::{Channel, ImgBuf};
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;

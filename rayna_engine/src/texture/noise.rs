@@ -35,11 +35,11 @@ impl<const D: usize, N: RtNoiseFn<D>> ColourSource<N, D> {
     pub fn get(&self, point: [Number; D]) -> Colour {
         match self {
             Self::Greyscale(n) => Colour::from([n.get(point) as Channel; 3]),
-            Self::Gradient(n, g) => *Colour::from_slice(&g.get_color(n.get(point)).map(Into::into)),
+            Self::Gradient(n, g) => Colour::from(&g.get_color(n.get(point)).map(Into::into)[..]),
             Self::Rgb(n) => Colour::from(n.each_ref().map(|n| n.get(point) as Channel)),
         }
         // Normalise `-1..1` to `0..1`
-        .map_without_alpha(|c| c / 2. + 0.5)
+        .map(|c| c / 2. + 0.5)
     }
 }
 

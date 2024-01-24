@@ -48,6 +48,22 @@ impl const From<ColourRgb> for (Channel, Channel, Channel) {
 impl<const N: usize> const From<[Channel; N]> for Colour<N> {
     fn from(val: [Channel; N]) -> Self { Self::new(val) }
 }
+impl<const N: usize> const From<&[Channel]> for Colour<N> {
+    /// Converts a slice reference into a colour
+    ///
+    /// # Panics
+    /// Ensure that the slice is at least [N] elements long, otherwise this will cause an assertion failure
+    fn from(val: &[Channel]) -> Self {
+        assert!(
+            val.len() >= N,
+            "given slice reference was not long enough ({len} < {n})",
+            len = val.len(),
+            n = N
+        );
+        let val: [Channel; N] = val[..N].try_into().expect("couldn't convert slice");
+        Self::new(val)
+    }
+}
 impl<const N: usize> const From<Colour<N>> for [Channel; N] {
     //noinspection RsLiveness - `val` is used
     fn from(Colour::<N> { 0: val }: Colour<N>) -> Self { val }

@@ -79,7 +79,7 @@ impl<Col> Image<Col> {
     }
 }
 
-// regions Constructors
+// endregion Constructors
 
 // region Pixel Accessors
 

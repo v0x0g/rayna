@@ -180,7 +180,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         }
 
         // log2 so the pixels are still clearly visible even when the dimensions are huge
-        let img = internal(w.ilog2(), h.ilog2());
+        let img = internal(w.ilog2() as usize, h.ilog2() as usize);
 
         return img;
     }
@@ -206,10 +206,10 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
             let pixels = img
                 .deref_mut()
+                .into_par_iter()
                 .enumerate()
-                .map(|(idx, chans)| {
-                    let (y, x) = num_integer::Integer::div_rem(&idx, &(w as usize));
-                    let p = Colour::from_slice_mut(chans);
+                .map(|(idx, p)| {
+                    let (y, x) = num_integer::Integer::div_rem(&idx, &w);
                     (x, y, p)
                 })
                 // Return on panic as fast as possible; don't keep processing all the pixels on panic

@@ -1,6 +1,5 @@
 use crate::core::types::Number;
 use nonzero::nonzero;
-use num_traits::cast::ToPrimitive;
 use serde::Serialize;
 use std::num::NonZeroUsize;
 use strum_macros::{Display, EnumIter, IntoStaticStr};

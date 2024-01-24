@@ -38,10 +38,10 @@ impl Texture for ImageTexture {
 
         // Don't need bounds check on uv coords, should be valid already
         // Don't need to
-        let Some(i) = (u * self.image.width() as Number).to_u32() else {
+        let Some(i) = (u * self.image.width() as Number).to_usize() else {
             return super::texture_error_value();
         };
-        let Some(j) = (v * self.image.height() as Number).to_u32() else {
+        let Some(j) = (v * self.image.height() as Number).to_usize() else {
             return super::texture_error_value();
         };
 

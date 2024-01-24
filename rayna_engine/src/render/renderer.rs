@@ -483,7 +483,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         let mut col_accum = Colour::BLACK;
         let mut prob_accum = 0.;
 
-        let samples = [(col_scattered, prob_scattered)];
+        let samples = [(col_scattered, prob_scattered), (col_light, prob_light)];
 
         // Do a weighted average of each source of light.
         for (col, prob) in samples {

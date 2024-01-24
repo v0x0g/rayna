@@ -1,9 +1,9 @@
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::targets::BG_WORKER;
-use egui::{Color32, ColorImage};
+use egui::ColorImage;
 use puffin::{profile_function, profile_scope};
 use rayna_engine::core::profiler;
-use rayna_engine::core::types::{Channel, Image};
+use rayna_engine::core::types::{Channel, Colour, Image};
 use rayna_engine::material::MaterialInstance;
 use rayna_engine::mesh::MeshInstance;
 use rayna_engine::object::ObjectInstance;
@@ -15,7 +15,7 @@ use rayna_engine::skybox::SkyboxInstance;
 use rayna_engine::texture::TextureInstance;
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
-use std::ops::DerefMut;
+use std::ops::{Deref, DerefMut};
 use std::thread::JoinHandle;
 use std::time::Duration;
 use tracing::{info, instrument, trace, warn};
@@ -139,39 +139,18 @@ impl BgWorker {
             img.deref_mut().into_par_iter().for_each(|c| *c = c.powf(INV_GAMMA));
         }
 
-        // Convert
-        let img_as_rgba_u8: RgbaImage = {
+        // Convert each pixel into array of u8 channels
+        let pixels_rgb_u8: Vec<[u8; Colour::CHANNEL_COUNT]> = {
             profile_scope!("convert_channels_u8");
-            let mut buffer: RgbaImage = RgbaImage::new(img.width(), img.height());
-            for (to, from) in buffer.pixels_mut().zip(img.pixels()) {
-                to.0[0] = (from.0[0] * 255.0) as u8;
-                to.0[1] = (from.0[1] * 255.0) as u8;
-                to.0[2] = (from.0[2] * 255.0) as u8;
-                to.0[3] = 255;
-            }
+            let mut buffer: Vec<[u8; Colour::CHANNEL_COUNT]> = vec![];
+            buffer.extend(img.deref().into_iter().map(|col| col.0.map(|c| (c * 255.0) as u8)));
             buffer
         };
 
         let img_as_egui = {
-            profile_scope!("transmute_egui");
+            profile_scope!("convert_egui");
 
-            let size = [img.width(), img.height()];
-
-            // PERFORMANCE:
-            // This is massively faster than calling
-            // `ColorImage::from_rgba_unmultiplied(size, img_as_rgba.into_vec())`
-            // It goes from ~7ms to ~1us
-            // We can do this because we know alpha channel is always 1, so we can skip it
-
-            // SAFETY:
-            //  Color32 is defined as being a `[u8; 4]` internally anyway
-            //  And we know that we have stored pixels `[r, g, b, a] : [u8; 4]`
-            //  So we can safely transmute the vector, because they have the same
-            //  internal representation and layout
-            let (ptr, len, cap) = img_as_rgba_u8.into_vec().into_raw_parts();
-            let px = unsafe { Vec::from_raw_parts(ptr, len / 4, cap / 4) };
-
-            ColorImage { size, pixels: px }
+            ColorImage::from_rgb([img.width(), img.height()], pixels_rgb_u8.flatten())
         };
 
         img_as_egui

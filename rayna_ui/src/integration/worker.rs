@@ -164,10 +164,10 @@ impl BgWorker {
             // We can do this because we know alpha channel is always 1, so we can skip it
 
             // SAFETY:
-            // Color32 is defined as being a `[u8; 4]` internally anyway
-            // And we know that we have stored pixels `[r, g, b, a] : [u8; 4]`
-            // So we can safely transmute the vector, because they have the same
-            // internal representation and layout
+            //  Color32 is defined as being a `[u8; 4]` internally anyway
+            //  And we know that we have stored pixels `[r, g, b, a] : [u8; 4]`
+            //  So we can safely transmute the vector, because they have the same
+            //  internal representation and layout
             let (ptr, len, cap) = img_as_rgba_u8.into_vec().into_raw_parts();
             let px = unsafe { Vec::from_raw_parts(ptr, len / 4, cap / 4) };
 

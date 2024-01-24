@@ -4,7 +4,7 @@
 //!
 //! There are some common ones [CORNELL] and [RTIAW_DEMO], that should be well known.
 
-use crate::core::types::{Angle, Channel, Colour, Number, Point3, Transform3, Vector3};
+use crate::core::types::{Angle, Channel, Colour, Image, Number, Point3, Transform3, Vector3};
 use crate::object::simple::SimpleObject;
 
 use noise::*;
@@ -358,11 +358,10 @@ pub static RTTNW_DEMO: Scene = {
             SimpleObject::new(
                 SphereMesh::new((4., 2., 4.), 1.0),
                 LambertianMaterial {
-                    albedo: ImageTexture::from(
+                    albedo: ImageTexture::from(Image::from(
                         image::load_from_memory(include_bytes!("../../../media/textures/earthmap/earthmap.jpg"))
-                            .expect("compile-time image resource should be valid")
-                            .into_rgb32f(),
-                    )
+                            .expect("compile-time image resource should be valid"),
+                    ))
                     .into(),
                     emissive: BLACK_TEX,
                 },

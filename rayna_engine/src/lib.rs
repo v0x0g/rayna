@@ -10,6 +10,7 @@
 #![feature(const_trait_impl)]
 #![feature(const_mut_refs)]
 #![feature(new_uninit)]
+#![feature(vec_into_raw_parts)]
 
 pub mod core;
 pub mod material;

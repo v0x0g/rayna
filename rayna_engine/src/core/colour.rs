@@ -6,7 +6,10 @@ use std::array;
 use std::hash::{Hash, Hasher};
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
+// TODO: Make this generic over the channel type
+
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
+#[repr(transparent)] // Ensure it's treated as a raw array, so we can transmute safely
 pub struct Colour<const N: usize>(pub [Channel; N]);
 
 pub type ColourRgb = Colour<3>;
@@ -17,7 +20,7 @@ impl<const N: usize> Colour<N> {
     pub const CHANNEL_COUNT: usize = N;
 }
 
-impl<const N: usize> Default for Colour<N> {
+impl<const N: usize> const Default for Colour<N> {
     fn default() -> Self { Self::new([0.; N]) }
 }
 
@@ -38,8 +41,6 @@ impl const From<ColourRgb> for (Channel, Channel, Channel) {
     //noinspection RsLiveness - `r,g,b` are used
     fn from(ColourRgb { 0: [r, g, b] }: ColourRgb) -> Self { (r, g, b) }
 }
-
-//poop
 
 // endregion RGB Impl
 

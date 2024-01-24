@@ -349,19 +349,19 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         // Some colours to help with visualisation
         const N_COL: usize = 13;
         const COLOURS: [Colour; N_COL] = [
-            [1.0, 1.0, 1.0].into(),
-            [1.0, 0.0, 0.0].into(),
-            [1.0, 0.5, 0.0].into(),
-            [1.0, 1.0, 0.0].into(),
-            [0.5, 1.0, 0.0].into(),
-            [0.0, 1.0, 0.0].into(),
-            [0.0, 1.0, 0.5].into(),
-            [0.0, 1.0, 1.0].into(),
-            [0.0, 0.5, 1.0].into(),
-            [0.0, 0.0, 1.0].into(),
-            [0.5, 0.0, 1.0].into(),
-            [1.0, 0.0, 1.0].into(),
-            [0.0, 0.0, 0.0].into(),
+            Colour::new([1.0, 1.0, 1.0]),
+            Colour::new([1.0, 0.0, 0.0]),
+            Colour::new([1.0, 0.5, 0.0]),
+            Colour::new([1.0, 1.0, 0.0]),
+            Colour::new([0.5, 1.0, 0.0]),
+            Colour::new([0.0, 1.0, 0.0]),
+            Colour::new([0.0, 1.0, 0.5]),
+            Colour::new([0.0, 1.0, 1.0]),
+            Colour::new([0.0, 0.5, 1.0]),
+            Colour::new([0.0, 0.0, 1.0]),
+            Colour::new([0.5, 0.0, 1.0]),
+            Colour::new([1.0, 0.0, 1.0]),
+            Colour::new([0.0, 0.0, 0.0]),
         ];
 
         return match mode {

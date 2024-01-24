@@ -1,15 +1,12 @@
 use crate::core::types::{Colour, Image, Number, Size2, Vector2};
 use crate::shared::intersect::Intersection;
 use crate::texture::Texture;
-use derivative::Derivative;
 use num_traits::ToPrimitive;
 use rand_core::RngCore;
 use std::sync::Arc;
 
-#[derive(Clone, Derivative)]
-#[derivative(Debug)]
+#[derive(Clone, Debug)]
 pub struct ImageTexture {
-    #[derivative(Debug = "ignore")]
     pub image: Arc<Image>,
     pub scale: Size2,
     pub offset: Vector2,

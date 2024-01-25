@@ -1,6 +1,6 @@
 use crate::core::profiler;
 use crate::core::targets::*;
-use crate::core::types::{Channel, Colour, Image, Number, Point3, Vector2};
+use crate::core::types::{Channel, Colour, Image, Number, Vector2};
 use crate::material::Material;
 use crate::object::Object;
 use crate::render::render::{Render, RenderStats};
@@ -439,18 +439,25 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
         /// Helper struct that encapsulates a future sample nicely
         #[derive(Copy, Clone, Debug)]
-        pub(self) struct FutureSample {
+        pub(self) struct ScatterSample {
+            /// The light ray colour of the sample
             pub col: Colour,
+            /// The relative probability of the sampled ray being sampled, for the given material.
+            /// This is similar to the weight of the sample - a higher value means the sample is more likely overall
+            /// and therefore should be weighted higher
             pub prob: Number,
         }
 
-        // PERF: Chose 16 samples as a tradeoff between not allocating on heap, and wasting stack space
+        // PERF: Chose num samples as a tradeoff between not allocating on heap, and wasting stack space
         //  If we go above 16 branches, the sheer amount of intersections will have a much bigger perf impact
         //  than any heap allocations. Also we want to make sure we don't overflow the stack with high depths
-        let mut future_samples = SmallVec::<[FutureSample; 16]>::new();
+        let mut scatter_samples = SmallVec::<[ScatterSample; 16]>::new();
+
+        // NOTE: The number of rays increases almost exponentially, with the number of branches and bounce depth
+        //  For a given `d: depth, b: branches`, we check `(b^(d+1) - 1) / (b - 1)` rays, per pixel
 
         // Calculate the lighting samples for the scattered ray
-        let scatter_sample = {
+        for _ in 0..opts.ray_branching.get() {
             let scatter_ray = {
                 let Some(future_ray_dir) = material.scatter(in_ray, &intersection, rng) else {
                     return col_emitted;
@@ -471,60 +478,29 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             };
             let scatter_prob = material.scatter_probability(in_ray, &scatter_ray, &intersection);
 
-            FutureSample {
+            let sample = ScatterSample {
                 col: scatter_col,
                 prob: scatter_prob,
-            }
-        };
-
-        let light_test_sample = {
-            let pos_light = Point3::new(0.5 + rng.gen::<Number>() * 0.1, 1.0, 0.5 + rng.gen::<Number>() * 0.1);
-            let to_light = pos_light - intersection.pos_w;
-            let light_ray = Ray::new(intersection.pos_w, to_light);
-            // If we intersected with the light, at the correct position, then there is no shadowing and the point is lit
-            let light_col = {
-                if let Some(i) = Self::calculate_intersection(scene, &light_ray, bounds, rng) {
-                    let col_raw = if i.intersection.pos_w.distance_squared(pos_light) > 0.001 {
-                        Colour::BLACK
-                    } else {
-                        Colour::WHITE * 1.
-                    };
-
-                    material.reflected_light(in_ray, &i.intersection, &light_ray, &col_raw, rng)
-                } else {
-                    Colour::BLACK
-                }
             };
-            let light_prob = material.scatter_probability(in_ray, &light_ray, &intersection);
 
-            FutureSample {
-                col: light_col,
-                prob: light_prob,
-            }
-        };
+            scatter_samples.push(sample);
+        }
 
-        let mut lights_sample = FutureSample {
+        // Do a weighted average of each source of light.
+        let mut overall_sample = ScatterSample {
             col: Colour::BLACK,
             prob: 0.,
         };
-
-        #[rustfmt::skip]
-        let samples_lights = [
-            // light_test_sample
-        ];
-
-        // Do a weighted average of each source of light.
-        for FutureSample { col, prob, .. } in samples_lights {
+        for ScatterSample { col, prob, .. } in scatter_samples {
             assert!(prob >= 0.);
-            lights_sample.prob += prob;
-            lights_sample.col += col * prob as Channel;
+            overall_sample.prob += prob;
+            overall_sample.col += col * prob as Channel;
+            // overall_sample.col += col;
         }
 
-        let col_avg = (scatter_sample.col + lights_sample.col)
-            / (lights_sample.prob + scatter_sample.prob) as Channel
-            / (1 + samples_lights.len()) as Channel;
+        let col_scattered = overall_sample.col / overall_sample.prob as Channel;
 
-        col_emitted + col_avg
+        col_emitted + col_scattered
     }
 }
 

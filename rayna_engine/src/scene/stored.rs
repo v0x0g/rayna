@@ -492,11 +492,11 @@ pub static CORNELL: Scene = {
         quad(o, (1., 0., 0.), Vector3::Z, Vector3::Y, green, black); // Right
         quad(o, (0., 1., 0.), Vector3::X, Vector3::Z, warm_grey, black); // Ceiling
 
-        // o.push(SimpleObject::new(
-        //     ParallelogramMesh::new(Planar::new((0.4, 0.9999, 0.4), (0.2, 0., 0.), (0., 0., 0.2))),
-        //     LightMaterial { emissive: light.into() },
-        //     None,
-        // ));
+        o.push(SimpleObject::new(
+            ParallelogramMesh::new(Planar::new((0.4, 0.9999, 0.4), (0.2, 0., 0.), (0., 0., 0.2))),
+            LightMaterial { emissive: light.into() },
+            None,
+        ));
     }
 
     {

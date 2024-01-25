@@ -6,8 +6,6 @@ use crate::shared::rng;
 use crate::texture::Texture;
 use crate::texture::TextureInstance;
 use glamour::AngleConsts;
-use num_traits::FloatConst;
-
 use rand::RngCore;
 
 #[derive(Copy, Clone, Debug)]

@@ -55,7 +55,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
     /// Creates a new renderer instance
     pub fn new() -> Result<Self, RendererCreateError> {
         let thread_pool = ThreadPoolBuilder::new()
-            .num_threads(10)
+            .num_threads(1)
             .thread_name(|id| format!("Renderer::worker_{id}"))
             .start_handler(|id| {
                 trace!(target: RENDERER, "renderer worker {id} start");
@@ -472,23 +472,33 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
         // Calculate the future colour, including from light sources
 
-        let ray_light = Ray::new(
-            intersection.pos_w,
-            Point3::new(0.5, 1.0, 0.5) + rng::vector_in_unit_cube_01(rng) * 0.01 - intersection.pos_w,
-        );
-        // depth=opts.bounces so it don't recurse again
-        let col_light = Self::ray_colour_recursive(scene, &ray_light, opts, bounds, opts.bounces, rng);
+        let pos_light = Point3::new(0.5, 1.0, 0.5) + rng::vector_in_unit_cube_01(rng) * 0.01;
+        let to_light = pos_light - intersection.pos_w;
+        let ray_light = Ray::new(intersection.pos_w, to_light);
+        // If we intersected with the light, at the correct position, then there is no shadowing and the point is lit
+        let col_light = if Self::calculate_intersection(scene, &ray_light, bounds, rng)
+            .is_some_and(|i| i.intersection.pos_w.distance_squared(pos_light) < 0.001)
+        {
+            Colour::WHITE * 3.
+        } else {
+            Colour::BLACK
+        };
         let prob_light = material.scatter_probability(ray, &ray_light, &intersection);
+        let light_dist_sqr = to_light.length_squared();
 
         let mut col_accum = Colour::BLACK;
         let mut prob_accum = 0.;
 
-        let samples = [(col_scattered, prob_scattered), (col_light, prob_light)];
+        let samples = [
+            (col_scattered, prob_scattered),
+            (col_light, prob_light / light_dist_sqr),
+        ];
 
         // Do a weighted average of each source of light.
         for (col, prob) in samples {
-            col_accum += col * prob as Channel;
+            assert!(prob >= 0.);
             prob_accum += prob;
+            col_accum += col * prob as Channel;
         }
 
         // Normalise at the end by dividing by dividing by total probability

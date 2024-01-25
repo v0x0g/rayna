@@ -6,6 +6,7 @@ use crate::shared::rng;
 use crate::texture::Texture;
 use crate::texture::TextureInstance;
 use glamour::AngleConsts;
+use num_traits::FloatConst;
 
 use rand::RngCore;
 
@@ -38,8 +39,8 @@ impl<TexAlbedo: Texture, TexEmissive: Texture> Material for LambertianMaterial<T
         // We have a `cos(theta)` lambertian distribution,
         // Where `P(ray_out) = cos(angle_between(ray_in, ray_out))`
         // We can factor this using the dot product
-        let cos_theta = intersection.ray_normal.dot(scattered.dir());
-        return (cos_theta / Number::PI).max(0.);
+        let cos_theta = Vector3::dot(intersection.ray_normal, scattered.dir());
+        return (cos_theta / Number::FRAC_2_PI()).max(0.);
     }
 
     fn emitted_light(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {

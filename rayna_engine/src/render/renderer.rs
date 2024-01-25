@@ -498,8 +498,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             for &ScatterSample { col, pdf: prob, .. } in scatter_samples.iter() {
                 assert!(prob >= 0.);
                 overall_sample.pdf += prob;
-                // Dividing by pdf value is (I hope) importance sampling
-                overall_sample.col += col; // * prob as Channel;
+                overall_sample.col += col;
             }
 
             overall_sample.col / opts.ray_branching.get() as Channel // * overall_sample.pdf as Channel

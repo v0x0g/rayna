@@ -487,22 +487,8 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             scatter_samples.push(sample);
         }
 
-        let col_scattered = if scatter_samples.is_empty() {
-            Colour::BLACK
-        } else {
-            // Do a weighted average of each source of light.
-            let mut overall_sample = ScatterSample {
-                col: Colour::BLACK,
-                pdf: 0.,
-            };
-            for &ScatterSample { col, pdf: prob, .. } in scatter_samples.iter() {
-                assert!(prob >= 0.);
-                overall_sample.pdf += prob;
-                overall_sample.col += col;
-            }
-
-            overall_sample.col / opts.ray_branching.get() as Channel // * overall_sample.pdf as Channel
-        };
+        let col_scatter_sum = scatter_samples.iter().map(|s| s.col).sum::<Colour>();
+        let col_scattered = col_scatter_sum / opts.ray_branching.get() as Channel;
 
         col_emitted + col_scattered
     }

@@ -472,37 +472,42 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
         // Calculate the future colour, including from light sources
 
-        let pos_light = Point3::new(0.5, 1.0, 0.5) + rng::vector_in_unit_cube_01(rng) * 0.01;
+        let pos_light = Point3::new(0.5 + rng.gen::<Number>() * 0.1, 1.0, 0.5 + rng.gen::<Number>() * 0.1);
         let to_light = pos_light - intersection.pos_w;
         let ray_light = Ray::new(intersection.pos_w, to_light);
         // If we intersected with the light, at the correct position, then there is no shadowing and the point is lit
-        let col_light = if Self::calculate_intersection(scene, &ray_light, bounds, rng)
-            .is_some_and(|i| i.intersection.pos_w.distance_squared(pos_light) < 0.001)
-        {
-            Colour::WHITE * 3.
-        } else {
-            Colour::BLACK
+        let col_light = {
+            if let Some(i) = Self::calculate_intersection(scene, &ray_light, bounds, rng) {
+                let col_raw = if i.intersection.pos_w.distance_squared(pos_light) > 0.001 {
+                    Colour::BLACK
+                } else {
+                    Colour::WHITE * 1.
+                };
+
+                material.reflected_light(ray, &i.intersection, &ray_light, &col_raw, rng)
+            } else {
+                Colour::BLACK
+            }
         };
         let prob_light = material.scatter_probability(ray, &ray_light, &intersection);
-        let light_dist_sqr = to_light.length_squared();
 
-        let mut col_accum = Colour::BLACK;
-        let mut prob_accum = 0.;
+        let mut light_col_accum = Colour::BLACK;
+        let mut light_prob_accum = 0.;
 
-        let samples = [
-            (col_scattered, prob_scattered),
-            (col_light, prob_light / light_dist_sqr),
+        #[rustfmt::skip]
+        let light_samples = [
+            (col_light, prob_light)
         ];
 
         // Do a weighted average of each source of light.
-        for (col, prob) in samples {
+        for (col, prob) in light_samples {
             assert!(prob >= 0.);
-            prob_accum += prob;
-            col_accum += col * prob as Channel;
+            light_prob_accum += prob.powi(2);
+            light_col_accum += col * prob.powi(2) as Channel;
         }
 
-        // Normalise at the end by dividing by dividing by total probability
-        let col_avg = col_accum / prob_accum as Channel;
+        let col_avg = (col_scattered + light_col_accum) * prob_scattered as Channel
+            / (prob_scattered + light_prob_accum) as Channel;
 
         col_emitted + col_avg
     }

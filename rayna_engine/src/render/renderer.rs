@@ -1,6 +1,6 @@
 use crate::core::profiler;
 use crate::core::targets::*;
-use crate::core::types::{Channel, Colour, Image, Number, Vector2};
+use crate::core::types::{Channel, Colour, Image, Number, Point3, Vector2, Vector3};
 use crate::material::Material;
 use crate::object::Object;
 use crate::render::render::{Render, RenderStats};
@@ -469,6 +469,27 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             };
 
             scatter_samples.push(scatter_col);
+        }
+
+        for _ in 0..opts.ray_branching.get() {
+            let light_pos = Point3::new(rng.gen_range(0.4..0.6), 0.9999, rng.gen_range(0.4..0.6));
+            let to_light = light_pos - intersection.pos_w;
+            let light_ray = Ray::new(light_pos, to_light);
+
+            let Some(light_intersect) = Self::calculate_intersection(scene, &light_ray, bounds, rng) else {
+                scatter_samples.push(Colour::BLACK);
+                continue;
+            };
+
+            if light_intersect.intersection.pos_w.distance_squared(light_pos) > 0.001 {
+                scatter_samples.push(Colour::BLACK);
+                continue;
+            }
+
+            let light_raw_col = Colour::WHITE * 1.;
+            let light_col = material.reflected_light(&in_ray, &intersection, &light_ray, &light_raw_col, rng);
+            let pdf = Vector3::dot(light_ray.dir(), intersection.normal) as Channel;
+            scatter_samples.push(light_col * pdf);
         }
 
         let col_scatter_sum = scatter_samples.iter().copied().sum::<Colour>();

@@ -1,11 +1,11 @@
-use crate::core::types::{Colour, Number, Vector3};
+use crate::core::types::{Colour, Vector3};
 use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::rng;
 use crate::texture::Texture;
 use crate::texture::TextureInstance;
-use glamour::AngleConsts;
+
 use rand::RngCore;
 
 #[derive(Copy, Clone, Debug)]

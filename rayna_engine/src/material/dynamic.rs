@@ -1,4 +1,4 @@
-use crate::core::types::{Colour, Number, Vector3};
+use crate::core::types::{Colour, Vector3};
 use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;

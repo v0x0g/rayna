@@ -450,7 +450,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         for _ in 0..opts.ray_branching.get() {
             let scatter_ray = {
                 let Some(future_ray_dir) = material.scatter(in_ray, &intersection, rng) else {
-                    // No scatter, skip this sample
+                    scatter_samples.push(Colour::BLACK);
                     continue;
                 };
                 validate::normal3(&future_ray_dir);
@@ -472,7 +472,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         }
 
         let col_scatter_sum = scatter_samples.iter().copied().sum::<Colour>();
-        let col_scattered = col_scatter_sum / opts.ray_branching.get() as Channel;
+        let col_scattered = col_scatter_sum / scatter_samples.len() as Channel;
 
         col_emitted + col_scattered
     }

@@ -56,7 +56,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
     /// Creates a new renderer instance
     pub fn new() -> Result<Self, RendererCreateError> {
         let thread_pool = ThreadPoolBuilder::new()
-            .num_threads(1)
+            .num_threads(10)
             .thread_name(|id| format!("Renderer::worker_{id}"))
             .start_handler(|id| {
                 trace!(target: RENDERER, "renderer worker {id} start");
@@ -502,7 +502,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
                 overall_sample.col += col / prob as Channel;
             }
 
-            overall_sample.col * overall_sample.pdf as Channel / scatter_samples.len() as Channel
+            overall_sample.col / opts.ray_branching.get() as Channel
         };
 
         col_emitted + col_scattered

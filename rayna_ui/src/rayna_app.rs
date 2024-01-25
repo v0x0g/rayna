@@ -117,10 +117,24 @@ impl crate::backend::app::App for RaynaApp {
 
                 // MSAA
 
-                let mut msaa = self.render_opts.samples.get();
                 ui.label("MSAA");
+                let mut msaa = self.render_opts.samples.get();
                 render_opts_dirty |= egui::DragValue::new(&mut msaa).ui(ui).changed();
                 self.render_opts.samples = NonZeroUsize::new(msaa).unwrap_or(NonZeroUsize::MIN);
+
+                // RAY BOUNCE DEPTH
+
+                ui.label("Ray Depth");
+                render_opts_dirty |= egui::DragValue::new(&mut self.render_opts.ray_depth).ui(ui).changed();
+
+                // RAY BRANCHING
+
+                ui.label("Ray Branching");
+                let mut ray_branching = self.render_opts.ray_branching.get();
+                render_opts_dirty |= egui::DragValue::new(&mut ray_branching).ui(ui).changed();
+                self.render_opts.ray_branching = NonZeroUsize::new(msaa).unwrap_or(NonZeroUsize::MIN);
+
+                // RENDER MODE
 
                 ui.label("Mode");
                 egui::ComboBox::from_id_source("mode")
@@ -135,9 +149,6 @@ impl crate::backend::app::App for RaynaApp {
                             render_opts_dirty |= resp.changed();
                         }
                     });
-
-                ui.label("Bounces");
-                render_opts_dirty |= egui::DragValue::new(&mut self.render_opts.ray_depth).ui(ui).changed();
             });
 
             ui.group(|ui| {
@@ -212,9 +223,10 @@ impl crate::backend::app::App for RaynaApp {
                 let stats = self.render_stats;
                 ui.label(format!("width:\t\t\t {}", stats.opts.width.get()));
                 ui.label(format!("height:\t\t\t {}", stats.opts.height.get()));
-                ui.label(format!("bounces:\t\t\t {}", stats.opts.ray_depth));
-                ui.label(format!("mode:\t\t\t {}", stats.opts.mode));
                 ui.label(format!("samples:\t\t {}", stats.opts.samples));
+                ui.label(format!("depth:\t\t\t {}", stats.opts.ray_depth));
+                ui.label(format!("branching:\t\t\t {}", stats.opts.ray_branching));
+                ui.label(format!("mode:\t\t\t {}", stats.opts.mode));
                 ui.label(format!("num threads: {}", stats.num_threads));
                 ui.label(format!("duration:\t\t {}", humantime::format_duration(stats.duration)));
             });

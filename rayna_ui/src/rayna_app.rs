@@ -132,7 +132,7 @@ impl crate::backend::app::App for RaynaApp {
                 ui.label("Ray Branching");
                 let mut ray_branching = self.render_opts.ray_branching.get();
                 render_opts_dirty |= egui::DragValue::new(&mut ray_branching).ui(ui).changed();
-                self.render_opts.ray_branching = NonZeroUsize::new(msaa).unwrap_or(NonZeroUsize::MIN);
+                self.render_opts.ray_branching = NonZeroUsize::new(ray_branching).unwrap_or(NonZeroUsize::MIN);
 
                 // RENDER MODE
 

@@ -414,7 +414,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
     /// It should be fine for all *reasonable* bounce limits (~200), but will most likely overflow the stack past that.
     fn ray_colour_recursive(
         scene: &Scene<Obj, Sky>,
-        ray: &Ray,
+        in_ray: &Ray,
         opts: &RenderOpts,
         bounds: &Bounds<Number>,
         depth: usize,
@@ -425,89 +425,100 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         }
 
         // Intersect
-        let Some(FullIntersection { intersection, material }) = Self::calculate_intersection(scene, ray, bounds, rng)
+        let Some(FullIntersection { intersection, material }) =
+            Self::calculate_intersection(scene, in_ray, bounds, rng)
         else {
-            return scene.skybox.sky_colour(ray);
+            return scene.skybox.sky_colour(in_ray);
         };
-        validate::intersection(ray, &intersection, bounds);
+        validate::intersection(in_ray, &intersection, bounds);
 
         let col_emitted = {
-            let col = material.emitted_light(ray, &intersection, rng);
+            let col = material.emitted_light(in_ray, &intersection, rng);
             validate::colour(&col);
             col
         };
 
-        // Calculate scatter
-        let future_ray = {
-            let Some(future_ray_dir) = material.scatter(ray, &intersection, rng) else {
-                return col_emitted;
-            };
-            validate::normal3(&future_ray_dir);
-            let future_ray = Ray::new(intersection.pos_w, future_ray_dir);
-            validate::ray(future_ray);
-            future_ray
-        };
+        /// Helper struct that encapsulates a future sample nicely
+        #[derive(Copy, Clone, Debug)]
+        pub struct FutureSample {
+            pub col: Colour,
+            pub prob: Number,
+        }
 
-        // Follow ray and calculate future bounces
-        let col_scattered = {
-            let col_future = Self::ray_colour_recursive(scene, &future_ray, opts, bounds, depth + 1, rng);
-            validate::colour(&col_future);
-            let col_scattered = material.reflected_light(ray, &intersection, &future_ray, &col_future, rng);
-            validate::colour(&col_scattered);
-            col_scattered
-        };
-        let prob_scattered = material.scatter_probability(ray, &future_ray, &intersection);
-
-        // // PDF value for the scattered ray
-        // let prob_scatter = material.scatter_probability(ray, &future_ray, &intersection);
-        //
-        // // Try calculate a light ray
-        // const N_LIGHTS: usize = 1;
-        // //
-        // let mut prob_light_sum = 1.;
-        // let mut col_lights =
-        // for i in 0..N_LIGHTS{
-        //
-        // }
-
-        // Calculate the future colour, including from light sources
-
-        let pos_light = Point3::new(0.5 + rng.gen::<Number>() * 0.1, 1.0, 0.5 + rng.gen::<Number>() * 0.1);
-        let to_light = pos_light - intersection.pos_w;
-        let ray_light = Ray::new(intersection.pos_w, to_light);
-        // If we intersected with the light, at the correct position, then there is no shadowing and the point is lit
-        let col_light = {
-            if let Some(i) = Self::calculate_intersection(scene, &ray_light, bounds, rng) {
-                let col_raw = if i.intersection.pos_w.distance_squared(pos_light) > 0.001 {
-                    Colour::BLACK
-                } else {
-                    Colour::WHITE * 1.
+        // Calculate the lighting samples for the scattered ray
+        let scatter_sample = {
+            let scatter_ray = {
+                let Some(future_ray_dir) = material.scatter(in_ray, &intersection, rng) else {
+                    return col_emitted;
                 };
+                validate::normal3(&future_ray_dir);
+                let future_ray = Ray::new(intersection.pos_w, future_ray_dir);
+                validate::ray(future_ray);
+                future_ray
+            };
 
-                material.reflected_light(ray, &i.intersection, &ray_light, &col_raw, rng)
-            } else {
-                Colour::BLACK
+            // Follow ray and calculate future bounces
+            let scatter_col = {
+                let col_future = Self::ray_colour_recursive(scene, &scatter_ray, opts, bounds, depth + 1, rng);
+                validate::colour(&col_future);
+                let col_scattered = material.reflected_light(in_ray, &intersection, &scatter_ray, &col_future, rng);
+                validate::colour(&col_scattered);
+                col_scattered
+            };
+            let scatter_prob = material.scatter_probability(in_ray, &scatter_ray, &intersection);
+
+            FutureSample {
+                col: scatter_col,
+                prob: scatter_prob,
             }
         };
-        let prob_light = material.scatter_probability(ray, &ray_light, &intersection);
 
-        let mut light_col_accum = Colour::BLACK;
-        let mut light_prob_accum = 0.;
+        let light_test_sample = {
+            let pos_light = Point3::new(0.5 + rng.gen::<Number>() * 0.1, 1.0, 0.5 + rng.gen::<Number>() * 0.1);
+            let to_light = pos_light - intersection.pos_w;
+            let light_ray = Ray::new(intersection.pos_w, to_light);
+            // If we intersected with the light, at the correct position, then there is no shadowing and the point is lit
+            let light_col = {
+                if let Some(i) = Self::calculate_intersection(scene, &light_ray, bounds, rng) {
+                    let col_raw = if i.intersection.pos_w.distance_squared(pos_light) > 0.001 {
+                        Colour::BLACK
+                    } else {
+                        Colour::WHITE * 1.
+                    };
+
+                    material.reflected_light(in_ray, &i.intersection, &light_ray, &col_raw, rng)
+                } else {
+                    Colour::BLACK
+                }
+            };
+            let light_prob = material.scatter_probability(in_ray, &light_ray, &intersection);
+
+            FutureSample {
+                col: light_col,
+                prob: light_prob,
+            }
+        };
+
+        let mut lights_sample = FutureSample {
+            col: Colour::BLACK,
+            prob: 0.,
+        };
 
         #[rustfmt::skip]
-        let light_samples = [
-            (col_light, prob_light)
+        let samples_lights = [
+            light_test_sample
         ];
 
         // Do a weighted average of each source of light.
-        for (col, prob) in light_samples {
+        for FutureSample { col, prob, .. } in samples_lights {
             assert!(prob >= 0.);
-            light_prob_accum += prob.powi(2);
-            light_col_accum += col * prob.powi(2) as Channel;
+            lights_sample.prob += prob;
+            lights_sample.col += col * prob as Channel;
         }
 
-        let col_avg = (col_scattered + light_col_accum) * prob_scattered as Channel
-            / (prob_scattered + light_prob_accum) as Channel;
+        let col_avg = (scatter_sample.col + lights_sample.col)
+            / (lights_sample.prob + scatter_sample.prob) as Channel
+            / (1 + samples_lights.len()) as Channel;
 
         col_emitted + col_avg
     }

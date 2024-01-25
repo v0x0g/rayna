@@ -445,7 +445,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             /// The relative probability of the sampled ray being sampled, for the given material.
             /// This is similar to the weight of the sample - a higher value means the sample is more likely overall
             /// and therefore should be weighted higher
-            pub prob: Number,
+            pub pdf: Number,
         }
 
         // PERF: Chose num samples as a tradeoff between not allocating on heap, and wasting stack space
@@ -481,7 +481,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
             let sample = ScatterSample {
                 col: scatter_col,
-                prob: scatter_prob,
+                pdf: scatter_prob,
             };
 
             scatter_samples.push(sample);
@@ -493,16 +493,16 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             // Do a weighted average of each source of light.
             let mut overall_sample = ScatterSample {
                 col: Colour::BLACK,
-                prob: 0.,
+                pdf: 0.,
             };
-            for ScatterSample { col, prob, .. } in scatter_samples {
+            for &ScatterSample { col, pdf: prob, .. } in scatter_samples.iter() {
                 assert!(prob >= 0.);
-                overall_sample.prob += prob;
-                overall_sample.col += col * prob as Channel;
-                // overall_sample.col += col;
+                overall_sample.pdf += prob;
+                // Dividing by pdf value is (I hope) importance sampling
+                overall_sample.col += col / prob as Channel;
             }
 
-            overall_sample.col / overall_sample.prob as Channel
+            overall_sample.col * overall_sample.pdf as Channel / scatter_samples.len() as Channel
         };
 
         col_emitted + col_scattered

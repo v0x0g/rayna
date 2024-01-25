@@ -13,7 +13,8 @@ pub struct RenderOpts {
     /// A scalar to increase the number of samples taken for each pixel.
     pub samples: NonZeroUsize,
     pub mode: RenderMode,
-    pub bounces: usize,
+    pub ray_depth: usize,
+    pub ray_branching: NonZeroUsize,
 }
 
 #[derive(
@@ -44,7 +45,8 @@ impl Default for RenderOpts {
             height: nonzero!(480_usize),
             samples: nonzero!(1_usize),
             mode: Default::default(),
-            bounces: 20,
+            ray_depth: 3,
+            ray_branching: nonzero!(2),
         }
     }
 }

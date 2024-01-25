@@ -137,7 +137,7 @@ impl crate::backend::app::App for RaynaApp {
                     });
 
                 ui.label("Bounces");
-                render_opts_dirty |= egui::DragValue::new(&mut self.render_opts.bounces).ui(ui).changed();
+                render_opts_dirty |= egui::DragValue::new(&mut self.render_opts.ray_depth).ui(ui).changed();
             });
 
             ui.group(|ui| {
@@ -212,7 +212,7 @@ impl crate::backend::app::App for RaynaApp {
                 let stats = self.render_stats;
                 ui.label(format!("width:\t\t\t {}", stats.opts.width.get()));
                 ui.label(format!("height:\t\t\t {}", stats.opts.height.get()));
-                ui.label(format!("bounces:\t\t\t {}", stats.opts.bounces));
+                ui.label(format!("bounces:\t\t\t {}", stats.opts.ray_depth));
                 ui.label(format!("mode:\t\t\t {}", stats.opts.mode));
                 ui.label(format!("samples:\t\t {}", stats.opts.samples));
                 ui.label(format!("num threads: {}", stats.num_threads));

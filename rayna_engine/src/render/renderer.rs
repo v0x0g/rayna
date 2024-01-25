@@ -10,7 +10,7 @@ use crate::shared::bounds::Bounds;
 use crate::shared::camera::Viewport;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::ray::Ray;
-use crate::shared::{math, rng, validate};
+use crate::shared::{math, validate};
 use crate::skybox::Skybox;
 use derivative::Derivative;
 use num_integer::Roots;
@@ -22,6 +22,7 @@ use rand::Rng;
 use rand_core::{RngCore, SeedableRng};
 use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
+use smallvec::SmallVec;
 use std::marker::PhantomData;
 use std::ops::DerefMut;
 use std::sync::OnceLock;
@@ -95,7 +96,7 @@ struct PooledData<R: RngCore + SeedableRng = SmallRng> {
     /// Buffer of [Vector2] values
     pub px_coords: Vec<Vector2>,
     /// Buffer of [Colour] values
-    pub samples: Vec<Colour>,
+    pub px_samples: Vec<Colour>,
     /// The [Uniform] number distribution for creating MSAA values
     pub msaa_distr: Uniform<Number>,
 }
@@ -106,13 +107,11 @@ impl<R: SeedableRng + RngCore> opool::PoolAllocator<PooledData<R>> for PooledDat
     fn allocate(&self) -> PooledData<R> {
         // I will admit I have no idea if you can fill an array from a function like this
         let rngs = [(); 2].map(|()| R::from_entropy());
-        let vec2 = vec![];
-        let colours = vec![];
         let msaa_dist = Uniform::new_inclusive(-0.5, 0.5);
         PooledData {
             rngs,
-            px_coords: vec2,
-            samples: colours,
+            px_coords: vec![],
+            px_samples: vec![],
             msaa_distr: msaa_dist,
         }
     }
@@ -265,7 +264,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
         let PooledData {
             px_coords: sample_coords,
-            samples,
+            px_samples: samples,
             msaa_distr,
             rngs: [rng1, rng2],
         } = pooled_data;
@@ -420,7 +419,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         depth: usize,
         rng: &mut impl Rng,
     ) -> Colour {
-        if depth > opts.bounces {
+        if depth > opts.ray_depth {
             return Colour::from([0.; 3]);
         }
 
@@ -440,10 +439,15 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
         /// Helper struct that encapsulates a future sample nicely
         #[derive(Copy, Clone, Debug)]
-        pub struct FutureSample {
+        pub(self) struct FutureSample {
             pub col: Colour,
             pub prob: Number,
         }
+
+        // PERF: Chose 16 samples as a tradeoff between not allocating on heap, and wasting stack space
+        //  If we go above 16 branches, the sheer amount of intersections will have a much bigger perf impact
+        //  than any heap allocations. Also we want to make sure we don't overflow the stack with high depths
+        let mut future_samples = SmallVec::<[FutureSample; 16]>::new();
 
         // Calculate the lighting samples for the scattered ray
         let scatter_sample = {
@@ -506,7 +510,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
         #[rustfmt::skip]
         let samples_lights = [
-            light_test_sample
+            // light_test_sample
         ];
 
         // Do a weighted average of each source of light.

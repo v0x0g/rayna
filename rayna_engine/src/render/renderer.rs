@@ -460,7 +460,8 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         for _ in 0..opts.ray_branching.get() {
             let scatter_ray = {
                 let Some(future_ray_dir) = material.scatter(in_ray, &intersection, rng) else {
-                    return col_emitted;
+                    // No scatter, skip this sample
+                    continue;
                 };
                 validate::normal3(&future_ray_dir);
                 let future_ray = Ray::new(intersection.pos_w, future_ray_dir);
@@ -486,19 +487,23 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             scatter_samples.push(sample);
         }
 
-        // Do a weighted average of each source of light.
-        let mut overall_sample = ScatterSample {
-            col: Colour::BLACK,
-            prob: 0.,
-        };
-        for ScatterSample { col, prob, .. } in scatter_samples {
-            assert!(prob >= 0.);
-            overall_sample.prob += prob;
-            overall_sample.col += col * prob as Channel;
-            // overall_sample.col += col;
-        }
+        let col_scattered = if scatter_samples.is_empty() {
+            Colour::BLACK
+        } else {
+            // Do a weighted average of each source of light.
+            let mut overall_sample = ScatterSample {
+                col: Colour::BLACK,
+                prob: 0.,
+            };
+            for ScatterSample { col, prob, .. } in scatter_samples {
+                assert!(prob >= 0.);
+                overall_sample.prob += prob;
+                overall_sample.col += col * prob as Channel;
+                // overall_sample.col += col;
+            }
 
-        let col_scattered = overall_sample.col / overall_sample.prob as Channel;
+            overall_sample.col / overall_sample.prob as Channel
+        };
 
         col_emitted + col_scattered
     }

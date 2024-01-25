@@ -502,7 +502,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
                 overall_sample.col += col / prob as Channel;
             }
 
-            overall_sample.col / opts.ray_branching.get() as Channel
+            overall_sample.col / opts.ray_branching.get() as Channel * overall_sample.pdf as Channel
         };
 
         col_emitted + col_scattered

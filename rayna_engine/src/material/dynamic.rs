@@ -15,10 +15,6 @@ impl Material for DynamicMaterial {
         self.inner.scatter(ray, intersection, rng)
     }
 
-    fn scatter_probability(&self, ray_in: &Ray, scattered: &Ray, intersection: &Intersection) -> Number {
-        self.inner.scatter_probability(ray_in, scattered, intersection)
-    }
-
     fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
         self.inner.emitted_light(ray, intersection, rng)
     }

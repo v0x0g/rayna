@@ -33,14 +33,6 @@ impl<TexAlbedo: Texture, TexEmissive: Texture> Material for LambertianMaterial<T
         Some(vec.try_normalize().unwrap_or(intersection.ray_normal))
     }
 
-    fn scatter_probability(&self, _ray_in: &Ray, scattered: &Ray, intersection: &Intersection) -> Number {
-        // We have a `cos(theta)` lambertian distribution,
-        // Where `P(ray_out) = cos(angle_between(ray_in, ray_out))`
-        // We can factor this using the dot product
-        let cos_theta = Vector3::dot(intersection.ray_normal, scattered.dir());
-        return (cos_theta / <Number as AngleConsts>::PI).max(0.);
-    }
-
     fn emitted_light(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
         self.emissive.value(intersection, rng)
     }

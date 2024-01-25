@@ -437,24 +437,14 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             col
         };
 
-        /// Helper struct that encapsulates a future sample nicely
-        #[derive(Copy, Clone, Debug)]
-        pub(self) struct ScatterSample {
-            /// The light ray colour of the sample
-            pub col: Colour,
-            /// The relative probability of the sampled ray being sampled, for the given material.
-            /// This is similar to the weight of the sample - a higher value means the sample is more likely overall
-            /// and therefore should be weighted higher
-            pub pdf: Number,
-        }
-
         // PERF: Chose num samples as a tradeoff between not allocating on heap, and wasting stack space
-        //  If we go above 16 branches, the sheer amount of intersections will have a much bigger perf impact
+        //  If we go above 8 branches, the sheer amount of intersections will have a much bigger perf impact
         //  than any heap allocations. Also we want to make sure we don't overflow the stack with high depths
-        let mut scatter_samples = SmallVec::<[ScatterSample; 16]>::new();
+        let mut scatter_samples = SmallVec::<[Colour; 8]>::new();
 
         // NOTE: The number of rays increases almost exponentially, with the number of branches and bounce depth
         //  For a given `d: depth, b: branches`, we check `(b^(d+1) - 1) / (b - 1)` rays, per pixel
+        //  Normally, any more than 4 branches is visually indistinguishable, as well as crazy slow
 
         // Calculate the lighting samples for the scattered ray
         for _ in 0..opts.ray_branching.get() {
@@ -477,17 +467,11 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
                 validate::colour(&col_scattered);
                 col_scattered
             };
-            let scatter_prob = material.scatter_probability(in_ray, &scatter_ray, &intersection);
 
-            let sample = ScatterSample {
-                col: scatter_col,
-                pdf: scatter_prob,
-            };
-
-            scatter_samples.push(sample);
+            scatter_samples.push(scatter_col);
         }
 
-        let col_scatter_sum = scatter_samples.iter().map(|s| s.col).sum::<Colour>();
+        let col_scatter_sum = scatter_samples.iter().copied().sum::<Colour>();
         let col_scattered = col_scatter_sum / opts.ray_branching.get() as Channel;
 
         col_emitted + col_scattered

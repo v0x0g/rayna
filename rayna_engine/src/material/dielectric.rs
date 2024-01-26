@@ -1,4 +1,4 @@
-use crate::core::types::{Colour, Number, Vector3};
+use crate::core::types::{Channel, Colour, Number, Point3, Vector3};
 use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::math;
@@ -12,6 +12,7 @@ use rand::{Rng, RngCore};
 pub struct DielectricMaterial<Tex: Texture> {
     pub albedo: Tex,
     pub refractive_index: Number,
+    pub density: Number,
 }
 
 impl<Tex: Texture> Material for DielectricMaterial<Tex> {
@@ -37,17 +38,35 @@ impl<Tex: Texture> Material for DielectricMaterial<Tex> {
         return Some(dir);
     }
 
-    // TODO: Beer's law?
     //noinspection DuplicatedCode
     fn reflected_light(
         &self,
-        _ray: &Ray,
+        ray: &Ray,
         intersection: &Intersection,
         _future_ray: &Ray,
         future_col: &Colour,
         rng: &mut dyn RngCore,
     ) -> Colour {
-        future_col * self.albedo.value(intersection, rng)
+        // We only get information for the previous ray and current intersection here (not future intersect)
+        // Therefore we cannot know how far we have travelled inside the material on the 'entering' intersection.
+        // So on the entering intersection, do nothing, and on exiting intersection, calculate distance travelled inside
+        // the object, so we can use [Beer's Law] (https://en.wikipedia.org/wiki/Beer%E2%80%93Lambert_law)
+
+        let exiting_intersection = !intersection.front_face;
+
+        if !exiting_intersection {
+            return *future_col;
+        }
+
+        let dist_inside = Point3::distance(intersection.pos_w, ray.pos());
+        let transmission = (-self.density * dist_inside) as Channel;
+        // NOTE: This is the colour at the exiting intersection, which might not be accurate if the texture
+        //  is non-homogenous
+        // TODO: Fix this texture issue somehow, maybe sample along the line and integrate that?
+        let attenuation_col = self.albedo.value(intersection, rng);
+
+        // future_col * (attenuation_col.exp(transmission))
+        future_col * attenuation_col * transmission.exp()
     }
 }
 

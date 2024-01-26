@@ -74,9 +74,9 @@ pub static SIMPLE: Scene = {
 #[dynamic]
 pub static TESTING: Scene = {
     let camera = Camera {
-        pos: Point3::new(0.5, 0.5, 2.3),
-        fwd: Vector3::new(0., 0., -1.).normalize(),
-        v_fov: Angle::from_degrees(40.),
+        pos: Point3::new(0.226, 0.454, 0.856),
+        fwd: Vector3::new(0.684, -0.635, -0.359).normalize(),
+        v_fov: Angle::from_degrees(90.),
         focus_dist: 1.,
         defocus_angle: Angle::from_degrees(0.),
     };
@@ -126,32 +126,12 @@ pub static TESTING: Scene = {
     }
 
     {
-        // INNER BOXES
-        //
-        // // Big
-        // o.push(SimpleObject::new(
-        //     AxisBoxMesh::new((0.231, 0., 0.117), (0.531, 0.595, 0.414)),
-        //     LambertianMaterial {
-        //         albedo: warm_grey.into(),
-        //         emissive: [0.; 3].into(),
-        //     },
-        //     Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(15.)),
-        // ));
-        // // Small
-        // o.push(SimpleObject::new(
-        //     AxisBoxMesh::new((0.477, 0., 0.531), (0.774, 0.297, 0.829)),
-        //     LambertianMaterial {
-        //         albedo: warm_grey.into(),
-        //         emissive: [0.; 3].into(),
-        //     },
-        //     Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(-18.)),
-        // ));
-
         o.push(SimpleObject::new(
             SphereMesh::new((0.5, 0.2, 0.5), 0.2),
             DielectricMaterial {
-                albedo: Colour::WHITE.into(),
+                albedo: [0.5; 3].into(),
                 refractive_index: 1.5,
+                density: 5.0,
             },
             None,
         ));
@@ -200,6 +180,7 @@ pub static RTIAW_DEMO: Scene = {
                 DielectricMaterial {
                     albedo: rng::colour_rgb_range(rng, 0.5..1.0).into(),
                     refractive_index: rng.gen_range(1.0..=10.0),
+                    density: 69.0,
                 }
                 .into()
             };
@@ -218,6 +199,7 @@ pub static RTIAW_DEMO: Scene = {
         SphereMesh::new((0., 1., 0.), 1.),
         DielectricMaterial {
             refractive_index: 1.5,
+            density: 69.0,
             albedo: [1.; 3].into(),
         },
         None,
@@ -345,6 +327,7 @@ pub static RTTNW_DEMO: Scene = {
                 SphereMesh::new((2.6, 1.5, 0.45), 0.5),
                 DielectricMaterial {
                     albedo: [1.; 3].into(),
+                    density: 69.0,
                     refractive_index: 1.5,
                 },
                 None,
@@ -372,6 +355,7 @@ pub static RTTNW_DEMO: Scene = {
                 DielectricMaterial {
                     albedo: [1.; 3].into(),
                     refractive_index: 1.5,
+                    density: 69.0,
                 },
                 None,
             )

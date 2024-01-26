@@ -143,7 +143,7 @@ impl Mesh for CylinderMesh {
             // `self.along.normalised()` is also the normal vector for the end caps
             normal = self.along / self.length * dist_along_norm.signum();
             face = if dist_along_norm.is_sign_negative() { 1 } else { 2 };
-
+            //TODO: allow ray origin to be inside
             // Position of the intersection we are checking, relative to cylinder origin
             let pos_rel = oc + (rd * dist);
 

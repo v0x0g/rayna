@@ -17,7 +17,7 @@ pub struct CylinderMesh {
     /// to the length of the cylinder.
     along: Vector3,
     /// The magnitude of [along] (how long the cylinder is)
-    length: Number,
+    length_sqr: Number,
 
     radius: Number,
     aabb: Aabb,
@@ -39,7 +39,7 @@ impl CylinderMesh {
             origin: p1,
             radius,
             along,
-            length: along.length(),
+            length_sqr: along.length_squared(),
             centre,
             aabb,
         }
@@ -59,9 +59,10 @@ impl Mesh for CylinderMesh {
         let bard = Vector3::dot(self.along, rd);
         let baoc = Vector3::dot(self.along, oc);
 
-        let a = self.length - (bard * bard);
-        let b = (self.length * Vector3::dot(oc, rd)) - (baoc * bard);
-        let c = (self.length * Vector3::dot(oc, oc)) - (baoc * baoc) - (self.radius * self.radius * self.length);
+        let a = self.length_sqr - (bard * bard);
+        let b = (self.length_sqr * Vector3::dot(oc, rd)) - (baoc * bard);
+        let c =
+            (self.length_sqr * Vector3::dot(oc, oc)) - (baoc * baoc) - (self.radius * self.radius * self.length_sqr);
 
         // let (k2, k1, k0) = (a,b,c);
 
@@ -83,22 +84,22 @@ impl Mesh for CylinderMesh {
         let dist_along = baoc + (t * bard);
 
         // Intersected body
-        if dist_along > 0. && dist_along < self.length {
+        if dist_along > 0. && dist_along < self.length_sqr {
             // Position of the intersection we are checking, relative to cylinder origin
             let pos_rel = oc + (rd * t);
             // Position along the cylinder, relative from the origin. Normalised against length
-            let norm_pos_along = (self.along * dist_along); // / self.length;
-                                                            // The position "around" the origin that the intersection is.
-                                                            // This is the position on the surface, from the origin, at zero distance along the length
-            let rel_pos_outwards = (pos_rel / self.radius) - norm_pos_along;
+            let norm_pos_along = (self.along * dist_along) / self.length_sqr;
+            // The position "around" the origin that the intersection is.
+            // This is the position on the surface, from the origin, at zero distance along the length
+            let rel_pos_outwards = pos_rel - norm_pos_along;
             // Normalise the position, and we get our normal vector easy!
-            normal = rel_pos_outwards;
+            normal = (rel_pos_outwards / self.radius).normalize();
 
             face = 0;
         }
         // Intersected caps
         else {
-            t = ((if dist_along < 0. { 0. } else { self.length }) - baoc) / bard;
+            t = ((if dist_along < 0. { 0. } else { self.length_sqr }) - baoc) / bard;
             if Number::abs(b + (a * t)) >= sqrt_d {
                 return None;
             }

@@ -99,12 +99,12 @@ impl Mesh for CylinderMesh {
             // Position of the intersection we are checking, relative to cylinder origin
             let pos_rel = oc + (rd * dist);
             // Position along the cylinder, relative from the origin. Normalised against length
-            let norm_pos_along = self.along * dist_along_norm;
+            let pos_along = self.along * dist_along_norm;
             // The position "around" the origin that the intersection is.
             // This is the position on the surface, from the origin, at zero distance along the length
-            let rel_pos_outwards = pos_rel - norm_pos_along;
+            let rel_pos_outwards = pos_rel - pos_along;
             // Normalise the position, and we get our normal vector easy!
-            normal = (rel_pos_outwards / self.radius).normalize();
+            normal = rel_pos_outwards.normalize();
             // One of the orthogonals we use to calculate the angle,
             // Both are normalised so skip that
             let cos_theta = Vector3::dot(normal, self.orthogonals.0);
@@ -132,16 +132,9 @@ impl Mesh for CylinderMesh {
 
             // Position of the intersection we are checking, relative to cylinder origin
             let pos_rel = oc + (rd * dist);
-            // Position along the cylinder, relative from the origin. Normalised against length
-            let norm_pos_along = self.along * dist_along_norm;
-            // The position "around" the origin that the intersection is.
-            // This is the position on the surface, from the origin, at zero distance along the length
-            let rel_pos_outwards = pos_rel - norm_pos_along;
-            // Normalise the position, and we get our normal vector easy!
-            let n_temp = (rel_pos_outwards / self.radius).normalize();
 
-            let u = n_temp.dot(self.orthogonals.0) / 2. + 0.5;
-            let v = n_temp.dot(self.orthogonals.1) / 2. + 0.5;
+            let u = (pos_rel / self.radius).dot(self.orthogonals.0) / 2. + 0.5;
+            let v = (pos_rel / self.radius).dot(self.orthogonals.1) / 2. + 0.5;
 
             uv = Point2::new(u, v);
         }

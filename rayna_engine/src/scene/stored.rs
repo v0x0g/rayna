@@ -4,7 +4,7 @@
 //!
 //! There are some common ones [CORNELL] and [RTIAW_DEMO], that should be well known.
 
-use crate::core::types::{Angle, Channel, Colour, Image, Number, Point3, Transform3, Vector3};
+use crate::core::types::{Angle, Channel, Colour, Image, Number, Point3, Transform3, Vector2, Vector3};
 use crate::object::simple::SimpleObject;
 
 use noise::*;
@@ -29,6 +29,8 @@ use crate::object::ObjectInstance;
 use crate::scene::camera::Camera;
 use crate::shared::rng;
 use crate::skybox::SkyboxInstance;
+use crate::texture::checker::UvCheckerTexture;
+use crate::texture::dynamic::DynamicTexture;
 use crate::texture::image::ImageTexture;
 use crate::texture::noise::{ColourSource, LocalNoiseTexture, WorldNoiseTexture};
 use crate::texture::solid::SolidTexture;
@@ -159,8 +161,17 @@ pub static TESTING: Scene = {
     {
         objects.push(SimpleObject::new(
             CylinderMesh::new((0.5, 0.1, 0.5), (0.5, 0.4, 0.5), 0.1),
+            // LambertianMaterial {
+            //     albedo: [0.9; 3].into(),
+            // },
             LambertianMaterial {
-                albedo: [0.9; 3].into(),
+                albedo: UvCheckerTexture {
+                    scale: 1. / 8.,
+                    offset: Vector2::ZERO,
+                    even: DynamicTexture::new(SolidTexture::from([1., 0., 0.])),
+                    odd: DynamicTexture::new(SolidTexture::from([0., 1., 0.])),
+                }
+                .into(),
             },
             None,
         ));

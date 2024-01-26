@@ -164,7 +164,7 @@ pub trait Material: RtRequirement {
 #[enum_dispatch(Material)]
 #[derive(Clone, Debug)]
 pub enum MaterialInstance<Tex: Texture> {
-    LambertianMaterial(LambertianMaterial<Tex, Tex>),
+    LambertianMaterial(LambertianMaterial<Tex>),
     MetalMaterial(MetalMaterial<Tex>),
     DielectricMaterial(DielectricMaterial<Tex>),
     IsotropicMaterial(IsotropicMaterial<Tex>),

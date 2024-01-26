@@ -61,7 +61,6 @@ pub static SIMPLE: Scene = {
                 SphereMesh::new((0., -100.5, -1.), 100.),
                 LambertianMaterial {
                     albedo: [0.5; 3].into(),
-                    emissive: Default::default(),
                 },
                 None,
             ),
@@ -87,7 +86,6 @@ pub static TESTING: Scene = {
         // WALLS
 
         let purple = LambertianMaterial {
-            emissive: Colour::BLACK.into(),
             albedo: [0.25, 0.11, 0.5].into(),
         };
         let light = LightMaterial {
@@ -160,13 +158,21 @@ pub static TESTING: Scene = {
     {
         objects.push(SimpleObject::new(
             SphereMesh::new((0.5, 0.2, 0.5), 0.2),
-            DielectricMaterial {
+            LambertianMaterial {
                 albedo: [0.9; 3].into(),
-                refractive_index: 1.5,
-                density: 0.0,
             },
             None,
         ));
+
+        // objects.push(SimpleObject::new(
+        //     SphereMesh::new((0.5, 0.2, 0.5), 0.2),
+        //     DielectricMaterial {
+        //         albedo: [0.9; 3].into(),
+        //         refractive_index: 1.5,
+        //         density: 0.0,
+        //     },
+        //     None,
+        // ));
     }
 
     Scene {
@@ -199,7 +205,6 @@ pub static RTIAW_DEMO: Scene = {
             let material: MaterialInstance<TextureInstance> = if material_choice < 0.7 {
                 LambertianMaterial {
                     albedo: (rng::colour_rgb(rng) * rng::colour_rgb(rng)).into(),
-                    emissive: Default::default(),
                 }
                 .into()
             } else if material_choice <= 0.9 {
@@ -240,7 +245,6 @@ pub static RTIAW_DEMO: Scene = {
         SphereMesh::new((-4., 1., 0.), 1.),
         LambertianMaterial {
             albedo: [0.4, 0.2, 0.1].into(),
-            emissive: Default::default(),
         },
         None,
     ));
@@ -260,7 +264,6 @@ pub static RTIAW_DEMO: Scene = {
                 source: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69u32)).set_scale(10000.)).to_dyn_box(),
             }
             .into(),
-            emissive: Default::default(),
         },
         None,
     ));
@@ -293,8 +296,6 @@ pub static RTTNW_DEMO: Scene = {
         texture
     }
 
-    const BLACK_TEX: TextureInstance = solid_texture([0., 0., 0.]);
-
     {
         // BOXES (FLOOR)
         const COUNT: usize = 20;
@@ -317,7 +318,6 @@ pub static RTTNW_DEMO: Scene = {
                 BvhMesh::new(floor),
                 LambertianMaterial {
                     albedo: solid_texture([0.48, 0.83, 0.53]),
-                    emissive: BLACK_TEX,
                 },
                 None,
             )
@@ -346,7 +346,6 @@ pub static RTTNW_DEMO: Scene = {
                 SphereMesh::new((4., 4., 2.), 0.5),
                 LambertianMaterial {
                     albedo: solid_texture([0.7, 0.3, 0.1]),
-                    emissive: BLACK_TEX,
                 },
                 None,
             )
@@ -416,7 +415,6 @@ pub static RTTNW_DEMO: Scene = {
                             .expect("compile-time image resource should be valid"),
                     ))
                     .into(),
-                    emissive: BLACK_TEX,
                 },
                 None,
             )
@@ -432,7 +430,6 @@ pub static RTTNW_DEMO: Scene = {
                         source: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69)).set_scale(4.)).to_dyn_box(),
                     }
                     .into(),
-                    emissive: BLACK_TEX,
                 },
                 None,
             )
@@ -456,7 +453,6 @@ pub static RTTNW_DEMO: Scene = {
                 BvhMesh::new(balls),
                 LambertianMaterial {
                     albedo: solid_texture([0.85; 3]),
-                    emissive: BLACK_TEX,
                 },
                 Transform3::from_scale_rotation_translation(
                     Vector3::ONE,
@@ -516,14 +512,10 @@ pub static CORNELL: Scene = {
         u: impl Into<Vector3>,
         v: impl Into<Vector3>,
         albedo: impl Into<TextureInstance>,
-        emissive: impl Into<TextureInstance>,
     ) {
         objs.push(SimpleObject::new(
             ParallelogramMesh::new(Planar::new(p, u, v)),
-            LambertianMaterial {
-                albedo: albedo.into(),
-                emissive: emissive.into(),
-            },
+            LambertianMaterial { albedo: albedo.into() },
             None,
         ));
     }
@@ -532,18 +524,17 @@ pub static CORNELL: Scene = {
     let green = [0.12, 0.45, 0.15];
     let warm_grey = [0.85, 0.74, 0.55];
     let light = [15.; 3];
-    let black = [0.; 3];
 
     let o = &mut objects;
 
     {
         // WALLS
 
-        quad(o, (0., 0., 0.), Vector3::Y, Vector3::Z, red, black); // Left
-        quad(o, (0., 0., 0.), Vector3::X, Vector3::Y, warm_grey, black); // Back
-        quad(o, (0., 0., 0.), Vector3::Z, Vector3::X, warm_grey, black); // Floor
-        quad(o, (1., 0., 0.), Vector3::Z, Vector3::Y, green, black); // Right
-        quad(o, (0., 1., 0.), Vector3::X, Vector3::Z, warm_grey, black); // Ceiling
+        quad(o, (0., 0., 0.), Vector3::Y, Vector3::Z, red); // Left
+        quad(o, (0., 0., 0.), Vector3::X, Vector3::Y, warm_grey); // Back
+        quad(o, (0., 0., 0.), Vector3::Z, Vector3::X, warm_grey); // Floor
+        quad(o, (1., 0., 0.), Vector3::Z, Vector3::Y, green); // Right
+        quad(o, (0., 1., 0.), Vector3::X, Vector3::Z, warm_grey); // Ceiling
 
         o.push(SimpleObject::new(
             ParallelogramMesh::new(Planar::new((0.4, 0.9999, 0.4), (0.2, 0., 0.), (0., 0., 0.2))),
@@ -560,7 +551,6 @@ pub static CORNELL: Scene = {
             AxisBoxMesh::new((0.231, 0., 0.117), (0.531, 0.595, 0.414)),
             LambertianMaterial {
                 albedo: warm_grey.into(),
-                emissive: [0.; 3].into(),
             },
             Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(15.)),
         ));
@@ -569,7 +559,6 @@ pub static CORNELL: Scene = {
             AxisBoxMesh::new((0.477, 0., 0.531), (0.774, 0.297, 0.829)),
             LambertianMaterial {
                 albedo: warm_grey.into(),
-                emissive: [0.; 3].into(),
             },
             Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(-18.)),
         ));

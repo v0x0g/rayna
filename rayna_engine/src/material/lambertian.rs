@@ -9,21 +9,19 @@ use crate::texture::TextureInstance;
 use rand::RngCore;
 
 #[derive(Copy, Clone, Debug)]
-pub struct LambertianMaterial<TexAlbedo: Texture, TexEmissive: Texture> {
-    pub albedo: TexAlbedo,
-    pub emissive: TexEmissive,
+pub struct LambertianMaterial<Tex: Texture> {
+    pub albedo: Tex,
 }
 
-impl Default for LambertianMaterial<TextureInstance, TextureInstance> {
+impl Default for LambertianMaterial<TextureInstance> {
     fn default() -> Self {
         Self {
             albedo: [0.5; 3].into(),
-            emissive: [0.; 3].into(),
         }
     }
 }
 
-impl<TexAlbedo: Texture, TexEmissive: Texture> Material for LambertianMaterial<TexAlbedo, TexEmissive> {
+impl<Tex: Texture> Material for LambertianMaterial<Tex> {
     fn scatter(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
         // Completely random scatter direction, in same hemisphere as normal
         let rand = rng::vector_in_unit_sphere(rng);
@@ -31,10 +29,6 @@ impl<TexAlbedo: Texture, TexEmissive: Texture> Material for LambertianMaterial<T
         let vec = intersection.ray_normal + rand;
         // Can't necessarily normalise, since maybe `rand + normal == 0`
         Some(vec.try_normalize().unwrap_or(intersection.ray_normal))
-    }
-
-    fn emitted_light(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
-        self.emissive.value(intersection, rng)
     }
 
     //noinspection DuplicatedCode

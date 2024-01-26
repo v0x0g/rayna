@@ -77,7 +77,7 @@ impl Mesh for CylinderMesh {
         let y = baoc + (t * bard);
         // Intersected body
         if y > 0. && y < baba {
-            normal = ((oc + (rd * t)) - ((ba * y) / baba)) / rad;
+            normal = (((oc + (rd * t)) - ((ba * y) / baba)) / rad).normalize();
             face = 0;
         }
         // Intersected caps
@@ -86,7 +86,7 @@ impl Mesh for CylinderMesh {
             if Number::abs(b + (a * t)) >= sqrt_d {
                 return None;
             }
-            normal = (ba * y.signum()) / baba;
+            normal = (ba * y.signum()).normalize();
             face = 1;
         }
 

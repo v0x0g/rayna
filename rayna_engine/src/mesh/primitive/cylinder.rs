@@ -119,13 +119,23 @@ impl Mesh for CylinderMesh {
         }
         // Intersected caps
         else {
-            // Distance along the length, for whichever cap we are checking (the closer one)
-            let cap_dist = if dist_along_norm < 0. { 0. } else { self.length_sqr };
             // `dist` is distance along the ray that we intersect with the end caps
-            dist = (cap_dist - baoc) / bard;
-            if Number::abs(b + (a * dist)) >= sqrt_d {
-                return None;
-            }
+            // First try closer cap
+            dist = {
+                let dist = (0.0 - baoc) / bard;
+                if !bounds.contains(&dist) || Number::abs(b + (a * dist)) >= sqrt_d {
+                    // Closer one failed, try other
+                    let dist = (self.length_sqr - baoc) / bard;
+                    if !bounds.contains(&dist) || Number::abs(b + (a * dist)) >= sqrt_d {
+                        // Neither cap matched
+                        return None;
+                    } else {
+                        dist
+                    }
+                } else {
+                    dist
+                }
+            };
             // `self.along.normalised()` is also the normal vector for the end caps
             normal = self.along / self.length * dist_along_norm.signum();
             face = if dist_along_norm.is_sign_negative() { 1 } else { 2 };

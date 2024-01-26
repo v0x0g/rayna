@@ -1,4 +1,5 @@
 use crate::core::types::{Number, Point3, Vector3};
+use crate::shared::validate;
 use getset::CopyGetters;
 
 #[derive(Copy, Clone, PartialEq, Debug, CopyGetters)]
@@ -24,8 +25,10 @@ impl Ray {
     ///
     /// # Safety
     /// Unsafe as it does not normalise the direction, assuming the caller
-    /// provided a correct vector, possibly breaking the invariant of a normalised direction
+    /// provided a correct vector, possibly breaking the invariant of a normalised direction.
+    /// This does still validate the vector, using to the [validate] module (and hence does nothing in release)
     pub unsafe fn new_unchecked(pos: Point3, dir: Vector3) -> Self {
+        validate::normal3(dir);
         Self {
             pos,
             dir,

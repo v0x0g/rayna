@@ -47,10 +47,12 @@ impl Mesh for SphereMesh {
         let ray_rel_pos = ray_pos - self.pos;
 
         // Quadratic formula variables
-        let a = ray_dir.length_squared();
+        // NOTE: Normally `a = ray_dir.length_squared()`. Since the contract of `Ray` is that the direction is
+        //  normalised, this means that `a = 1`, and we can simplify the equations a bit
+        debug_assert!(approx::abs_diff_eq!(ray_dir.length_squared(), 1.));
         let half_b = Vector3::dot(ray_rel_pos, ray_dir);
         let c = ray_rel_pos.length_squared() - self.radius_sqr;
-        let discriminant = (half_b * half_b) - (a * c);
+        let discriminant = (half_b * half_b) - (c);
 
         //No solutions to where ray intersects with sphere because of negative square root
         if discriminant < 0. {
@@ -62,9 +64,9 @@ impl Mesh for SphereMesh {
         // Find the nearest root that lies in the acceptable range.
         //This way we do a double check on both, prioritizing the less-positive root (as it's closer)
         //And we only return null if neither is valid
-        let mut root = (-half_b - sqrt_d) / a;
+        let mut root = -half_b - sqrt_d;
         if !bounds.contains(&root) {
-            root = (-half_b + sqrt_d) / a;
+            root = -half_b + sqrt_d;
             if !bounds.contains(&root) {
                 return None;
             }

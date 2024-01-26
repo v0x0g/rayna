@@ -25,7 +25,7 @@ use crate::mesh::sphere::*;
 use crate::mesh::MeshInstance;
 use crate::object::volumetric::VolumetricObject;
 use crate::object::ObjectInstance;
-use crate::shared::camera::Camera;
+use crate::scene::camera::Camera;
 use crate::shared::rng;
 use crate::skybox::SkyboxInstance;
 use crate::texture::image::ImageTexture;

@@ -1,10 +1,11 @@
 use crate::material::MaterialInstance;
 use crate::mesh::MeshInstance;
 use crate::object::{Object, ObjectInstance};
-use crate::shared::camera::Camera;
+use crate::scene::camera::Camera;
 use crate::skybox::{Skybox, SkyboxInstance};
 use crate::texture::TextureInstance;
 
+pub mod camera;
 pub mod stored;
 
 #[derive(Clone, Debug)]

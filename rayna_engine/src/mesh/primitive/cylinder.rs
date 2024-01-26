@@ -12,14 +12,13 @@ use rand_core::RngCore;
 pub struct CylinderMesh {
     centre: Point3,
     /// The first point along the line of the cylinder
-    p1: Point3,
-    /// The second point along the line of the cylinder
-    p2: Point3,
+    origin: Point3,
     /// The vector `p2 - p1`, that goes along the length of the cylinder, with a magnitude equal
     /// to the length of the cylinder.
     along: Vector3,
     /// The magnitude of [along] (how long the cylinder is)
     length: Number,
+
     radius: Number,
     aabb: Aabb,
 }
@@ -37,8 +36,7 @@ impl CylinderMesh {
         let along = p2 - p1;
 
         Self {
-            p1,
-            p2,
+            origin: p1,
             radius,
             along,
             length: along.length(),
@@ -54,20 +52,18 @@ impl CylinderMesh {
 
 impl Mesh for CylinderMesh {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
-        let (ro, rd) = (ray.pos(), ray.dir());
-        let (p1, p2, rad) = (self.p1, self.p2, self.radius);
+        let rd = ray.dir();
 
         // TODO: Optimise `ba`
         let ba = self.along;
-        let oc = ro - p1;
+        let oc = ray.pos() - self.origin;
 
-        let baba = self.length;
         let bard = Vector3::dot(ba, rd);
         let baoc = Vector3::dot(ba, oc);
 
-        let a = baba - (bard * bard);
-        let b = (baba * Vector3::dot(oc, rd)) - (baoc * bard);
-        let c = (baba * Vector3::dot(oc, oc)) - (baoc * baoc) - (rad * rad * baba);
+        let a = self.length - (bard * bard);
+        let b = (self.length * Vector3::dot(oc, rd)) - (baoc * bard);
+        let c = (self.length * Vector3::dot(oc, oc)) - (baoc * baoc) - (self.radius * self.radius * self.length);
 
         // let (k2, k1, k0) = (a,b,c);
 
@@ -89,14 +85,22 @@ impl Mesh for CylinderMesh {
         let dist_along = baoc + (t * bard);
 
         // Intersected body
-        if dist_along > 0. && dist_along < baba {
-            normal = (((oc + (rd * t)) - ((ba * dist_along) / baba)) / rad).normalize();
+        if dist_along > 0. && dist_along < self.length {
+            // Position of the intersection we are checking, relative to cylinder origin
+            let pos_rel = oc + (rd * t);
+            // Position along the cylinder, relative from the origin. Normalised against length
+            let norm_pos_along = (ba * dist_along) / self.length;
+            // The position "around" the origin that the intersection is.
+            // This is the position on the surface, from the origin, at zero distance along the length
+            let rel_pos_outwards = pos_rel - norm_pos_along;
+            // Normalise the position, and we get our normal vector easy!
+            normal = rel_pos_outwards / self.radius;
 
             face = 0;
         }
         // Intersected caps
         else {
-            t = ((if dist_along < 0. { 0. } else { baba }) - baoc) / bard;
+            t = ((if dist_along < 0. { 0. } else { self.length }) - baoc) / bard;
             if Number::abs(b + (a * t)) >= sqrt_d {
                 return None;
             }

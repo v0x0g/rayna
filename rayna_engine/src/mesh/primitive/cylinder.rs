@@ -95,7 +95,6 @@ impl Mesh for CylinderMesh {
         let dist_along_norm = (baoc + (dist * bard)) / self.length_sqr;
 
         // Intersect with body
-        // NOTE: Not sure why
         if dist_along_norm > 0. && dist_along_norm < 1. {
             // Position of the intersection we are checking, relative to cylinder origin
             let pos_rel = oc + (rd * dist);
@@ -130,7 +129,21 @@ impl Mesh for CylinderMesh {
             // `self.along.normalised()` is also the normal vector for the end caps
             normal = self.along / self.length * dist_along_norm.signum();
             face = if dist_along_norm.is_sign_negative() { 1 } else { 2 };
-            uv = Point2::new(a, b);
+
+            // Position of the intersection we are checking, relative to cylinder origin
+            let pos_rel = oc + (rd * dist);
+            // Position along the cylinder, relative from the origin. Normalised against length
+            let norm_pos_along = self.along * dist_along_norm;
+            // The position "around" the origin that the intersection is.
+            // This is the position on the surface, from the origin, at zero distance along the length
+            let rel_pos_outwards = pos_rel - norm_pos_along;
+            // Normalise the position, and we get our normal vector easy!
+            let n_temp = (rel_pos_outwards / self.radius).normalize();
+
+            let u = n_temp.dot(self.orthogonals.0) / 2. + 0.5;
+            let v = n_temp.dot(self.orthogonals.1) / 2. + 0.5;
+
+            uv = Point2::new(u, v);
         }
 
         if !bounds.contains(&dist) {

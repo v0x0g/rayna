@@ -11,8 +11,15 @@ use rand_core::RngCore;
 #[get_copy = "pub"]
 pub struct CylinderMesh {
     centre: Point3,
+    /// The first point along the line of the cylinder
     p1: Point3,
+    /// The second point along the line of the cylinder
     p2: Point3,
+    /// The vector `p2 - p1`, that goes along the length of the cylinder, with a magnitude equal
+    /// to the length of the cylinder.
+    along: Vector3,
+    /// The magnitude of [along] (how long the cylinder is)
+    length: Number,
     radius: Number,
     aabb: Aabb,
 }
@@ -27,11 +34,14 @@ impl CylinderMesh {
             Point3::max(p1, p2) + Vector3::splat(radius),
         );
         let centre = ((p1.to_vector() + p2.to_vector()) / 2.).to_point();
+        let along = p2 - p1;
 
         Self {
             p1,
             p2,
             radius,
+            along,
+            length: along.length(),
             centre,
             aabb,
         }
@@ -48,10 +58,10 @@ impl Mesh for CylinderMesh {
         let (p1, p2, rad) = (self.p1, self.p2, self.radius);
 
         // TODO: Optimise `ba`
-        let ba = p2 - p1;
+        let ba = self.along;
         let oc = ro - p1;
 
-        let baba = ba.length_squared();
+        let baba = self.length;
         let bard = Vector3::dot(ba, rd);
         let baoc = Vector3::dot(ba, oc);
 
@@ -74,19 +84,23 @@ impl Mesh for CylinderMesh {
         let normal;
         let face;
 
-        let y = baoc + (t * bard);
+        // Distance along the line segment (P1 -> P2) that the ray intersects
+        // 0 means @ P1, `baba` means @ P2
+        let dist_along = baoc + (t * bard);
+
         // Intersected body
-        if y > 0. && y < baba {
-            normal = (((oc + (rd * t)) - ((ba * y) / baba)) / rad).normalize();
+        if dist_along > 0. && dist_along < baba {
+            normal = (((oc + (rd * t)) - ((ba * dist_along) / baba)) / rad).normalize();
+
             face = 0;
         }
         // Intersected caps
         else {
-            t = ((if y < 0. { 0. } else { baba }) - baoc) / bard;
+            t = ((if dist_along < 0. { 0. } else { baba }) - baoc) / bard;
             if Number::abs(b + (a * t)) >= sqrt_d {
                 return None;
             }
-            normal = (ba * y.signum()).normalize();
+            normal = (ba * dist_along.signum()).normalize();
             face = 1;
         }
 

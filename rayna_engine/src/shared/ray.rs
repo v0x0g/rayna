@@ -12,7 +12,8 @@ pub struct Ray {
 
 impl Ray {
     // FIXME: This function is pretty slow :(
-    pub fn new(pos: Point3, dir: Vector3) -> Self {
+    pub fn new(pos: impl Into<Point3>, dir: impl Into<Vector3>) -> Self {
+        let (pos, dir) = (pos.into(), dir.into());
         let dir = dir.normalize();
         Self {
             pos,
@@ -27,7 +28,8 @@ impl Ray {
     /// Unsafe as it does not normalise the direction, assuming the caller
     /// provided a correct vector, possibly breaking the invariant of a normalised direction.
     /// This does still validate the vector, using to the [validate] module (and hence does nothing in release)
-    pub unsafe fn new_unchecked(pos: Point3, dir: Vector3) -> Self {
+    pub unsafe fn new_unchecked(pos: impl Into<Point3>, dir: impl Into<Vector3>) -> Self {
+        let (pos, dir) = (pos.into(), dir.into());
         validate::normal3(dir);
         Self {
             pos,
@@ -41,7 +43,7 @@ impl Ray {
     /// `pos + (t * dir)`
     pub fn at(&self, t: Number) -> Point3 { self.pos + (self.dir * t) }
 }
-
+// TODO: Impl Into<Point3>
 /// Destructure ray into position and direction
 impl From<Ray> for (Point3, Vector3) {
     fn from(value: Ray) -> Self { (value.pos, value.dir) }

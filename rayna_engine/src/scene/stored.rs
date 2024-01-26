@@ -19,7 +19,7 @@ use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::mesh::axis_box::AxisBoxMesh;
 use crate::mesh::bvh::BvhMesh;
-use crate::mesh::parallelogram::ParallelogramMesh;
+use crate::mesh::planar::parallelogram::ParallelogramMesh;
 use crate::mesh::planar::Planar;
 use crate::mesh::sphere::*;
 use crate::mesh::MeshInstance;

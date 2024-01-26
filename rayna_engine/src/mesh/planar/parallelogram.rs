@@ -25,7 +25,7 @@ impl ParallelogramMesh {
     pub fn new(plane: Planar) -> Self {
         let (p, a, b) = (plane.p(), plane.p() + plane.u(), plane.p() + plane.v());
         let centre = p + (plane.u() / 2.) + (plane.v() / 2.);
-        let aabb = Aabb::encompass_points([p, a, b]).min_padded(super::planar::AABB_PADDING);
+        let aabb = Aabb::encompass_points([p, a, b]).min_padded(super::AABB_PADDING);
 
         Self { plane, aabb, centre }
     }

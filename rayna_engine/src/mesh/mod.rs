@@ -35,19 +35,17 @@ use rand_core::RngCore;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
 use self::{
-    axis_box::AxisBoxMesh, bvh::BvhMesh, dynamic::DynamicMesh, infinite_plane::InfinitePlaneMesh, list::MeshList,
-    parallelogram::ParallelogramMesh, sphere::SphereMesh, triangle::TriangleMesh,
+    axis_box::AxisBoxMesh, bvh::BvhMesh, dynamic::DynamicMesh, list::MeshList,
+    planar::infinite_plane::InfinitePlaneMesh, planar::parallelogram::ParallelogramMesh,
+    planar::triangle::TriangleMesh, sphere::SphereMesh,
 };
 
 pub mod axis_box;
 pub mod bvh;
 pub mod dynamic;
-pub mod infinite_plane;
 pub mod list;
-pub mod parallelogram;
 pub mod planar;
 pub mod sphere;
-pub mod triangle;
 
 // region Object traits
 

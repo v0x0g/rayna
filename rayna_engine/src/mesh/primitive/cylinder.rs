@@ -5,6 +5,7 @@ use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use getset::CopyGetters;
+use glamour::AngleConsts;
 use rand_core::RngCore;
 
 #[derive(Copy, Clone, Debug, CopyGetters)]
@@ -14,15 +15,16 @@ pub struct CylinderMesh {
     /// The first point along the line of the cylinder
     origin: Point3,
     /// The vector `p2 - p1`, that goes along the length of the cylinder, with a magnitude equal
-    /// to the length of the cylinder.
+    /// to the length of the cylinder. The normalised value of this is the surface normal for the end caps
     along: Vector3,
-    /// Normalised version of [along]. This is the normal vector for the end caps
-    along_norm: Vector3,
     /// The square magnitude of [along] (how long the cylinder is, squared)
     length_sqr: Number,
     /// How long the cylinder is
     length: Number,
     radius: Number,
+    /// Two arbitrary "outward" directions that points from the centre of the cylinder to the surface.
+    /// Aka, two arbitrary, orthogonal surface normals
+    orthogonals: (Vector3, Vector3),
     aabb: Aabb,
 }
 
@@ -37,14 +39,17 @@ impl CylinderMesh {
         );
         let centre = ((p1.to_vector() + p2.to_vector()) / 2.).to_point();
         let along = p2 - p1;
+        let length_sqr = along.length_squared();
+        let length = length_sqr.sqrt();
+        let orthogonals = Vector3::any_orthonormal_pair(&(along / length));
 
         Self {
             origin: p1,
             radius,
             along,
-            along_norm: along.normalize(),
-            length_sqr: along.length_squared(),
-            length: along.length(),
+            length_sqr,
+            length,
+            orthogonals,
             centre,
             aabb,
         }
@@ -100,7 +105,15 @@ impl Mesh for CylinderMesh {
             let rel_pos_outwards = pos_rel - norm_pos_along;
             // Normalise the position, and we get our normal vector easy!
             normal = (rel_pos_outwards / self.radius).normalize();
-            uv = Point2::new(0., dist_along_sqr.sqrt());
+            // One of the orthogonals we use to calculate the angle,
+            // Both are normalised so skip that
+            let cos_theta = Vector3::dot(normal, self.orthogonals.0);
+            // Use `signum()` of dot with second orthogonal, so we can tell which side of `self.orthogonals.0` it was
+            let theta_signed = cos_theta.acos() * Vector3::dot(normal, self.orthogonals.1).signum();
+            // Remap from `-pi..pi`to `0..1`
+            let u = (theta_signed / Number::PI / 2.) + 0.5;
+            let v = (dist_along_sqr / self.length_sqr).sqrt();
+            uv = Point2::new(u, v);
 
             face = 0;
         }
@@ -113,10 +126,10 @@ impl Mesh for CylinderMesh {
             if Number::abs(b + (a * dist)) >= sqrt_d {
                 return None;
             }
-            // `self.along_norm` is also the normal vector for the end caps
-            normal = self.along_norm * dist_along_sqr.signum();
-            face = 1;
-            uv = Point2::new(dist, dist);
+            // `self.along.normalised()` is also the normal vector for the end caps
+            normal = self.along / self.length * dist_along_sqr.signum();
+            face = if dist_along_sqr.is_sign_negative() { 1 } else { 2 };
+            uv = Point2::new(a, b);
         }
 
         if !bounds.contains(&dist) {

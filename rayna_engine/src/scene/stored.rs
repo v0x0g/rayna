@@ -88,10 +88,10 @@ pub static TESTING: Scene = {
 
         let purple = LambertianMaterial {
             emissive: Colour::BLACK.into(),
-            albedo: [0.32, 0.15, 0.5].into(),
+            albedo: [0.25, 0.11, 0.5].into(),
         };
         let light = LightMaterial {
-            emissive: [15.; 3].into(),
+            emissive: [30.; 3].into(),
         };
 
         // Back

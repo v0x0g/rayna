@@ -26,6 +26,7 @@ impl From<Arc<Image>> for ImageTexture {
     }
 }
 
+// TODO: Implement some sort of texture filtering and stuff
 impl Texture for ImageTexture {
     fn value(&self, intersection: &Intersection, _rng: &mut dyn RngCore) -> Colour {
         // Calculate pixel positions after scale and offset

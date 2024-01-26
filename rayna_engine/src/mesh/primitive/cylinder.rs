@@ -16,6 +16,8 @@ pub struct CylinderMesh {
     /// The vector `p2 - p1`, that goes along the length of the cylinder, with a magnitude equal
     /// to the length of the cylinder.
     along: Vector3,
+    /// Normalised version of [along]. This is the normal vector for the end caps
+    along_norm: Vector3,
     /// The magnitude of [along] (how long the cylinder is)
     length_sqr: Number,
 
@@ -39,6 +41,7 @@ impl CylinderMesh {
             origin: p1,
             radius,
             along,
+            along_norm: along.normalize(),
             length_sqr: along.length_squared(),
             centre,
             aabb,
@@ -99,11 +102,14 @@ impl Mesh for CylinderMesh {
         }
         // Intersected caps
         else {
-            t = ((if dist_along < 0. { 0. } else { self.length_sqr }) - baoc) / bard;
+            // Distance along the length, for whichever cap we are checking (the closer one)
+            let cap_dist = if dist_along < 0. { 0. } else { self.length_sqr };
+            t = (cap_dist - baoc) / bard;
             if Number::abs(b + (a * t)) >= sqrt_d {
                 return None;
             }
-            normal = (self.along * dist_along.signum()).normalize();
+            // `self.along_norm` is also the normal vector for the end caps
+            normal = self.along_norm * dist_along.signum();
             face = 1;
         }
 

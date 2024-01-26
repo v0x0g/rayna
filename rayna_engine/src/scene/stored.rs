@@ -88,74 +88,74 @@ pub static TESTING: Scene = {
     {
         // WALLS
 
-        let purple = LambertianMaterial {
-            albedo: [0.25, 0.11, 0.5].into(),
-        };
-        let light = LightMaterial {
-            emissive: [30.; 3].into(),
-        };
+        // let purple = LambertianMaterial {
+        //     albedo: [0.25, 0.11, 0.5].into(),
+        // };
+        // let light = LightMaterial {
+        //     emissive: [30.; 3].into(),
+        // };
 
-        // Back
-        objects.push(SimpleObject::new(
-            ParallelogramMesh::new(Planar::new((0., 0., 0.), Vector3::X, Vector3::Y)),
-            purple.clone(),
-            None,
-        ));
-        // Front
-        objects.push(SimpleObject::new(
-            ParallelogramMesh::new(Planar::new((0., 0., 1.), Vector3::X, Vector3::Y)),
-            purple.clone(),
-            None,
-        ));
-
-        // Floor
-        objects.push(SimpleObject::new(
-            ParallelogramMesh::new(Planar::new((0., 0., 0.), Vector3::Z, Vector3::X)),
-            purple.clone(),
-            None,
-        ));
-        // Ceiling
-        objects.push(SimpleObject::new(
-            ParallelogramMesh::new(Planar::new((0., 1., 0.), Vector3::X, Vector3::Z)),
-            purple.clone(),
-            None,
-        ));
-
-        // Left
-        objects.push(SimpleObject::new(
-            ParallelogramMesh::new(Planar::new((0., 0., 0.), Vector3::Y, Vector3::Z)),
-            purple.clone(),
-            None,
-        ));
-        // Right
-        objects.push(SimpleObject::new(
-            ParallelogramMesh::new(Planar::new((1., 0., 0.), Vector3::Z, Vector3::Y)),
-            purple.clone(),
-            None,
-        ));
-
-        let scale = 0.3;
-
-        // Left Light
-        objects.push(SimpleObject::new(
-            ParallelogramMesh::new(Planar::new_centred(
-                (0., 0.5, 0.),
-                Vector3::Y * scale,
-                Vector3::Z * scale,
-            )),
-            light.clone(),
-            None,
-        ));
-        // Right Light
-        objects.push(SimpleObject::new(
-            ParallelogramMesh::new(Planar::new_centred(
-                (1., 0.5, 0.),
-                Vector3::Z * scale,
-                Vector3::Y * scale,
-            )),
-            light.clone(),
-            None,
-        ));
+        // // Back
+        // objects.push(SimpleObject::new(
+        //     ParallelogramMesh::new(Planar::new((0., 0., 0.), Vector3::X, Vector3::Y)),
+        //     purple.clone(),
+        //     None,
+        // ));
+        // // Front
+        // objects.push(SimpleObject::new(
+        //     ParallelogramMesh::new(Planar::new((0., 0., 1.), Vector3::X, Vector3::Y)),
+        //     purple.clone(),
+        //     None,
+        // ));
+        //
+        // // Floor
+        // objects.push(SimpleObject::new(
+        //     ParallelogramMesh::new(Planar::new((0., 0., 0.), Vector3::Z, Vector3::X)),
+        //     purple.clone(),
+        //     None,
+        // ));
+        // // Ceiling
+        // objects.push(SimpleObject::new(
+        //     ParallelogramMesh::new(Planar::new((0., 1., 0.), Vector3::X, Vector3::Z)),
+        //     purple.clone(),
+        //     None,
+        // ));
+        //
+        // // Left
+        // objects.push(SimpleObject::new(
+        //     ParallelogramMesh::new(Planar::new((0., 0., 0.), Vector3::Y, Vector3::Z)),
+        //     purple.clone(),
+        //     None,
+        // ));
+        // // Right
+        // objects.push(SimpleObject::new(
+        //     ParallelogramMesh::new(Planar::new((1., 0., 0.), Vector3::Z, Vector3::Y)),
+        //     purple.clone(),
+        //     None,
+        // ));
+        //
+        // let scale = 0.3;
+        //
+        // // Left Light
+        // objects.push(SimpleObject::new(
+        //     ParallelogramMesh::new(Planar::new_centred(
+        //         (0., 0.5, 0.),
+        //         Vector3::Y * scale,
+        //         Vector3::Z * scale,
+        //     )),
+        //     light.clone(),
+        //     None,
+        // ));
+        // // Right Light
+        // objects.push(SimpleObject::new(
+        //     ParallelogramMesh::new(Planar::new_centred(
+        //         (1., 0.5, 0.),
+        //         Vector3::Z * scale,
+        //         Vector3::Y * scale,
+        //     )),
+        //     light.clone(),
+        //     None,
+        // ));
     }
 
     {
@@ -190,8 +190,8 @@ pub static TESTING: Scene = {
     Scene {
         camera,
         objects: objects.into(),
-        skybox: None.into(),
-        // skybox: SkyboxInstance::default(),
+        // skybox: None.into(),
+        skybox: SkyboxInstance::default(),
     }
 };
 

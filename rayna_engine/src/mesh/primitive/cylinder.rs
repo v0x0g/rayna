@@ -142,7 +142,6 @@ impl Mesh for CylinderMesh {
         if !bounds.contains(&dist) {
             return None;
         }
-        assert_ne!(dist, -1.);
 
         let pos_w = ray.at(dist);
         let pos_l = (pos_w - self.centre).into();

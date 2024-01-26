@@ -84,7 +84,14 @@ impl Mesh for CylinderMesh {
             discriminant.sqrt()
         };
 
+        //
         let mut dist = (-b - sqrt_d) / a;
+        if !bounds.contains(&dist) {
+            dist = (-b + sqrt_d) / a;
+        }
+        if !bounds.contains(&dist) {
+            return None;
+        }
 
         let normal;
         let face;
@@ -94,7 +101,7 @@ impl Mesh for CylinderMesh {
         // 0 means @ P1, `1` means @ P2 (it's normalised). Not sure why `/len_sqr` not `/len`
         let dist_along_norm = (baoc + (dist * bard)) / self.length_sqr;
 
-        // Intersect with body
+        // Intersect with body.
         if dist_along_norm > 0. && dist_along_norm < 1. {
             // Position of the intersection we are checking, relative to cylinder origin
             let pos_rel = oc + (rd * dist);
@@ -119,6 +126,7 @@ impl Mesh for CylinderMesh {
         }
         // Intersected caps
         else {
+            return None;
             // `dist` is distance along the ray that we intersect with the end caps
             // First try closer cap
             let (dist_near, dist_far) = if dist_along_norm < 0. {
@@ -143,7 +151,8 @@ impl Mesh for CylinderMesh {
             // `self.along.normalised()` is also the normal vector for the end caps
             normal = self.along / self.length * dist_along_norm.signum();
             face = if dist_along_norm.is_sign_negative() { 1 } else { 2 };
-            //TODO: allow ray origin to be inside
+            // TODO: allow ray origin to be inside
+
             // Position of the intersection we are checking, relative to cylinder origin
             let pos_rel = oc + (rd * dist);
 
@@ -151,10 +160,6 @@ impl Mesh for CylinderMesh {
             let v = (pos_rel / self.radius).dot(self.orthogonals.1) / 2. + 0.5;
 
             uv = Point2::new(u, v);
-        }
-
-        if !bounds.contains(&dist) {
-            return None;
         }
 
         let pos_w = ray.at(dist);

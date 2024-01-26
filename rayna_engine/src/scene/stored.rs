@@ -19,7 +19,6 @@ use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::mesh::axis_box::AxisBoxMesh;
 use crate::mesh::bvh::BvhMesh;
-use crate::mesh::infinite_plane::{InfinitePlaneMesh, UvWrappingMode};
 use crate::mesh::parallelogram::ParallelogramMesh;
 use crate::mesh::planar::Planar;
 use crate::mesh::sphere::*;
@@ -74,57 +73,95 @@ pub static SIMPLE: Scene = {
 
 #[dynamic]
 pub static TESTING: Scene = {
-    let mut objects = Vec::<ObjectInstance<_, _>>::new();
+    let camera = Camera {
+        pos: Point3::new(0.5, 0.5, 2.3),
+        fwd: Vector3::new(0., 0., -1.).normalize(),
+        v_fov: Angle::from_degrees(40.),
+        focus_dist: 1.,
+        defocus_angle: Angle::from_degrees(0.),
+    };
 
-    objects.push(
-        SimpleObject::new(
-            // Ground
-            InfinitePlaneMesh::new(Planar::new(Point3::ZERO, Vector3::X, Vector3::Z), UvWrappingMode::Wrap),
+    let mut objects = Vec::new();
+
+    fn quad(
+        objs: &mut Vec<SimpleObject<MeshInstance, MaterialInstance<TextureInstance>>>,
+        p: impl Into<Point3>,
+        u: impl Into<Vector3>,
+        v: impl Into<Vector3>,
+        albedo: impl Into<TextureInstance>,
+        emissive: impl Into<TextureInstance>,
+    ) {
+        objs.push(SimpleObject::new(
+            ParallelogramMesh::new(Planar::new(p, u, v)),
             LambertianMaterial {
-                albedo: [0.5; 3].into(),
-                emissive: [0.; 3].into(),
+                albedo: albedo.into(),
+                emissive: emissive.into(),
             },
             None,
-        )
-        .into(),
-    );
-    objects.push(
-        SimpleObject::new(
-            // Slope
-            InfinitePlaneMesh::new(
-                Planar::new((0., -0.1, 0.), (1., 0.1, 0.), Vector3::Z),
-                UvWrappingMode::Wrap,
-            ),
-            LambertianMaterial {
-                albedo: [0.2; 3].into(),
-                emissive: [0.1; 3].into(),
+        ));
+    }
+
+    let red = [0.65, 0.05, 0.05];
+    let green = [0.12, 0.45, 0.15];
+    let warm_grey = [0.85, 0.74, 0.55];
+    let light = [1.; 3];
+    let black = [0.; 3];
+
+    let o = &mut objects;
+
+    {
+        // WALLS
+
+        quad(o, (0., 0., 0.), Vector3::Y, Vector3::Z, red, black); // Left
+        quad(o, (0., 0., 0.), Vector3::Z, Vector3::X, warm_grey, black); // Floor
+        quad(o, (1., 0., 0.), Vector3::Z, Vector3::Y, green, black); // Right
+        quad(o, (0., 1., 0.), Vector3::X, Vector3::Z, warm_grey, black); // Ceiling
+
+        o.push(SimpleObject::new(
+            // Back wall is light
+            ParallelogramMesh::new(Planar::new((0., 0., 0.), Vector3::X, Vector3::Y)),
+            LightMaterial { emissive: light.into() },
+            None,
+        ));
+    }
+
+    {
+        // INNER BOXES
+        //
+        // // Big
+        // o.push(SimpleObject::new(
+        //     AxisBoxMesh::new((0.231, 0., 0.117), (0.531, 0.595, 0.414)),
+        //     LambertianMaterial {
+        //         albedo: warm_grey.into(),
+        //         emissive: [0.; 3].into(),
+        //     },
+        //     Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(15.)),
+        // ));
+        // // Small
+        // o.push(SimpleObject::new(
+        //     AxisBoxMesh::new((0.477, 0., 0.531), (0.774, 0.297, 0.829)),
+        //     LambertianMaterial {
+        //         albedo: warm_grey.into(),
+        //         emissive: [0.; 3].into(),
+        //     },
+        //     Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(-18.)),
+        // ));
+
+        o.push(SimpleObject::new(
+            SphereMesh::new((0.5, 0.2, 0.5), 0.2),
+            DielectricMaterial {
+                albedo: Colour::WHITE.into(),
+                refractive_index: 1.5,
             },
             None,
-        )
-        .into(),
-    );
-    objects.push(
-        VolumetricObject::new(
-            // Ball
-            SphereMesh::new((0., 1., 0.), 1.),
-            IsotropicMaterial {
-                albedo: [0.5; 3].into(),
-            },
-            1.,
-            None,
-        )
-        .into(),
-    );
+        ));
+    }
+
     Scene {
-        camera: Camera {
-            pos: Point3::new(0., 0.5, -3.),
-            fwd: Vector3::Z,
-            v_fov: Angle::from_degrees(45.),
-            focus_dist: 3.,
-            defocus_angle: Angle::from_degrees(0.),
-        },
+        camera,
         objects: objects.into(),
-        skybox: SkyboxInstance::default(),
+        skybox: None.into(),
+        // skybox: SkyboxInstance::default(),
     }
 };
 

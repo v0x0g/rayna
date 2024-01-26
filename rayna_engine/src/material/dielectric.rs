@@ -51,9 +51,9 @@ impl<Tex: Texture> Material for DielectricMaterial<Tex> {
         // Therefore we cannot know how far we have travelled inside the material on the 'entering' intersection.
         // So on the entering intersection, do nothing, and on exiting intersection, calculate distance travelled inside
         // the object, so we can use [Beer's Law] (https://en.wikipedia.org/wiki/Beer%E2%80%93Lambert_law)
+        // Possibly sub-optimal, but not much we can do
 
         let exiting_intersection = !intersection.front_face;
-
         if !exiting_intersection {
             return *future_col;
         }

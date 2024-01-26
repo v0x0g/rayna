@@ -74,8 +74,8 @@ pub static SIMPLE: Scene = {
 #[dynamic]
 pub static TESTING: Scene = {
     let camera = Camera {
-        pos: Point3::new(0.226, 0.454, 0.856),
-        fwd: Vector3::new(0.684, -0.635, -0.359).normalize(),
+        pos: Point3::new(0.45, 0.26, 0.192),
+        fwd: Vector3::new(0.056, -0.148, 0.987).normalize(),
         v_fov: Angle::from_degrees(90.),
         focus_dist: 1.,
         defocus_angle: Angle::from_degrees(0.),
@@ -86,57 +86,73 @@ pub static TESTING: Scene = {
     {
         // WALLS
 
-        let purple = [0.32, 0.15, 0.5];
-        let light = [7.; 3];
+        let purple = LambertianMaterial {
+            emissive: Colour::BLACK.into(),
+            albedo: [0.32, 0.15, 0.5].into(),
+        };
+        let light = LightMaterial {
+            emissive: [1.; 3].into(),
+        };
 
         // Back
         objects.push(SimpleObject::new(
             ParallelogramMesh::new(Planar::new((0., 0., 0.), Vector3::X, Vector3::Y)),
-            LambertianMaterial {
-                emissive: Colour::BLACK.into(),
-                albedo: purple.into(),
-            },
+            purple.clone(),
             None,
         ));
         // Front
         objects.push(SimpleObject::new(
             ParallelogramMesh::new(Planar::new((0., 0., 1.), Vector3::X, Vector3::Y)),
-            LambertianMaterial {
-                emissive: Colour::BLACK.into(),
-                albedo: purple.into(),
-            },
+            purple.clone(),
             None,
         ));
 
         // Floor
         objects.push(SimpleObject::new(
             ParallelogramMesh::new(Planar::new((0., 0., 0.), Vector3::Z, Vector3::X)),
-            LambertianMaterial {
-                emissive: Colour::BLACK.into(),
-                albedo: purple.into(),
-            },
+            purple.clone(),
             None,
         ));
         // Ceiling
         objects.push(SimpleObject::new(
             ParallelogramMesh::new(Planar::new((0., 1., 0.), Vector3::X, Vector3::Z)),
-            LambertianMaterial {
-                emissive: Colour::BLACK.into(),
-                albedo: purple.into(),
-            },
+            purple.clone(),
             None,
         ));
 
         // Left
         objects.push(SimpleObject::new(
             ParallelogramMesh::new(Planar::new((0., 0., 0.), Vector3::Y, Vector3::Z)),
-            LightMaterial { emissive: light.into() },
+            purple.clone(),
             None,
         ));
         // Right
         objects.push(SimpleObject::new(
             ParallelogramMesh::new(Planar::new((1., 0., 0.), Vector3::Z, Vector3::Y)),
-            LightMaterial { emissive: light.into() },
+            purple.clone(),
+            None,
+        ));
+
+        let scale = 0.1;
+
+        // Left Light
+        objects.push(SimpleObject::new(
+            ParallelogramMesh::new(Planar::new_centred(
+                (0., 0.5, 0.),
+                Vector3::Y * scale,
+                Vector3::Z * scale,
+            )),
+            light.clone(),
+            None,
+        ));
+        // Right Light
+        objects.push(SimpleObject::new(
+            ParallelogramMesh::new(Planar::new_centred(
+                (1., 0.5, 0.),
+                Vector3::Z * scale,
+                Vector3::Y * scale,
+            )),
+            light.clone(),
             None,
         ));
     }
@@ -147,7 +163,7 @@ pub static TESTING: Scene = {
             DielectricMaterial {
                 albedo: [0.9; 3].into(),
                 refractive_index: 1.5,
-                density: 2.0,
+                density: 0.0,
             },
             None,
         ));

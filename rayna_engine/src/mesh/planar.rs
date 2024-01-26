@@ -83,6 +83,12 @@ impl Planar {
         Self { p, u, v, n, d, w }
     }
 
+    pub fn new_centred(centre: impl Into<Point3>, u: impl Into<Vector3>, v: impl Into<Vector3>) -> Self {
+        let (centre, u, v) = (centre.into(), u.into(), v.into());
+
+        Self::new(centre - u - v, u * 2., v * 2.)
+    }
+
     /// Creates a [Planar] mesh from three points on the surface.
     ///
     /// For a 2D plane in the `XY` plane, the point layout would be:

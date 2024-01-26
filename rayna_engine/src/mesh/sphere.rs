@@ -4,6 +4,7 @@ use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
+use crate::shared::validate;
 use getset::CopyGetters;
 use glamour::AngleConsts;
 use rand_core::RngCore;
@@ -49,7 +50,7 @@ impl Mesh for SphereMesh {
         // Quadratic formula variables
         // NOTE: Normally `a = ray_dir.length_squared()`. Since the contract of `Ray` is that the direction is
         //  normalised, this means that `a = 1`, and we can simplify the equations a bit
-        debug_assert!(approx::abs_diff_eq!(ray_dir.length_squared(), 1.));
+        validate::normal3(ray_dir);
         let half_b = Vector3::dot(ray_rel_pos, ray_dir);
         let c = ray_rel_pos.length_squared() - self.radius_sqr;
         let discriminant = (half_b * half_b) - (c);

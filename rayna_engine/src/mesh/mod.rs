@@ -35,9 +35,9 @@ use rand_core::RngCore;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
 use self::{
-    advanced::bvh::BvhMesh, advanced::dynamic::DynamicMesh, advanced::list::MeshList,
-    planar::infinite_plane::InfinitePlaneMesh, planar::parallelogram::ParallelogramMesh,
-    planar::triangle::TriangleMesh, primitive::axis_box::AxisBoxMesh, primitive::sphere::SphereMesh,
+    advanced::{bvh::BvhMesh, dynamic::DynamicMesh, list::MeshList},
+    planar::{infinite_plane::InfinitePlaneMesh, parallelogram::ParallelogramMesh, triangle::TriangleMesh},
+    primitive::{axis_box::AxisBoxMesh, cylinder::CylinderMesh, sphere::SphereMesh},
 };
 
 pub mod advanced;
@@ -64,6 +64,7 @@ pub trait Mesh: MeshProperties + RtRequirement {
 #[derive(Clone, Debug)]
 pub enum MeshInstance {
     SphereMesh,
+    CylinderMesh,
     AxisBoxMesh,
     ParallelogramMesh,
     InfinitePlaneMesh,

@@ -130,8 +130,12 @@ impl Planar {
 }
 
 /// Create from three point array
-impl From<[Point3; 3]> for Planar {
-    fn from([p, a, b]: [Point3; 3]) -> Self { Self::new_points(p, a, b) }
+// impl From<[Point3; 3]> for Planar {
+//     fn from([p, a, b]: [Point3; 3]) -> Self { Self::new_points(p, a, b) }
+// }
+/// Create from three point array
+impl<P: Into<Point3>> From<[P; 3]> for Planar {
+    fn from([p, a, b]: [P; 3]) -> Self { Self::new_points(p, a, b) }
 }
 /// Create from three point tuple
 impl From<(Point3, Point3, Point3)> for Planar {

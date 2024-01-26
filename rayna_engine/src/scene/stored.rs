@@ -21,6 +21,7 @@ use crate::mesh::advanced::bvh::BvhMesh;
 use crate::mesh::planar::parallelogram::ParallelogramMesh;
 use crate::mesh::planar::Planar;
 use crate::mesh::primitive::axis_box::AxisBoxMesh;
+use crate::mesh::primitive::cylinder::CylinderMesh;
 use crate::mesh::primitive::sphere::SphereMesh;
 use crate::mesh::MeshInstance;
 use crate::object::volumetric::VolumetricObject;
@@ -157,7 +158,7 @@ pub static TESTING: Scene = {
 
     {
         objects.push(SimpleObject::new(
-            SphereMesh::new((0.5, 0.2, 0.5), 0.2),
+            CylinderMesh::new((0.5, 0.1, 0.5), (0.5, 0.4, 0.5), 0.1),
             LambertianMaterial {
                 albedo: [0.9; 3].into(),
             },

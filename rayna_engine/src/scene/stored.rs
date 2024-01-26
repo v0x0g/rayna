@@ -74,9 +74,9 @@ pub static SIMPLE: Scene = {
 #[dynamic]
 pub static TESTING: Scene = {
     let camera = Camera {
-        pos: Point3::new(0.45, 0.26, 0.192),
-        fwd: Vector3::new(0.056, -0.148, 0.987).normalize(),
-        v_fov: Angle::from_degrees(90.),
+        pos: Point3::new(0.440, 0.288, 0.008),
+        fwd: Vector3::new(0.118, -0.139, 0.983).normalize(),
+        v_fov: Angle::from_degrees(60.),
         focus_dist: 1.,
         defocus_angle: Angle::from_degrees(0.),
     };

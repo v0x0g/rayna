@@ -74,9 +74,7 @@ impl Mesh for CylinderMesh {
         let c =
             (self.length_sqr * Vector3::dot(oc, oc)) - (baoc * baoc) - (self.radius * self.radius * self.length_sqr);
 
-        // let (k2, k1, k0) = (a,b,c);
-
-        // Quadratic formula?
+        // Quadratic formula
         let discriminant = (b * b) - (c * a);
         let sqrt_d = if discriminant < 0. {
             return None;
@@ -84,7 +82,10 @@ impl Mesh for CylinderMesh {
             discriminant.sqrt()
         };
 
-        //
+        // Check both of the intersections along the ray. We only check the second (further) distance
+        // if the ray can start *inside* the cylinder (IQ's code didn't have this originally)
+        // This is **not** checking the front-face/back-face, but checking the entering/exiting intersections
+        // (e.g. when ray inside volume, the entering intersect is behind, so we have to check exiting intersect too)
         let mut dist = (-b - sqrt_d) / a;
         if !bounds.contains(&dist) {
             dist = (-b + sqrt_d) / a;
@@ -101,7 +102,9 @@ impl Mesh for CylinderMesh {
         // 0 means @ P1, `1` means @ P2 (it's normalised). Not sure why `/len_sqr` not `/len`
         let dist_along_norm = (baoc + (dist * bard)) / self.length_sqr;
 
-        // Intersect with body.
+        // Intersect with body, only if the intersection is along the length segment of the cylinder
+        // This will only check the front-face of the cylinder (where normal faces towards ray origin)
+        // The back-face will always be obscured by the end caps
         if dist_along_norm > 0. && dist_along_norm < 1. {
             // Position of the intersection we are checking, relative to cylinder origin
             let pos_rel = oc + (rd * dist);
@@ -110,10 +113,10 @@ impl Mesh for CylinderMesh {
             // The position "around" the origin that the intersection is.
             // This is the position on the surface, from the origin, at zero distance along the length
             let rel_pos_outwards = pos_rel - pos_along;
-            // Normalise the position, and we get our normal vector easy!
+            // Normalise the relative position, and we get our normal vector easy!
             normal = rel_pos_outwards / self.radius;
             // One of the orthogonals we use to calculate the angle,
-            // Both are normalised so skip that
+            // Both are normalised so we can skip normalising them
             let cos_theta = Vector3::dot(normal, self.orthogonals.0);
             // Use `signum()` of dot with second orthogonal, so we can tell which side of `self.orthogonals.0` it was
             let theta_signed = cos_theta.acos() * Vector3::dot(normal, self.orthogonals.1).signum();
@@ -124,9 +127,9 @@ impl Mesh for CylinderMesh {
 
             face = 0;
         }
-        // Intersected caps
+        // Intersection wasn't along the (front-facing) body section, so check the end caps.
+        // See note above about back-faces.
         else {
-            return None;
             // `dist` is distance along the ray that we intersect with the end caps
             // First try closer cap
             let (dist_near, dist_far) = if dist_along_norm < 0. {

@@ -1,4 +1,4 @@
-use crate::mesh::bvh::BvhMesh;
+use crate::mesh::advanced::bvh::BvhMesh;
 use crate::mesh::{Mesh as MeshTrait, MeshInstance, MeshProperties};
 
 use crate::core::types::{Number, Point3};

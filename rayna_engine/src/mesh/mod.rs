@@ -35,14 +35,12 @@ use rand_core::RngCore;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
 use self::{
-    bvh::BvhMesh, dynamic::DynamicMesh, list::MeshList, planar::infinite_plane::InfinitePlaneMesh,
-    planar::parallelogram::ParallelogramMesh, planar::triangle::TriangleMesh, primitive::axis_box::AxisBoxMesh,
-    primitive::sphere::SphereMesh,
+    advanced::bvh::BvhMesh, advanced::dynamic::DynamicMesh, advanced::list::MeshList,
+    planar::infinite_plane::InfinitePlaneMesh, planar::parallelogram::ParallelogramMesh,
+    planar::triangle::TriangleMesh, primitive::axis_box::AxisBoxMesh, primitive::sphere::SphereMesh,
 };
 
-pub mod bvh;
-pub mod dynamic;
-pub mod list;
+pub mod advanced;
 pub mod planar;
 pub mod primitive;
 

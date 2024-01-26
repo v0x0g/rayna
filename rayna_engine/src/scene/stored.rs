@@ -17,7 +17,7 @@ use crate::material::lambertian::LambertianMaterial;
 use crate::material::light::LightMaterial;
 use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
-use crate::mesh::bvh::BvhMesh;
+use crate::mesh::advanced::bvh::BvhMesh;
 use crate::mesh::planar::parallelogram::ParallelogramMesh;
 use crate::mesh::planar::Planar;
 use crate::mesh::primitive::axis_box::AxisBoxMesh;

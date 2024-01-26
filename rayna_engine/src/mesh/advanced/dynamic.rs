@@ -24,7 +24,7 @@ impl DynamicMesh {
 //  This will probably need specialisation or type inequality bounds
 //  else it will overlap with `impl<T> From<T> for T`, where `T == DynamicMesh`
 
-impl super::MeshInstance {
+impl super::super::MeshInstance {
     pub fn from_dyn(value: impl Mesh + 'static) -> Self { Self::from(DynamicMesh::new(value)) }
 }
 

@@ -54,12 +54,10 @@ impl Mesh for CylinderMesh {
     fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         let rd = ray.dir();
 
-        // TODO: Optimise `ba`
-        let ba = self.along;
         let oc = ray.pos() - self.origin;
 
-        let bard = Vector3::dot(ba, rd);
-        let baoc = Vector3::dot(ba, oc);
+        let bard = Vector3::dot(self.along, rd);
+        let baoc = Vector3::dot(self.along, oc);
 
         let a = self.length - (bard * bard);
         let b = (self.length * Vector3::dot(oc, rd)) - (baoc * bard);
@@ -89,12 +87,12 @@ impl Mesh for CylinderMesh {
             // Position of the intersection we are checking, relative to cylinder origin
             let pos_rel = oc + (rd * t);
             // Position along the cylinder, relative from the origin. Normalised against length
-            let norm_pos_along = (ba * dist_along) / self.length;
-            // The position "around" the origin that the intersection is.
-            // This is the position on the surface, from the origin, at zero distance along the length
-            let rel_pos_outwards = pos_rel - norm_pos_along;
+            let norm_pos_along = (self.along * dist_along); // / self.length;
+                                                            // The position "around" the origin that the intersection is.
+                                                            // This is the position on the surface, from the origin, at zero distance along the length
+            let rel_pos_outwards = (pos_rel / self.radius) - norm_pos_along;
             // Normalise the position, and we get our normal vector easy!
-            normal = rel_pos_outwards / self.radius;
+            normal = rel_pos_outwards;
 
             face = 0;
         }
@@ -104,7 +102,7 @@ impl Mesh for CylinderMesh {
             if Number::abs(b + (a * t)) >= sqrt_d {
                 return None;
             }
-            normal = (ba * dist_along.signum()).normalize();
+            normal = (self.along * dist_along.signum()).normalize();
             face = 1;
         }
 

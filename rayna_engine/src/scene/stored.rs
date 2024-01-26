@@ -91,7 +91,7 @@ pub static TESTING: Scene = {
             albedo: [0.32, 0.15, 0.5].into(),
         };
         let light = LightMaterial {
-            emissive: [1.; 3].into(),
+            emissive: [15.; 3].into(),
         };
 
         // Back
@@ -133,7 +133,7 @@ pub static TESTING: Scene = {
             None,
         ));
 
-        let scale = 0.1;
+        let scale = 0.3;
 
         // Left Light
         objects.push(SimpleObject::new(

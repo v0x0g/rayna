@@ -91,15 +91,16 @@ impl Mesh for CylinderMesh {
         let uv;
 
         // Distance along the line segment (P1 -> P2) that the ray intersects
-        // 0 means @ P1, `baba` means @ P2
-        let dist_along_sqr = baoc + (dist * bard);
+        // 0 means @ P1, `1` means @ P2 (it's normalised). Not sure why `/len_sqr` not `/len`
+        let dist_along_norm = (baoc + (dist * bard)) / self.length_sqr;
 
-        // Intersected body
-        if dist_along_sqr > 0. && dist_along_sqr < self.length_sqr {
+        // Intersect with body
+        // NOTE: Not sure why
+        if dist_along_norm > 0. && dist_along_norm < 1. {
             // Position of the intersection we are checking, relative to cylinder origin
             let pos_rel = oc + (rd * dist);
             // Position along the cylinder, relative from the origin. Normalised against length
-            let norm_pos_along = (self.along * dist_along_sqr) / self.length_sqr;
+            let norm_pos_along = self.along * dist_along_norm;
             // The position "around" the origin that the intersection is.
             // This is the position on the surface, from the origin, at zero distance along the length
             let rel_pos_outwards = pos_rel - norm_pos_along;
@@ -112,7 +113,7 @@ impl Mesh for CylinderMesh {
             let theta_signed = cos_theta.acos() * Vector3::dot(normal, self.orthogonals.1).signum();
             // Remap from `-pi..pi`to `0..1`
             let u = (theta_signed / Number::PI / 2.) + 0.5;
-            let v = (dist_along_sqr / self.length_sqr).sqrt();
+            let v = dist_along_norm;
             uv = Point2::new(u, v);
 
             face = 0;
@@ -120,15 +121,15 @@ impl Mesh for CylinderMesh {
         // Intersected caps
         else {
             // Distance along the length, for whichever cap we are checking (the closer one)
-            let cap_dist = if dist_along_sqr < 0. { 0. } else { self.length_sqr };
+            let cap_dist = if dist_along_norm < 0. { 0. } else { self.length_sqr };
             // `dist` is distance along the ray that we intersect with the end caps
             dist = (cap_dist - baoc) / bard;
             if Number::abs(b + (a * dist)) >= sqrt_d {
                 return None;
             }
             // `self.along.normalised()` is also the normal vector for the end caps
-            normal = self.along / self.length * dist_along_sqr.signum();
-            face = if dist_along_sqr.is_sign_negative() { 1 } else { 2 };
+            normal = self.along / self.length * dist_along_norm.signum();
+            face = if dist_along_norm.is_sign_negative() { 1 } else { 2 };
             uv = Point2::new(a, b);
         }
 

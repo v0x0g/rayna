@@ -104,7 +104,7 @@ impl Mesh for CylinderMesh {
             // This is the position on the surface, from the origin, at zero distance along the length
             let rel_pos_outwards = pos_rel - pos_along;
             // Normalise the position, and we get our normal vector easy!
-            normal = rel_pos_outwards.normalize();
+            normal = (rel_pos_outwards / self.radius);
             // One of the orthogonals we use to calculate the angle,
             // Both are normalised so skip that
             let cos_theta = Vector3::dot(normal, self.orthogonals.0);

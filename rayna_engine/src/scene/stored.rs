@@ -83,55 +83,71 @@ pub static TESTING: Scene = {
 
     let mut objects = Vec::new();
 
-    fn quad(
-        objs: &mut Vec<SimpleObject<MeshInstance, MaterialInstance<TextureInstance>>>,
-        p: impl Into<Point3>,
-        u: impl Into<Vector3>,
-        v: impl Into<Vector3>,
-        albedo: impl Into<TextureInstance>,
-        emissive: impl Into<TextureInstance>,
-    ) {
-        objs.push(SimpleObject::new(
-            ParallelogramMesh::new(Planar::new(p, u, v)),
-            LambertianMaterial {
-                albedo: albedo.into(),
-                emissive: emissive.into(),
-            },
-            None,
-        ));
-    }
-
-    let red = [0.65, 0.05, 0.05];
-    let green = [0.12, 0.45, 0.15];
-    let warm_grey = [0.85, 0.74, 0.55];
-    let light = [1.; 3];
-    let black = [0.; 3];
-
-    let o = &mut objects;
-
     {
         // WALLS
 
-        quad(o, (0., 0., 0.), Vector3::Y, Vector3::Z, red, black); // Left
-        quad(o, (0., 0., 0.), Vector3::Z, Vector3::X, warm_grey, black); // Floor
-        quad(o, (1., 0., 0.), Vector3::Z, Vector3::Y, green, black); // Right
-        quad(o, (0., 1., 0.), Vector3::X, Vector3::Z, warm_grey, black); // Ceiling
+        let purple = [0.32, 0.15, 0.5];
+        let light = [7.; 3];
 
-        o.push(SimpleObject::new(
-            // Back wall is light
+        // Back
+        objects.push(SimpleObject::new(
             ParallelogramMesh::new(Planar::new((0., 0., 0.), Vector3::X, Vector3::Y)),
+            LambertianMaterial {
+                emissive: Colour::BLACK.into(),
+                albedo: purple.into(),
+            },
+            None,
+        ));
+        // Front
+        objects.push(SimpleObject::new(
+            ParallelogramMesh::new(Planar::new((0., 0., 1.), Vector3::X, Vector3::Y)),
+            LambertianMaterial {
+                emissive: Colour::BLACK.into(),
+                albedo: purple.into(),
+            },
+            None,
+        ));
+
+        // Floor
+        objects.push(SimpleObject::new(
+            ParallelogramMesh::new(Planar::new((0., 0., 0.), Vector3::Z, Vector3::X)),
+            LambertianMaterial {
+                emissive: Colour::BLACK.into(),
+                albedo: purple.into(),
+            },
+            None,
+        ));
+        // Ceiling
+        objects.push(SimpleObject::new(
+            ParallelogramMesh::new(Planar::new((0., 1., 0.), Vector3::X, Vector3::Z)),
+            LambertianMaterial {
+                emissive: Colour::BLACK.into(),
+                albedo: purple.into(),
+            },
+            None,
+        ));
+
+        // Left
+        objects.push(SimpleObject::new(
+            ParallelogramMesh::new(Planar::new((0., 0., 0.), Vector3::Y, Vector3::Z)),
+            LightMaterial { emissive: light.into() },
+            None,
+        ));
+        // Right
+        objects.push(SimpleObject::new(
+            ParallelogramMesh::new(Planar::new((1., 0., 0.), Vector3::Z, Vector3::Y)),
             LightMaterial { emissive: light.into() },
             None,
         ));
     }
 
     {
-        o.push(SimpleObject::new(
+        objects.push(SimpleObject::new(
             SphereMesh::new((0.5, 0.2, 0.5), 0.2),
             DielectricMaterial {
-                albedo: [0.5; 3].into(),
+                albedo: [0.9; 3].into(),
                 refractive_index: 1.5,
-                density: 5.0,
+                density: 2.0,
             },
             None,
         ));

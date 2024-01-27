@@ -16,7 +16,7 @@ pub struct MetalMaterial<Tex: Texture> {
 impl<Tex: Texture> Material for MetalMaterial<Tex> {
     fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
         let reflected = math::reflect(ray.dir(), intersection.ray_normal);
-        let rand = rng::vector_on_unit_sphere(rng);
+        let rand = rng::normal_on_unit_sphere(rng);
 
         // Generate some fuzzy reflections by adding a "cloud" of random points
         // around the reflection (a sphere with `radius=fuzz` centred at `reflected)

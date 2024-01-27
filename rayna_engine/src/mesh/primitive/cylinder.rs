@@ -115,11 +115,11 @@ impl Mesh for CylinderMesh {
             let rel_pos_outwards = pos_rel - pos_along;
             // Normalise the relative position, and we get our normal vector easy!
             normal = rel_pos_outwards / self.radius;
-            // One of the orthogonals we use to calculate the angle,
+            // Use orthogonals so we have reference frame for calculating UV coords
             // Both are normalised so we can skip normalising them
-            let cos_theta = Vector3::dot(normal, self.orthogonals.0);
+            let theta = Vector3::dot(normal, self.orthogonals.1).acos();
             // Use `signum()` of dot with second orthogonal, so we can tell which side of `self.orthogonals.0` it was
-            let theta_signed = cos_theta.acos() * Vector3::dot(normal, self.orthogonals.1).signum();
+            let theta_signed = theta * Vector3::dot(normal, self.orthogonals.0).signum();
             // Remap from `-pi..pi`to `0..1`
             let u = (theta_signed / Number::PI / 2.) + 0.5;
             let v = dist_along_norm;
@@ -154,7 +154,6 @@ impl Mesh for CylinderMesh {
             // `self.along.normalised()` is also the normal vector for the end caps
             normal = self.along / self.length * dist_along_norm.signum();
             face = if dist_along_norm.is_sign_negative() { 1 } else { 2 };
-            // TODO: allow ray origin to be inside
 
             // Position of the intersection we are checking, relative to cylinder origin
             let pos_rel = oc + (rd * dist);

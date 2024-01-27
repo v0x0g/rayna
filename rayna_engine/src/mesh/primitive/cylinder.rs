@@ -130,17 +130,19 @@ impl Mesh for CylinderMesh {
         // Intersection wasn't along the (front-facing) body section, so check the end caps.
         // See note above about back-faces.
         else {
-            // `dist` is distance along the ray that we intersect with the end caps
-            // First try closer cap
-            let (dist_near, dist_far) = if dist_along_norm < 0. {
+            // Find the distances to either of the end caps
+            // If `baoc` and `bard` have the same sign, the P2 cap is nearer
+            let (dist_near, dist_far) = if baoc.is_sign_positive() == bard.is_sign_positive() {
                 ((0.0 - baoc) / bard, (self.length_sqr - baoc) / bard)
             } else {
                 ((self.length_sqr - baoc) / bard, (0.0 - baoc) / bard)
             };
+            let dist_near = Number::min(dist_near, dist_far);
+            let dist_far = Number::max(dist_near, dist_far);
 
             dist = {
                 if bounds.contains(&dist_near) && Number::abs(b + (a * dist_near)) < sqrt_d {
-                    dist
+                    dist_near
                 } else {
                     // Closer one failed, try other
                     if bounds.contains(&dist_far) && Number::abs(b + (a * dist_far)) < sqrt_d {
@@ -161,7 +163,7 @@ impl Mesh for CylinderMesh {
             let u = (pos_rel / self.radius).dot(self.orthogonals.0) / 2. + 0.5;
             let v = (pos_rel / self.radius).dot(self.orthogonals.1) / 2. + 0.5;
 
-            uv = Point2::new(u, v);
+            uv = Point2::new(dist_near, dist_far);
         }
 
         let pos_w = ray.at(dist);

@@ -1,4 +1,4 @@
-use crate::core::types::{Colour, Number, Point2, Point3, Vector3};
+use crate::core::types::{Colour, Number, Point2, Point3, Vector2, Vector3};
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
@@ -38,10 +38,30 @@ pub fn normal3(n: impl Borrow<Vector3>) {
         n.length()
     );
 }
+#[inline(always)]
+#[track_caller]
+pub fn normal2(n: impl Borrow<Vector2>) {
+    debug_assert_only!();
+    let n = n.borrow();
+    vector3(n);
+    assert!(
+        n.is_normalized(),
+        "should be normalised; vec: {n:?}, len: {:?}",
+        n.length()
+    );
+}
 
 #[inline(always)]
 #[track_caller]
 pub fn point3(v: impl Borrow<Point3>) {
+    debug_assert_only!();
+    let v = v.borrow();
+    assert!(!v.is_nan(), "should not be nan; vec: {v:?}");
+}
+
+#[inline(always)]
+#[track_caller]
+pub fn vector2(v: impl Borrow<Vector2>) {
     debug_assert_only!();
     let v = v.borrow();
     assert!(!v.is_nan(), "should not be nan; vec: {v:?}");

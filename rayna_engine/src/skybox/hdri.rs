@@ -2,15 +2,16 @@ use crate::core::types::{Colour, Image, Number};
 use crate::mesh::primitive::sphere;
 use crate::shared::ray::Ray;
 use crate::skybox::Skybox;
+use std::sync::Arc;
 
 /// A skybox that uses a **High Dynamic Range Image** (**HDRI**) as the skybox
 #[derive(Clone, Debug)]
 pub struct HdrImageSkybox {
-    pub image: Image,
+    pub image: Arc<Image>,
 }
 
 impl From<Image> for HdrImageSkybox {
-    fn from(image: Image) -> Self { Self { image } }
+    fn from(image: Image) -> Self { Self { image: Arc::new(image) } }
 }
 
 impl Skybox for HdrImageSkybox {

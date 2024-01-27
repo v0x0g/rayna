@@ -196,16 +196,14 @@ pub static TESTING: Scene = {
         camera,
         objects: objects.into(),
         // skybox: None.into(),
-        skybox: HdrImageSkybox {
-            image: Image::from({
-                let file = std::fs::File::open("media/skyboxes/misty_farm_road/misty_farm_road_21k.exr")
-                    .expect("compile-time image resource should be valid");
-                let mut reader = image::io::Reader::new(BufReader::new(file));
-                reader.no_limits();
-                reader.set_format(ImageFormat::OpenExr);
-                reader.decode().expect("compile-time image resource should be valid")
-            }),
-        }
+        skybox: HdrImageSkybox::from(Image::from({
+            let file = std::fs::File::open("media/skybox/misty-farm-road/4096x2048.exr")
+                .expect("compile-time image resource should be valid");
+            let mut reader = image::io::Reader::new(BufReader::new(file));
+            reader.no_limits();
+            reader.set_format(ImageFormat::OpenExr);
+            reader.decode().expect("compile-time image resource should be valid")
+        }))
         .into(),
     }
 };
@@ -438,7 +436,7 @@ pub static RTTNW_DEMO: Scene = {
                 SphereMesh::new((4., 2., 4.), 1.0),
                 LambertianMaterial {
                     albedo: ImageTexture::from(Image::from(
-                        image::load_from_memory(include_bytes!("../../../media/textures/earthmap/earthmap.jpg"))
+                        image::load_from_memory(include_bytes!("../../../media/texture/nasa-earthmap/5400x2700.jpg"))
                             .expect("compile-time image resource should be valid"),
                     ))
                     .into(),

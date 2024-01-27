@@ -33,7 +33,7 @@ pub fn number_in_unit_line<R: Rng + ?Sized>(rng: &mut R) -> Number {
 
 /// Returns a number in the range `0.0..1.0`
 pub fn number_in_unit_line_01<R: Rng + ?Sized>(rng: &mut R) -> Number {
-    let n = rng.gen_range(-1.0..=1.0);
+    let n = rng.gen_range(0.0..=1.0);
     validate::number(&n);
     n
 }

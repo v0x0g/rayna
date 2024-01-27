@@ -43,7 +43,7 @@ pub fn normal3(n: impl Borrow<Vector3>) {
 pub fn normal2(n: impl Borrow<Vector2>) {
     debug_assert_only!();
     let n = n.borrow();
-    vector3(n);
+    vector2(n);
     assert!(
         n.is_normalized(),
         "should be normalised; vec: {n:?}, len: {:?}",

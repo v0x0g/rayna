@@ -4,8 +4,10 @@
 //!
 //! There are some common ones [CORNELL] and [RTIAW_DEMO], that should be well known.
 
-use crate::core::types::{Angle, Channel, Colour, Image, Number, Point3, Transform3, Vector2, Vector3};
+use crate::core::types::{Angle, Channel, Colour, Image, Number, Point3, Transform3, Vector3};
 use crate::object::simple::SimpleObject;
+use image::ImageFormat;
+use std::io::BufReader;
 
 use noise::*;
 use rand::{thread_rng, Rng};
@@ -28,9 +30,8 @@ use crate::object::volumetric::VolumetricObject;
 use crate::object::ObjectInstance;
 use crate::scene::camera::Camera;
 use crate::shared::rng;
+use crate::skybox::hdri::HdrImageSkybox;
 use crate::skybox::SkyboxInstance;
-use crate::texture::checker::UvCheckerTexture;
-use crate::texture::dynamic::DynamicTexture;
 use crate::texture::image::ImageTexture;
 use crate::texture::noise::{ColourSource, LocalNoiseTexture, WorldNoiseTexture};
 use crate::texture::solid::SolidTexture;
@@ -195,7 +196,17 @@ pub static TESTING: Scene = {
         camera,
         objects: objects.into(),
         // skybox: None.into(),
-        skybox: SkyboxInstance::default(),
+        skybox: HdrImageSkybox {
+            image: Image::from({
+                let file = std::fs::File::open("media/skyboxes/misty_farm_road/misty_farm_road_21k.exr")
+                    .expect("compile-time image resource should be valid");
+                let mut reader = image::io::Reader::new(BufReader::new(file));
+                reader.no_limits();
+                reader.set_format(ImageFormat::OpenExr);
+                reader.decode().expect("compile-time image resource should be valid")
+            }),
+        }
+        .into(),
     }
 };
 

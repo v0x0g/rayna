@@ -20,7 +20,7 @@ impl Skybox for HdrImageSkybox {
         let (u, v) = sphere::sphere_uv(ray.dir()).into();
 
         let i = u * self.image.width() as Number;
-        let j = v * self.image.height() as Number;
+        let j = (1. - v) * self.image.height() as Number;
         self.image.get_bilinear(i, j)
     }
 }

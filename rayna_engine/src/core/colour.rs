@@ -1,5 +1,6 @@
 use crate::core::types::Channel;
 use crate::impl_op_assign;
+use crate::shared::math::Lerp;
 use crate::{forward_fn, impl_op};
 use itertools::Itertools;
 use std::array;
@@ -132,25 +133,31 @@ impl<const N: usize> Colour<N> {
 }
 
 // Basic maths operators
+// TODO: This is a lot of repeated code...
+
 impl_op!(impl {<const N: usize>} core::ops::Add : fn add(a: Colour<N>, b: Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Channel::add) });
 impl_op!(impl {<const N: usize>} core::ops::Sub : fn sub(a: Colour<N>, b: Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Channel::sub) });
 impl_op!(impl {<const N: usize>} core::ops::Mul : fn mul(a: Colour<N>, b: Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Channel::mul) });
 impl_op!(impl {<const N: usize>} core::ops::Div : fn div(a: Colour<N>, b: Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Channel::div) });
+impl_op!(impl {<const N: usize>} core::ops::Rem : fn rem(a: Colour<N>, b: Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Channel::rem) });
 
 impl_op!(impl {<const N: usize>} core::ops::Add : fn add(a: Colour<N>, b: Channel) -> Colour<N> { Colour::map2(&a, &[b; N].into(), Channel::add) });
 impl_op!(impl {<const N: usize>} core::ops::Sub : fn sub(a: Colour<N>, b: Channel) -> Colour<N> { Colour::map2(&a, &[b; N].into(), Channel::sub) });
 impl_op!(impl {<const N: usize>} core::ops::Mul : fn mul(a: Colour<N>, b: Channel) -> Colour<N> { Colour::map2(&a, &[b; N].into(), Channel::mul) });
 impl_op!(impl {<const N: usize>} core::ops::Div : fn div(a: Colour<N>, b: Channel) -> Colour<N> { Colour::map2(&a, &[b; N].into(), Channel::div) });
+impl_op!(impl {<const N: usize>} core::ops::Rem : fn rem(a: Colour<N>, b: Channel) -> Colour<N> { Colour::map2(&a, &[b; N].into(), Channel::rem) });
 
 impl_op_assign!(impl {<const N: usize>} core::ops::AddAssign : fn add_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Channel::add_assign) });
 impl_op_assign!(impl {<const N: usize>} core::ops::SubAssign : fn sub_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Channel::sub_assign) });
 impl_op_assign!(impl {<const N: usize>} core::ops::MulAssign : fn mul_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Channel::mul_assign) });
 impl_op_assign!(impl {<const N: usize>} core::ops::DivAssign : fn div_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Channel::div_assign) });
+impl_op_assign!(impl {<const N: usize>} core::ops::RemAssign : fn rem_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Channel::rem_assign) });
 
 impl_op_assign!(impl {<const N: usize>} core::ops::AddAssign : fn add_assign(a: Colour<N>, b: Channel) { Colour::map2_assign(&mut a, &[b; N].into(), Channel::add_assign) });
 impl_op_assign!(impl {<const N: usize>} core::ops::SubAssign : fn sub_assign(a: Colour<N>, b: Channel) { Colour::map2_assign(&mut a, &[b; N].into(), Channel::sub_assign) });
 impl_op_assign!(impl {<const N: usize>} core::ops::MulAssign : fn mul_assign(a: Colour<N>, b: Channel) { Colour::map2_assign(&mut a, &[b; N].into(), Channel::mul_assign) });
 impl_op_assign!(impl {<const N: usize>} core::ops::DivAssign : fn div_assign(a: Colour<N>, b: Channel) { Colour::map2_assign(&mut a, &[b; N].into(), Channel::div_assign) });
+impl_op_assign!(impl {<const N: usize>} core::ops::RemAssign : fn rem_assign(a: Colour<N>, b: Channel) { Colour::map2_assign(&mut a, &[b; N].into(), Channel::rem_assign) });
 
 // Shift left/right rotates the channels left/right by `n` places.
 impl_op!(impl {<const N: usize>} core::ops::Shl : fn shl(col: Colour<N>, shift: usize) -> Colour<N> { col.0.rotate_left(shift); col });
@@ -164,6 +171,16 @@ impl<const N: usize> core::iter::Sum for Colour<N> {
 }
 impl<const N: usize> core::iter::Product for Colour<N> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self { iter.fold(Self::BLACK, Self::mul) }
+}
+
+impl<const N: usize> num_traits::Zero for Colour<N> {
+    fn zero() -> Self { Self::BLACK }
+
+    fn is_zero(&self) -> bool { self == Self::BLACK }
+}
+
+impl<const N: usize> num_traits::One for Colour<N> {
+    fn one() -> Self { Self::WHITE }
 }
 
 // endregion

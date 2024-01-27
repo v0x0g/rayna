@@ -1,5 +1,4 @@
 use crate::render::render_opts::RenderOpts;
-use derivative::Derivative;
 use std::time::Duration;
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -12,10 +11,8 @@ pub struct RenderStats {
     pub opts: RenderOpts,
 }
 
-#[derive(Clone, Derivative)]
-#[derivative(Debug)]
+#[derive(Clone, Debug)]
 pub struct Render<T> {
-    #[derivative(Debug = "ignore")]
     pub img: T,
     pub stats: RenderStats,
 }

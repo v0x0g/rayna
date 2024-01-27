@@ -2,23 +2,11 @@ use std::ops::{Add, Mul, Sub};
 
 use crate::core::types::{Channel, Colour, Number, Vector3};
 
-/// Your standard linear interpolation function
-pub fn lerp<T>(a: T, b: T, t: Number) -> T
-where
-    T: Add<Output = T> + Mul<Number, Output = T> + Sub<Output = T> + Clone,
-{
-    a.clone() + ((b.clone() - a.clone()) * t)
+pub trait Lerp<Frac>: num_traits::NumOps<Frac> + Sized {
+    fn lerp(a: Self, b: Self, t: Frac) -> Self { a + (b - a) * t }
 }
 
-pub fn lerp_px(a: Colour, b: Colour, t: Number) -> Colour {
-    let [ra, ga, ba] = a.0;
-    let [rb, gb, bb] = b.0;
-    Colour::from([
-        lerp(ra as Number, rb as Number, t) as Channel,
-        lerp(ga as Number, gb as Number, t) as Channel,
-        lerp(ba as Number, bb as Number, t) as Channel,
-    ])
-}
+impl<Frac, T: num_traits::NumOps<Frac> + Sized> Lerp<Frac> for T {}
 
 /// Calculates the vector reflection of vector `d` across the surface normal `n`
 pub fn reflect(d: Vector3, n: Vector3) -> Vector3 { d - n * (2. * d.dot(n)) }

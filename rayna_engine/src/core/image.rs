@@ -1,9 +1,10 @@
-use crate::core::types::Colour;
+use crate::core::types::{Colour, Number};
+use crate::shared::math::{lerp, Lerp};
 use derivative::Derivative;
 use getset::{CopyGetters, Getters};
 use num_integer::Integer;
 use std::mem::MaybeUninit;
-use std::ops::{Deref, DerefMut, Index, IndexMut};
+use std::ops::{Add, Deref, DerefMut, Index, IndexMut, Mul, Sub};
 
 #[derive(CopyGetters, Getters, Derivative, Clone)]
 #[derivative(Debug)]
@@ -117,6 +118,7 @@ impl<Col> Image<Col> {
 impl<Col> Index<usize> for Image<Col> {
     type Output = Col;
 
+    /// Direct access to the pixel buffer. Don't use this please
     fn index(&self, index: usize) -> &Self::Output {
         assert!(index < self.len, "invalid pixel index {} for len {}", index, self.len);
         &self.data[index]
@@ -124,6 +126,7 @@ impl<Col> Index<usize> for Image<Col> {
 }
 
 impl<Col> IndexMut<usize> for Image<Col> {
+    /// Direct access to the pixel buffer. Don't use this please
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         assert!(index < self.len, "invalid pixel index {} for len {}", index, self.len);
         &mut self.data[index]
@@ -157,6 +160,33 @@ impl<Col> IndexMut<(usize, usize)> for Image<Col> {
             self.height
         );
         self.index_mut(self.compress_index(x, y))
+    }
+}
+
+impl<Col> Image<Col> {
+    fn bilinear_coords(&self, val: Number, max: usize) -> (usize, usize, Number) {
+        let floor = val.floor().clamp(0., (max - 1) as _);
+        let ceil = val.ceil().clamp(0., (max - 1) as _);
+        let frac = val - floor;
+
+        (floor as _, ceil as _, frac)
+    }
+
+    pub fn get_bilinear<Frac>(&self, px: Number, py: Number) -> Col
+    where
+        Col: Lerp<Frac>,
+        Frac: From<Number>,
+    {
+        let (x1, x2, xl) = self.bilinear_coords(px, self.width);
+        let (y1, y2, yl) = self.bilinear_coords(py, self.height);
+        let [c11, c12, c21, c22] = [(x1, y1), (x1, y2), (x2, y1), (x2, y2)].map(|c| self[c]);
+
+        // Interpolate over x-axis
+        let cy1/* Y=Y1 */ = Colour::lerp(c11, c21, xl.into());
+        let cy2/* Y=Y2 */ = Colour::lerp(c12, c22, xl.into());
+
+        let c = Colour::lerp(cy1, cy2, yl.into());
+        c
     }
 }
 

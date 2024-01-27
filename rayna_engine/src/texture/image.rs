@@ -1,7 +1,6 @@
 use crate::core::types::{Colour, Image, Number, Size2, Vector2};
 use crate::shared::intersect::Intersection;
 use crate::texture::Texture;
-use num_traits::ToPrimitive;
 use rand_core::RngCore;
 use std::sync::Arc;
 
@@ -34,16 +33,8 @@ impl Texture for ImageTexture {
         // Flip y-axis to image coords
         let (u, v) = (translated.x, 1. - translated.y);
 
-        // Don't need bounds check on uv coords, should be valid already
-        // Don't need to
-        let Some(i) = (u * self.image.width() as Number).to_usize() else {
-            return super::texture_error_value();
-        };
-        let Some(j) = (v * self.image.height() as Number).to_usize() else {
-            return super::texture_error_value();
-        };
-
-        // Should never be out of bounds
-        self.image[(i, j)]
+        let i = u * self.image.width() as Number;
+        let j = v * self.image.height() as Number;
+        self.image.get_bilinear(i, j)
     }
 }

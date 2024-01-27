@@ -22,7 +22,8 @@ impl<Tex: Texture> Material for MetalMaterial<Tex> {
         // around the reflection (a sphere with `radius=fuzz` centred at `reflected)
         let vec = reflected + (rand * self.fuzz);
         // This might end up scattering beneath the surface of the mesh, so check here
-        return if Vector3::dot(vec, intersection.ray_normal) > 0. {
+        let dot = Vector3::dot(vec, intersection.ray_normal);
+        return if dot > 0. {
             // Scatter ok
             Some(vec.normalize())
         } else {

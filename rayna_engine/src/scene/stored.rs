@@ -164,14 +164,18 @@ pub static TESTING: Scene = {
             // LambertianMaterial {
             //     albedo: [0.9; 3].into(),
             // },
-            LambertianMaterial {
-                albedo: UvCheckerTexture {
-                    scale: 1. / 8.,
-                    offset: Vector2::ZERO,
-                    even: DynamicTexture::new(SolidTexture::from([1., 0., 0.])),
-                    odd: DynamicTexture::new(SolidTexture::from([0., 1., 0.])),
-                }
-                .into(),
+            // LambertianMaterial {
+            //     albedo: UvCheckerTexture {
+            //         scale: 1. / 8.,
+            //         offset: Vector2::ZERO,
+            //         even: DynamicTexture::new(SolidTexture::from([1., 0., 0.])),
+            //         odd: DynamicTexture::new(SolidTexture::from([0., 1., 0.])),
+            //     }
+            //     .into(),
+            // },
+            MetalMaterial {
+                albedo: Colour::WHITE.into(),
+                fuzz: 0.0,
             },
             None,
         ));

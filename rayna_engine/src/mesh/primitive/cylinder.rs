@@ -163,7 +163,8 @@ impl Mesh for CylinderMesh {
             let u = (pos_rel / self.radius).dot(self.orthogonals.0) / 2. + 0.5;
             let v = (pos_rel / self.radius).dot(self.orthogonals.1) / 2. + 0.5;
 
-            uv = Point2::new(dist_near, dist_far);
+            // TODO: Get back to cylinder and fix at a later date
+            uv = Point2::new(u, v);
         }
 
         let pos_w = ray.at(dist);

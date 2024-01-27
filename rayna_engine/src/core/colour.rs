@@ -1,11 +1,10 @@
-use crate::core::types::Channel;
+use crate::core::types::{Channel, Number};
 use crate::impl_op_assign;
-use crate::shared::math::Lerp;
 use crate::{forward_fn, impl_op};
 use itertools::Itertools;
 use std::array;
 use std::hash::{Hash, Hasher};
-use std::ops::{Add, Deref, DerefMut, Index, IndexMut, Mul};
+use std::ops::{Add, Deref, DerefMut, Div, Index, IndexMut, Mul, Rem, Sub};
 
 // TODO: Make this generic over the channel type
 
@@ -134,18 +133,45 @@ impl<const N: usize> Colour<N> {
 
 // Basic maths operators
 // TODO: This is a lot of repeated code...
+//
+// macro_rules! impl_num_ops {
+//     (
+//         // `<const N: usize>` bound elided...
+//         impl $({ $($outer_bounds:tt)* })?  $op_type:tt { $(
+//              $({ $($inner_bounds:tt)* })?  $($operator:ident)::+  :  fn $fn_name:ident ($b_ty:ty);
+//         )*}
+//     ) => {
+//
+//         impl_op!(impl { $($outer_bounds)* , $($outer_bounds)* } $($operator)::+ : fn $fn_name(a: Colour<N>, b: $b_ty) -> Colour<N> { Colour::map2(&a, &b, Channel::$fn_name) });
+//     };
+//
+//     (@inner
+//         impl $({ $($outer_bounds:tt)* })?  $op_type:tt { $(
+//              $({ $($inner_bounds:tt)* })?  $($operator:ident)::+  :  fn $fn_name:ident ($b_ty:ty);
+//         )*}
+//     ) => {
+//
+//         impl_op!(impl { $($outer_bounds)* , $($outer_bounds)* } $($operator)::+ : fn $fn_name(a: Colour<N>, b: $b_ty) -> Colour<N> { Colour::map2(&a, &b, Channel::$fn_name) });
+//     };
+// }
 
-impl_op!(impl {<const N: usize>} core::ops::Add : fn add(a: Colour<N>, b: Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Channel::add) });
-impl_op!(impl {<const N: usize>} core::ops::Sub : fn sub(a: Colour<N>, b: Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Channel::sub) });
-impl_op!(impl {<const N: usize>} core::ops::Mul : fn mul(a: Colour<N>, b: Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Channel::mul) });
-impl_op!(impl {<const N: usize>} core::ops::Div : fn div(a: Colour<N>, b: Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Channel::div) });
-impl_op!(impl {<const N: usize>} core::ops::Rem : fn rem(a: Colour<N>, b: Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Channel::rem) });
+impl_op!(impl {const N: usize} core::ops::Add : fn add(a: Colour<N>, b: Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Channel::add) });
+impl_op!(impl {const N: usize} core::ops::Sub : fn sub(a: Colour<N>, b: Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Channel::sub) });
+impl_op!(impl {const N: usize} core::ops::Mul : fn mul(a: Colour<N>, b: Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Channel::mul) });
+impl_op!(impl {const N: usize} core::ops::Div : fn div(a: Colour<N>, b: Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Channel::div) });
+impl_op!(impl {const N: usize} core::ops::Rem : fn rem(a: Colour<N>, b: Colour<N>) -> Colour<N> { Colour::map2(&a, &b, Channel::rem) });
 
-impl_op!(impl {<const N: usize>} core::ops::Add : fn add(a: Colour<N>, b: Channel) -> Colour<N> { Colour::map2(&a, &[b; N].into(), Channel::add) });
-impl_op!(impl {<const N: usize>} core::ops::Sub : fn sub(a: Colour<N>, b: Channel) -> Colour<N> { Colour::map2(&a, &[b; N].into(), Channel::sub) });
-impl_op!(impl {<const N: usize>} core::ops::Mul : fn mul(a: Colour<N>, b: Channel) -> Colour<N> { Colour::map2(&a, &[b; N].into(), Channel::mul) });
-impl_op!(impl {<const N: usize>} core::ops::Div : fn div(a: Colour<N>, b: Channel) -> Colour<N> { Colour::map2(&a, &[b; N].into(), Channel::div) });
-impl_op!(impl {<const N: usize>} core::ops::Rem : fn rem(a: Colour<N>, b: Channel) -> Colour<N> { Colour::map2(&a, &[b; N].into(), Channel::rem) });
+impl_op!(impl {const N: usize} core::ops::Add : fn add(col: Colour<N>, b: Channel) -> Colour<N> { Colour::map2(&col, &[b; N].into(), Channel::add) });
+impl_op!(impl {const N: usize} core::ops::Sub : fn sub(col: Colour<N>, b: Channel) -> Colour<N> { Colour::map2(&col, &[b; N].into(), Channel::sub) });
+impl_op!(impl {const N: usize} core::ops::Mul : fn mul(col: Colour<N>, b: Channel) -> Colour<N> { Colour::map2(&col, &[b; N].into(), Channel::mul) });
+impl_op!(impl {const N: usize} core::ops::Div : fn div(col: Colour<N>, b: Channel) -> Colour<N> { Colour::map2(&col, &[b; N].into(), Channel::div) });
+impl_op!(impl {const N: usize} core::ops::Rem : fn rem(col: Colour<N>, b: Channel) -> Colour<N> { Colour::map2(&col, &[b; N].into(), Channel::rem) });
+
+impl_op!(impl {const N: usize} core::ops::Add : fn add(col: Colour<N>, b: Number) -> Colour<N> { Colour::map(&col, |c| Number::add(c as Number, b) as Channel) });
+impl_op!(impl {const N: usize} core::ops::Sub : fn sub(col: Colour<N>, b: Number) -> Colour<N> { Colour::map(&col, |c| Number::sub(c as Number, b) as Channel) });
+impl_op!(impl {const N: usize} core::ops::Mul : fn mul(col: Colour<N>, b: Number) -> Colour<N> { Colour::map(&col, |c| Number::mul(c as Number, b) as Channel) });
+impl_op!(impl {const N: usize} core::ops::Div : fn div(col: Colour<N>, b: Number) -> Colour<N> { Colour::map(&col, |c| Number::div(c as Number, b) as Channel) });
+impl_op!(impl {const N: usize} core::ops::Rem : fn rem(col: Colour<N>, b: Number) -> Colour<N> { Colour::map(&col, |c| Number::rem(c as Number, b) as Channel) });
 
 impl_op_assign!(impl {<const N: usize>} core::ops::AddAssign : fn add_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Channel::add_assign) });
 impl_op_assign!(impl {<const N: usize>} core::ops::SubAssign : fn sub_assign(a: Colour<N>, b: Colour<N>) { Colour::map2_assign(&mut a, &b, Channel::sub_assign) });
@@ -159,9 +185,15 @@ impl_op_assign!(impl {<const N: usize>} core::ops::MulAssign : fn mul_assign(a: 
 impl_op_assign!(impl {<const N: usize>} core::ops::DivAssign : fn div_assign(a: Colour<N>, b: Channel) { Colour::map2_assign(&mut a, &[b; N].into(), Channel::div_assign) });
 impl_op_assign!(impl {<const N: usize>} core::ops::RemAssign : fn rem_assign(a: Colour<N>, b: Channel) { Colour::map2_assign(&mut a, &[b; N].into(), Channel::rem_assign) });
 
+impl_op_assign!(impl {<const N: usize>} core::ops::AddAssign : fn add_assign(a: Colour<N>, b: Number) { Colour::map(&a, |c| Number::add(c as Number, b) as Channel) });
+impl_op_assign!(impl {<const N: usize>} core::ops::SubAssign : fn sub_assign(a: Colour<N>, b: Number) { Colour::map(&a, |c| Number::sub(c as Number, b) as Channel) });
+impl_op_assign!(impl {<const N: usize>} core::ops::MulAssign : fn mul_assign(a: Colour<N>, b: Number) { Colour::map(&a, |c| Number::mul(c as Number, b) as Channel) });
+impl_op_assign!(impl {<const N: usize>} core::ops::DivAssign : fn div_assign(a: Colour<N>, b: Number) { Colour::map(&a, |c| Number::div(c as Number, b) as Channel) });
+impl_op_assign!(impl {<const N: usize>} core::ops::RemAssign : fn rem_assign(a: Colour<N>, b: Number) { Colour::map(&a, |c| Number::rem(c as Number, b) as Channel) });
+
 // Shift left/right rotates the channels left/right by `n` places.
-impl_op!(impl {<const N: usize>} core::ops::Shl : fn shl(col: Colour<N>, shift: usize) -> Colour<N> { col.0.rotate_left(shift); col });
-impl_op!(impl {<const N: usize>} core::ops::Shr : fn shr(col: Colour<N>, shift: usize) -> Colour<N> { col.0.rotate_right(shift); col });
+impl_op!(impl {const N: usize} core::ops::Shl : fn shl(col: Colour<N>, shift: usize) -> Colour<N> { col.0.rotate_left(shift); col });
+impl_op!(impl {const N: usize} core::ops::Shr : fn shr(col: Colour<N>, shift: usize) -> Colour<N> { col.0.rotate_right(shift); col });
 
 impl_op_assign!(impl {<const N: usize>} core::ops::ShlAssign : fn shl_assign(col: Colour<N>, shift: usize) { col.0.rotate_left(shift) });
 impl_op_assign!(impl {<const N: usize>} core::ops::ShrAssign : fn shr_assign(col: Colour<N>, shift: usize) { col.0.rotate_right(shift) });
@@ -176,7 +208,7 @@ impl<const N: usize> core::iter::Product for Colour<N> {
 impl<const N: usize> num_traits::Zero for Colour<N> {
     fn zero() -> Self { Self::BLACK }
 
-    fn is_zero(&self) -> bool { self == Self::BLACK }
+    fn is_zero(&self) -> bool { *self == Self::BLACK }
 }
 
 impl<const N: usize> num_traits::One for Colour<N> {

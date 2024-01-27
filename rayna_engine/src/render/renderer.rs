@@ -9,8 +9,9 @@ use crate::scene::camera::Viewport;
 use crate::scene::Scene;
 use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
+use crate::shared::math::Lerp;
 use crate::shared::ray::Ray;
-use crate::shared::{math, validate};
+use crate::shared::validate;
 use crate::skybox::Skybox;
 use derivative::Derivative;
 use num_integer::Roots;
@@ -390,7 +391,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
                 let a = COLOURS[floor as usize];
                 let b = COLOURS[ceil as usize];
-                let lerp = math::lerp_px(a, b, frac);
+                let lerp = Colour::lerp(a, b, frac);
                 lerp
             }
         };

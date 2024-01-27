@@ -1,12 +1,16 @@
 use std::ops::{Add, Mul, Sub};
 
-use crate::core::types::{Channel, Colour, Number, Vector3};
+use crate::core::types::{Number, Vector3};
 
 pub trait Lerp<Frac>: Add<Self, Output = Self> + Sub<Self, Output = Self> + Mul<Frac, Output = Self> + Sized {
-    fn lerp(a: Self, b: Self, t: Frac) -> Self { a + (b - a) * t }
+    fn lerp(a: Self, b: Self, t: Frac) -> Self;
 }
 
-impl<Frac, T: Add<Self, Output = Self> + Sub<Self, Output = Self> + Mul<Frac, Output = Self> + Sized> Lerp<Frac> for T {}
+impl<Frac, T: Add<Self, Output = Self> + Sub<Self, Output = Self> + Mul<Frac, Output = Self> + Sized + Clone> Lerp<Frac>
+    for T
+{
+    fn lerp(a: Self, b: Self, t: Frac) -> Self { a.clone() + (b - a) * t }
+}
 
 /// Calculates the vector reflection of vector `d` across the surface normal `n`
 pub fn reflect(d: Vector3, n: Vector3) -> Vector3 { d - n * (2. * d.dot(n)) }

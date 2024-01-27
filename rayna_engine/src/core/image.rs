@@ -1,11 +1,10 @@
 use crate::core::types::{Colour, Number};
-use crate::shared::math::{lerp, Lerp};
+use crate::shared::math::Lerp;
 use derivative::Derivative;
 use getset::{CopyGetters, Getters};
 use num_integer::Integer;
-use num_traits::FromPrimitive;
 use std::mem::MaybeUninit;
-use std::ops::{Add, Deref, DerefMut, Index, IndexMut, Mul, Sub};
+use std::ops::{Deref, DerefMut, Index, IndexMut};
 
 #[derive(CopyGetters, Getters, Derivative, Clone)]
 #[derivative(Debug)]
@@ -175,11 +174,11 @@ impl<Col> Image<Col> {
 
     pub fn get_bilinear(&self, px: Number, py: Number) -> Col
     where
-        Col: Lerp<Number>,
+        Col: Lerp<Number> + Clone,
     {
         let (x1, x2, xl) = self.bilinear_coords(px, self.width);
         let (y1, y2, yl) = self.bilinear_coords(py, self.height);
-        let [c11, c12, c21, c22] = [(x1, y1), (x1, y2), (x2, y1), (x2, y2)].map(|c| self[c]);
+        let [c11, c12, c21, c22] = [(x1, y1), (x1, y2), (x2, y1), (x2, y2)].map(|c| self[c].clone());
 
         // Interpolate over x-axis
         let cy1/* Y=Y1 */ = Col::lerp(c11, c21, xl);

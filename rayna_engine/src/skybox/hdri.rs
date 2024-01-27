@@ -1,7 +1,7 @@
-use crate::core::types::{Channel, Colour, Image, Number};
+use crate::core::types::{Colour, Image, Number};
 use crate::mesh::primitive::sphere;
 use crate::shared::ray::Ray;
-use crate::skybox::{Skybox, SkyboxInstance};
+use crate::skybox::Skybox;
 
 /// A skybox that uses a **High Dynamic Range Image** (**HDRI**) as the skybox
 #[derive(Clone, Debug)]

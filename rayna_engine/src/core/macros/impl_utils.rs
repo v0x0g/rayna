@@ -12,8 +12,8 @@ macro_rules! impl_op {
         impl_op!(@inner impl $({$($bounds)*})? $($operator)::+ : fn $fn_name ($a: &$a_ty, $b: &$b_ty) -> $ret_ty $body);
     };
 
-    (@inner impl $({$($bounds:tt)*})? $($operator:ident)::+ : fn $fn_name:ident ($a:ident: $a_ty:ty, $b:ident : $b_ty:ty) -> $ret_ty:ty $body:block) => {
-        impl $($($bounds)*)?  $($operator)::+<$b_ty> for $a_ty {
+    (@inner impl $({ $($bounds:tt)* })? $($operator:ident)::+ : fn $fn_name:ident ($a:ident: $a_ty:ty, $b:ident : $b_ty:ty) -> $ret_ty:ty $body:block) => {
+        impl $(< $($bounds)* >)?  $($operator)::+<$b_ty> for $a_ty {
             type Output = $ret_ty;
 
             fn $fn_name(self, rhs: $b_ty) -> Self::Output {
@@ -38,6 +38,7 @@ macro_rules! impl_op_assign {
         impl $($($bounds)*)? $($operator)::+<$rhs> for $lhs {
             fn $fn_name(&mut self, rhs: $rhs) {
                 // Cloning is the easiest way to ensure that we get a owned value, from either a reference or owned val
+                #[allow(unused_mut)]
                 let (mut $a, $b) = (self.clone(), rhs.clone());
                 $body;
                 *self = $a;

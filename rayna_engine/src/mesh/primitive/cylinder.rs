@@ -82,55 +82,32 @@ impl Mesh for CylinderMesh {
             discriminant.sqrt()
         };
 
-        /// Which section of the cylinder did we intersect (caps or body)
-        enum Section {
-            Body,
-            Caps,
+        // Check both of the intersections along the ray. We only check the second (further) distance
+        // if the ray can start *inside* the cylinder (IQ's code didn't have this originally)
+        // This is **not** checking the front-face/back-face, but checking the entering/exiting intersections
+        // (e.g. when ray inside volume, the entering intersect is behind, so we have to check exiting intersect too)
+        let mut dist = (-b - sqrt_d) / a;
+        if !bounds.contains(&dist) {
+            dist = (-b + sqrt_d) / a;
+        }
+        if !bounds.contains(&dist) {
+            return None;
         }
 
-        let (dist, section) = {
-            // Check both of the intersections along the ray. We only check the second (further) distance
-            // if the ray can start *inside* the cylinder (IQ's code didn't have this originally)
-            // This is **not** checking the front-face/back-face, but checking the entering/exiting intersections
-            // (e.g. when ray inside volume, the entering intersect is behind, so we have to check exiting intersect too)
-            let (body_near, body_far) = ((-b - sqrt_d) / a, (-b + sqrt_d) / a);
-            if bounds.contains(&body_near) {
-                (body_near, Section::Body)
-            } else if bounds.contains(&body_far) {
-                (body_far, Section::Body)
-            }
-            // Neither of the bodies is in bounds, but the cap might still be
-            else {
-                // If `baoc` and `bard` have same sign, the P2 cap is nearer, if opposite signs then P1 nearer
-                let (cap_near, cap_far) = if baoc.signum() != bard.signum() {
-                    // Diff sign, P1 nearer
-                    ((0.0 - baoc) / bard, (self.length_sqr - baoc) / bard)
-                } else {
-                    // Same sign, P2 nearer
-                    ((self.length_sqr - baoc) / bard, (0.0 - baoc) / bard)
-                };
-                if bounds.contains(&cap_near) {
-                    (cap_near, Section::Caps)
-                } else if bounds.contains(&body_far) {
-                    (cap_far, Section::Caps)
-                } else {
-                    // No caps and no body,
-                    return None;
-                }
-            }
-        };
+        let normal;
+        let face;
+        let uv;
 
         // Distance along the line segment (P1 -> P2) that the ray intersects
         // 0 means @ P1, `1` means @ P2 (it's normalised). Not sure why `/len_sqr` not `/len`
-        // Only used in the case of the body
         let dist_along_norm = (baoc + (dist * bard)) / self.length_sqr;
-        // Position of the intersection we are checking, relative to cylinder origin
-        let pos_rel = oc + (rd * dist);
 
         // Intersect with body, only if the intersection is along the length segment of the cylinder
         // This will only check the front-face of the cylinder (where normal faces towards ray origin)
         // The back-face will always be obscured by the end caps
         if dist_along_norm > 0. && dist_along_norm < 1. {
+            // Position of the intersection we are checking, relative to cylinder origin
+            let pos_rel = oc + (rd * dist);
             // Position along the cylinder, relative from the origin. Normalised against length
             let pos_along = self.along * dist_along_norm;
             // The position "around" the origin that the intersection is.
@@ -149,7 +126,31 @@ impl Mesh for CylinderMesh {
             uv = Point2::new(u, v);
 
             face = 0;
-        } else {
+        }
+        // Intersection wasn't along the (front-facing) body section, so check the end caps.
+        // See note above about back-faces.
+        else {
+            // `dist` is distance along the ray that we intersect with the end caps
+            // First try closer cap
+            let (dist_near, dist_far) = if dist_along_norm < 0. {
+                ((0.0 - baoc) / bard, (self.length_sqr - baoc) / bard)
+            } else {
+                ((self.length_sqr - baoc) / bard, (0.0 - baoc) / bard)
+            };
+
+            dist = {
+                if bounds.contains(&dist_near) && Number::abs(b + (a * dist_near)) < sqrt_d {
+                    dist
+                } else {
+                    // Closer one failed, try other
+                    if bounds.contains(&dist_far) && Number::abs(b + (a * dist_far)) < sqrt_d {
+                        dist_far
+                    } else {
+                        // Neither cap matched
+                        return None;
+                    }
+                }
+            };
             // `self.along.normalised()` is also the normal vector for the end caps
             normal = self.along / self.length * dist_along_norm.signum();
             face = if dist_along_norm.is_sign_negative() { 1 } else { 2 };

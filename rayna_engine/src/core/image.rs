@@ -173,20 +173,19 @@ impl<Col> Image<Col> {
         (floor as _, ceil as _, frac)
     }
 
-    pub fn get_bilinear<Frac>(&self, px: Number, py: Number) -> Col
+    pub fn get_bilinear(&self, px: Number, py: Number) -> Col
     where
-        Col: Lerp<Frac>,
-        Frac: FromPrimitive,
+        Col: Lerp<Number>,
     {
         let (x1, x2, xl) = self.bilinear_coords(px, self.width);
         let (y1, y2, yl) = self.bilinear_coords(py, self.height);
         let [c11, c12, c21, c22] = [(x1, y1), (x1, y2), (x2, y1), (x2, y2)].map(|c| self[c]);
 
         // Interpolate over x-axis
-        let cy1/* Y=Y1 */ = Col::lerp(c11, c21, xl.ch());
-        let cy2/* Y=Y2 */ = Col::lerp(c12, c22, xl.into());
+        let cy1/* Y=Y1 */ = Col::lerp(c11, c21, xl);
+        let cy2/* Y=Y2 */ = Col::lerp(c12, c22, xl);
 
-        let c = Col::lerp(cy1, cy2, yl.into());
+        let c = Col::lerp(cy1, cy2, yl);
         c
     }
 }

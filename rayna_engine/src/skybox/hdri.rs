@@ -1,4 +1,4 @@
-use crate::core::types::{Colour, Image, Number};
+use crate::core::types::{Channel, Colour, Image, Number};
 use crate::mesh::primitive::sphere;
 use crate::shared::ray::Ray;
 use crate::skybox::{Skybox, SkyboxInstance};
@@ -21,6 +21,6 @@ impl Skybox for HdrImageSkybox {
 
         let i = u * self.image.width() as Number;
         let j = v * self.image.height() as Number;
-        self.image.get_bilinear(i, j)
+        self.image.get_bilinear::<Channel>(i, j)
     }
 }

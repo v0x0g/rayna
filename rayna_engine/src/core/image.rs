@@ -3,6 +3,7 @@ use crate::shared::math::{lerp, Lerp};
 use derivative::Derivative;
 use getset::{CopyGetters, Getters};
 use num_integer::Integer;
+use num_traits::FromPrimitive;
 use std::mem::MaybeUninit;
 use std::ops::{Add, Deref, DerefMut, Index, IndexMut, Mul, Sub};
 
@@ -175,17 +176,17 @@ impl<Col> Image<Col> {
     pub fn get_bilinear<Frac>(&self, px: Number, py: Number) -> Col
     where
         Col: Lerp<Frac>,
-        Frac: From<Number>,
+        Frac: FromPrimitive,
     {
         let (x1, x2, xl) = self.bilinear_coords(px, self.width);
         let (y1, y2, yl) = self.bilinear_coords(py, self.height);
         let [c11, c12, c21, c22] = [(x1, y1), (x1, y2), (x2, y1), (x2, y2)].map(|c| self[c]);
 
         // Interpolate over x-axis
-        let cy1/* Y=Y1 */ = Colour::lerp(c11, c21, xl.into());
-        let cy2/* Y=Y2 */ = Colour::lerp(c12, c22, xl.into());
+        let cy1/* Y=Y1 */ = Col::lerp(c11, c21, xl.ch());
+        let cy2/* Y=Y2 */ = Col::lerp(c12, c22, xl.into());
 
-        let c = Colour::lerp(cy1, cy2, yl.into());
+        let c = Col::lerp(cy1, cy2, yl.into());
         c
     }
 }

@@ -1,8 +1,9 @@
 pub mod default;
 pub mod dynamic;
+pub mod hdri;
 pub mod none;
 
-use self::{default::DefaultSkybox, dynamic::DynamicSkybox, none::NoSkybox};
+use self::{default::DefaultSkybox, dynamic::DynamicSkybox, hdri::HdrImageSkybox, none::NoSkybox};
 use crate::core::types::Colour;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
@@ -22,6 +23,7 @@ pub enum SkyboxInstance {
     DefaultSkybox,
     NoSkybox,
     DynamicSkybox,
+    HdrImageSkybox,
 }
 
 impl Default for SkyboxInstance {

@@ -15,6 +15,7 @@ use crate::shared::ray::Ray;
 /// Enum for different ways UV coordinates can be wrapped (or not) on a plane
 #[derive(Copy, Clone, Debug, Default, Ord, PartialOrd, Eq, PartialEq)]
 pub enum UvWrappingMode {
+    // TODO: Remove `None`, add ones like clamp border, clamp edge
     /// Don't wrap UV coords, keep them unbounded
     None,
     /// Wrap the UV coordinates when they reach `1.0`

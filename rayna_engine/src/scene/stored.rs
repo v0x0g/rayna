@@ -6,9 +6,6 @@
 
 use crate::core::types::{Angle, Channel, Colour, Image, Number, Point3, Transform3, Vector3};
 use crate::object::simple::SimpleObject;
-use image::ImageFormat;
-use std::io::BufReader;
-
 use noise::*;
 use rand::{thread_rng, Rng};
 use static_init::*;
@@ -21,16 +18,15 @@ use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::mesh::advanced::bvh::BvhMesh;
 use crate::mesh::planar::parallelogram::ParallelogramMesh;
+use crate::mesh::planar::triangle::TriangleMesh;
 use crate::mesh::planar::Planar;
 use crate::mesh::primitive::axis_box::AxisBoxMesh;
-use crate::mesh::primitive::cylinder::CylinderMesh;
 use crate::mesh::primitive::sphere::SphereMesh;
 use crate::mesh::MeshInstance;
 use crate::object::volumetric::VolumetricObject;
 use crate::object::ObjectInstance;
 use crate::scene::camera::Camera;
 use crate::shared::rng;
-use crate::skybox::hdri::HdrImageSkybox;
 use crate::skybox::SkyboxInstance;
 use crate::texture::image::ImageTexture;
 use crate::texture::noise::{ColourSource, LocalNoiseTexture, WorldNoiseTexture};
@@ -87,124 +83,19 @@ pub static TESTING: Scene = {
     let mut objects = Vec::new();
 
     {
-        // WALLS
-
-        // let purple = LambertianMaterial {
-        //     albedo: [0.25, 0.11, 0.5].into(),
-        // };
-        // let light = LightMaterial {
-        //     emissive: [30.; 3].into(),
-        // };
-
-        // // Back
-        // objects.push(SimpleObject::new(
-        //     ParallelogramMesh::new(Planar::new((0., 0., 0.), Vector3::X, Vector3::Y)),
-        //     purple.clone(),
-        //     None,
-        // ));
-        // // Front
-        // objects.push(SimpleObject::new(
-        //     ParallelogramMesh::new(Planar::new((0., 0., 1.), Vector3::X, Vector3::Y)),
-        //     purple.clone(),
-        //     None,
-        // ));
-        //
-        // // Floor
-        // objects.push(SimpleObject::new(
-        //     ParallelogramMesh::new(Planar::new((0., 0., 0.), Vector3::Z, Vector3::X)),
-        //     purple.clone(),
-        //     None,
-        // ));
-        // // Ceiling
-        // objects.push(SimpleObject::new(
-        //     ParallelogramMesh::new(Planar::new((0., 1., 0.), Vector3::X, Vector3::Z)),
-        //     purple.clone(),
-        //     None,
-        // ));
-        //
-        // // Left
-        // objects.push(SimpleObject::new(
-        //     ParallelogramMesh::new(Planar::new((0., 0., 0.), Vector3::Y, Vector3::Z)),
-        //     purple.clone(),
-        //     None,
-        // ));
-        // // Right
-        // objects.push(SimpleObject::new(
-        //     ParallelogramMesh::new(Planar::new((1., 0., 0.), Vector3::Z, Vector3::Y)),
-        //     purple.clone(),
-        //     None,
-        // ));
-        //
-        // let scale = 0.3;
-        //
-        // // Left Light
-        // objects.push(SimpleObject::new(
-        //     ParallelogramMesh::new(Planar::new_centred(
-        //         (0., 0.5, 0.),
-        //         Vector3::Y * scale,
-        //         Vector3::Z * scale,
-        //     )),
-        //     light.clone(),
-        //     None,
-        // ));
-        // // Right Light
-        // objects.push(SimpleObject::new(
-        //     ParallelogramMesh::new(Planar::new_centred(
-        //         (1., 0.5, 0.),
-        //         Vector3::Z * scale,
-        //         Vector3::Y * scale,
-        //     )),
-        //     light.clone(),
-        //     None,
-        // ));
-    }
-
-    {
         objects.push(SimpleObject::new(
-            CylinderMesh::new((0.5, 0.1, 0.5), (0.5, 0.4, 0.5), 0.1),
-            // LambertianMaterial {
-            //     albedo: [0.9; 3].into(),
-            // },
-            // LambertianMaterial {
-            //     albedo: UvCheckerTexture {
-            //         scale: 1. / 8.,
-            //         offset: Vector2::ZERO,
-            //         even: DynamicTexture::new(SolidTexture::from([1., 0., 0.])),
-            //         odd: DynamicTexture::new(SolidTexture::from([0., 1., 0.])),
-            //     }
-            //     .into(),
-            // },
-            MetalMaterial {
-                albedo: Colour::WHITE.into(),
-                fuzz: 0.0,
+            TriangleMesh::new([(0.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)]),
+            LambertianMaterial {
+                albedo: [0.9; 3].into(),
             },
             None,
         ));
-
-        // objects.push(SimpleObject::new(
-        //     SphereMesh::new((0.5, 0.2, 0.5), 0.2),
-        //     DielectricMaterial {
-        //         albedo: [0.9; 3].into(),
-        //         refractive_index: 1.5,
-        //         density: 0.0,
-        //     },
-        //     None,
-        // ));
     }
 
     Scene {
         camera,
         objects: objects.into(),
-        // skybox: None.into(),
-        skybox: HdrImageSkybox::from(Image::from({
-            let file = std::fs::File::open("media/skybox/misty-farm-road/4096x2048.exr")
-                .expect("compile-time image resource should be valid");
-            let mut reader = image::io::Reader::new(BufReader::new(file));
-            reader.no_limits();
-            reader.set_format(ImageFormat::OpenExr);
-            reader.decode().expect("compile-time image resource should be valid")
-        }))
-        .into(),
+        skybox: Default::default(),
     }
 };
 

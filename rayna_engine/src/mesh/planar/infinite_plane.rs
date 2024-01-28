@@ -61,11 +61,16 @@ pub struct InfinitePlaneMesh {
 // region Constructors
 
 impl InfinitePlaneMesh {
-    pub fn new(plane: Planar, uv_wrap: UvWrappingMode) -> Self { Self { plane, uv_wrap } }
+    pub fn new(plane: impl Into<Planar>, uv_wrap: UvWrappingMode) -> Self {
+        Self {
+            plane: plane.into(),
+            uv_wrap,
+        }
+    }
 }
 
-impl From<Planar> for InfinitePlaneMesh {
-    fn from(plane: Planar) -> Self { Self::new(plane, UvWrappingMode::default()) }
+impl<T: Into<Planar>> From<T> for InfinitePlaneMesh {
+    fn from(plane: T) -> Self { Self::new(plane, UvWrappingMode::default()) }
 }
 
 // endregion Constructors

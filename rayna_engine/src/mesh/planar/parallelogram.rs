@@ -22,7 +22,8 @@ pub struct ParallelogramMesh {
 // region Constructors
 
 impl ParallelogramMesh {
-    pub fn new(plane: Planar) -> Self {
+    pub fn new(plane: impl Into<Planar>) -> Self {
+        let plane = plane.into();
         let (p, a, b) = (plane.p(), plane.p() + plane.u(), plane.p() + plane.v());
         let centre = p + (plane.u() / 2.) + (plane.v() / 2.);
         let aabb = Aabb::encompass_points([p, a, b]).min_padded(super::AABB_PADDING);
@@ -31,8 +32,8 @@ impl ParallelogramMesh {
     }
 }
 
-impl From<Planar> for ParallelogramMesh {
-    fn from(plane: Planar) -> Self { Self::new(plane) }
+impl<T: Into<Planar>> From<T> for ParallelogramMesh {
+    fn from(plane: T) -> Self { Self::new(plane) }
 }
 
 // endregion Constructors

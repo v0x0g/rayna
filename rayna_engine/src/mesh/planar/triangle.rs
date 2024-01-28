@@ -22,7 +22,8 @@ pub struct TriangleMesh {
 // region Constructors
 
 impl TriangleMesh {
-    pub fn new(plane: Planar) -> Self {
+    pub fn new(plane: impl Into<Planar>) -> Self {
+        let plane = plane.into();
         let (p, a, b) = (plane.p(), plane.p() + plane.u(), plane.p() + plane.v());
         let centre = p + (plane.u() / 2.) + (plane.v() / 2.);
         let aabb = Aabb::encompass_points([p, a, b]).min_padded(super::AABB_PADDING);
@@ -33,8 +34,8 @@ impl TriangleMesh {
 
 // endregion Constructors
 
-impl From<Planar> for TriangleMesh {
-    fn from(plane: Planar) -> Self { Self::new(plane) }
+impl<P: Into<Planar>> From<P> for TriangleMesh {
+    fn from(plane: P) -> Self { Self::new(plane) }
 }
 
 // region Mesh Impl

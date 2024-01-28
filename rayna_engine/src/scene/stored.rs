@@ -383,7 +383,7 @@ pub static RTTNW_DEMO: Scene = {
                 SphereMesh::new((2.6, 1.5, 0.45), 0.5),
                 DielectricMaterial {
                     albedo: [1.; 3].into(),
-                    density: 69.0,
+                    density: 1.0,
                     refractive_index: 1.5,
                 },
                 None,
@@ -411,7 +411,7 @@ pub static RTTNW_DEMO: Scene = {
                 DielectricMaterial {
                     albedo: [1.; 3].into(),
                     refractive_index: 1.5,
-                    density: 69.0,
+                    density: 0.0,
                 },
                 None,
             )
@@ -424,7 +424,7 @@ pub static RTTNW_DEMO: Scene = {
                 IsotropicMaterial {
                     albedo: [0.2, 0.4, 0.9].into(),
                 },
-                8.0,
+                1.0,
                 None,
             )
             .into(),

@@ -391,8 +391,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
                 let a = COLOURS[floor as usize];
                 let b = COLOURS[ceil as usize];
-                let lerp = Colour::lerp(a, b, frac);
-                lerp
+                Colour::lerp(a, b, frac)
             }
         };
     }

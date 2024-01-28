@@ -84,7 +84,7 @@ pub static TESTING: Scene = {
 
     {
         objects.push(SimpleObject::new(
-            TriangleMesh::new([(0.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)]),
+            TriangleMesh::new([(0.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, 1.0, 0.0)]),
             LambertianMaterial {
                 albedo: [0.9; 3].into(),
             },

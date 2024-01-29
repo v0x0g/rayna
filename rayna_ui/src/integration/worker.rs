@@ -15,7 +15,7 @@ use rayna_engine::skybox::SkyboxInstance;
 use rayna_engine::texture::TextureInstance;
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
-use std::ops::{Deref, DerefMut};
+use std::ops::DerefMut;
 use std::thread::JoinHandle;
 use std::time::Duration;
 use tracing::{info, instrument, trace, warn};
@@ -124,7 +124,7 @@ impl BgWorker {
 
     /// Converts the image outputted by the renderer into an egui-appropriate one.
     /// Also converts from linear space to SRGB space
-    fn convert_img(mut img: Image) -> ColorImage {
+    fn convert_img(mut src: Image) -> ColorImage {
         profile_function!();
 
         // Got a rendered image
@@ -136,23 +136,27 @@ impl BgWorker {
             const INV_GAMMA: Channel = 1.0 / GAMMA;
 
             // Gamma correction is per-channel, not per-pixel
-            img.deref_mut().into_par_iter().for_each(|c| *c = c.powf(INV_GAMMA));
+            src.deref_mut().into_par_iter().for_each(|c| *c = c.powf(INV_GAMMA));
         }
-
-        // Convert each pixel into array of u8 channels
-        let pixels_egui = {
-            profile_scope!("convert_channels_u8");
-            img.deref()
-                .as_standard_layout()
-                .map(|col| {
-                    let [r, g, b] = col.0.map(|c| (c * 255.0) as u8);
-                    Color32::from_rgb(r, g, b)
-                })
-                .into_raw_vec()
+        // TODO: Pool the images?
+        let mut output = {
+            profile_scope!("alloc_output");
+            ColorImage {
+                size: [src.width(), src.height()],
+                // I hope the compiler optimizes this
+                pixels: vec![Color32::default(); src.len()],
+            }
         };
-        ColorImage {
-            size: [img.width(), img.height()],
-            pixels: pixels_egui,
-        }
+
+        // Convert each pixel into array of u8 channels and write to output
+        {
+            profile_scope!("convert_channels_u8");
+            src.indexed_iter().for_each(|((x, y), col)| {
+                let [r, g, b] = col.0.map(|c| (c * 255.0) as u8);
+                output[(x, y)] = Color32::from_rgb(r, g, b)
+            });
+        };
+
+        output
     }
 }

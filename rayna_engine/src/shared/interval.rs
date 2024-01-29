@@ -2,21 +2,21 @@ use std::cmp::Ordering;
 use std::fmt::{Display, Formatter};
 use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 
-/// Represents a (possible) bounding on some range of values. There may/not be a `start` and/or `end` bound.
+/// Represents a interval of values. There may/not be a `start` and/or `end` bound.
 ///
 /// # Requirements
 /// It is a logic error for `start > end`. This requirement may not necessarily be enforced due to performance reasons,
 /// and is considered UB.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
-pub struct Bounds<T> {
+pub struct Interval<T> {
     pub start: Option<T>,
     pub end: Option<T>,
 }
 
-impl<T> From<RangeFull> for Bounds<T> {
+impl<T> From<RangeFull> for Interval<T> {
     fn from(_value: RangeFull) -> Self { Self { start: None, end: None } }
 }
-impl<T> From<RangeInclusive<T>> for Bounds<T> {
+impl<T> From<RangeInclusive<T>> for Interval<T> {
     fn from(value: RangeInclusive<T>) -> Self {
         let (min, max) = value.into_inner();
         Self {
@@ -25,7 +25,7 @@ impl<T> From<RangeInclusive<T>> for Bounds<T> {
         }
     }
 }
-impl<T> From<RangeTo<T>> for Bounds<T> {
+impl<T> From<RangeTo<T>> for Interval<T> {
     fn from(value: RangeTo<T>) -> Self {
         Self {
             start: None,
@@ -33,7 +33,7 @@ impl<T> From<RangeTo<T>> for Bounds<T> {
         }
     }
 }
-impl<T> From<RangeToInclusive<T>> for Bounds<T> {
+impl<T> From<RangeToInclusive<T>> for Interval<T> {
     fn from(value: RangeToInclusive<T>) -> Self {
         Self {
             start: None,
@@ -41,7 +41,7 @@ impl<T> From<RangeToInclusive<T>> for Bounds<T> {
         }
     }
 }
-impl<T> From<RangeFrom<T>> for Bounds<T> {
+impl<T> From<RangeFrom<T>> for Interval<T> {
     fn from(value: RangeFrom<T>) -> Self {
         Self {
             start: Some(value.start),
@@ -49,7 +49,7 @@ impl<T> From<RangeFrom<T>> for Bounds<T> {
         }
     }
 }
-impl<T> From<Range<T>> for Bounds<T> {
+impl<T> From<Range<T>> for Interval<T> {
     fn from(value: Range<T>) -> Self {
         Self {
             start: Some(value.start),
@@ -58,11 +58,11 @@ impl<T> From<Range<T>> for Bounds<T> {
     }
 }
 
-impl<T> Bounds<T> {
+impl<T> Interval<T> {
     pub const FULL: Self = Self { start: None, end: None };
 }
 
-impl<T: PartialOrd> Bounds<T> {
+impl<T: PartialOrd> Interval<T> {
     /// Checks if the given range `min..max` overlaps with the bounds (`self`)
     pub fn range_overlaps(&self, min: &T, max: &T) -> bool {
         return match self {
@@ -124,8 +124,8 @@ impl<T: PartialOrd> Bounds<T> {
     }
 }
 
-impl<T: PartialOrd> std::ops::BitAnd for Bounds<T> {
-    type Output = Bounds<T>;
+impl<T: PartialOrd> std::ops::BitAnd for Interval<T> {
+    type Output = Interval<T>;
 
     fn bitand(self, other: Self) -> Self::Output {
         // `lower`: Find the largest (total) lowest bound, aka the lower bound that's inside both bounds
@@ -160,7 +160,7 @@ impl<T: PartialOrd> std::ops::BitAnd for Bounds<T> {
     }
 }
 
-impl<T: Display> Display for Bounds<T> {
+impl<T: Display> Display for Interval<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         if let Some(start) = &self.start {
             write!(f, "{start}")?;
@@ -180,7 +180,7 @@ impl<T: Display> Display for Bounds<T> {
     }
 }
 
-impl<T> Bounds<T> {
+impl<T> Interval<T> {
     pub fn with_start(self, start: Option<T>) -> Self { Self { start, ..self } }
     pub fn with_some_start(self, start: T) -> Self {
         Self {

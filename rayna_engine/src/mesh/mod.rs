@@ -26,8 +26,8 @@
 
 use crate::core::types::{Number, Point3};
 use crate::shared::aabb::HasAabb;
-use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
+use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use enum_dispatch::enum_dispatch;
@@ -52,7 +52,7 @@ pub trait Mesh: MeshProperties + RtRequirement {
     ///
     /// # Return Value
     /// This should return the *first* intersection that is within the given range, else [None]
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection>;
+    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, rng: &mut dyn RngCore) -> Option<Intersection>;
 
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
 }

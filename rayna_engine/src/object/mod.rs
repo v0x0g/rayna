@@ -9,8 +9,8 @@ use crate::material::Material;
 use crate::mesh::Mesh as MeshTrait;
 use crate::shared::aabb::Aabb;
 use crate::shared::aabb::HasAabb;
-use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
+use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
 use rand_core::RngCore;
@@ -34,7 +34,7 @@ pub trait Object: RtRequirement + HasAabb {
     fn full_intersect<'o>(
         &'o self,
         ray: &Ray,
-        bounds: &Bounds<Number>,
+        bounds: &Interval<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Self::Mat>>;
 }
@@ -57,7 +57,7 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> Object for ObjectInstance<M
     fn full_intersect<'o>(
         &'o self,
         ray: &Ray,
-        bounds: &Bounds<Number>,
+        bounds: &Interval<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Self::Mat>> {
         match self {

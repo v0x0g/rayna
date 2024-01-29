@@ -4,8 +4,8 @@ use crate::mesh::Mesh as MeshTrait;
 use crate::object::transform::ObjectTransform;
 use crate::object::Object;
 use crate::shared::aabb::{Aabb, HasAabb};
-use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
+use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use getset::Getters;
 use rand_core::RngCore;
@@ -107,7 +107,7 @@ where
     fn full_intersect<'o>(
         &'o self,
         orig_ray: &Ray,
-        bounds: &Bounds<Number>,
+        bounds: &Interval<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Mat>> {
         let trans_ray = self.transform.incoming_ray(orig_ray);

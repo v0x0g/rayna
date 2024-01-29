@@ -7,8 +7,8 @@ use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::{RenderMode, RenderOpts};
 use crate::scene::camera::Viewport;
 use crate::scene::Scene;
-use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
+use crate::shared::interval::Interval;
 use crate::shared::math::Lerp;
 use crate::shared::ray::Ray;
 use crate::shared::validate;
@@ -139,7 +139,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
                 Self::render_failed(w, h)
             }
             Ok(viewport) => {
-                let bounds = Bounds::from(1e-3..Number::MAX);
+                let bounds = Interval::from(1e-3..Number::MAX);
                 self.render_actual(scene, render_opts, &viewport, &bounds)
             }
         };
@@ -193,7 +193,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         scene: &Scene<Obj, Sky>,
         render_opts: &RenderOpts,
         viewport: &Viewport,
-        bounds: &Bounds<Number>,
+        bounds: &Interval<Number>,
     ) -> Image {
         profile_function!();
 
@@ -254,7 +254,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         scene: &Scene<Obj, Sky>,
         opts: &RenderOpts,
         viewport: &Viewport,
-        bounds: &Bounds<Number>,
+        bounds: &Interval<Number>,
         x: usize,
         y: usize,
         pooled_data: &mut PooledData,
@@ -319,7 +319,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         scene: &Scene<Obj, Sky>,
         viewport: &Viewport,
         opts: &RenderOpts,
-        bounds: &Bounds<Number>,
+        bounds: &Interval<Number>,
         x: Number,
         y: Number,
         rng: &mut impl Rng,
@@ -400,7 +400,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
     fn calculate_intersection<'o>(
         scene: &'o Scene<Obj, Sky>,
         ray: &Ray,
-        bounds: &Bounds<Number>,
+        bounds: &Interval<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Obj::Mat>> {
         scene.objects.full_intersect(ray, bounds, rng)
@@ -415,7 +415,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         scene: &Scene<Obj, Sky>,
         in_ray: &Ray,
         opts: &RenderOpts,
-        bounds: &Bounds<Number>,
+        bounds: &Interval<Number>,
         depth: usize,
         rng: &mut impl Rng,
     ) -> Colour {

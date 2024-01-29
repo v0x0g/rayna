@@ -3,8 +3,8 @@ use crate::mesh::{Mesh as MeshTrait, MeshInstance, MeshProperties};
 
 use crate::core::types::{Number, Point3};
 use crate::shared::aabb::{Aabb, HasAabb};
-use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
+use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use getset::Getters;
 use rand_core::RngCore;
@@ -82,7 +82,7 @@ impl<Mesh: MeshTrait> HasAabb for MeshList<Mesh> {
 }
 
 impl<Mesh: MeshTrait> MeshTrait for MeshList<Mesh> {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
         let bvh_int = self.bounded.intersect(ray, bounds, rng).into_iter();
         let unbound_int = self.unbounded.iter().filter_map(|o| o.intersect(ray, bounds, rng));
         Iterator::chain(bvh_int, unbound_int).min()

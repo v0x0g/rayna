@@ -1,6 +1,6 @@
 use crate::core::types::{Colour, Number, Point2, Point3, Vector2, Vector3};
-use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
+use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use approx::*;
 use std::borrow::Borrow;
@@ -110,7 +110,11 @@ pub fn uv(uv: impl Borrow<Point2>) {
 /// Asserts that an intersection was valid
 #[inline(always)]
 #[track_caller]
-pub fn intersection(ray: impl Borrow<Ray>, intersect: impl Borrow<Intersection>, bounds: impl Borrow<Bounds<Number>>) {
+pub fn intersection(
+    ray: impl Borrow<Ray>,
+    intersect: impl Borrow<Intersection>,
+    bounds: impl Borrow<Interval<Number>>,
+) {
     debug_assert_only!();
 
     let intersect = intersect.borrow();

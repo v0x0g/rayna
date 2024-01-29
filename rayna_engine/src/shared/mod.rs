@@ -1,9 +1,9 @@
 use std::fmt::Debug;
 
 pub mod aabb;
-pub mod bounds;
 pub mod generic_bvh;
 pub mod intersect;
+pub mod interval;
 pub mod math;
 pub mod ray;
 pub mod rng;

@@ -11,9 +11,9 @@ use std::ops::{Add, Div};
 
 use crate::mesh::{Mesh as MeshTrait, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
-use crate::shared::bounds::Bounds;
 use crate::shared::generic_bvh::{GenericBvh, GenericBvhNode};
 use crate::shared::intersect::Intersection;
+use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 
 #[derive(Getters, Clone, Debug)]
@@ -60,7 +60,7 @@ impl<Mesh: MeshTrait> BvhMesh<Mesh> {
     ///     - Returns the closest intersection of the above
     fn bvh_node_intersect(
         ray: &Ray,
-        bounds: &Bounds<Number>,
+        bounds: &Interval<Number>,
         node: NodeId,
         arena: &Arena<GenericBvhNode<Mesh>>,
         rng: &mut dyn RngCore,
@@ -97,7 +97,7 @@ impl<Mesh: MeshTrait> MeshProperties for BvhMesh<Mesh> {
 }
 
 impl<Mesh: MeshTrait> MeshTrait for BvhMesh<Mesh> {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
         // Pass everything on to our magical function
         Self::bvh_node_intersect(ray, bounds, self.inner.root_id()?, &self.inner.arena(), rng)
     }

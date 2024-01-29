@@ -1,8 +1,8 @@
 use crate::core::types::{Number, Point2, Point3, Vector3};
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
-use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
+use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use crate::shared::validate;
 use getset::CopyGetters;
@@ -41,7 +41,7 @@ impl SphereMesh {
 // region Mesh Impl
 
 impl Mesh for SphereMesh {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();

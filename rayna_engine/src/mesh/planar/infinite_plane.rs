@@ -6,8 +6,8 @@ use crate::core::types::{Number, Point2, Point3};
 use crate::mesh::planar::Planar;
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
-use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
+use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 
 // region UV Wrap
@@ -78,7 +78,7 @@ impl<T: Into<Planar>> From<T> for InfinitePlaneMesh {
 // region Mesh Impl
 
 impl Mesh for InfinitePlaneMesh {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         let mut i = self.plane.intersect_bounded(ray, bounds)?;
         // Wrap uv's if required
         self.uv_wrap.apply_mut(&mut i.uv);

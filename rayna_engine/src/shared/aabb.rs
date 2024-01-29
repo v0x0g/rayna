@@ -6,7 +6,7 @@ use getset::*;
 
 use crate::core::types::{Number, Point3, Vector3};
 
-use crate::shared::bounds::Bounds;
+use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 
 /// An **Axis-Aligned Bounding Box** (AABB)
@@ -114,7 +114,7 @@ impl Aabb {
 // region Impl
 impl Aabb {
     /// Checks whether the given ray intersects with the AABB at any point within the given distance bounds
-    pub fn hit(&self, ray: &Ray, bounds: &Bounds<Number>) -> bool {
+    pub fn hit(&self, ray: &Ray, bounds: &Interval<Number>) -> bool {
         /*
         CREDITS:
 

@@ -1,8 +1,8 @@
 use crate::core::types::{Number, Point3};
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
-use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
+use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use rand_core::RngCore;
 
@@ -29,7 +29,7 @@ impl super::super::MeshInstance {
 }
 
 impl Mesh for DynamicMesh {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
         self.inner.intersect(ray, bounds, rng)
     }
 }

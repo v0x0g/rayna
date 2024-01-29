@@ -6,8 +6,8 @@ use crate::core::types::{Number, Point3};
 use crate::mesh::planar::Planar;
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
-use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
+use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 
 #[derive(Copy, Clone, Debug, CopyGetters)]
@@ -41,7 +41,7 @@ impl<P: Into<Planar>> From<P> for TriangleMesh {
 // region Mesh Impl
 
 impl Mesh for TriangleMesh {
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         let i = self.plane.intersect_bounded(ray, bounds)?;
         // Check in bounds for our segment of the plane: `u + v: [0..1]`
         // TODO: Bayesian coordinates for triangles??

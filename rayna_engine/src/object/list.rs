@@ -8,8 +8,8 @@ use crate::mesh;
 use crate::object::bvh::BvhObject;
 use crate::object::{Object, ObjectInstance};
 use crate::shared::aabb::{Aabb, HasAabb};
-use crate::shared::bounds::Bounds;
 use crate::shared::intersect::FullIntersection;
+use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 
 #[derive(Getters, Clone, Debug)]
@@ -111,7 +111,7 @@ impl<Obj: Object> Object for ObjectList<Obj> {
     fn full_intersect<'o>(
         &'o self,
         orig_ray: &Ray,
-        bounds: &Bounds<Number>,
+        bounds: &Interval<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Obj::Mat>> {
         let trans_ray = self.transform.incoming_ray(orig_ray);

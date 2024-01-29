@@ -4,8 +4,8 @@ use crate::mesh::Mesh as MeshTrait;
 use crate::object::transform::ObjectTransform;
 use crate::object::Object;
 use crate::shared::aabb::{Aabb, HasAabb};
-use crate::shared::bounds::Bounds;
 use crate::shared::intersect::{FullIntersection, Intersection};
+use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use crate::shared::rng;
 use getset::{CopyGetters, Getters};
@@ -86,7 +86,7 @@ where
     fn full_intersect<'o>(
         &'o self,
         orig_ray: &Ray,
-        bounds: &Bounds<Number>,
+        bounds: &Interval<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Mat>> {
         let ray = self.transform.incoming_ray(orig_ray);
@@ -102,7 +102,7 @@ where
         // To solve this, we check for entering intersection without bounds, so that we can still check if an intersection
         // exists at all along the ray. Then, we clamp that distance value to our bounds, so we still get the right value
         let entering_dist = {
-            let enter_bounds = Bounds::FULL;
+            let enter_bounds = Interval::FULL;
             let d = self.mesh.intersect(&ray, &enter_bounds, rng)?.dist;
             // If we have start bound, move intersection along so it happened there at the earliest
             if let Some(start) = bounds.start {
@@ -113,7 +113,7 @@ where
         };
         let exiting_dist = {
             // Have to add a slight offset so we don't intersect with the same point twice
-            let exit_bounds = Bounds::from(entering_dist + 0.001..);
+            let exit_bounds = Interval::from(entering_dist + 0.001..);
             let d = self.mesh.intersect(&ray, &exit_bounds, rng)?.dist;
 
             if let Some(end) = exit_bounds.end {

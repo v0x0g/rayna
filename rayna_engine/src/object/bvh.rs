@@ -11,9 +11,9 @@ use rand_core::RngCore;
 use crate::object::transform::ObjectTransform;
 use crate::object::Object;
 use crate::shared::aabb::{Aabb, HasAabb};
-use crate::shared::bounds::Bounds;
 use crate::shared::generic_bvh::{GenericBvh, GenericBvhNode};
 use crate::shared::intersect::FullIntersection;
+use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 
 #[derive(Getters, Clone, Debug)]
@@ -68,7 +68,7 @@ impl<Obj: Object> BvhObject<Obj> {
     ///     - Returns the closest intersection of the above
     fn bvh_node_intersect<'o>(
         ray: &Ray,
-        bounds: &Bounds<Number>,
+        bounds: &Interval<Number>,
         node: NodeId,
         arena: &'o Arena<GenericBvhNode<Obj>>,
         rng: &mut dyn RngCore,
@@ -107,7 +107,7 @@ impl<Obj: Object> Object for BvhObject<Obj> {
     fn full_intersect<'o>(
         &'o self,
         orig_ray: &Ray,
-        bounds: &Bounds<Number>,
+        bounds: &Interval<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Obj::Mat>> {
         let trans_ray = self.transform.incoming_ray(orig_ray);

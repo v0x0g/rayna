@@ -8,8 +8,8 @@ use crate::core::types::{Number, Point3, Size3, Vector2, Vector3};
 
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
-use crate::shared::bounds::Bounds;
 use crate::shared::intersect::Intersection;
+use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use crate::shared::validate;
 
@@ -61,7 +61,7 @@ impl From<(Point3, Size3)> for AxisBoxMesh {
 
 impl Mesh for AxisBoxMesh {
     //noinspection RsLiveness
-    fn intersect(&self, ray: &Ray, bounds: &Bounds<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         /*
         CREDITS:
 

@@ -14,6 +14,7 @@ use crate::shared::ray::Ray;
 use crate::shared::validate;
 use crate::skybox::Skybox;
 use derivative::Derivative;
+use ndarray::Zip;
 use num_integer::Roots;
 use puffin::profile_function;
 use rand::distributions::Distribution;
@@ -204,14 +205,8 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         self.thread_pool.install(|| {
             let data_pool = &self.data_pool;
 
-            let pixels = img
-                .deref_mut()
+            let pixels = Zip::indexed(img.deref_mut())
                 .into_par_iter()
-                .enumerate()
-                .map(|(idx, p)| {
-                    let (y, x) = num_integer::Integer::div_rem(&idx, &w);
-                    (x, y, p)
-                })
                 // Return on panic as fast as possible; don't keep processing all the pixels on panic
                 // Otherwise we get (literally) millions of panics (1 per pixel) which just hangs the renderer as it prints
                 .panic_fuse();
@@ -232,7 +227,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
                     (profiler_scope, data_pool.get())
                 },
                 // Process each pixel
-                |(_scope, pooled), (x, y, p)| {
+                |(_scope, pooled), ((x, y), p)| {
                     *p = Self::render_px(scene, render_opts, viewport, interval, x, y, pooled.deref_mut());
                 },
             );

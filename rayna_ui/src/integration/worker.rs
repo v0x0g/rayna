@@ -13,8 +13,8 @@ use rayna_engine::render::renderer::Renderer;
 use rayna_engine::scene::Scene;
 use rayna_engine::skybox::SkyboxInstance;
 use rayna_engine::texture::TextureInstance;
+use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
-use rayon::iter::{IndexedParallelIterator, IntoParallelIterator};
 use std::ops::{Deref, DerefMut};
 use std::thread::JoinHandle;
 use std::time::Duration;
@@ -142,15 +142,13 @@ impl BgWorker {
         // Convert each pixel into array of u8 channels
         let pixels_egui = {
             profile_scope!("convert_channels_u8");
-            let mut buffer = vec![];
             img.deref()
-                .into_par_iter()
+                .as_standard_layout()
                 .map(|col| {
                     let [r, g, b] = col.0.map(|c| (c * 255.0) as u8);
                     Color32::from_rgb(r, g, b)
                 })
-                .collect_into_vec(&mut buffer);
-            buffer
+                .into_raw_vec()
         };
         ColorImage {
             size: [img.width(), img.height()],

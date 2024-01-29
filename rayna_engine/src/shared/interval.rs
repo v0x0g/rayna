@@ -188,4 +188,7 @@ impl<T> Interval<T> {
             ..self
         }
     }
+
+    pub fn with_end(self, end: Option<T>) -> Self { Self { end, ..self } }
+    pub fn with_some_end(self, end: T) -> Self { Self { end: Some(end), ..self } }
 }

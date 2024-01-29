@@ -80,13 +80,19 @@ impl<Obj: Object> BvhObject<Obj> {
                     return None;
                 }
 
-                // TODO: Rework this to use the new interval::bitor API to shrink the next child's search range
-                //  So keep track of the interval, and each iteration shrink with `interval = interval | ..intersection.dist`
-                //  And if an intersect was found in that shrunk range then we know that
+                // PERF: See [BvhMesh::bvh_node_intersect()]
+                let mut shrunk_interval = *interval;
+                let mut closest_intersect = None;
+                for child in node.children(arena) {
+                    let Some(intersect) = Self::bvh_node_intersect(ray, &shrunk_interval, child, arena, rng) else {
+                        continue;
+                    };
 
-                node.children(arena)
-                    .filter_map(|child| Self::bvh_node_intersect(ray, interval, child, arena, rng))
-                    .min()
+                    shrunk_interval = shrunk_interval.with_some_end(intersect.intersection.dist);
+                    closest_intersect = Some(intersect)
+                }
+
+                closest_intersect
             }
             // Objects can be delegated directly
             GenericBvhNode::Object(obj) => {

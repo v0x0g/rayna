@@ -113,12 +113,12 @@ pub fn uv(uv: impl Borrow<Point2>) {
 pub fn intersection(
     ray: impl Borrow<Ray>,
     intersect: impl Borrow<Intersection>,
-    bounds: impl Borrow<Interval<Number>>,
+    interval: impl Borrow<Interval<Number>>,
 ) {
     debug_assert_only!();
 
     let intersect = intersect.borrow();
-    let bounds = bounds.borrow();
+    let interval = interval.borrow();
     let ray = ray.borrow();
 
     uv(&intersect.uv);
@@ -127,10 +127,10 @@ pub fn intersection(
     number(intersect.dist);
 
     assert!(
-        bounds.contains(&intersect.dist),
-        "intersect dist {} not in bounds {}",
+        interval.contains(&intersect.dist),
+        "intersect dist {} not in interval {}",
         intersect.dist,
-        bounds
+        interval
     );
 
     // Dist between start and end should match `.dist` field

@@ -61,7 +61,7 @@ impl From<(Point3, Size3)> for AxisBoxMesh {
 
 impl Mesh for AxisBoxMesh {
     //noinspection RsLiveness
-    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         /*
         CREDITS:
 
@@ -103,8 +103,8 @@ impl Mesh for AxisBoxMesh {
             // Dot product is faster than this CMOV chain, but doesn't work when distanceToPlane contains nans or infs.
             ($u:ident, $vw:ident) => {{
                 let dist: Number = plane_dist.$u;
-                // Is there a hit on this axis in the valid distance bounds?
-                if bounds.contains(&dist) {
+                // Is there a hit on this axis in the valid distance interval?
+                if interval.contains(&dist) {
                     let uvs_raw = Vector2::from_raw(ro.to_raw().$vw() + (rd.to_raw().$vw() * dist));
                     let radius = Vector2::from_raw(self.radius.to_raw().$vw());
                     // Is that hit within the face of the box?

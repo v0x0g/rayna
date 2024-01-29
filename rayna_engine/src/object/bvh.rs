@@ -58,7 +58,7 @@ impl<Obj: Object> BvhObject<Obj> {
 }
 
 impl<Obj: Object> BvhObject<Obj> {
-    /// Given a [NodeId] on the [Arena] tree, calculates the nearest intersection for the given `ray` and `bounds`
+    /// Given a [NodeId] on the [Arena] tree, calculates the nearest intersection for the given `ray` and `interval`
     ///
     /// If the node is a [BvhNode::Object], it passes on the check to the mesh.
     /// Otherwise, if it's a [BvhNode::Aabb], it:
@@ -68,7 +68,7 @@ impl<Obj: Object> BvhObject<Obj> {
     ///     - Returns the closest intersection of the above
     fn bvh_node_intersect<'o>(
         ray: &Ray,
-        bounds: &Interval<Number>,
+        interval: &Interval<Number>,
         node: NodeId,
         arena: &'o Arena<GenericBvhNode<Obj>>,
         rng: &mut dyn RngCore,
@@ -76,24 +76,24 @@ impl<Obj: Object> BvhObject<Obj> {
         return match arena.get(node).expect("node should exist in arena").get() {
             // An aabb will need to delegate to child nodes if not missed
             GenericBvhNode::Nested(aabb) => {
-                if !aabb.hit(ray, bounds) {
+                if !aabb.hit(ray, interval) {
                     return None;
                 }
 
-                // TODO: Rework this to use the new Bounds::bitor API to shrink the next child's search range
-                //  So keep track of the bounds, and each iteration shrink with `bounds = bounds | ..intersection.dist`
+                // TODO: Rework this to use the new interval::bitor API to shrink the next child's search range
+                //  So keep track of the interval, and each iteration shrink with `interval = interval | ..intersection.dist`
                 //  And if an intersect was found in that shrunk range then we know that
 
                 node.children(arena)
-                    .filter_map(|child| Self::bvh_node_intersect(ray, bounds, child, arena, rng))
+                    .filter_map(|child| Self::bvh_node_intersect(ray, interval, child, arena, rng))
                     .min()
             }
             // Objects can be delegated directly
             GenericBvhNode::Object(obj) => {
-                if !obj.expect_aabb().hit(ray, bounds) {
+                if !obj.expect_aabb().hit(ray, interval) {
                     None
                 } else {
-                    obj.full_intersect(ray, bounds, rng)
+                    obj.full_intersect(ray, interval, rng)
                 }
             }
         };
@@ -107,12 +107,13 @@ impl<Obj: Object> Object for BvhObject<Obj> {
     fn full_intersect<'o>(
         &'o self,
         orig_ray: &Ray,
-        bounds: &Interval<Number>,
+        interval: &Interval<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Obj::Mat>> {
         let trans_ray = self.transform.incoming_ray(orig_ray);
         // Pass everything on to our magical function
-        let mut inner = Self::bvh_node_intersect(&trans_ray, bounds, self.inner.root_id()?, &self.inner.arena(), rng)?;
+        let mut inner =
+            Self::bvh_node_intersect(&trans_ray, interval, self.inner.root_id()?, &self.inner.arena(), rng)?;
         inner.intersection = self.transform.outgoing_intersection(orig_ray, inner.intersection);
         Some(inner)
     }

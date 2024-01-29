@@ -34,7 +34,7 @@ pub trait Object: RtRequirement + HasAabb {
     fn full_intersect<'o>(
         &'o self,
         ray: &Ray,
-        bounds: &Interval<Number>,
+        interval: &Interval<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Self::Mat>>;
 }
@@ -49,7 +49,7 @@ pub enum ObjectInstance<Mesh: MeshTrait + Clone, Mat: Material + Clone> {
     Bvh(BvhObject<ObjectInstance<Mesh, Mat>>),
 }
 
-// `enum_dispatch` doesn't support associated type bounds, so we have to do manual impl
+// `enum_dispatch` doesn't support associated type interval, so we have to do manual impl
 impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> Object for ObjectInstance<Mesh, Mat> {
     type Mesh = Mesh;
     type Mat = Mat;
@@ -57,14 +57,14 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> Object for ObjectInstance<M
     fn full_intersect<'o>(
         &'o self,
         ray: &Ray,
-        bounds: &Interval<Number>,
+        interval: &Interval<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Self::Mat>> {
         match self {
-            Self::Bvh(v) => v.full_intersect(ray, bounds, rng),
-            Self::SimpleObject(v) => v.full_intersect(ray, bounds, rng),
-            Self::VolumetricObject(v) => v.full_intersect(ray, bounds, rng),
-            Self::ObjectList(v) => v.full_intersect(ray, bounds, rng),
+            Self::Bvh(v) => v.full_intersect(ray, interval, rng),
+            Self::SimpleObject(v) => v.full_intersect(ray, interval, rng),
+            Self::VolumetricObject(v) => v.full_intersect(ray, interval, rng),
+            Self::ObjectList(v) => v.full_intersect(ray, interval, rng),
         }
     }
 }

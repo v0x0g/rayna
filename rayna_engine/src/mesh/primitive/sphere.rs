@@ -41,7 +41,7 @@ impl SphereMesh {
 // region Mesh Impl
 
 impl Mesh for SphereMesh {
-    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         //Do some ray-sphere intersection math to find if the ray intersects
         let ray_pos = ray.pos();
         let ray_dir = ray.dir();
@@ -66,9 +66,9 @@ impl Mesh for SphereMesh {
         //This way we do a double check on both, prioritizing the less-positive root (as it's closer)
         //And we only return null if neither is valid
         let mut root = -half_b - sqrt_d;
-        if !bounds.contains(&root) {
+        if !interval.contains(&root) {
             root = -half_b + sqrt_d;
-            if !bounds.contains(&root) {
+            if !interval.contains(&root) {
                 return None;
             }
         }

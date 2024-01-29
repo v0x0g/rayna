@@ -111,16 +111,16 @@ impl<Obj: Object> Object for ObjectList<Obj> {
     fn full_intersect<'o>(
         &'o self,
         orig_ray: &Ray,
-        bounds: &Interval<Number>,
+        interval: &Interval<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Obj::Mat>> {
         let trans_ray = self.transform.incoming_ray(orig_ray);
 
-        let bvh_int = self.bvh.full_intersect(&trans_ray, bounds, rng).into_iter();
+        let bvh_int = self.bvh.full_intersect(&trans_ray, interval, rng).into_iter();
         let unbound_int = self
             .unbounded
             .iter()
-            .filter_map(|o| o.full_intersect(&trans_ray, bounds, rng));
+            .filter_map(|o| o.full_intersect(&trans_ray, interval, rng));
         let mut intersect = Iterator::chain(bvh_int, unbound_int).min()?;
 
         intersect.intersection = self.transform.outgoing_intersection(orig_ray, intersect.intersection);

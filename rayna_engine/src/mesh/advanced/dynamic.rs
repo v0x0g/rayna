@@ -21,7 +21,7 @@ impl DynamicMesh {
 }
 
 // TODO: Create an `impl<T: Mesh> From<T> for DynamicMesh`
-//  This will probably need specialisation or type inequality bounds
+//  This will probably need specialisation or type inequality interval
 //  else it will overlap with `impl<T> From<T> for T`, where `T == DynamicMesh`
 
 impl super::super::MeshInstance {
@@ -29,8 +29,8 @@ impl super::super::MeshInstance {
 }
 
 impl Mesh for DynamicMesh {
-    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
-        self.inner.intersect(ray, bounds, rng)
+    fn intersect(&self, ray: &Ray, interval: &Interval<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
+        self.inner.intersect(ray, interval, rng)
     }
 }
 

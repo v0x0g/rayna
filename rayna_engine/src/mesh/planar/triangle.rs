@@ -41,9 +41,9 @@ impl<P: Into<Planar>> From<P> for TriangleMesh {
 // region Mesh Impl
 
 impl Mesh for TriangleMesh {
-    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
-        let i = self.plane.intersect_bounded(ray, bounds)?;
-        // Check in bounds for our segment of the plane: `u + v: [0..1]`
+    fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
+        let i = self.plane.intersect_bounded(ray, interval)?;
+        // Check in interval for our segment of the plane: `u + v: [0..1]`
         // TODO: Bayesian coordinates for triangles??
         if (i.uv.x + i.uv.y) < 1. {
             Some(i)

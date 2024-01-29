@@ -107,11 +107,11 @@ where
     fn full_intersect<'o>(
         &'o self,
         orig_ray: &Ray,
-        bounds: &Interval<Number>,
+        interval: &Interval<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Mat>> {
         let trans_ray = self.transform.incoming_ray(orig_ray);
-        let inner = self.mesh.intersect(&trans_ray, bounds, rng)?;
+        let inner = self.mesh.intersect(&trans_ray, interval, rng)?;
         let intersect = self.transform.outgoing_intersection(orig_ray, inner);
         Some(intersect.make_full(&self.material))
     }

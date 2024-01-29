@@ -61,7 +61,7 @@ impl CylinderMesh {
 // region Mesh Impl
 
 impl Mesh for CylinderMesh {
-    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         let rd = ray.dir();
 
         let oc = ray.pos() - self.origin;
@@ -87,10 +87,10 @@ impl Mesh for CylinderMesh {
         // This is **not** checking the front-face/back-face, but checking the entering/exiting intersections
         // (e.g. when ray inside volume, the entering intersect is behind, so we have to check exiting intersect too)
         let mut dist = (-b - sqrt_d) / a;
-        if !bounds.contains(&dist) {
+        if !interval.contains(&dist) {
             dist = (-b + sqrt_d) / a;
         }
-        if !bounds.contains(&dist) {
+        if !interval.contains(&dist) {
             return None;
         }
 
@@ -141,11 +141,11 @@ impl Mesh for CylinderMesh {
             let dist_far = Number::max(dist_near, dist_far);
 
             dist = {
-                if bounds.contains(&dist_near) && Number::abs(b + (a * dist_near)) < sqrt_d {
+                if interval.contains(&dist_near) && Number::abs(b + (a * dist_near)) < sqrt_d {
                     dist_near
                 } else {
                     // Closer one failed, try other
-                    if bounds.contains(&dist_far) && Number::abs(b + (a * dist_far)) < sqrt_d {
+                    if interval.contains(&dist_far) && Number::abs(b + (a * dist_far)) < sqrt_d {
                         dist_far
                     } else {
                         // Neither cap matched

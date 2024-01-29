@@ -41,9 +41,9 @@ impl<T: Into<Planar>> From<T> for ParallelogramMesh {
 // region Mesh Impl
 
 impl Mesh for ParallelogramMesh {
-    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
-        let i = self.plane.intersect_bounded(ray, bounds)?;
-        // Check in bounds for our segment of the plane: `uv in [0, 1]`
+    fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
+        let i = self.plane.intersect_bounded(ray, interval)?;
+        // Check in interval for our segment of the plane: `uv in [0, 1]`
         if (i.uv.cmple(Point2::ONE) & i.uv.cmpge(Point2::ZERO)).all() {
             Some(i)
         } else {

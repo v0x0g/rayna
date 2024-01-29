@@ -113,8 +113,8 @@ impl Aabb {
 
 // region Impl
 impl Aabb {
-    /// Checks whether the given ray intersects with the AABB at any point within the given distance bounds
-    pub fn hit(&self, ray: &Ray, bounds: &Interval<Number>) -> bool {
+    /// Checks whether the given ray intersects with the AABB at any point within the given distance interval
+    pub fn hit(&self, ray: &Ray, interval: &Interval<Number>) -> bool {
         /*
         CREDITS:
 
@@ -149,7 +149,7 @@ impl Aabb {
         tmin = Number::max(tmin, Number::min(tz1, tz2));
         tmax = Number::min(tmax, Number::max(tz1, tz2));
 
-        return bounds.range_overlaps(&tmin, &tmax);
+        return interval.range_overlaps(&tmin, &tmax);
     }
 }
 

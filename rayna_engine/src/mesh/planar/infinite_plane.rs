@@ -78,8 +78,8 @@ impl<T: Into<Planar>> From<T> for InfinitePlaneMesh {
 // region Mesh Impl
 
 impl Mesh for InfinitePlaneMesh {
-    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
-        let mut i = self.plane.intersect_bounded(ray, bounds)?;
+    fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
+        let mut i = self.plane.intersect_bounded(ray, interval)?;
         // Wrap uv's if required
         self.uv_wrap.apply_mut(&mut i.uv);
         Some(i)

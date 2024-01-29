@@ -50,7 +50,7 @@ impl<Mesh: MeshTrait> BvhMesh<Mesh> {
 // region Mesh Impl
 
 impl<Mesh: MeshTrait> BvhMesh<Mesh> {
-    /// Given a [NodeId] on the [Arena] tree, calculates the nearest intersection for the given `ray` and `bounds`
+    /// Given a [NodeId] on the [Arena] tree, calculates the nearest intersection for the given `ray` and `interval`
     ///
     /// If the node is a [BvhNode::Mesh], it passes on the check to the mesh.
     /// Otherwise, if it's a [BvhNode::Aabb], it:
@@ -60,7 +60,7 @@ impl<Mesh: MeshTrait> BvhMesh<Mesh> {
     ///     - Returns the closest intersection of the above
     fn bvh_node_intersect(
         ray: &Ray,
-        bounds: &Interval<Number>,
+        interval: &Interval<Number>,
         node: NodeId,
         arena: &Arena<GenericBvhNode<Mesh>>,
         rng: &mut dyn RngCore,
@@ -68,24 +68,24 @@ impl<Mesh: MeshTrait> BvhMesh<Mesh> {
         return match arena.get(node).expect("node should exist in arena").get() {
             // An aabb will need to delegate to child nodes if not missed
             GenericBvhNode::Nested(aabb) => {
-                if !aabb.hit(ray, bounds) {
+                if !aabb.hit(ray, interval) {
                     return None;
                 }
 
-                // TODO: Rework this to use the new Bounds::bitor API to shrink the next child's search range
-                //  So keep track of the bounds, and each iteration shrink with `bounds = bounds | ..intersection.dist`
+                // TODO: Rework this to use the new interval::bitor API to shrink the next child's search range
+                //  So keep track of the interval, and each iteration shrink with `interval = interval | ..intersection.dist`
                 //  And if an intersect was found in that shrunk range then we know that
 
                 node.children(arena)
-                    .filter_map(|child| Self::bvh_node_intersect(ray, bounds, child, arena, rng))
+                    .filter_map(|child| Self::bvh_node_intersect(ray, interval, child, arena, rng))
                     .min()
             }
             // meshes can be delegated directly
             GenericBvhNode::Object(mesh) => {
-                if !mesh.aabb().expect("aabb missing").hit(ray, bounds) {
+                if !mesh.aabb().expect("aabb missing").hit(ray, interval) {
                     None
                 } else {
-                    mesh.intersect(ray, bounds, rng)
+                    mesh.intersect(ray, interval, rng)
                 }
             }
         };
@@ -97,9 +97,9 @@ impl<Mesh: MeshTrait> MeshProperties for BvhMesh<Mesh> {
 }
 
 impl<Mesh: MeshTrait> MeshTrait for BvhMesh<Mesh> {
-    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray, interval: &Interval<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
         // Pass everything on to our magical function
-        Self::bvh_node_intersect(ray, bounds, self.inner.root_id()?, &self.inner.arena(), rng)
+        Self::bvh_node_intersect(ray, interval, self.inner.root_id()?, &self.inner.arena(), rng)
     }
 }
 

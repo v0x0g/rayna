@@ -82,9 +82,9 @@ impl<Mesh: MeshTrait> HasAabb for MeshList<Mesh> {
 }
 
 impl<Mesh: MeshTrait> MeshTrait for MeshList<Mesh> {
-    fn intersect(&self, ray: &Ray, bounds: &Interval<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
-        let bvh_int = self.bounded.intersect(ray, bounds, rng).into_iter();
-        let unbound_int = self.unbounded.iter().filter_map(|o| o.intersect(ray, bounds, rng));
+    fn intersect(&self, ray: &Ray, interval: &Interval<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
+        let bvh_int = self.bounded.intersect(ray, interval, rng).into_iter();
+        let unbound_int = self.unbounded.iter().filter_map(|o| o.intersect(ray, interval, rng));
         Iterator::chain(bvh_int, unbound_int).min()
     }
 }

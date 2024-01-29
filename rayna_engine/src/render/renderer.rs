@@ -139,8 +139,8 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
                 Self::render_failed(w, h)
             }
             Ok(viewport) => {
-                let bounds = Interval::from(1e-3..Number::MAX);
-                self.render_actual(scene, render_opts, &viewport, &bounds)
+                let interval = Interval::from(1e-3..Number::MAX);
+                self.render_actual(scene, render_opts, &viewport, &interval)
             }
         };
 
@@ -193,7 +193,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         scene: &Scene<Obj, Sky>,
         render_opts: &RenderOpts,
         viewport: &Viewport,
-        bounds: &Interval<Number>,
+        interval: &Interval<Number>,
     ) -> Image {
         profile_function!();
 
@@ -233,7 +233,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
                 },
                 // Process each pixel
                 |(_scope, pooled), (x, y, p)| {
-                    *p = Self::render_px(scene, render_opts, viewport, bounds, x, y, pooled.deref_mut());
+                    *p = Self::render_px(scene, render_opts, viewport, interval, x, y, pooled.deref_mut());
                 },
             );
         });
@@ -254,7 +254,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         scene: &Scene<Obj, Sky>,
         opts: &RenderOpts,
         viewport: &Viewport,
-        bounds: &Interval<Number>,
+        interval: &Interval<Number>,
         x: usize,
         y: usize,
         pooled_data: &mut PooledData,
@@ -295,7 +295,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         samples.clear();
         sample_coords
             .into_iter()
-            .map(|&mut Vector2 { x, y }| Self::render_px_once(scene, viewport, opts, bounds, x, y, rng2))
+            .map(|&mut Vector2 { x, y }| Self::render_px_once(scene, viewport, opts, interval, x, y, rng2))
             .inspect(|p| validate::colour(p))
             .collect_into(samples);
 
@@ -319,7 +319,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         scene: &Scene<Obj, Sky>,
         viewport: &Viewport,
         opts: &RenderOpts,
-        bounds: &Interval<Number>,
+        interval: &Interval<Number>,
         x: Number,
         y: Number,
         rng: &mut impl Rng,
@@ -329,17 +329,17 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         let mode = opts.mode;
 
         if mode == RenderMode::PBR {
-            return Self::ray_colour_recursive(scene, &ray, opts, bounds, 0, rng);
+            return Self::ray_colour_recursive(scene, &ray, opts, interval, 0, rng);
         }
 
         let Some(FullIntersection {
             intersection: intersect,
             material,
-        }) = Self::calculate_intersection(scene, &ray, bounds, rng)
+        }) = Self::calculate_intersection(scene, &ray, interval, rng)
         else {
             return scene.skybox.sky_colour(&ray);
         };
-        validate::intersection(ray, &intersect, bounds);
+        validate::intersection(ray, &intersect, interval);
 
         // Some colours to help with visualisation
         const N_COL: usize = 13;
@@ -400,10 +400,10 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
     fn calculate_intersection<'o>(
         scene: &'o Scene<Obj, Sky>,
         ray: &Ray,
-        bounds: &Interval<Number>,
+        interval: &Interval<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Obj::Mat>> {
-        scene.objects.full_intersect(ray, bounds, rng)
+        scene.objects.full_intersect(ray, interval, rng)
     }
 
     /// Recursive function that calculates the colour in the scene for a given ray.
@@ -415,7 +415,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         scene: &Scene<Obj, Sky>,
         in_ray: &Ray,
         opts: &RenderOpts,
-        bounds: &Interval<Number>,
+        interval: &Interval<Number>,
         depth: usize,
         rng: &mut impl Rng,
     ) -> Colour {
@@ -425,11 +425,11 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
         // Intersect
         let Some(FullIntersection { intersection, material }) =
-            Self::calculate_intersection(scene, in_ray, bounds, rng)
+            Self::calculate_intersection(scene, in_ray, interval, rng)
         else {
             return scene.skybox.sky_colour(in_ray);
         };
-        validate::intersection(in_ray, &intersection, bounds);
+        validate::intersection(in_ray, &intersection, interval);
 
         let col_emitted = {
             let col = material.emitted_light(in_ray, &intersection, rng);
@@ -461,7 +461,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
             // Follow ray and calculate future bounces
             let scatter_col = {
-                let col_future = Self::ray_colour_recursive(scene, &scatter_ray, opts, bounds, depth + 1, rng);
+                let col_future = Self::ray_colour_recursive(scene, &scatter_ray, opts, interval, depth + 1, rng);
                 validate::colour(&col_future);
                 let col_scattered = material.reflected_light(in_ray, &intersection, &scatter_ray, &col_future, rng);
                 validate::colour(&col_scattered);

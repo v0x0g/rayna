@@ -63,7 +63,7 @@ impl<T> Interval<T> {
 }
 
 impl<T: PartialOrd> Interval<T> {
-    /// Checks if the given range `min..max` overlaps with the bounds (`self`)
+    /// Checks if the given range `min..max` overlaps with the interval (`self`)
     pub fn range_overlaps(&self, min: &T, max: &T) -> bool {
         return match self {
             Self { start: None, end: None } => true,
@@ -92,10 +92,10 @@ impl<T: PartialOrd> Interval<T> {
         };
     }
 
-    /// Checks if the given bounds overlap with self
-    pub fn bounds_overlap(self, other: Self) -> bool {
+    /// Checks if the given interval overlap with self
+    pub fn interval_overlap(self, other: Self) -> bool {
         // Calculate overlap and check it's valid
-        // If the bounds overlap, then lower must be <= upper
+        // If the interval overlap, then lower must be <= upper
         return match self & other {
             Self { start: None, .. } | Self { end: None, .. } => true,
             Self {
@@ -128,14 +128,14 @@ impl<T: PartialOrd> std::ops::BitAnd for Interval<T> {
     type Output = Interval<T>;
 
     fn bitand(self, other: Self) -> Self::Output {
-        // `lower`: Find the largest (total) lowest bound, aka the lower bound that's inside both bounds
-        // `upper`: Find the smallest (total) upper bound, aka the upper bound that's inside both bounds
+        // `lower`: Find the largest (total) lowest bound, aka the lower bound that's inside both interval
+        // `upper`: Find the smallest (total) upper bound, aka the upper bound that's inside both interval
         // This is equivalent to finding `lower = max(self_lower, other_lower), upper = min(self_upper, other_upper)`
 
         let start = match (self.start, other.start) {
             (None, start) | (start, None) => start,
             (Some(a), Some(b)) => {
-                match T::partial_cmp(&a, &b).expect("can't compare bounds") {
+                match T::partial_cmp(&a, &b).expect("can't compare interval") {
                     // a < b
                     Ordering::Less => Some(b),
                     // a >= b
@@ -147,7 +147,7 @@ impl<T: PartialOrd> std::ops::BitAnd for Interval<T> {
         let end = match (self.end, other.end) {
             (None, start) | (start, None) => start,
             (Some(a), Some(b)) => {
-                match T::partial_cmp(&a, &b).expect("can't compare bounds") {
+                match T::partial_cmp(&a, &b).expect("can't compare interval") {
                     // a < b
                     Ordering::Less => Some(a),
                     // a >= b

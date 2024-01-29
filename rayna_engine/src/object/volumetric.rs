@@ -86,7 +86,7 @@ where
     fn full_intersect<'o>(
         &'o self,
         orig_ray: &Ray,
-        bounds: &Interval<Number>,
+        interval: &Interval<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<FullIntersection<'o, Mat>> {
         let ray = self.transform.incoming_ray(orig_ray);
@@ -96,16 +96,16 @@ where
         // Find two samples on surface of volume
         // These should be as the ray enters and exits the mesh
 
-        // NOTE: We should be using the `bounds` parameter here, however that won't work for rays inside meshes,
+        // NOTE: We should be using the `interval` parameter here, however that won't work for rays inside meshes,
         // where the mesh is convex (many primitives are) - the first intersection will be 'behind' the ray,
         // and so we will only get *one* forward intersection (entering), which means we don't an exiting intersection.
-        // To solve this, we check for entering intersection without bounds, so that we can still check if an intersection
-        // exists at all along the ray. Then, we clamp that distance value to our bounds, so we still get the right value
+        // To solve this, we check for entering intersection without interval, so that we can still check if an intersection
+        // exists at all along the ray. Then, we clamp that distance value to our interval, so we still get the right value
         let entering_dist = {
-            let enter_bounds = Interval::FULL;
-            let d = self.mesh.intersect(&ray, &enter_bounds, rng)?.dist;
+            let enter_interval = Interval::FULL;
+            let d = self.mesh.intersect(&ray, &enter_interval, rng)?.dist;
             // If we have start bound, move intersection along so it happened there at the earliest
-            if let Some(start) = bounds.start {
+            if let Some(start) = interval.start {
                 d.max(start)
             } else {
                 d
@@ -113,10 +113,10 @@ where
         };
         let exiting_dist = {
             // Have to add a slight offset so we don't intersect with the same point twice
-            let exit_bounds = Interval::from(entering_dist + 0.001..);
-            let d = self.mesh.intersect(&ray, &exit_bounds, rng)?.dist;
+            let exit_interval = Interval::from(entering_dist + 0.001..);
+            let d = self.mesh.intersect(&ray, &exit_interval, rng)?.dist;
 
-            if let Some(end) = exit_bounds.end {
+            if let Some(end) = exit_interval.end {
                 d.min(end)
             } else {
                 d
@@ -128,10 +128,10 @@ where
         // Random distance at which we will hit
         let hit_dist = self.neg_inv_density * Number::ln(rng.gen());
 
-        // NOTE: We don't do normal bounds checks on intersections here, due to concavity issues given above.
+        // NOTE: We don't do normal interval checks on intersections here, due to concavity issues given above.
         // Also, even if `exiting_dist` is outside of the range, the value `hit_dist` might be inside
         // And `hit_dist` is the one we actually use, so check that instead
-        // We don't need to check `if !bounds.contains(&dist)`, it's guaranteed to be inside `bounds`
+        // We don't need to check `if !interval.contains(&dist)`, it's guaranteed to be inside `interval`
         if hit_dist > dist_inside {
             return None;
         }

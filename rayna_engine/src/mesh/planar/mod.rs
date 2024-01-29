@@ -144,19 +144,19 @@ impl<P: Into<Point3>, A: Into<Point3>, B: Into<Point3>> From<(P, A, B)> for Plan
 
 impl Planar {
     /// Does a full ray-plane intersection check, returning the intersection if possible. If an intersection is not found,
-    /// it means that the ray is perfectly parallel to the plane, or outside the given bounds.
+    /// it means that the ray is perfectly parallel to the plane, or outside the given interval.
     ///
     /// # Arguments
     ///
     /// * `ray`: The ray to intersect with
-    /// * `bounds`: Bounds to restrict the range of valid distances
+    /// * `interval`: interval to restrict the range of valid distances
     /// * `material`: Material to be used for the [Intersection] in the case of an intersection
     /// * `validate_coords`: Callable to be used to validate whether the given point on the surface is considered valid.
     /// Arguments are `validate(u, v) -> point_is_valid`. Note that `u, v` will be with respect to the [Planar.u] and [Planar.v] values,
     /// so if creating a plane from three points, `u, v` will be equal to one *at those points*, as opposed to one unit in the direction of those points,
     /// meaning scaling those points will "enlarge" the resulting shape
     #[inline(always)]
-    pub fn intersect_bounded(&self, ray: &Ray, bounds: &Interval<Number>) -> Option<Intersection> {
+    pub fn intersect_bounded(&self, ray: &Ray, interval: &Interval<Number>) -> Option<Intersection> {
         let denominator = Vector3::dot(self.n, ray.dir());
 
         // Ray is parallel to plane
@@ -166,7 +166,7 @@ impl Planar {
 
         let t = (self.d - Vector3::dot(self.n, ray.pos().to_vector())) / denominator;
 
-        if !bounds.contains(&t) {
+        if !interval.contains(&t) {
             return None;
         }
 

@@ -100,7 +100,7 @@ pub static TESTING: Scene = {
             ),
             DielectricMaterial {
                 albedo: [0.68, 0.73, 0.8].into(),
-                density: 8.0,
+                density: 40.0,
                 refractive_index: 1.335,
             },
             None,

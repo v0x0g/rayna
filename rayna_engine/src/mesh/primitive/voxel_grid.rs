@@ -12,11 +12,6 @@ use itertools::Itertools;
 use ndarray::{ArcArray, Dimension, Ix3, Shape};
 use rand_core::RngCore;
 
-#[derive(Copy, Clone, Debug)]
-pub struct Voxel {
-    pub value: Number,
-}
-
 /// A mesh struct that is created from a grid of voxels
 ///
 /// # Transforming
@@ -39,16 +34,20 @@ pub struct VoxelGridMesh {
     /// The raw data for the grid
     #[derivative(Debug = "ignore")]
     #[get = "pub"]
-    data: ArcArray<Voxel, Ix3>,
+    data: ArcArray<Number, Ix3>,
+    #[get_copy = "pub"]
+    thresh: Number,
+    #[derivative(Debug = "ignore")]
+    #[get = "pub"]
     voxels: BvhMesh<AxisBoxMesh>,
 }
 
-pub trait GeneratorFunction = Fn(Point3) -> Voxel;
+pub trait GeneratorFunction = Fn(Point3) -> Number;
 
 // region Constructors
 
 impl VoxelGridMesh {
-    pub fn generate(width: usize, height: usize, depth: usize, func: impl GeneratorFunction, thresh: Number) -> Self {
+    pub fn generate([width, height, depth]: [usize; 3], func: impl GeneratorFunction, thresh: Number) -> Self {
         let dims = Ix3(width, height, depth);
         let centre = Self::index_to_pos(dims) / 2.;
         // Create raw grid of voxels, using provided function for each grid point
@@ -59,8 +58,8 @@ impl VoxelGridMesh {
 
         let voxels = data
             .indexed_iter()
-            .filter_map(|((x, y, z), v)| {
-                if v.value >= thresh {
+            .filter_map(|((x, y, z), &v)| {
+                if v >= thresh {
                     Some(AxisBoxMesh::new_centred(
                         (Self::index_to_pos(Ix3(x, y, z)) - centre).to_point(),
                         Size3::ONE,
@@ -80,6 +79,7 @@ impl VoxelGridMesh {
             centre: centre.to_point(),
             data,
             voxels,
+            thresh,
         }
     }
 }

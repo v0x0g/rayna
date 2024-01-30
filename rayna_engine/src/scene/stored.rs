@@ -18,10 +18,10 @@ use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::mesh::advanced::bvh::BvhMesh;
 use crate::mesh::planar::parallelogram::ParallelogramMesh;
-use crate::mesh::planar::triangle::TriangleMesh;
 use crate::mesh::planar::Planar;
 use crate::mesh::primitive::axis_box::AxisBoxMesh;
 use crate::mesh::primitive::sphere::SphereMesh;
+use crate::mesh::primitive::voxel_grid::VoxelGridMesh;
 use crate::mesh::MeshInstance;
 use crate::object::volumetric::VolumetricObject;
 use crate::object::ObjectInstance;
@@ -84,7 +84,7 @@ pub static TESTING: Scene = {
 
     {
         objects.push(SimpleObject::new(
-            TriangleMesh::new([(0.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, 1.0, 0.0)]),
+            VoxelGridMesh::generate([10, 10, 10], |p| p.x + p.y, 1.),
             LambertianMaterial {
                 albedo: [0.9; 3].into(),
             },

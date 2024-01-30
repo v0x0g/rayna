@@ -8,7 +8,7 @@ use indextree::{Arena, NodeId};
 use std::cmp::Ordering;
 
 use crate::core::types::Number;
-use itertools::{zip_eq, Itertools};
+use itertools::Itertools;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
@@ -135,6 +135,8 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
 
             let optimal_split = Self::calculate_optimal_split(&mut objects);
 
+            Self::sort_along_aabb_axis(optimal_split.axis, &mut objects);
+
             // Split the vector into the two halves. Annoyingly there is no nice API for boxed slices or vectors
             let (left_split, right_split) = {
                 let mut l = Vec::from(objects);
@@ -153,58 +155,34 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
     }
 
     fn calculate_optimal_split(objects: &mut Vec<BNode>) -> BvhSplit {
+        assert!(objects.len() > 2, "cannot split with <=2 items");
         let n = objects.len();
-        let aabbs = objects.iter().map(HasAabb::expect_aabb).copied().collect_vec();
 
         let mut bvh_splits = vec![];
 
         for sort_axis in SplitAxis::iter() {
             Self::sort_along_aabb_axis(sort_axis, objects);
 
-            // Calculate the areas of the left/right AABBs, for each given split position
-            let (left_areas, right_areas) = {
-                let mut left_areas = Vec::new();
-                left_areas.resize(n, 0.);
-                let mut right_areas = Vec::new();
-                right_areas.resize(n, 0.);
+            // Make sure we don't split with zero elements
+            for split_pos in 1..n - 1 {
+                let (split_l, split_r) = objects.split_at(split_pos);
+                let splits = [split_l, split_r];
 
-                //Calculate the area from the left towards right
-                let mut left_aabb = Aabb::default();
-                for (area, obj_aabb) in zip_eq(left_areas.iter_mut(), aabbs.iter()) {
-                    left_aabb = Aabb::encompass(&left_aabb, obj_aabb);
-                    *area = left_aabb.area();
-                }
+                let cost = splits
+                    .iter()
+                    .map(|s| {
+                        let l = s.len() as Number;
+                        let area = Aabb::encompass_iter(s.iter().map(HasAabb::expect_aabb)).area();
+                        l * area
+                    })
+                    .sum();
 
-                //Calculate the area from the right towards the left
-                let mut right_aabb = Aabb::default();
-                for (area, obj_aabb) in zip_eq(right_areas.iter_mut().rev(), aabbs.iter().rev()) {
-                    right_aabb = Aabb::encompass(&right_aabb, obj_aabb);
-                    *area = right_aabb.area();
-                }
-                (left_areas, right_areas)
-            };
-
-            // Find the most optimal split index, using the areas calculated above
-            let split_index = {
-                // NOTE: If doing in a for loop this would be `i: 0..n-1`, and `l=left[i], r=right[i+1]`
-                // This way we have non-overlapping left & right areas
-                let left_trimmed = left_areas.split_last().expect("left_area is empty").1;
-                let right_trimmed = right_areas.split_first().expect("right_area is empty").1;
-                let min_sa_idx = zip_eq(left_trimmed, right_trimmed)
-                    .enumerate()
-                    // calculate SA
-                    .map(|(i, (&l, &r))| (i as Number * l) + ((n - i - 1) as Number * r))
-                    .position_min_by(Number::total_cmp)
-                    .expect("area iters have >1 elem");
-                min_sa_idx
-            };
-
-            let split = BvhSplit {
-                pos: split_index,
-                axis: sort_axis,
-                cost: 69.,
-            };
-            bvh_splits.push(split);
+                bvh_splits.push(BvhSplit {
+                    axis: sort_axis,
+                    pos: split_pos,
+                    cost,
+                });
+            }
         }
 
         bvh_splits

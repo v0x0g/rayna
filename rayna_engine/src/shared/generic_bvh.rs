@@ -139,6 +139,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             // Find the longest axis to split along, and sort for that axis
             // TODO: maybe choose the axis that gives the smallest overlap between the left & right splits?
             //  This means why try `product_of(all 3 axes, all split positions)` and find the optimal by `left.len()^2 + right.len()^2`
+            // TODO: Also attempt splitting more than twice
 
             // Sort along longest axis
             {

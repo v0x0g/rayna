@@ -4,7 +4,7 @@
 //!
 //! There are some common ones [CORNELL] and [RTIAW_DEMO], that should be well known.
 
-use crate::core::types::{Angle, Channel, Colour, Image, Number, Point3, Transform3, Vector3};
+use crate::core::types::{Angle, Channel, Colour, Image, Number, Point3, Size3, Transform3, Vector3};
 use crate::object::simple::SimpleObject;
 use noise::*;
 use rand::{thread_rng, Rng};
@@ -73,9 +73,9 @@ pub static SIMPLE: Scene = {
 #[dynamic]
 pub static TESTING: Scene = {
     let camera = Camera {
-        pos: Point3::new(0.440, 0.288, 0.008),
-        fwd: Vector3::new(0.118, -0.139, 0.983).normalize(),
-        v_fov: Angle::from_degrees(60.),
+        pos: Point3::new(0., 0., 1.),
+        fwd: Vector3::new(0., 0., -1.).normalize(),
+        v_fov: Angle::from_degrees(80.),
         focus_dist: 1.,
         defocus_angle: Angle::from_degrees(0.),
     };
@@ -84,12 +84,35 @@ pub static TESTING: Scene = {
 
     {
         objects.push(SimpleObject::new(
-            VoxelGridMesh::generate([10, 10, 10], |p| p.x + p.y, 1.),
+            VoxelGridMesh::generate(
+                [32; 3],
+                Point3::ZERO,
+                Size3::ONE,
+                Point3::new(0., 0.5, 0.),
+                Size3::ONE,
+                |Point3 { x, y, z }| {
+                    const A: Number = 5.0;
+                    const B: Number = 0.155;
+                    let y = 1.0 - y;
+                    x.powi(2) + z.powi(2) + y.powf(A + (A * B)) - y.powf(A)
+                },
+                0.,
+            ),
             LambertianMaterial {
-                albedo: [0.9; 3].into(),
+                albedo: [1., 0., 0.].into(),
             },
             None,
         ));
+
+        // objects.push(SimpleObject::new(
+        //     SphereMesh::new(Point3::ZERO, 0.5),
+        //     DielectricMaterial {
+        //         albedo: [0.9; 3].into(),
+        //         density: 1.,
+        //         refractive_index: 1.0,
+        //     },
+        //     None,
+        // ));
     }
 
     Scene {

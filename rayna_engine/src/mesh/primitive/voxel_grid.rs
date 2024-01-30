@@ -9,7 +9,7 @@ use crate::shared::ray::Ray;
 use derivative::Derivative;
 use getset::{CopyGetters, Getters};
 use itertools::Itertools;
-use ndarray::{ArcArray, Dimension, Ix3, Shape};
+use ndarray::{ArcArray, Ix3, Shape};
 use rand_core::RngCore;
 
 /// A mesh struct that is created from a grid of voxels
@@ -47,23 +47,61 @@ pub trait GeneratorFunction = Fn(Point3) -> Number;
 // region Constructors
 
 impl VoxelGridMesh {
-    pub fn generate([width, height, depth]: [usize; 3], func: impl GeneratorFunction, thresh: Number) -> Self {
-        let dims = Ix3(width, height, depth);
-        let centre = Self::index_to_pos(dims) / 2.;
+    pub fn generate(
+        resolution: [usize; 3],
+        mesh_centre: impl Into<Point3>,
+        mesh_scale: impl Into<Size3>,
+        func_centre: impl Into<Point3>,
+        func_scale: impl Into<Size3>,
+        func: impl GeneratorFunction,
+        thresh: Number,
+    ) -> Self {
+        // (The position that the voxel_centre maps to, and a scale around that centre point)
+        let (func_centre, func_scale) = (func_centre.into(), func_scale.into());
+        let (mesh_centre, mesh_scale) = (mesh_centre.into(), mesh_scale.into());
+        let [width, height, depth] = resolution;
+
+        // Position of the centre of the voxels (central point in the 3D grid)
+        let grid_dims: Vector3 = resolution.map(|n| n as Number).into();
+        let grid_centre: Vector3 = resolution.map(|n| (n - 1) as Number / 2.).into();
+
+        // How large each voxel should be
+        let voxel_size = (mesh_scale.to_vector() / grid_dims).to_size();
+
+        let idx_to_world_pos = |(x, y, z): (usize, usize, usize)| {
+            let idx_vec = Vector3::from([x, y, z].map(|n| n as Number));
+            // centre so the coords range `-dim/2 .. dim/2`
+            let idx_centred = idx_vec - grid_centre;
+            // normalise to `-0.5..0.5`
+            let idx_norm = idx_centred / grid_dims;
+            // scale according to the mesh's scale
+            let idx_scaled = idx_norm * mesh_scale.to_vector();
+            // offset according to the function's centre
+            let point = mesh_centre + idx_scaled;
+            point
+        };
+
+        let idx_to_fn_pos = |(x, y, z): (usize, usize, usize)| {
+            let idx_vec = Vector3::from([x, y, z].map(|n| n as Number));
+            // centre so the coords range `-dim/2 .. dim/2`
+            let idx_centred = idx_vec - grid_centre;
+            // normalise to `-0.5..0.5`
+            let idx_norm = idx_centred / grid_dims;
+            // scale according to the function's scale
+            let idx_scaled = idx_norm * func_scale.to_vector();
+            // offset according to the function's centre
+            let point = func_centre + idx_scaled;
+            point
+        };
+
         // Create raw grid of voxels, using provided function for each grid point
-        let data = ArcArray::from_shape_fn(Shape::from(dims), |(x, y, z)| {
-            let p = Self::index_to_pos(Ix3(x, y, z)) - centre;
-            func(p.to_point())
-        });
+        let data = ArcArray::from_shape_fn(Shape::from(Ix3(width, height, depth)), |p| func(idx_to_fn_pos(p)));
 
         let voxels = data
             .indexed_iter()
-            .filter_map(|((x, y, z), &v)| {
-                if v >= thresh {
-                    Some(AxisBoxMesh::new_centred(
-                        (Self::index_to_pos(Ix3(x, y, z)) - centre).to_point(),
-                        Size3::ONE,
-                    ))
+            .filter_map(|(p, &v)| {
+                if v < thresh {
+                    Some(AxisBoxMesh::new_centred(idx_to_world_pos(p), voxel_size))
                 } else {
                     None
                 }
@@ -76,7 +114,7 @@ impl VoxelGridMesh {
             height,
             depth,
             count: data.len(),
-            centre: centre.to_point(),
+            centre: grid_centre.to_point(),
             data,
             voxels,
             thresh,
@@ -85,17 +123,6 @@ impl VoxelGridMesh {
 }
 
 // endregion Constructors
-
-// region Helper
-
-impl VoxelGridMesh {
-    pub fn index_to_pos(index: Ix3) -> Vector3 {
-        let (x, y, z) = index.into_pattern();
-        [x, y, z].map(|n| n as Number).into()
-    }
-}
-
-// endregion Helper
 
 // region Mesh Impl
 

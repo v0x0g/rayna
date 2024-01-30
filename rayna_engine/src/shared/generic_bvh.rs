@@ -122,22 +122,18 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
         };
 
         {
-            // This is a port of [my C# port of] [Pete Shirley's code]
+            // This was originally based off Pete Shirley's SAH BVH algorithm
             // https://psgraphics.blogspot.com/2016/03/a-simple-sah-bvh-build.html
             // https://3.bp.blogspot.com/-PMG6dWk1i60/VuG9UHjsdlI/AAAAAAAACEo/BS1qJyut7LE/s1600/Screen%2BShot%2B2016-03-10%2Bat%2B11.25.08%2BAM.png
 
             // Find the longest axis to split along, and sort for that axis
-            // TODO: maybe choose the axis that gives the smallest overlap between the left & right splits?
-            //  This means why try `product_of(all 3 axes, all split positions)` and find the optimal by `left.len()^2 + right.len()^2`
             // TODO: Also attempt splitting more than twice
-
             let main_aabb = Aabb::encompass_iter(objects.iter().map(HasAabb::expect_aabb));
 
             let optimal_split = Self::calculate_optimal_split(&mut objects);
 
-            Self::sort_along_aabb_axis(optimal_split.axis, &mut objects);
-
             // Split the vector into the two halves. Annoyingly there is no nice API for boxed slices or vectors
+            Self::sort_along_aabb_axis(optimal_split.axis, &mut objects);
             let (left_split, right_split) = {
                 let mut l = Vec::from(objects);
                 let r = l.split_off(optimal_split.pos + 1);

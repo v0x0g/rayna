@@ -46,7 +46,7 @@ impl Default for RenderOpts {
             samples: nonzero!(1_usize),
             mode: Default::default(),
             ray_depth: 5,
-            ray_branching: nonzero!(2_usize),
+            ray_branching: nonzero!(1_usize),
         }
     }
 }

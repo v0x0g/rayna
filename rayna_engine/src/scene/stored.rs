@@ -73,9 +73,9 @@ pub static SIMPLE: Scene = {
 #[dynamic]
 pub static TESTING: Scene = {
     let camera = Camera {
-        pos: Point3::new(0., 0., 1.),
+        pos: Point3::new(0., -0.15, 0.6),
         fwd: Vector3::new(0., 0., -1.).normalize(),
-        v_fov: Angle::from_degrees(80.),
+        v_fov: Angle::from_degrees(75.),
         focus_dist: 1.,
         defocus_angle: Angle::from_degrees(0.),
     };
@@ -98,8 +98,10 @@ pub static TESTING: Scene = {
                 },
                 0.,
             ),
-            LambertianMaterial {
-                albedo: [1., 0., 0.].into(),
+            DielectricMaterial {
+                albedo: [0.68, 0.73, 0.8].into(),
+                density: 8.0,
+                refractive_index: 1.335,
             },
             None,
         ));

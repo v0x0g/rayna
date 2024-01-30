@@ -33,6 +33,7 @@ impl<Mesh: MeshTrait> BvhMesh<Mesh> {
     /// The exact behaviour is not specified, but will most likely result in a panic during building/accessing the tree
     pub fn new(meshes: Vec<Mesh>) -> Self {
         Self {
+            // Pretty shit approximation, averages all the centres of sub-meshes
             centre: meshes
                 .iter()
                 .map(MeshProperties::centre)

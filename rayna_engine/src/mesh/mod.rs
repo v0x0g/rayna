@@ -37,7 +37,7 @@ use rand_core::RngCore;
 use self::{
     advanced::{bvh::BvhMesh, dynamic::DynamicMesh, list::MeshList},
     planar::{infinite_plane::InfinitePlaneMesh, parallelogram::ParallelogramMesh, triangle::TriangleMesh},
-    primitive::{axis_box::AxisBoxMesh, cylinder::CylinderMesh, sphere::SphereMesh},
+    primitive::{axis_box::AxisBoxMesh, cylinder::CylinderMesh, sphere::SphereMesh, voxel_grid::VoxelGridMesh},
 };
 
 pub mod advanced;
@@ -68,6 +68,7 @@ pub enum MeshInstance {
     AxisBoxMesh,
     ParallelogramMesh,
     InfinitePlaneMesh,
+    VoxelGridMesh,
     TriangleMesh,
     BvhMesh(BvhMesh<MeshInstance>),
     MeshList(MeshList<MeshInstance>),

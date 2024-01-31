@@ -107,7 +107,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
 
         // The number of objects under which we create leaf nodes, instead of
         // creating branches and splitting the objects
-        const MAX_LEAF_NODES: usize = 3;
+        const MAX_LEAF_NODES: usize = 8;
         if objects.len() <= MAX_LEAF_NODES {
             let aabb = Aabb::encompass_iter(objects.iter().map(HasAabb::expect_aabb));
             let node = arena.new_node(GenericBvhNode::Nested(aabb));

@@ -165,7 +165,6 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             "cannot split with <=2 items per split (have {})",
             objects.len()
         );
-        let n = objects.len();
 
         let mut bvh_splits = HashSet::new();
 
@@ -176,7 +175,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             // So we would have [1, 2], [1,3], ... [n-1, n-1], for any length K
             // I would use `itertools`, but it allocates a new vector every time and is SLOW
 
-            let split_pos_values = (1..n - 1).collect_vec();
+            let split_pos_values = (1..objects.len() - 1).collect_vec();
             let mut split_pos_indices: [usize; N_SPLIT] = std::array::from_fn(std::convert::identity);
             let mut first = true;
 
@@ -202,16 +201,18 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
                         split_pos_indices[j] = split_pos_indices[j - 1] + 1;
                     }
                 }
-
-                // Find absolute split positions from indices
-                let absolute_split_positions = split_pos_indices.map(|i| split_pos_values[i]);
-
                 let split_lengths: [usize; N_SPLIT_PLUS_ONE] = {
                     // We have to translate split positions so they are relative to the previous position
                     let mut split_offset = 0;
-                    std::array::from_fn(|i| {
-                        // If we are on the last split segment, we want to take all the elements, so essentially split at `n`
-                        let split_count = absolute_split_positions.get(i).unwrap_or(&n) - split_offset;
+                    std::array::from_fn(|section_index| {
+                        // If we are on the last split segment, we want to take all the elements
+                        // so essentially split at `objects.len()`
+                        let absolute_split_pos = if section_index < N_SPLIT {
+                            split_pos_values[split_pos_indices[section_index]]
+                        } else {
+                            objects.len()
+                        };
+                        let split_count = absolute_split_pos - split_offset;
                         split_offset += split_count;
                         split_count
                     })

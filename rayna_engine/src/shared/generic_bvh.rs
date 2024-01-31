@@ -201,18 +201,24 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
                         split_pos_indices[j] = split_pos_indices[j - 1] + 1;
                     }
                 }
+
+                // Find absolute split positions from indices
+                let absolute_split_positions = split_pos_indices.map(|i| split_pos_values[i]);
+
                 let split_lengths: [usize; N_SPLIT_PLUS_ONE] = {
                     // We have to translate split positions so they are relative to the previous position
                     let mut split_offset = 0;
                     std::array::from_fn(|section_index| {
                         // If we are on the last split segment, we want to take all the elements
                         // so essentially split at `objects.len()`
-                        let absolute_split_pos = if section_index < N_SPLIT {
-                            split_pos_values[split_pos_indices[section_index]]
-                        } else {
-                            objects.len()
-                        };
-                        let split_count = absolute_split_pos - split_offset;
+                        // let absolute_split_pos = if section_index < N_SPLIT {
+                        //     split_pos_values[split_pos_indices[section_index]]
+                        // } else {
+                        //     objects.len()
+                        // };
+                        // let split_count = absolute_split_pos - split_offset;
+                        let split_count =
+                            absolute_split_positions.get(section_index).unwrap_or(&objects.len()) - split_offset;
                         split_offset += split_count;
                         split_count
                     })

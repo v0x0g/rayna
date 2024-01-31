@@ -126,7 +126,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
 
             let optimal_split_outer = Self::calculate_optimal_split(&mut objects);
 
-            let split_objects = Self::split_objects::<1, 2>(objects, optimal_split_outer);
+            let split_objects = Self::split_objects::<2, 3>(objects, optimal_split_outer);
             let main_node = arena.new_node(GenericBvhNode::Nested(main_aabb));
 
             for chunk in split_objects {
@@ -200,14 +200,6 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
                             i -= 1;
                         } else {
                             // Reached the last combination
-                            dbg!(
-                                "break",
-                                N_S,
-                                n,
-                                i,
-                                split_pos_indices,
-                                split_pos_indices.map(|i| split_pos_values[i])
-                            );
                             break 'combinations_loop;
                         }
                     }
@@ -231,8 +223,6 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
                         split_count
                     })
                 };
-
-                dbg!(absolute_split_positions, split_positions);
 
                 let splits: [&[BNode]; N_S] = {
                     let mut array = objects.as_slice();

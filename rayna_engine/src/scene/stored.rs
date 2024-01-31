@@ -85,7 +85,7 @@ pub static TESTING: Scene = {
     {
         objects.push(SimpleObject::new(
             VoxelGridMesh::generate(
-                [16; 3],
+                [32; 3],
                 Point3::ZERO,
                 Size3::ONE,
                 Point3::new(0., 0.5, 0.),

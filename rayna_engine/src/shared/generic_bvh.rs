@@ -110,13 +110,11 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
         // creating branches and splitting the objects
         const MAX_LEAF_NODES: usize = 4;
         if objects.len() <= MAX_LEAF_NODES {
-            let arr = SmallVec::<[BNode; MAX_LEAF_NODES]>::from_vec(objects);
-            assert!(!arr.spilled(), "vec should be able to hold all elements on stack");
-            let aabb = Aabb::encompass_iter(arr.iter().map(HasAabb::expect_aabb));
+            let aabb = Aabb::encompass_iter(objects.iter().map(HasAabb::expect_aabb));
             let node = arena.new_node(GenericBvhNode::Nested(aabb));
-            let _ = arr
-                .into_iter()
-                .map(|o| node.append_value(GenericBvhNode::Object(o), arena));
+            objects.into_iter().for_each(|o| {
+                node.append_value(GenericBvhNode::Object(o), arena);
+            });
             return node;
         }
 

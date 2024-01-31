@@ -175,18 +175,21 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             // So we would have [1, 2], [1,3], ... [n-1, n-1], for any length K
             // I would use `itertools`, but it allocates a new vector every time and is SLOW
 
-            let split_pos_values = (1..objects.len() - 1).collect_vec();
-            let mut split_pos_indices: [usize; N_SPLIT] = std::array::from_fn(std::convert::identity);
-            let mut first = true;
+            let combinator_values = (1..objects.len() - 1).collect_vec();
+            let combinator_len = combinator_values.len();
+            let mut combinator_indices: [usize; N_SPLIT] = std::array::from_fn(std::convert::identity);
+            let mut combinator_first = true;
 
             'combinations_loop: loop {
-                if first {
-                    first = false;
+                // region COMBINATORS CODE
+
+                if combinator_first {
+                    combinator_first = false;
                 } else {
                     // Scan from the end, looking for an index to increment
                     let mut i: usize = N_SPLIT - 1;
 
-                    while split_pos_indices[i] == i {
+                    while combinator_indices[i] == i + combinator_len - N_SPLIT {
                         if i > 0 {
                             i -= 1;
                         } else {
@@ -196,29 +199,24 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
                     }
 
                     // Increment index, and reset the ones to its right
-                    split_pos_indices[i] += 1;
-                    for j in i + 1..split_pos_indices.len() {
-                        split_pos_indices[j] = split_pos_indices[j - 1] + 1;
+                    combinator_indices[i] += 1;
+                    for j in i + 1..combinator_indices.len() {
+                        combinator_indices[j] = combinator_indices[j - 1] + 1;
                     }
                 }
 
+                // endregion COMBINATORS CODE
+
                 // Find absolute split positions from indices
-                let absolute_split_positions = split_pos_indices.map(|i| split_pos_values[i]);
+                let abs_split_positions = combinator_indices.map(|i| combinator_values[i]);
 
                 let split_lengths: [usize; N_SPLIT_PLUS_ONE] = {
                     // We have to translate split positions so they are relative to the previous position
                     let mut split_offset = 0;
-                    std::array::from_fn(|section_index| {
+                    std::array::from_fn(|slice_idx| {
                         // If we are on the last split segment, we want to take all the elements
                         // so essentially split at `objects.len()`
-                        // let absolute_split_pos = if section_index < N_SPLIT {
-                        //     split_pos_values[split_pos_indices[section_index]]
-                        // } else {
-                        //     objects.len()
-                        // };
-                        // let split_count = absolute_split_pos - split_offset;
-                        let split_count =
-                            absolute_split_positions.get(section_index).unwrap_or(&objects.len()) - split_offset;
+                        let split_count = abs_split_positions.get(slice_idx).unwrap_or(&objects.len()) - split_offset;
                         split_offset += split_count;
                         split_count
                     })

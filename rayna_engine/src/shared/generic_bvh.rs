@@ -209,24 +209,13 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
                 let split_lengths: [usize; N_SPLIT_PLUS_ONE] = {
                     // We have to translate split positions so they are relative to the previous position
                     let mut split_offset = 0;
-                    let mut array: [Option<usize>; N_SPLIT_PLUS_ONE] = std::array::from_fn(|_| None);
-                    for i in 0..N_SPLIT_PLUS_ONE {
+                    std::array::from_fn(|i| {
+                        // If we are on the last split segment, we want to take all the elements, so essentially split at `n`
                         let split_count = absolute_split_positions.get(i).unwrap_or(&n) - split_offset;
                         split_offset += split_count;
-                        array[i] = Some(split_count);
-                    }
-
-                    array
-                        .try_map(std::convert::identity)
-                        .expect("all elements of the array should have been set")
+                        split_count
+                    })
                 };
-
-                // // If any of the (relative) split positions are zero, we'd make a zero-length slice
-                // // That's pointless, and also breaks our code, so skip those
-                // if split_lengths.iter().all(|&p| p == 0) {
-                //     dbg!();
-                //     continue;
-                // }
 
                 let splits: [&[BNode]; N_SPLIT_PLUS_ONE] = {
                     let mut array = objects.as_slice();

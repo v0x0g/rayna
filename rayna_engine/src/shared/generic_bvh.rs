@@ -221,11 +221,12 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
                         .expect("all elements of the array should have been set")
                 };
 
-                // If any of the (relative) split positions are zero, we'd make a zero-length slice
-                // That's pointless, and also breaks our code, so skip those
-                if split_lengths.iter().all(|&p| p == 0) {
-                    continue;
-                }
+                // // If any of the (relative) split positions are zero, we'd make a zero-length slice
+                // // That's pointless, and also breaks our code, so skip those
+                // if split_lengths.iter().all(|&p| p == 0) {
+                //     dbg!();
+                //     continue;
+                // }
 
                 let splits: [&[BNode]; N_SPLIT_PLUS_ONE] = {
                     let mut array = objects.as_slice();
@@ -238,7 +239,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
 
                 let cost = splits
                     .iter()
-                    .map(|s| {
+                    .map(|&s| {
                         let l = s.len() as Number;
                         let area = Aabb::encompass_iter(s.iter().map(HasAabb::expect_aabb)).area();
                         l * area
@@ -253,15 +254,10 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             }
         }
 
-        dbg!(&bvh_splits);
-
-        let optimal = bvh_splits
+        bvh_splits
             .into_iter()
             .min_by(|a, b| Number::total_cmp(&a.cost, &b.cost))
-            .unwrap();
-
-        dbg!(optimal);
-        optimal
+            .unwrap()
     }
 }
 

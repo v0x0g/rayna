@@ -124,9 +124,9 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             // Find the longest axis to split along, and sort for that axis
             let main_aabb = Aabb::encompass_iter(objects.iter().map(HasAabb::expect_aabb));
 
-            let optimal_split_outer = Self::calculate_optimal_split(&mut objects);
+            let optimal_split_outer = Self::calculate_optimal_split::<1, 2>(&mut objects);
 
-            let split_objects = Self::split_objects::<2, 3>(objects, optimal_split_outer);
+            let split_objects = Self::split_objects(objects, optimal_split_outer);
             let main_node = arena.new_node(GenericBvhNode::Nested(main_aabb));
 
             for chunk in split_objects {
@@ -137,39 +137,31 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
         }
     }
 
-    fn split_objects<const N_SPLIT: usize, const N_SPLIT_PLUS_ONE: usize>(
+    fn split_objects<const N_SPLIT_PLUS_ONE: usize>(
         mut objects: Vec<BNode>,
-        split: BvhSplit<N_SPLIT>,
+        optimal_split: BvhSplit<N_SPLIT_PLUS_ONE>,
     ) -> [Vec<BNode>; N_SPLIT_PLUS_ONE] {
-        // Unfortunately I can't use const assertions like `static_assertions::const_assert_eq()`
-        // Since they create a `const _:()` and so use a generic from the outer item, which isn't allowed :(
-        assert_eq!(N_SPLIT + 1, N_SPLIT_PLUS_ONE);
+        Self::sort_along_aabb_axis(optimal_split.axis, &mut objects);
 
-        Self::sort_along_aabb_axis(split.axis, &mut objects);
-
-        let mut array: [Option<Vec<BNode>>; N_SPLIT_PLUS_ONE] = std::array::from_fn(|_| None);
-        // We have to translate split positions so they are relative to the previous position
-        let mut split_offset = 0;
-        for i in 0..N_SPLIT {
-            let split_count = split.pos[i] - split_offset;
-            let remainder = objects.split_off(split_count);
-            split_offset += split_count;
-            array[i] = Some(objects);
-            objects = remainder;
-        }
-        array[N_SPLIT] = Some(objects);
-
-        array
-            .try_map(std::convert::identity)
-            .expect("all elements of the array should have been set")
+        optimal_split.split_lengths.map(|take| {
+            let mut remainder = objects.split_off(take);
+            // We want to keep the remainder (the right segment) for next iteration
+            std::mem::swap(&mut objects, &mut remainder);
+            remainder
+        })
     }
 
     /// Given a vec of objects, calculates the most optimal split position
     ///
     /// Requires mutable access to the vec, so that elements can be sorted along axes
-    fn calculate_optimal_split<const N_S: usize>(objects: &mut Vec<BNode>) -> BvhSplit<N_S> {
+    fn calculate_optimal_split<const N_SPLIT: usize, const N_SPLIT_PLUS_ONE: usize>(
+        objects: &mut Vec<BNode>,
+    ) -> BvhSplit<N_SPLIT_PLUS_ONE> {
+        // Unfortunately I can't use const assertions like `static_assertions::const_assert_eq()`
+        // Since they create a `const _:()` and so use a generic from the outer item, which isn't allowed :(
+        assert_eq!(N_SPLIT + 1, N_SPLIT_PLUS_ONE);
         assert!(
-            objects.len() > 2 * N_S,
+            objects.len() > 2 * N_SPLIT,
             "cannot split with <=2 items per split (have {})",
             objects.len()
         );
@@ -185,7 +177,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             // I would use `itertools`, but it allocates a new vector every time and is SLOW
 
             let split_pos_values = (1..n - 1).collect_vec();
-            let mut split_pos_indices: [usize; N_S] = std::array::from_fn(std::convert::identity);
+            let mut split_pos_indices: [usize; N_SPLIT] = std::array::from_fn(std::convert::identity);
             let mut first = true;
 
             'combinations_loop: loop {
@@ -193,7 +185,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
                     first = false;
                 } else {
                     // Scan from the end, looking for an index to increment
-                    let mut i: usize = N_S - 1;
+                    let mut i: usize = N_SPLIT - 1;
 
                     while split_pos_indices[i] == i {
                         if i > 0 {
@@ -214,19 +206,30 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
                 // Find absolute split positions from indices
                 let absolute_split_positions = split_pos_indices.map(|i| split_pos_values[i]);
 
-                let split_positions: [usize; N_S] = {
+                let split_lengths: [usize; N_SPLIT_PLUS_ONE] = {
+                    // We have to translate split positions so they are relative to the previous position
                     let mut split_offset = 0;
-                    std::array::from_fn(|i| {
-                        // How many elements to split off. Remove offset since we want relative pos from absolute pos
-                        let split_count = absolute_split_positions[i] - split_offset;
+                    let mut array: [Option<usize>; N_SPLIT_PLUS_ONE] = std::array::from_fn(|_| None);
+                    for i in 0..N_SPLIT_PLUS_ONE {
+                        let split_count = absolute_split_positions.get(i).unwrap_or(&n) - split_offset;
                         split_offset += split_count;
-                        split_count
-                    })
+                        array[i] = Some(split_count);
+                    }
+
+                    array
+                        .try_map(std::convert::identity)
+                        .expect("all elements of the array should have been set")
                 };
 
-                let splits: [&[BNode]; N_S] = {
+                // If any of the (relative) split positions are zero, we'd make a zero-length slice
+                // That's pointless, and also breaks our code, so skip those
+                if split_lengths.iter().all(|&p| p == 0) {
+                    continue;
+                }
+
+                let splits: [&[BNode]; N_SPLIT_PLUS_ONE] = {
                     let mut array = objects.as_slice();
-                    split_positions.map(|take| {
+                    split_lengths.map(|take| {
                         let (chunk, rest) = array.split_at(take);
                         array = rest;
                         chunk
@@ -244,11 +247,13 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
 
                 bvh_splits.insert(BvhSplit {
                     axis: sort_axis,
-                    pos: split_positions,
+                    split_lengths,
                     cost,
                 });
             }
         }
+
+        dbg!(&bvh_splits);
 
         let optimal = bvh_splits
             .into_iter()
@@ -270,9 +275,12 @@ enum SplitAxis {
 
 #[derive(Copy, Clone, Debug, Derivative)]
 #[derivative(Hash, Eq, PartialEq)]
-struct BvhSplit<const N: usize> {
+struct BvhSplit<const SPLIT_PLUS_ONE: usize> {
+    /// What axis to split along
     pub axis: SplitAxis,
-    pub pos: [usize; N],
+    /// The lengths of each slice to make when doing this split. None should be zero
+    pub split_lengths: [usize; SPLIT_PLUS_ONE],
+    /// The cost of making this given split. Probably a function of SAH
     #[derivative(Hash = "ignore", PartialEq = "ignore")]
     pub cost: Number,
 }

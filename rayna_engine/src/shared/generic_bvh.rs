@@ -123,7 +123,6 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             // https://3.bp.blogspot.com/-PMG6dWk1i60/VuG9UHjsdlI/AAAAAAAACEo/BS1qJyut7LE/s1600/Screen%2BShot%2B2016-03-10%2Bat%2B11.25.08%2BAM.png
 
             // Find the longest axis to split along, and sort for that axis
-            // TODO: Also attempt splitting more than twice
             let main_aabb = Aabb::encompass_iter(objects.iter().map(HasAabb::expect_aabb));
 
             let optimal_split_outer = Self::calculate_optimal_split(&mut objects);

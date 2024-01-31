@@ -8,7 +8,6 @@ use indextree::{Arena, NodeId};
 use std::cmp::Ordering;
 
 use crate::core::types::Number;
-use smallvec::SmallVec;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
@@ -129,21 +128,24 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
 
             let optimal_split_outer = Self::calculate_optimal_split(&mut objects);
 
-            // Split the vector into the two halves. Annoyingly there is no nice API for boxed slices or vectors
-            Self::sort_along_aabb_axis(optimal_split_outer.axis, &mut objects);
-
-            let split = Self::split_objects::<1, 2>(objects, optimal_split_outer);
-
-            // // // Repeat the split
-            // let optimal_split_inner_1 = Self::calculate_optimal_split(&mut left_split);
-            // let optimal_split_inner_2 = Self::calculate_optimal_split(&mut right_split);
-
+            let split_objects = Self::split_objects::<1, 2>(objects, optimal_split_outer);
             let main_node = arena.new_node(GenericBvhNode::Nested(main_aabb));
-            let split_nodes =
-                SmallVec::<[_; 4]>::from_iter(split.into_iter().map(|slice| Self::generate_nodes_sah(slice, arena)));
-            split_nodes
-                .into_iter()
-                .for_each(|s_node| main_node.append(s_node, arena));
+
+            for mut chunk in split_objects {
+                // Attempt to split *again* if there are enough objects
+                // So instead of having at most two slices at each depth,
+                // we attempt to split *four* times each time
+                // So each node on the tree has hopefully four children
+                if chunk.len() > 2 {
+                    let optimal = Self::calculate_optimal_split(&mut chunk);
+                    let sub = Self::split_objects::<1, 2>(chunk, optimal);
+                    let nodes = sub.map(|slice| Self::generate_nodes_sah(slice, arena));
+                    nodes.into_iter().for_each(|s_node| main_node.append(s_node, arena));
+                } else {
+                    main_node.append(Self::generate_nodes_sah(chunk, arena), arena);
+                }
+            }
+
             return main_node;
         }
     }
@@ -179,7 +181,11 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
     ///
     /// Requires mutable access to the vec, so that elements can be sorted along axes
     fn calculate_optimal_split(objects: &mut Vec<BNode>) -> BvhSplit<1> {
-        assert!(objects.len() > 2, "cannot split with <=2 items");
+        assert!(
+            objects.len() > 2,
+            "cannot split with <=2 items (have {})",
+            objects.len()
+        );
         let n = objects.len();
 
         let mut bvh_splits = vec![];

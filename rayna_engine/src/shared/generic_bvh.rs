@@ -8,7 +8,7 @@ use indextree::{Arena, NodeId};
 use std::cmp::Ordering;
 
 use crate::core::types::Number;
-use itertools::Itertools;
+use smallvec::SmallVec;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
@@ -102,24 +102,23 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
         // Can't match on a `Vec<O>`, can't move out of a `Box<[O]>` (even with `#![feature(box_patterns)]`)
         // Can't use `if let Ok(..)` since it moves the Vec
 
-        objects = match <[BNode; 1]>::try_from(objects) {
-            Ok([obj]) => {
-                return arena.new_node(GenericBvhNode::Object(obj));
-            }
-            Err(v) => v,
-        };
+        if objects.len() == 1 {
+            return arena.new_node(GenericBvhNode::Object(objects.remove(0)));
+        }
 
-        objects = match <[BNode; 2]>::try_from(objects) {
-            Ok([a, b]) => {
-                let aabb = Aabb::encompass(a.expect_aabb(), b.expect_aabb());
-
-                let node = arena.new_node(GenericBvhNode::Nested(aabb));
-                node.append_value(GenericBvhNode::Object(a), arena);
-                node.append_value(GenericBvhNode::Object(b), arena);
-                return node;
-            }
-            Err(v) => v,
-        };
+        // The number of objects under which we create leaf nodes, instead of
+        // creating branches and splitting the objects
+        const MAX_LEAF_NODES: usize = 4;
+        if objects.len() <= MAX_LEAF_NODES {
+            let arr = SmallVec::<[BNode; MAX_LEAF_NODES]>::from_vec(objects);
+            assert!(!arr.spilled(), "vec should be able to hold all elements on stack");
+            let aabb = Aabb::encompass_iter(arr.iter().map(HasAabb::expect_aabb));
+            let node = arena.new_node(GenericBvhNode::Nested(aabb));
+            let _ = arr
+                .into_iter()
+                .map(|o| node.append_value(GenericBvhNode::Object(o), arena));
+            return node;
+        }
 
         {
             // This was originally based off Pete Shirley's SAH BVH algorithm
@@ -130,15 +129,19 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             // TODO: Also attempt splitting more than twice
             let main_aabb = Aabb::encompass_iter(objects.iter().map(HasAabb::expect_aabb));
 
-            let optimal_split = Self::calculate_optimal_split(&mut objects);
+            let optimal_split_outer = Self::calculate_optimal_split(&mut objects);
 
             // Split the vector into the two halves. Annoyingly there is no nice API for boxed slices or vectors
-            Self::sort_along_aabb_axis(optimal_split.axis, &mut objects);
+            Self::sort_along_aabb_axis(optimal_split_outer.axis, &mut objects);
             let (left_split, right_split) = {
                 let mut l = Vec::from(objects);
-                let r = l.split_off(optimal_split.pos + 1);
+                let r = l.split_off(optimal_split_outer.pos[0] + 1);
                 (l, r)
             };
+
+            // // Repeat the split
+            // let optimal_split_inner_1 = Self::calculate_optimal_split(&mut objects);
+            // let optimal_split_inner_2 = Self::calculate_optimal_split(&mut objects);
 
             let left_node = Self::generate_nodes_sah(left_split, arena);
             let right_node = Self::generate_nodes_sah(right_split, arena);
@@ -150,7 +153,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
         }
     }
 
-    fn calculate_optimal_split(objects: &mut Vec<BNode>) -> BvhSplit {
+    fn calculate_optimal_split(objects: &mut Vec<BNode>) -> BvhSplit<1> {
         assert!(objects.len() > 2, "cannot split with <=2 items");
         let n = objects.len();
 
@@ -175,7 +178,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
 
                 bvh_splits.push(BvhSplit {
                     axis: sort_axis,
-                    pos: split_pos,
+                    pos: [split_pos],
                     cost,
                 });
             }
@@ -196,8 +199,8 @@ enum SplitAxis {
     Z,
 }
 
-struct BvhSplit {
+struct BvhSplit<const N: usize> {
     pub axis: SplitAxis,
-    pub pos: usize,
+    pub pos: [usize; N],
     pub cost: Number,
 }

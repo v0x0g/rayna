@@ -131,11 +131,8 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
 
             // Split the vector into the two halves. Annoyingly there is no nice API for boxed slices or vectors
             Self::sort_along_aabb_axis(optimal_split_outer.axis, &mut objects);
-            let split = {
-                let mut l = Vec::from(objects);
-                let r = l.split_off(optimal_split_outer.pos[0] + 1);
-                [l, r]
-            };
+
+            let split = Self::split_objects::<1, 2>(objects, optimal_split_outer);
 
             // // // Repeat the split
             // let optimal_split_inner_1 = Self::calculate_optimal_split(&mut left_split);
@@ -151,6 +148,36 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
         }
     }
 
+    fn split_objects<const N_SPLIT: usize, const N_SPLIT_PLUS_ONE: usize>(
+        mut objects: Vec<BNode>,
+        split: BvhSplit<N_SPLIT>,
+    ) -> [Vec<BNode>; N_SPLIT_PLUS_ONE] {
+        // Unfortunately I can't use const assertions like `static_assertions::const_assert_eq()`
+        // Since they create a `const _:()` and so use a generic from the outer item, which isn't allowed :(
+        assert_eq!(N_SPLIT + 1, N_SPLIT_PLUS_ONE);
+
+        Self::sort_along_aabb_axis(split.axis, &mut objects);
+
+        let mut array: [Option<Vec<BNode>>; N_SPLIT_PLUS_ONE] = std::array::from_fn(|_| None);
+        // We have to translate split positions so they are relative to the previous position
+        let mut split_offset = 0;
+        for i in 0..N_SPLIT {
+            let split_count = split.pos[i] - split_offset;
+            let remainder = objects.split_off(split_count);
+            split_offset += split_count;
+            array[i] = Some(objects);
+            objects = remainder;
+        }
+        array[N_SPLIT] = Some(objects);
+
+        array
+            .try_map(std::convert::identity)
+            .expect("something in my code fucked up")
+    }
+
+    /// Given a vec of objects, calculates the most optimal split position
+    ///
+    /// Requires mutable access to the vec, so that elements can be sorted along axes
     fn calculate_optimal_split(objects: &mut Vec<BNode>) -> BvhSplit<1> {
         assert!(objects.len() > 2, "cannot split with <=2 items");
         let n = objects.len();

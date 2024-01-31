@@ -131,23 +131,23 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
 
             // Split the vector into the two halves. Annoyingly there is no nice API for boxed slices or vectors
             Self::sort_along_aabb_axis(optimal_split_outer.axis, &mut objects);
-            let (left_split, right_split) = {
+            let split = {
                 let mut l = Vec::from(objects);
                 let r = l.split_off(optimal_split_outer.pos[0] + 1);
-                (l, r)
+                [l, r]
             };
 
-            // // Repeat the split
-            // let optimal_split_inner_1 = Self::calculate_optimal_split(&mut objects);
-            // let optimal_split_inner_2 = Self::calculate_optimal_split(&mut objects);
+            // // // Repeat the split
+            // let optimal_split_inner_1 = Self::calculate_optimal_split(&mut left_split);
+            // let optimal_split_inner_2 = Self::calculate_optimal_split(&mut right_split);
 
-            let left_node = Self::generate_nodes_sah(left_split, arena);
-            let right_node = Self::generate_nodes_sah(right_split, arena);
-
-            let node = arena.new_node(GenericBvhNode::Nested(main_aabb));
-            node.append(left_node, arena);
-            node.append(right_node, arena);
-            return node;
+            let main_node = arena.new_node(GenericBvhNode::Nested(main_aabb));
+            let split_nodes =
+                SmallVec::<[_; 4]>::from_iter(split.into_iter().map(|slice| Self::generate_nodes_sah(slice, arena)));
+            split_nodes
+                .into_iter()
+                .for_each(|s_node| main_node.append(s_node, arena));
+            return main_node;
         }
     }
 

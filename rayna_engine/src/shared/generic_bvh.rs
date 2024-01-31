@@ -180,13 +180,36 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
         for sort_axis in SplitAxis::iter() {
             Self::sort_along_aabb_axis(sort_axis, objects);
 
-            // Make sure we don't split with zero elements
             let valid_split_indices = 1..n - 1;
-            dbg!(sort_axis, n, &valid_split_indices);
-            for absolute_split_positions in valid_split_indices
-                .combinations(N_S)
-                .map(|i| <[usize; N_S]>::try_from(i).unwrap())
-            {
+            // We want to iterate over all combinations of split positions
+            // So we would have [1, 2], [1,3], ... [n-1, n-1], for any length K
+            // I would use `itertools`, but it allocates a new vector every time and is SLOW
+
+            let split_pos_values = valid_split_indices.collect_vec();
+            let mut split_pos_indices = [0usize; N_S];
+
+            'combinations_loop: loop {
+                // Scan from the end, looking for an index to increment
+                let mut i: usize = N_S - 1;
+
+                while split_pos_indices[i] == i {
+                    if i > 0 {
+                        i -= 1;
+                    } else {
+                        // Reached the last combination
+                        break 'combinations_loop;
+                    }
+                }
+
+                // Increment index, and reset the ones to its right
+                split_pos_indices[i] += 1;
+                for j in i + 1..split_pos_indices.len() {
+                    split_pos_indices[j] = split_pos_indices[j - 1] + 1;
+                }
+
+                // Find absolute split positions from indices
+                let absolute_split_positions = split_pos_indices.map(|i| split_pos_values[i]);
+
                 let split_positions: [usize; N_S] = {
                     let mut split_offset = 0;
                     std::array::from_fn(|i| {

@@ -3,7 +3,7 @@
 //! There is no significance to them, apart from not having to manually create scenes by hand.
 //!
 //! There are some common ones [CORNELL] and [RTIAW_DEMO], that should be well known.
-
+#![allow(unused)]
 use crate::core::types::{Angle, Channel, Colour, Image, Number, Point3, Size3, Transform3, Vector3};
 use crate::object::simple::SimpleObject;
 use noise::*;

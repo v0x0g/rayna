@@ -3,9 +3,12 @@
 //! These are used to accelerate ray-mesh intersection tests by narrowing the search space,
 //! by skipping objects that obviously can't be intersected.
 
+use derivative::Derivative;
 use getset::{CopyGetters, Getters};
 use indextree::{Arena, NodeId};
+use itertools::Itertools;
 use std::cmp::Ordering;
+use std::collections::HashSet;
 
 use crate::core::types::Number;
 use strum::IntoEnumIterator;
@@ -97,10 +100,6 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             panic!("internal invariant fail: must pass in a non-empty slice for objects")
         }
 
-        // I really hate this code, but there's not much I can do about it
-        // Can't match on a `Vec<O>`, can't move out of a `Box<[O]>` (even with `#![feature(box_patterns)]`)
-        // Can't use `if let Ok(..)` since it moves the Vec
-
         if objects.len() == 1 {
             return arena.new_node(GenericBvhNode::Object(objects.remove(0)));
         }
@@ -136,7 +135,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
                 // we attempt to split *four* times each time
                 // So each node on the tree has hopefully four children
                 if chunk.len() > 2 {
-                    let optimal = Self::calculate_optimal_split(&mut chunk);
+                    let optimal = Self::calculate_optimal_split::<1>(&mut chunk);
                     let sub = Self::split_objects::<1, 2>(chunk, optimal);
                     let nodes = sub.map(|slice| Self::generate_nodes_sah(slice, arena));
                     nodes.into_iter().for_each(|s_node| main_node.append(s_node, arena));
@@ -173,29 +172,49 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
 
         array
             .try_map(std::convert::identity)
-            .expect("something in my code fucked up")
+            .expect("all elements of the array should have been set")
     }
 
     /// Given a vec of objects, calculates the most optimal split position
     ///
     /// Requires mutable access to the vec, so that elements can be sorted along axes
-    fn calculate_optimal_split(objects: &mut Vec<BNode>) -> BvhSplit<1> {
+    fn calculate_optimal_split<const N_S: usize>(objects: &mut Vec<BNode>) -> BvhSplit<N_S> {
         assert!(
-            objects.len() > 2,
-            "cannot split with <=2 items (have {})",
+            objects.len() > 2 * N_S,
+            "cannot split with <=2 items per split (have {})",
             objects.len()
         );
         let n = objects.len();
 
-        let mut bvh_splits = vec![];
+        let mut bvh_splits = HashSet::new();
 
         for sort_axis in SplitAxis::iter() {
             Self::sort_along_aabb_axis(sort_axis, objects);
 
             // Make sure we don't split with zero elements
-            for split_pos in 1..n - 1 {
-                let (split_l, split_r) = objects.split_at(split_pos);
-                let splits = [split_l, split_r];
+            let valid_split_indices = 1..n - 1;
+            for absolute_split_positions in valid_split_indices
+                .combinations(N_S)
+                .map(|i| <[usize; N_S]>::try_from(i).unwrap())
+            {
+                let split_positions: [usize; N_S] = {
+                    let mut split_offset = 0;
+                    std::array::from_fn(|i| {
+                        // How many elements to split off. Remove offset since we want relative pos from absolute pos
+                        let split_count = absolute_split_positions[i] - split_offset;
+                        split_offset += split_count;
+                        split_count
+                    })
+                };
+
+                let splits: [&[BNode]; N_S] = {
+                    let mut array = objects.as_slice();
+                    split_positions.map(|take| {
+                        let (chunk, rest) = array.split_at(take);
+                        array = rest;
+                        chunk
+                    })
+                };
 
                 let cost = splits
                     .iter()
@@ -206,9 +225,9 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
                     })
                     .sum();
 
-                bvh_splits.push(BvhSplit {
+                bvh_splits.insert(BvhSplit {
                     axis: sort_axis,
-                    pos: [split_pos],
+                    pos: split_positions,
                     cost,
                 });
             }
@@ -222,15 +241,18 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
 }
 
 /// Enum for which axis we split along when doing SAH
-#[derive(Copy, Clone, Debug, EnumIter)]
+#[derive(Copy, Clone, Debug, EnumIter, Hash, Ord, PartialOrd, Eq, PartialEq)]
 enum SplitAxis {
-    X,
-    Y,
-    Z,
+    X = 0,
+    Y = 1,
+    Z = 2,
 }
 
+#[derive(Copy, Clone, Debug, Derivative)]
+#[derivative(Hash, Eq, PartialEq)]
 struct BvhSplit<const N: usize> {
     pub axis: SplitAxis,
     pub pos: [usize; N],
+    #[derivative(Hash = "ignore", PartialEq = "ignore")]
     pub cost: Number,
 }

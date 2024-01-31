@@ -129,19 +129,8 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             let split_objects = Self::split_objects::<1, 2>(objects, optimal_split_outer);
             let main_node = arena.new_node(GenericBvhNode::Nested(main_aabb));
 
-            for mut chunk in split_objects {
-                // Attempt to split *again* if there are enough objects
-                // So instead of having at most two slices at each depth,
-                // we attempt to split *four* times each time
-                // So each node on the tree has hopefully four children
-                if chunk.len() > 2 {
-                    let optimal = Self::calculate_optimal_split::<1>(&mut chunk);
-                    let sub = Self::split_objects::<1, 2>(chunk, optimal);
-                    let nodes = sub.map(|slice| Self::generate_nodes_sah(slice, arena));
-                    nodes.into_iter().for_each(|s_node| main_node.append(s_node, arena));
-                } else {
-                    main_node.append(Self::generate_nodes_sah(chunk, arena), arena);
-                }
+            for chunk in split_objects {
+                main_node.append(Self::generate_nodes_sah(chunk, arena), arena);
             }
 
             return main_node;
@@ -193,6 +182,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
 
             // Make sure we don't split with zero elements
             let valid_split_indices = 1..n - 1;
+            dbg!(sort_axis, n, &valid_split_indices);
             for absolute_split_positions in valid_split_indices
                 .combinations(N_S)
                 .map(|i| <[usize; N_S]>::try_from(i).unwrap())
@@ -206,6 +196,8 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
                         split_count
                     })
                 };
+
+                dbg!(absolute_split_positions, split_positions);
 
                 let splits: [&[BNode]; N_S] = {
                     let mut array = objects.as_slice();
@@ -233,10 +225,13 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             }
         }
 
-        bvh_splits
+        let optimal = bvh_splits
             .into_iter()
             .min_by(|a, b| Number::total_cmp(&a.cost, &b.cost))
-            .unwrap()
+            .unwrap();
+
+        dbg!(optimal);
+        optimal
     }
 }
 

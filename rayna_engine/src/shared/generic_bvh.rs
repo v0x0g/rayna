@@ -126,10 +126,9 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
 
             const N_SPLIT: usize = 3;
             let optimal_split_outer = Self::calculate_optimal_split::<N_SPLIT, { N_SPLIT + 1 }>(&mut objects);
-
             let split_objects = Self::split_objects(objects, optimal_split_outer);
-            let main_node = arena.new_node(GenericBvhNode::Nested(main_aabb));
 
+            let main_node = arena.new_node(GenericBvhNode::Nested(main_aabb));
             for chunk in split_objects {
                 main_node.append(Self::generate_nodes_sah(chunk, arena), arena);
             }

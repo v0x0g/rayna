@@ -18,6 +18,7 @@ use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::mesh::advanced::bvh::BvhMesh;
 use crate::mesh::advanced::isosurface::IsosurfaceMesh;
+use crate::mesh::planar::infinite_plane::InfinitePlaneMesh;
 use crate::mesh::planar::parallelogram::ParallelogramMesh;
 use crate::mesh::planar::triangle::TriangleMesh;
 use crate::mesh::planar::Planar;
@@ -106,18 +107,44 @@ pub static TESTING: Scene = {
         // ));
 
         let v = [[1.0, 1.0, 1.0], [-1.0, -1.0, 1.0], [-1.0, 1.0, -1.0], [1.0, -1.0, -1.0]];
+        let r = 0.1;
 
         objects.push(SimpleObject::new(
-            TriangleMesh::from([v[0], v[1], v[2]]),
+            ParallelogramMesh::from([v[0], v[1], v[2]]),
             LambertianMaterial::default(),
             None,
         ));
-
         objects.push(SimpleObject::new(
-            TriangleMesh::from([v[3], v[0], v[1]]),
-            LambertianMaterial::default(),
+            SphereMesh::new(v[0], r),
+            LambertianMaterial::from(TextureInstance::from([1., 0., 0.])),
             None,
         ));
+        objects.push(SimpleObject::new(
+            SphereMesh::new(v[1], r),
+            LambertianMaterial::from(TextureInstance::from([0., 1., 0.])),
+            None,
+        ));
+        objects.push(SimpleObject::new(
+            SphereMesh::new(v[2], r),
+            LambertianMaterial::from(TextureInstance::from([0., 0., 1.])),
+            None,
+        ));
+        objects.push(SimpleObject::new(
+            SphereMesh::new(v[3], r),
+            LambertianMaterial::from(TextureInstance::from([0., 0., 0.])),
+            None,
+        ));
+        objects.push(SimpleObject::new(
+            SphereMesh::new(Point3::ZERO, r),
+            LambertianMaterial::from(TextureInstance::from([1., 1., 1.])),
+            None,
+        ));
+
+        // objects.push(SimpleObject::new(
+        //     TriangleMesh::from([v[3], v[0], v[1]]),
+        //     LambertianMaterial::default(),
+        //     None,
+        // ));
     }
 
     Scene {

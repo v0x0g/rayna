@@ -21,6 +21,10 @@ impl Default for LambertianMaterial<TextureInstance> {
     }
 }
 
+impl<Tex: Texture> From<Tex> for LambertianMaterial<Tex> {
+    fn from(value: Tex) -> Self { Self { albedo: value } }
+}
+
 impl<Tex: Texture> Material for LambertianMaterial<Tex> {
     fn scatter(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
         // Completely random scatter direction, in same hemisphere as normal

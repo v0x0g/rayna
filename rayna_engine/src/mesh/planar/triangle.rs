@@ -49,7 +49,9 @@ impl Mesh for TriangleMesh {
             Some(i)
         } else {
             None
-        }
+        };
+
+        Some(i)
     }
 }
 

@@ -9,9 +9,10 @@ use crate::shared::math::Lerp;
 use crate::shared::ray::Ray;
 use derivative::Derivative;
 use getset::{CopyGetters, Getters};
-use isosurface::marching_cubes::MarchingCubes;
-use isosurface::math::Vec3;
-use isosurface::source::{HermiteSource, Source};
+use isosurface::distance::Signed;
+use isosurface::sampler::Sampler;
+use isosurface::source::ScalarSource;
+use isosurface::MarchingCubes;
 use itertools::Itertools;
 use rand_core::RngCore;
 
@@ -39,9 +40,12 @@ pub trait SdfGeneratorFunction = Fn(Point3) -> Number;
 
 impl IsosurfaceMesh {
     pub fn generate<F: SdfGeneratorFunction>(resolution: usize, func: F) -> Self {
-        let source = SdfSource { func, epsilon: 0.0001 };
+        // let source = SdfSource { func };
         let (mut raw_vertices, mut raw_indices) = (vec![], vec![]);
-        MarchingCubes::new(resolution).extract(&source, &mut raw_vertices, &mut raw_indices);
+        let source = isosurface::implicit::Sphere::new(0.5);
+        let mut extractor = isosurface::extractor::IndexedVertices::new(&mut raw_vertices, &mut raw_indices);
+        let sampler = Sampler::new(&source);
+        MarchingCubes::<Signed>::new(resolution).extract(&sampler, &mut extractor);
 
         assert_eq!(
             raw_indices.len() % 3,
@@ -65,7 +69,6 @@ impl IsosurfaceMesh {
         for indices in isosurface_indices {
             // Each index refers to the index of the `x` vertex coordinate in the buffer,
             // so we can divide by 3 to get the proper index as a point
-            let indices = indices.map(|i| i as usize);
             let vertices = indices.map(|idx| isosurface_vertices[idx]);
             triangles.push(TriangleMesh::from(vertices));
         }
@@ -86,21 +89,11 @@ impl IsosurfaceMesh {
 
 struct SdfSource<F: SdfGeneratorFunction> {
     pub func: F,
-    pub epsilon: Number,
 }
-impl<F: SdfGeneratorFunction> Source for SdfSource<F> {
-    fn sample(&self, x: f32, y: f32, z: f32) -> f32 {
-        (self.func)([x, y, z].map(|n| Lerp::lerp(-1., 1., n as Number)).into()) as f32
-    }
-}
-impl<F: SdfGeneratorFunction> HermiteSource for SdfSource<F> {
-    fn sample_normal(&self, x: f32, y: f32, z: f32) -> Vec3 {
-        let v = self.sample(x, y, z);
-        let vx = self.sample(x + self.epsilon as f32, y, z);
-        let vy = self.sample(x, y + self.epsilon as f32, z);
-        let vz = self.sample(x, y, z + self.epsilon as f32);
-
-        Vec3::new(vx - v, vy - v, vz - v)
+impl<F: SdfGeneratorFunction> ScalarSource for SdfSource<F> {
+    fn sample_scalar(&self, isosurface::math::Vec3 { x, y, z }: isosurface::math::Vec3) -> Signed {
+        let point = [x, y, z].map(|n| Lerp::lerp(-1., 1., n as Number)).into();
+        Signed((self.func)(point) as f32)
     }
 }
 

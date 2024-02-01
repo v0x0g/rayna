@@ -8,7 +8,6 @@ use getset::{CopyGetters, Getters};
 use indextree::{Arena, NodeId};
 use itertools::Itertools;
 use std::cmp::Ordering;
-use std::time::Duration;
 
 use crate::core::types::Number;
 use strum::IntoEnumIterator;

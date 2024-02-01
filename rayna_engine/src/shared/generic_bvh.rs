@@ -170,6 +170,17 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             objects.len()
         );
 
+        // When we have a large number of objects, we can potentially be checking millions or more split positions
+        // So we can batch objects slightly, so that we don't check *all* combinations, hopefully speeding things up a bit
+        // It will make the resulting BVH tree a bit less granular, but since the objects are sorted it shouldn't
+        // affect performance/BVH quality much
+
+        /// Higher values are more aggressive at skipping, and are faster to build. Range `0..1`
+        const SKIP_AGGRESSION: Number = 0.1;
+        static_assertions::const_assert!(0.0 <= SKIP_AGGRESSION && SKIP_AGGRESSION < 1.0);
+        let batch_skip = (objects.len() as Number).powf(SKIP_AGGRESSION) - 1.0;
+        let mut batch_counter = 0.0;
+
         let mut best_split = None;
 
         for sort_axis in SplitAxis::iter() {
@@ -210,6 +221,14 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
                 }
 
                 // endregion COMBINATORS CODE
+
+                // Skip values occasionally so we can speed things up a bit
+                if batch_counter > 0.0 {
+                    batch_counter -= 1.0;
+                    continue;
+                } else {
+                    batch_counter += batch_skip;
+                }
 
                 // Find absolute split positions from indices
                 let abs_split_positions = combinator_indices.map(|i| combinator_values[i]);

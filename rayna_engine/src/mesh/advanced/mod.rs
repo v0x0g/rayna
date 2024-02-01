@@ -1,4 +1,4 @@
 pub mod bvh;
 pub mod dynamic;
+pub mod isosurface;
 pub mod list;
-pub mod voxel_grid;

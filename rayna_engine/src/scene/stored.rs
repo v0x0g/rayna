@@ -17,7 +17,7 @@ use crate::material::light::LightMaterial;
 use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::mesh::advanced::bvh::BvhMesh;
-use crate::mesh::advanced::voxel_grid::VoxelGridMesh;
+use crate::mesh::advanced::isosurface::IsosurfaceMesh;
 use crate::mesh::planar::parallelogram::ParallelogramMesh;
 use crate::mesh::planar::Planar;
 use crate::mesh::primitive::axis_box::AxisBoxMesh;
@@ -84,20 +84,12 @@ pub static TESTING: Scene = {
 
     {
         objects.push(SimpleObject::new(
-            VoxelGridMesh::generate(
-                [32; 3],
-                Point3::ZERO,
-                Size3::ONE,
-                Point3::new(0., 0.5, 0.),
-                Size3::ONE,
-                |Point3 { x, y, z }| {
-                    const A: Number = 5.0;
-                    const B: Number = 0.155;
-                    let y = 1.0 - y;
-                    x.powi(2) + z.powi(2) + y.powf(A + (A * B)) - y.powf(A)
-                },
-                0.,
-            ),
+            IsosurfaceMesh::generate(5, |Point3 { x, y, z }| {
+                const A: Number = 5.0;
+                const B: Number = 0.155;
+                let y = 1.0 - y;
+                x.powi(2) + z.powi(2) + y.powf(A + (A * B)) - y.powf(A)
+            }),
             DielectricMaterial {
                 albedo: [0.68, 0.73, 0.8].into(),
                 density: 40.0,

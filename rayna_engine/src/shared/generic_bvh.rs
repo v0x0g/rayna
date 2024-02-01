@@ -176,7 +176,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
         // affect performance/BVH quality much
 
         /// Higher values are more aggressive at skipping, and are faster to build. Range `0..1`
-        const SKIP_AGGRESSION: Number = 0.1;
+        const SKIP_AGGRESSION: Number = 0.0;
         static_assertions::const_assert!(0.0 <= SKIP_AGGRESSION && SKIP_AGGRESSION < 1.0);
         let batch_skip = (objects.len() as Number).powf(SKIP_AGGRESSION) - 1.0;
         let mut batch_counter = 0.0;

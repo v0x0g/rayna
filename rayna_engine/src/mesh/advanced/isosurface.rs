@@ -41,7 +41,7 @@ impl IsosurfaceMesh {
     pub fn generate<F: SdfGeneratorFunction>(resolution: usize, func: F) -> Self {
         let source = SdfSource { func, epsilon: 0.0001 };
         let (mut raw_vertices, mut raw_indices) = (vec![], vec![]);
-        MarchingCubes::new(resolution).extract_with_normals(&source, &mut raw_vertices, &mut raw_indices);
+        MarchingCubes::new(resolution).extract(&source, &mut raw_vertices, &mut raw_indices);
 
         assert_eq!(
             raw_indices.len() % 3,
@@ -61,19 +61,6 @@ impl IsosurfaceMesh {
             .collect_vec();
 
         let mut triangles = Vec::with_capacity(raw_indices.len() % 3);
-
-        // for tri_index in 0..isosurface_indices.len() / 3 {
-        //     // Indices for the starting coordinate of each vertex
-        //     let i1 = isosurface_indices[3 * tri_index];
-        //     let i2 = isosurface_indices[3 * tri_index + 1];
-        //     let i3 = isosurface_indices[3 * tri_index + 2];
-        //
-        //     let p1 = [i1, i1 + 1, i1 + 2].map(|i| isosurface_vertices[i as usize] as Number);
-        //     let p2 = [i2, i2 + 1, i2 + 2].map(|i| isosurface_vertices[i as usize] as Number);
-        //     let p3 = [i3, i3 + 1, i3 + 2].map(|i| isosurface_vertices[i as usize] as Number);
-        //
-        //     triangles.push(TriangleMesh::from([p1, p2, p3]));
-        // }
 
         for indices in isosurface_indices {
             // Each index refers to the index of the `x` vertex coordinate in the buffer,

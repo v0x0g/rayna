@@ -8,7 +8,6 @@ use getset::{CopyGetters, Getters};
 use indextree::{Arena, NodeId};
 use itertools::Itertools;
 use std::cmp::Ordering;
-use std::collections::HashSet;
 
 use crate::core::types::Number;
 use strum::IntoEnumIterator;
@@ -124,7 +123,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             // Find the longest axis to split along, and sort for that axis
             let main_aabb = Aabb::encompass_iter(objects.iter().map(HasAabb::expect_aabb));
 
-            const N_SPLIT: usize = 3;
+            const N_SPLIT: usize = 1;
             let optimal_split_outer = Self::calculate_optimal_split::<N_SPLIT, { N_SPLIT + 1 }>(&mut objects);
             let split_objects = Self::split_objects(objects, optimal_split_outer);
 
@@ -166,7 +165,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             objects.len()
         );
 
-        let mut bvh_splits = HashSet::new();
+        let mut best_split = None;
 
         for sort_axis in SplitAxis::iter() {
             Self::sort_along_aabb_axis(sort_axis, objects);
@@ -240,18 +239,20 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
                     })
                     .sum();
 
-                bvh_splits.insert(BvhSplit {
+                let curr_split = BvhSplit {
                     axis: sort_axis,
                     split_lengths,
                     cost,
+                };
+
+                best_split = Some(match best_split {
+                    Some(best) => std::cmp::min_by(best, curr_split, |a, b| Number::total_cmp(&a.cost, &b.cost)),
+                    None => curr_split,
                 });
             }
         }
 
-        bvh_splits
-            .into_iter()
-            .min_by(|a, b| Number::total_cmp(&a.cost, &b.cost))
-            .unwrap()
+        best_split.expect("best split was not set: did no iterations")
     }
 }
 

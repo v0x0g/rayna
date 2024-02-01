@@ -5,14 +5,14 @@ use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
+use crate::shared::math::Lerp;
 use crate::shared::ray::Ray;
 use derivative::Derivative;
 use getset::{CopyGetters, Getters};
-use isosurface::linear_hashed_marching_cubes;
+use isosurface::marching_cubes::MarchingCubes;
 use isosurface::math::Vec3;
 use isosurface::source::{HermiteSource, Source};
 use itertools::Itertools;
-use linear_hashed_marching_cubes::LinearHashedMarchingCubes;
 use rand_core::RngCore;
 
 /// A mesh struct that is created by creating an isosurface from a given SDF
@@ -40,28 +40,42 @@ pub trait SdfGeneratorFunction = Fn(Point3) -> Number;
 impl IsosurfaceMesh {
     pub fn generate<F: SdfGeneratorFunction>(resolution: usize, func: F) -> Self {
         let source = SdfSource { func, epsilon: 0.0001 };
-        let (mut isosurface_vertices, mut isosurface_indices) = (vec![], vec![]);
-        LinearHashedMarchingCubes::new(resolution).extract_with_normals(
-            &source,
-            &mut isosurface_vertices,
-            &mut isosurface_indices,
-        );
+        let (mut raw_vertices, mut raw_indices) = (vec![], vec![]);
+        MarchingCubes::new(resolution).extract_with_normals(&source, &mut raw_vertices, &mut raw_indices);
 
         assert_eq!(
-            isosurface_indices.len() % 3,
+            raw_indices.len() % 3,
             0,
             "`indices.len` should be multiple of 3 (was {})",
-            isosurface_indices.len()
+            raw_indices.len()
         );
 
         // Group the vertex coordinates into groups of three, so we get a 3D point
-        let isosurface_vertices = isosurface_vertices
+        let isosurface_vertices = raw_vertices
             .array_chunks::<3>()
             .map(|vs| Point3::from(vs.map(|v| v as Number)))
             .collect_vec();
+        let isosurface_indices = raw_indices
+            .array_chunks::<3>()
+            .map(|vs| vs.map(|v| v as usize))
+            .collect_vec();
 
-        let mut triangles = Vec::with_capacity(isosurface_indices.len() % 3);
-        for &indices in isosurface_indices.array_chunks::<3>() {
+        let mut triangles = Vec::with_capacity(raw_indices.len() % 3);
+
+        // for tri_index in 0..isosurface_indices.len() / 3 {
+        //     // Indices for the starting coordinate of each vertex
+        //     let i1 = isosurface_indices[3 * tri_index];
+        //     let i2 = isosurface_indices[3 * tri_index + 1];
+        //     let i3 = isosurface_indices[3 * tri_index + 2];
+        //
+        //     let p1 = [i1, i1 + 1, i1 + 2].map(|i| isosurface_vertices[i as usize] as Number);
+        //     let p2 = [i2, i2 + 1, i2 + 2].map(|i| isosurface_vertices[i as usize] as Number);
+        //     let p3 = [i3, i3 + 1, i3 + 2].map(|i| isosurface_vertices[i as usize] as Number);
+        //
+        //     triangles.push(TriangleMesh::from([p1, p2, p3]));
+        // }
+
+        for indices in isosurface_indices {
             // Each index refers to the index of the `x` vertex coordinate in the buffer,
             // so we can divide by 3 to get the proper index as a point
             let indices = indices.map(|i| i as usize);
@@ -88,7 +102,9 @@ struct SdfSource<F: SdfGeneratorFunction> {
     pub epsilon: Number,
 }
 impl<F: SdfGeneratorFunction> Source for SdfSource<F> {
-    fn sample(&self, x: f32, y: f32, z: f32) -> f32 { (self.func)([x, y, z].map(|n| n as Number).into()) as f32 }
+    fn sample(&self, x: f32, y: f32, z: f32) -> f32 {
+        (self.func)([x, y, z].map(|n| Lerp::lerp(-1., 1., n as Number)).into()) as f32
+    }
 }
 impl<F: SdfGeneratorFunction> HermiteSource for SdfSource<F> {
     fn sample_normal(&self, x: f32, y: f32, z: f32) -> Vec3 {

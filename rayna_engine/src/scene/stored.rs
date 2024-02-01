@@ -19,6 +19,7 @@ use crate::material::MaterialInstance;
 use crate::mesh::advanced::bvh::BvhMesh;
 use crate::mesh::advanced::isosurface::IsosurfaceMesh;
 use crate::mesh::planar::parallelogram::ParallelogramMesh;
+use crate::mesh::planar::triangle::TriangleMesh;
 use crate::mesh::planar::Planar;
 use crate::mesh::primitive::axis_box::AxisBoxMesh;
 use crate::mesh::primitive::sphere::SphereMesh;
@@ -83,36 +84,40 @@ pub static TESTING: Scene = {
     let mut objects = Vec::new();
 
     {
+        // objects.push(SimpleObject::new(
+        //     IsosurfaceMesh::generate(5, |p| {
+        //         dbg!(p);
+        //         let Vector3 { x, y, z } = p.to_vector();
+        //
+        //         // const A: Number = 5.0;
+        //         // const B: Number = 0.155;
+        //         // let y = 1.0 - y;
+        //         // x.powi(2) + z.powi(2) + y.powf(A + (A * B)) - y.powf(A)
+        //
+        //         x.powi(2) + y.powi(2) + z.powi(2)
+        //     }),
+        //     // DielectricMaterial {
+        //     //     albedo: [0.68, 0.73, 0.8].into(),
+        //     //     density: 40.0,
+        //     //     refractive_index: 1.335,
+        //     // },
+        //     LambertianMaterial::default(),
+        //     None,
+        // ));
+
+        let v = [[1.0, 1.0, 1.0], [-1.0, -1.0, 1.0], [-1.0, 1.0, -1.0], [1.0, -1.0, -1.0]];
+
         objects.push(SimpleObject::new(
-            IsosurfaceMesh::generate(5, |p| {
-                dbg!(p);
-                let Vector3 { x, y, z } = p.to_vector();
-
-                // const A: Number = 5.0;
-                // const B: Number = 0.155;
-                // let y = 1.0 - y;
-                // x.powi(2) + z.powi(2) + y.powf(A + (A * B)) - y.powf(A)
-
-                x.powi(2) + y.powi(2) + z.powi(2)
-            }),
-            // DielectricMaterial {
-            //     albedo: [0.68, 0.73, 0.8].into(),
-            //     density: 40.0,
-            //     refractive_index: 1.335,
-            // },
+            TriangleMesh::from([v[0], v[1], v[2]]),
             LambertianMaterial::default(),
             None,
         ));
 
-        // objects.push(SimpleObject::new(
-        //     SphereMesh::new(Point3::ZERO, 0.5),
-        //     DielectricMaterial {
-        //         albedo: [0.9; 3].into(),
-        //         density: 1.,
-        //         refractive_index: 1.0,
-        //     },
-        //     None,
-        // ));
+        objects.push(SimpleObject::new(
+            TriangleMesh::from([v[3], v[0], v[1]]),
+            LambertianMaterial::default(),
+            None,
+        ));
     }
 
     Scene {

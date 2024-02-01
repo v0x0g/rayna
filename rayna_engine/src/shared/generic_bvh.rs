@@ -8,6 +8,7 @@ use getset::{CopyGetters, Getters};
 use indextree::{Arena, NodeId};
 use itertools::Itertools;
 use std::cmp::Ordering;
+use std::time::Duration;
 
 use crate::core::types::Number;
 use strum::IntoEnumIterator;
@@ -51,11 +52,15 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
         );
 
         let mut arena = Arena::with_capacity(objects.len());
+        let start = puffin::now_ns();
         let root_id = if objects.is_empty() {
             None
         } else {
             Some(Self::generate_nodes_sah(objects, &mut arena))
         };
+        let end = puffin::now_ns();
+        let duration = Duration::from_nanos(end.abs_diff(start));
+        dbg!(duration);
 
         // eprintln!("\n\n{:?}\n\n", root_id.debug_pretty_print(&tree));
 
@@ -123,7 +128,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             // Find the longest axis to split along, and sort for that axis
             let main_aabb = Aabb::encompass_iter(objects.iter().map(HasAabb::expect_aabb));
 
-            const N_SPLIT: usize = 1;
+            const N_SPLIT: usize = 2;
             let optimal_split_outer = Self::calculate_optimal_split::<N_SPLIT, { N_SPLIT + 1 }>(&mut objects);
             let split_objects = Self::split_objects(objects, optimal_split_outer);
 

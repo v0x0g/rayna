@@ -1,6 +1,5 @@
 use crate::core::types::{Number, Point3, Size3, Vector3};
 use crate::mesh::advanced::bvh::BvhMesh;
-use crate::mesh::planar::triangle::TriangleMesh;
 use crate::mesh::primitive::axis_box::AxisBoxMesh;
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
@@ -40,7 +39,7 @@ pub struct VoxelGridMesh {
     thresh: Number,
     #[derivative(Debug = "ignore")]
     #[get = "pub"]
-    mesh_data: BvhMesh<TriangleMesh>,
+    voxels: BvhMesh<AxisBoxMesh>,
 }
 
 pub trait GeneratorFunction = Fn(Point3) -> Number;
@@ -69,22 +68,46 @@ impl VoxelGridMesh {
         // How large each voxel should be
         let voxel_size = (mesh_scale.to_vector() / grid_dims).to_size();
 
-        // Create raw grid of voxels, using provided function for each grid point
-        let data = ArcArray::from_shape_fn(Shape::from(Ix3(width, height, depth)), |p| {
-            func(Self::idx_to_func_pos(
-                p,
-                grid_centre,
-                grid_dims,
-                func_centre,
-                func_scale,
-            ))
-        });
+        let idx_to_world_pos = |(x, y, z): (usize, usize, usize)| {
+            let idx_vec = Vector3::from([x, y, z].map(|n| n as Number));
+            // centre so the coords range `-dim/2 .. dim/2`
+            let idx_centred = idx_vec - grid_centre;
+            // normalise to `-0.5..0.5`
+            let idx_norm = idx_centred / grid_dims;
+            // scale according to the mesh's scale
+            let idx_scaled = idx_norm * mesh_scale.to_vector();
+            // offset according to the function's centre
+            let point = mesh_centre + idx_scaled;
+            point
+        };
 
-        // Convert data to the mesh data
-        let mesh_data = Self::extract_isosurface(
-            data,
-            grid_centre, grid_dims, mesh_centre
-        )
+        let idx_to_fn_pos = |(x, y, z): (usize, usize, usize)| {
+            let idx_vec = Vector3::from([x, y, z].map(|n| n as Number));
+            // centre so the coords range `-dim/2 .. dim/2`
+            let idx_centred = idx_vec - grid_centre;
+            // normalise to `-0.5..0.5`
+            let idx_norm = idx_centred / grid_dims;
+            // scale according to the function's scale
+            let idx_scaled = idx_norm * func_scale.to_vector();
+            // offset according to the function's centre
+            let point = func_centre + idx_scaled;
+            point
+        };
+
+        // Create raw grid of voxels, using provided function for each grid point
+        let data = ArcArray::from_shape_fn(Shape::from(Ix3(width, height, depth)), |p| func(idx_to_fn_pos(p)));
+
+        let voxels = data
+            .indexed_iter()
+            .filter_map(|(p, &v)| {
+                if v < thresh {
+                    Some(AxisBoxMesh::new_centred(idx_to_world_pos(p), voxel_size))
+                } else {
+                    None
+                }
+            })
+            .collect_vec();
+        let voxels = BvhMesh::new(voxels);
 
         Self {
             width,
@@ -93,7 +116,7 @@ impl VoxelGridMesh {
             count: data.len(),
             centre: grid_centre.to_point(),
             data,
-            mesh_data: voxels,
+            voxels,
             thresh,
         }
     }
@@ -101,89 +124,10 @@ impl VoxelGridMesh {
 
 // endregion Constructors
 
-// region Helper
-
-impl VoxelGridMesh {
-    fn idx_to_world_pos(
-        (x, y, z): (usize, usize, usize),
-        grid_centre: impl Into<Vector3>,
-        grid_dims: impl Into<Vector3>,
-        mesh_centre: impl Into<Vector3>,
-        mesh_scale: impl Into<Vector3>,
-    ) -> Point3 {
-        let (grid_centre, grid_dims, mesh_centre, mesh_scale) = (
-            grid_centre.into(),
-            grid_dims.into(),
-            mesh_centre.into(),
-            mesh_scale.into(),
-        );
-        let idx_vec = Vector3::from([x, y, z].map(|n| n as Number));
-        // centre so the coords range `-dim/2 .. dim/2`
-        let idx_centred = idx_vec - grid_centre;
-        // normalise to `-0.5..0.5`
-        let idx_norm = idx_centred / grid_dims;
-        // scale according to the mesh's scale
-        let idx_scaled = idx_norm * mesh_scale;
-        // offset according to the mesh's centre
-        let point = mesh_centre + idx_scaled;
-        point.to_point()
-    }
-
-    fn idx_to_func_pos(
-        (x, y, z): (usize, usize, usize),
-        grid_centre: impl Into<Vector3>,
-        grid_dims: impl Into<Vector3>,
-        func_centre: impl Into<Vector3>,
-        func_scale: impl Into<Vector3>,
-    ) -> Point3 {
-        let (grid_centre, grid_dims, func_centre, func_scale) = (
-            grid_centre.into(),
-            grid_dims.into(),
-            func_centre.into(),
-            func_scale.into(),
-        );
-        let idx_vec = Vector3::from([x, y, z].map(|n| n as Number));
-        // centre so the coords range `-dim/2 .. dim/2`
-        let idx_centred = idx_vec - grid_centre;
-        // normalise to `-0.5..0.5`
-        let idx_norm = idx_centred / grid_dims;
-        // scale according to the function's scale
-        let idx_scaled = idx_norm * func_scale;
-        // offset according to the function's centre
-        let point = func_centre + idx_scaled;
-        point.to_point()
-    }
-
-    fn extract_isosurface(data: ArcArray<Number, Ix3>,
-                          grid_centre: impl Into<Vector3>,
-                          grid_dims: impl Into<Vector3>,
-                          mesh_centre: impl Into<Vector3>,
-                          mesh_scale: impl Into<Vector3>,
-                          voxel_size: impl Into<Size3>,
-                          thresh: Number) -> BvhMesh<TriangleMesh> {
-        let mesh_data= data
-            .indexed_iter()
-            .filter_map(|(p, &v)| {
-                if v < thresh {
-                    Some(AxisBoxMesh::new_centred(
-                        Self::idx_to_world_pos(p, grid_centre, grid_dims, mesh_centre, mesh_scale),
-                        voxel_size,
-                    ))
-                } else {
-                    None
-                }
-            })
-            .collect_vec();
-        BvhMesh::new(mesh_data);
-    }
-}
-
-// endregion
-
 // region Mesh Impl
 
 impl HasAabb for VoxelGridMesh {
-    fn aabb(&self) -> Option<&Aabb> { self.mesh_data.aabb() }
+    fn aabb(&self) -> Option<&Aabb> { self.voxels.aabb() }
 }
 
 impl MeshProperties for VoxelGridMesh {
@@ -192,7 +136,7 @@ impl MeshProperties for VoxelGridMesh {
 
 impl Mesh for VoxelGridMesh {
     fn intersect(&self, ray: &Ray, interval: &Interval<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
-        self.mesh_data.intersect(ray, interval, rng)
+        self.voxels.intersect(ray, interval, rng)
     }
 }
 

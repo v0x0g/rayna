@@ -128,14 +128,31 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             // Find the longest axis to split along, and sort for that axis
             let main_aabb = Aabb::encompass_iter(objects.iter().map(HasAabb::expect_aabb));
 
-            const N_SPLIT: usize = 4;
-            let optimal_split_outer = Self::calculate_optimal_split::<N_SPLIT, { N_SPLIT + 1 }>(&mut objects);
-            let split_objects = Self::split_objects(objects, optimal_split_outer);
+            // NOTE: Ideally, I would be able to use `N_SPLIT=3` for this, to partition into four separate chunks along the axis
+            //  However, due to the time complexity (I think either `O(N_S!)` or `O(e^N_S)`, it's impossibly slow
+            //  (i.e. `N_SPLIT=4` for 32K objects takes more than several hours (I gave up after four)
+            //  Instead, just run the split twice, which should give four child nodes
 
             let main_node = arena.new_node(GenericBvhNode::Nested(main_aabb));
-            for chunk in split_objects {
-                main_node.append(Self::generate_nodes_sah(chunk, arena), arena);
+
+            let optimal_split_outer = Self::calculate_optimal_split::<1, 2>(&mut objects)
+                .expect("outer split calculation should always succeed");
+            let outer_split_objects = Self::split_objects(objects, optimal_split_outer);
+            for mut outer_split in outer_split_objects {
+                // Try split again
+                if let Some(sub_split) = Self::calculate_optimal_split::<1, 2>(&mut outer_split) {
+                    let sub_split_objects = Self::split_objects(outer_split, sub_split);
+                    for chunk in sub_split_objects {
+                        main_node.append(Self::generate_nodes_sah(chunk, arena), arena);
+                    }
+                } else {
+                    main_node.append(Self::generate_nodes_sah(outer_split, arena), arena);
+                }
             }
+
+            // const N_SPLIT: usize = 1;
+            // let optimal_split_outer = Self::calculate_optimal_split::<N_SPLIT, { N_SPLIT + 1 }>(&mut objects);
+            // let split_objects = Self::split_objects(objects, optimal_split_outer);
 
             return main_node;
         }
@@ -155,20 +172,18 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
         })
     }
 
-    /// Given a vec of objects, calculates the most optimal split position
+    /// Given a vec of objects, calculates the most optimal split position(s)
     ///
     /// Requires mutable access to the vec, so that elements can be sorted along axes
     fn calculate_optimal_split<const N_SPLIT: usize, const N_SPLIT_PLUS_ONE: usize>(
         objects: &mut Vec<BNode>,
-    ) -> BvhSplit<N_SPLIT_PLUS_ONE> {
+    ) -> Option<BvhSplit<N_SPLIT_PLUS_ONE>> {
         // Unfortunately I can't use const assertions like `static_assertions::const_assert_eq()`
         // Since they create a `const _:()` and so use a generic from the outer item, which isn't allowed :(
         assert_eq!(N_SPLIT + 1, N_SPLIT_PLUS_ONE);
-        assert!(
-            objects.len() > 2 * N_SPLIT,
-            "cannot split with <=2 items per split (have {})",
-            objects.len()
-        );
+        if objects.len() <= 2 * N_SPLIT {
+            return None;
+        }
 
         // When we have a large number of objects, we can potentially be checking millions or more split positions
         // So we can batch objects slightly, so that we don't check *all* combinations, hopefully speeding things up a bit
@@ -176,7 +191,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
         // affect performance/BVH quality much
 
         /// Higher values are more aggressive at skipping, and are faster to build. Range `0..1`
-        const SKIP_AGGRESSION: Number = 0.5;
+        const SKIP_AGGRESSION: Number = 0.0;
         static_assertions::const_assert!(0.0 <= SKIP_AGGRESSION && SKIP_AGGRESSION < 1.0);
         let batch_skip = (objects.len() as Number).powf(SKIP_AGGRESSION) - 1.0;
         let mut batch_counter = 0.0;
@@ -276,7 +291,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             }
         }
 
-        best_split.expect("best split was not set: did no iterations")
+        Some(best_split.expect("best split was not set: did no iterations"))
     }
 }
 

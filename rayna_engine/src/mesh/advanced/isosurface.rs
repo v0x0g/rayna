@@ -40,12 +40,15 @@ pub trait SdfGeneratorFunction = Fn(Point3) -> Number;
 
 impl IsosurfaceMesh {
     pub fn generate<F: SdfGeneratorFunction>(resolution: usize, func: F) -> Self {
-        // let source = SdfSource { func };
-        let (mut raw_vertices, mut raw_indices) = (vec![], vec![]);
-        let source = isosurface::implicit::Sphere::new(0.5);
-        let mut extractor = isosurface::extractor::IndexedVertices::new(&mut raw_vertices, &mut raw_indices);
-        let sampler = Sampler::new(&source);
-        MarchingCubes::<Signed>::new(resolution).extract(&sampler, &mut extractor);
+        // // let source = SdfSource { func };
+        // let (mut raw_vertices, mut raw_indices) = (vec![], vec![]);
+        // let source = isosurface::implicit::Sphere::new(0.5);
+        // let mut extractor = isosurface::extractor::IndexedVertices::new(&mut raw_vertices, &mut raw_indices);
+        // let sampler = Sampler::new(&source);
+        // MarchingCubes::<Signed>::new(resolution).extract(&sampler, &mut extractor);
+
+        let raw_vertices = vec![1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0];
+        let raw_indices = vec![0, 1, 2, 3, 0, 1];
 
         assert_eq!(
             raw_indices.len() % 3,

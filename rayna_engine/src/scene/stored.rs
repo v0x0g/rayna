@@ -35,40 +35,40 @@ use crate::texture::TextureInstance;
 
 use super::Scene;
 
-/// Super simple scene, just a ground sphere and a small sphere
-#[dynamic]
-pub static SIMPLE: Scene = {
-    Scene {
-        camera: Camera {
-            pos: Point3::new(0., 0.5, -3.),
-            fwd: Vector3::Z,
-            v_fov: Angle::from_degrees(45.),
-            focus_dist: 3.,
-            defocus_angle: Angle::from_degrees(0.),
-        },
-        objects: [
-            SimpleObject::new(
-                // Small, top
-                SphereMesh::new((0., 0., 1.), 0.5),
-                MetalMaterial {
-                    albedo: [0.8; 3].into(),
-                    fuzz: 1.,
-                },
-                None,
-            ),
-            SimpleObject::new(
-                // Ground
-                SphereMesh::new((0., -100.5, -1.), 100.),
-                LambertianMaterial {
-                    albedo: [0.5; 3].into(),
-                },
-                None,
-            ),
-        ]
-        .into(),
-        skybox: SkyboxInstance::default(),
-    }
-};
+// /// Super simple scene, just a ground sphere and a small sphere
+// #[dynamic]
+// pub static SIMPLE: Scene = {
+//     Scene {
+//         camera: Camera {
+//             pos: Point3::new(0., 0.5, -3.),
+//             fwd: Vector3::Z,
+//             v_fov: Angle::from_degrees(45.),
+//             focus_dist: 3.,
+//             defocus_angle: Angle::from_degrees(0.),
+//         },
+//         objects: [
+//             SimpleObject::new(
+//                 // Small, top
+//                 SphereMesh::new((0., 0., 1.), 0.5),
+//                 MetalMaterial {
+//                     albedo: [0.8; 3].into(),
+//                     fuzz: 1.,
+//                 },
+//                 None,
+//             ),
+//             SimpleObject::new(
+//                 // Ground
+//                 SphereMesh::new((0., -100.5, -1.), 100.),
+//                 LambertianMaterial {
+//                     albedo: [0.5; 3].into(),
+//                 },
+//                 None,
+//             ),
+//         ]
+//         .into(),
+//         skybox: SkyboxInstance::default(),
+//     }
+// };
 
 #[dynamic]
 pub static TESTING: Scene = {
@@ -90,11 +90,12 @@ pub static TESTING: Scene = {
                 let y = 1.0 - y;
                 x.powi(2) + z.powi(2) + y.powf(A + (A * B)) - y.powf(A)
             }),
-            DielectricMaterial {
-                albedo: [0.68, 0.73, 0.8].into(),
-                density: 40.0,
-                refractive_index: 1.335,
-            },
+            // DielectricMaterial {
+            //     albedo: [0.68, 0.73, 0.8].into(),
+            //     density: 40.0,
+            //     refractive_index: 1.335,
+            // },
+            LambertianMaterial::default(),
             None,
         ));
 

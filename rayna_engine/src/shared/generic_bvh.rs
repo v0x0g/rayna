@@ -128,7 +128,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
             // Find the longest axis to split along, and sort for that axis
             let main_aabb = Aabb::encompass_iter(objects.iter().map(HasAabb::expect_aabb));
 
-            const N_SPLIT: usize = 2;
+            const N_SPLIT: usize = 4;
             let optimal_split_outer = Self::calculate_optimal_split::<N_SPLIT, { N_SPLIT + 1 }>(&mut objects);
             let split_objects = Self::split_objects(objects, optimal_split_outer);
 
@@ -176,7 +176,7 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
         // affect performance/BVH quality much
 
         /// Higher values are more aggressive at skipping, and are faster to build. Range `0..1`
-        const SKIP_AGGRESSION: Number = 0.2;
+        const SKIP_AGGRESSION: Number = 0.5;
         static_assertions::const_assert!(0.0 <= SKIP_AGGRESSION && SKIP_AGGRESSION < 1.0);
         let batch_skip = (objects.len() as Number).powf(SKIP_AGGRESSION) - 1.0;
         let mut batch_counter = 0.0;

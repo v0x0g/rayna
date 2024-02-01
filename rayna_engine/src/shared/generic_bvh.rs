@@ -52,17 +52,13 @@ impl<BNode: HasAabb> GenericBvh<BNode> {
         );
 
         let mut arena = Arena::with_capacity(objects.len());
-        let start = puffin::now_ns();
         let root_id = if objects.is_empty() {
             None
         } else {
             Some(Self::generate_nodes_sah(objects, &mut arena))
         };
-        let end = puffin::now_ns();
-        let duration = Duration::from_nanos(end.abs_diff(start));
-        dbg!(duration);
 
-        // eprintln!("\n\n{:?}\n\n", root_id.debug_pretty_print(&tree));
+        // root_id.map(|root_id| eprintln!("\n\n{:?}\n\n", root_id.debug_pretty_print(&arena)));
 
         Self { arena, root_id }
     }

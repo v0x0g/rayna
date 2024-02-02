@@ -78,7 +78,10 @@ impl Mesh for InfinitePlaneMesh {
     fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         let mut i = self.plane.intersect_bounded(ray, interval)?;
         // Wrap uv's if required
-        self.uv_wrap.apply_mut(&mut i.uv);
+        // self.uv_wrap.apply_mut(&mut i.uv);
+        if !(0. <= i.uv.x && i.uv.x <= 1. && 0. <= i.uv.y && i.uv.y <= 1.0) {
+            i.uv = Point2::ZERO;
+        }
         Some(i)
     }
 }

@@ -41,37 +41,45 @@ pub trait SdfGeneratorFunction = Fn(Point3) -> Number;
 impl IsosurfaceMesh {
     pub fn generate<F: SdfGeneratorFunction>(resolution: usize, func: F) -> Self {
         // let source = SdfSource { func };
-        let (mut raw_vertices, mut raw_indices) = (vec![], vec![]);
+        let mut raw_vertices = vec![];
+        // let mut raw_indices = vec![];
         let source = isosurface::implicit::Sphere::new(0.5);
-        let mut extractor = isosurface::extractor::IndexedVertices::new(&mut raw_vertices, &mut raw_indices);
+        let mut extractor = isosurface::extractor::OnlyVertices::new(&mut raw_vertices);
         let sampler = Sampler::new(&source);
         MarchingCubes::<Signed>::new(resolution).extract(&sampler, &mut extractor);
 
-        assert_eq!(
-            raw_indices.len() % 3,
-            0,
-            "`indices.len` should be multiple of 3 (was {})",
-            raw_indices.len()
-        );
+        // assert_eq!(
+        //     raw_indices.len() % 3,
+        //     0,
+        //     "`indices.len` should be multiple of 3 (was {})",
+        //     raw_indices.len()
+        // );
 
         // Group the vertex coordinates into groups of three, so we get a 3D point
         let isosurface_vertices = raw_vertices
             .array_chunks::<3>()
             .map(|vs| Point3::from(vs.map(|v| v as Number)))
             .collect_vec();
-        let isosurface_indices = raw_indices
-            .array_chunks::<3>()
-            .map(|vs| vs.map(|v| v as usize))
-            .collect_vec();
 
-        let mut triangles = Vec::with_capacity(raw_indices.len() % 3);
+        // let isosurface_indices = raw_indices
+        //     .array_chunks::<3>()
+        //     .map(|vs| vs.map(|v| v as usize))
+        //     .collect_vec();
 
-        for indices in isosurface_indices {
-            // Each index refers to the index of the `x` vertex coordinate in the buffer,
-            // so we can divide by 3 to get the proper index as a point
-            let vertices = indices.map(|idx| isosurface_vertices[idx]);
+        // let mut triangles = Vec::with_capacity(raw_indices.len() % 3);
+        let mut triangles = vec![];
+
+        for &vertices in isosurface_vertices.array_chunks::<3>() {
             triangles.push(TriangleMesh::from(vertices));
         }
+
+        // for indices in isosurface_indices {
+        //     // Each index refers to the index of the `x` vertex coordinate in the buffer,
+        //     // so we can divide by 3 to get the proper index as a point
+        //     let vertices = indices.map(|idx| isosurface_vertices[idx]);
+        //     triangles.push(TriangleMesh::from(vertices));
+        // }
+
         let count = triangles.len();
         let mesh = BvhMesh::new(triangles);
 

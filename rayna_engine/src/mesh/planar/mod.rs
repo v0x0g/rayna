@@ -81,7 +81,7 @@ impl Planar {
         let n = n_raw
             .try_normalize()
             .expect("couldn't normalise plane normal: cross(u, v) == 0");
-        let d = n.dot(p.to_vector());
+        let d = -Vector3::dot(n, p.to_vector());
         // NOTE: using non-normalised normal here
         let w = n_raw / n_raw.length_squared();
         Self { p, u, v, n, d, w }
@@ -164,7 +164,7 @@ impl Planar {
             return None;
         }
 
-        let t = (self.d - Vector3::dot(self.n, ray.pos().to_vector())) / denominator;
+        let t = -(Vector3::dot(self.n, ray.pos().to_vector()) + self.d) / denominator;
 
         if !interval.contains(&t) {
             return None;

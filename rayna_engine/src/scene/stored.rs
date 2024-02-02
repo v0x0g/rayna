@@ -106,7 +106,7 @@ pub static TESTING: Scene = {
         //     None,
         // ));
 
-        let v = [[1.0, 1.0, 1.0], [-1.0, -1.0, 1.0], [-1.0, 1.0, -1.0], [1.0, -1.0, -1.0]];
+        let v = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0]];
         let r = 0.1;
 
         objects.push(SimpleObject::new(
@@ -135,7 +135,7 @@ pub static TESTING: Scene = {
             None,
         ));
         objects.push(SimpleObject::new(
-            SphereMesh::new(Point3::ZERO, r),
+            SphereMesh::new([0.5, 0.5, 0.0], r),
             LambertianMaterial::from(TextureInstance::from([1., 1., 1.])),
             None,
         ));

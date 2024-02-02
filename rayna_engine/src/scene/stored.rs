@@ -107,48 +107,41 @@ pub static TESTING: Scene = {
         // ));
 
         let v = [[0.0, 0.0, -1.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]].map(Vector3::from);
-        let r = 0.1;
+        let [vr, vg, vb, vw] = [v[0], v[1], v[2], (v[1] + v[2]) - v[0] * 2.];
+        let [vrg, vgb, vbr] = [(vr + vg) / 2., (vg + vb) / 2., (vb + vr) / 2.];
+        let [r, g, b, w] = [[1., 0., 0.], [0., 1., 0.], [0., 0., 1.], [1., 1., 1.]].map(Colour::from);
+        let [rg, gb, br] = [(r + g) / 2., (g + b) / 2., (b + r) / 2.];
+        let radius = 0.1;
 
         objects.push(SimpleObject::new(
-            InfinitePlaneMesh::from([v[0], v[1], v[2]]),
+            ParallelogramMesh::from(v),
             LambertianMaterial::default(),
             None,
         ));
-        objects.push(SimpleObject::new(
-            SphereMesh::new(v[0], r),
-            LambertianMaterial::from(TextureInstance::from([1., 0., 0.])),
-            None,
-        ));
-        objects.push(SimpleObject::new(
-            SphereMesh::new(v[0] / 2., r),
-            LambertianMaterial::from(TextureInstance::from([1., 0., 0.])),
-            None,
-        ));
-        objects.push(SimpleObject::new(
-            SphereMesh::new(v[1], r),
-            LambertianMaterial::from(TextureInstance::from([0., 1., 0.])),
-            None,
-        ));
-        objects.push(SimpleObject::new(
-            SphereMesh::new(v[1] / 2., r),
-            LambertianMaterial::from(TextureInstance::from([0., 1., 0.])),
-            None,
-        ));
-        objects.push(SimpleObject::new(
-            SphereMesh::new(v[2], r),
-            LambertianMaterial::from(TextureInstance::from([0., 0., 1.])),
-            None,
-        ));
-        objects.push(SimpleObject::new(
-            SphereMesh::new(v[2] / 2., r),
-            LambertianMaterial::from(TextureInstance::from([0., 0., 1.])),
-            None,
-        ));
-        objects.push(SimpleObject::new(
-            SphereMesh::new(Point3::ZERO, r),
-            LambertianMaterial::from(TextureInstance::from([0.; 3])),
-            None,
-        ));
+
+        let mut sphere = |p: Vector3, c: Colour| {
+            objects.push(SimpleObject::new(
+                SphereMesh::new(p, radius),
+                LambertianMaterial::from(TextureInstance::from(c)),
+                None,
+            ));
+        };
+
+        sphere(Vector3::ZERO, Colour::BLACK);
+
+        sphere(vr, r);
+        sphere(vg, g);
+        sphere(vb, b);
+
+        sphere(vr / 2., r);
+        sphere(vg / 2., g);
+        sphere(vb / 2., b);
+
+        sphere(vrg, rg);
+        sphere(vgb, gb);
+        sphere(vbr, br);
+
+        sphere(vw, w);
 
         // objects.push(SimpleObject::new(
         //     TriangleMesh::from([v[3], v[0], v[1]]),

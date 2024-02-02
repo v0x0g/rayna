@@ -15,6 +15,7 @@ use isosurface::source::ScalarSource;
 use isosurface::MarchingCubes;
 use itertools::Itertools;
 use rand_core::RngCore;
+use tracing::debug;
 
 /// A mesh struct that is created by creating an isosurface from a given SDF
 ///
@@ -71,7 +72,11 @@ impl IsosurfaceMesh {
 
         // The vertices are given as a triangle strip, where each vertex follows on from the previous two vertices
         // E.g. for vertices `[a, b, c, d]`, we have triangles `[a,b,c]` and `[b,c,d]`, etc
-        for &vertices in raw_vertices.array_windows::<3>() {
+        for (i, &vertices) in raw_vertices.array_windows::<3>().enumerate() {
+            if vertices[0] == vertices[1] || vertices[1] == vertices[2] || vertices[2] == vertices[0] {
+                debug!(target: crate::core::targets::MAIN, "invalid vertices at index {i}: {vertices:?}");
+                continue;
+            }
             triangles.push(TriangleMesh::from(vertices));
         }
 

@@ -100,11 +100,10 @@ pub fn uv(uv: impl Borrow<Point2>) {
     debug_assert_only!();
     let uv = uv.borrow();
     assert!(!uv.is_nan(), "should not be nan; uvs: {uv:?}");
-    // This check does not apply since the change allowing UV coordinates to be unbounded
-    // assert!(
-    //     (uv.cmpge(Point2::ZERO) & uv.cmple(Point2::ONE)).all(),
-    //     "uv coordinates should be `0..=1`; uv: {uv:?}"
-    // )
+    assert!(
+        (uv.cmpge(Point2::ZERO) & uv.cmple(Point2::ONE)).all(),
+        "uv coordinates should be `0..=1`; uv: {uv:?}"
+    )
 }
 
 /// Asserts that an intersection was valid

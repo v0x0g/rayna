@@ -25,6 +25,8 @@ pub enum UvWrappingMode {
     ///
     /// Equivalent to `abs((x % 2.0) - 1.0)
     Mirror,
+    /// If either of the UV coordinates goes out of the range `0..=1`, sets both components to zero
+    ClampZero,
 }
 
 impl UvWrappingMode {
@@ -37,6 +39,13 @@ impl UvWrappingMode {
         match self {
             Self::Wrap => Point2::new(wrap(uvs.x), wrap(uvs.y)),
             Self::Mirror => Point2::new(mirror(uvs.x), mirror(uvs.y)),
+            Self::ClampZero => {
+                if !(0. <= uvs.x && uvs.x <= 1. && 0. <= uvs.y && uvs.y <= 1.0) {
+                    Point2::ZERO
+                } else {
+                    uvs
+                }
+            }
         }
     }
 
@@ -78,10 +87,7 @@ impl Mesh for InfinitePlaneMesh {
     fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         let mut i = self.plane.intersect_bounded(ray, interval)?;
         // Wrap uv's if required
-        // self.uv_wrap.apply_mut(&mut i.uv);
-        if !(0. <= i.uv.x && i.uv.x <= 1. && 0. <= i.uv.y && i.uv.y <= 1.0) {
-            i.uv = Point2::ZERO;
-        }
+        self.uv_wrap.apply_mut(&mut i.uv);
         Some(i)
     }
 }

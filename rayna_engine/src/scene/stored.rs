@@ -18,7 +18,7 @@ use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::mesh::advanced::bvh::BvhMesh;
 use crate::mesh::advanced::isosurface::IsosurfaceMesh;
-use crate::mesh::planar::infinite_plane::InfinitePlaneMesh;
+use crate::mesh::planar::infinite_plane::{InfinitePlaneMesh, UvWrappingMode};
 use crate::mesh::planar::parallelogram::ParallelogramMesh;
 use crate::mesh::planar::triangle::TriangleMesh;
 use crate::mesh::planar::Planar;
@@ -114,7 +114,7 @@ pub static TESTING: Scene = {
         let radius = 0.1;
 
         objects.push(SimpleObject::new(
-            InfinitePlaneMesh::from(v),
+            InfinitePlaneMesh::new(v, UvWrappingMode::ClampZero),
             LambertianMaterial::default(),
             None,
         ));

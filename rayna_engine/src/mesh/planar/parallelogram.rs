@@ -24,9 +24,14 @@ pub struct ParallelogramMesh {
 impl ParallelogramMesh {
     pub fn new(plane: impl Into<Planar>) -> Self {
         let plane = plane.into();
-        let (p, a, b) = (plane.p(), plane.p() + plane.u(), plane.p() + plane.v());
+        let (p, a, b, ab) = (
+            plane.p(),
+            plane.p() + plane.u(),
+            plane.p() + plane.v(),
+            plane.p() + plane.u() + plane.v(),
+        );
         let centre = p + (plane.u() / 2.) + (plane.v() / 2.);
-        let aabb = Aabb::encompass_points([p, a, b]).min_padded(super::AABB_PADDING);
+        let aabb = Aabb::encompass_points([p, a, b, ab]).min_padded(super::AABB_PADDING);
 
         Self { plane, aabb, centre }
     }

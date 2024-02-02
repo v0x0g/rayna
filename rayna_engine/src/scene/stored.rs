@@ -114,7 +114,8 @@ pub static TESTING: Scene = {
         let radius = 0.1;
 
         objects.push(SimpleObject::new(
-            InfinitePlaneMesh::new(v, UvWrappingMode::ClampZero),
+            // InfinitePlaneMesh::new(v, UvWrappingMode::ClampZero),
+            ParallelogramMesh::new(v),
             LambertianMaterial::default(),
             None,
         ));

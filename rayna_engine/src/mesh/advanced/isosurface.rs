@@ -1,6 +1,7 @@
 use crate::core::types::{Number, Point3};
 use crate::mesh::advanced::bvh::BvhMesh;
 use crate::mesh::planar::triangle::TriangleMesh;
+use crate::mesh::primitive::sphere::SphereMesh;
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::intersect::Intersection;
@@ -32,7 +33,7 @@ pub struct IsosurfaceMesh {
     count: usize,
     #[derivative(Debug = "ignore")]
     #[get = "pub"]
-    mesh: BvhMesh<TriangleMesh>,
+    mesh: BvhMesh<SphereMesh>,
 }
 
 pub trait SdfGeneratorFunction = Fn(Point3) -> Number;
@@ -67,18 +68,10 @@ impl IsosurfaceMesh {
         //     .map(|vs| vs.map(|v| v as usize))
         //     .collect_vec();
 
-        // let mut triangles = Vec::with_capacity(raw_indices.len() % 3);
-        let mut triangles = vec![];
+        let mut spheres = vec![];
 
-        // The vertices are given as a triangle strip, where each vertex follows on from the previous two vertices
-        // E.g. for vertices `[a, b, c, d]`, we have triangles `[a,b,c]` and `[b,c,d]`, etc
-        for (i, &vert @ [a, b, c]) in raw_vertices.array_windows::<3>().enumerate() {
-            if a == b || b == c || c == a {
-                debug!(target: crate::core::targets::MAIN, "invalid vertices at index {i}: {vert:?}", );
-                continue;
-            }
-
-            triangles.push(TriangleMesh::from([b, a, c]));
+        for p in raw_vertices {
+            spheres.push(SphereMesh::new(p, 0.05));
         }
 
         // for indices in isosurface_indices {
@@ -88,8 +81,8 @@ impl IsosurfaceMesh {
         //     triangles.push(TriangleMesh::from(vertices));
         // }
 
-        let count = triangles.len();
-        let mesh = BvhMesh::new(triangles);
+        let count = spheres.len();
+        let mesh = BvhMesh::new(spheres);
 
         Self {
             count,

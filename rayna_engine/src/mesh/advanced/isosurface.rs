@@ -72,12 +72,14 @@ impl IsosurfaceMesh {
 
         // The vertices are given as a triangle strip, where each vertex follows on from the previous two vertices
         // E.g. for vertices `[a, b, c, d]`, we have triangles `[a,b,c]` and `[b,c,d]`, etc
-        for (i, &vertices) in raw_vertices.array_windows::<3>().enumerate() {
-            if vertices[0] == vertices[1] || vertices[1] == vertices[2] || vertices[2] == vertices[0] {
-                debug!(target: crate::core::targets::MAIN, "invalid vertices at index {i}: {vertices:?}");
+        for (i, &vert) in raw_vertices.array_chunks::<4>().enumerate() {
+            if vert[0] == vert[1] || vert[1] == vert[2] || vert[2] == vert[3] || vert[3] == vert[0] {
+                debug!(target: crate::core::targets::MAIN, "invalid vertices at index {i}: {vert:?}");
                 continue;
             }
-            triangles.push(TriangleMesh::from(vertices));
+
+            triangles.push(TriangleMesh::from([vert[0], vert[1], vert[2]]));
+            triangles.push(TriangleMesh::from([vert[1], vert[2], vert[3]]));
         }
 
         // for indices in isosurface_indices {

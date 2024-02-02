@@ -16,8 +16,6 @@ use crate::shared::ray::Ray;
 #[derive(Copy, Clone, Debug, Default, Ord, PartialOrd, Eq, PartialEq)]
 pub enum UvWrappingMode {
     // TODO: Remove `None`, add ones like clamp border, clamp edge
-    /// Don't wrap UV coords, keep them unbounded
-    None,
     /// Wrap the UV coordinates when they reach `1.0`
     ///
     /// Equivalent to `x % 1.0`
@@ -33,11 +31,10 @@ impl UvWrappingMode {
     /// Applies the wrapping mode to the UV coordinate, returning the new coordinate
     #[inline(always)]
     pub fn apply(self, uvs: Point2) -> Point2 {
-        fn wrap(x: Number) -> Number { (x % 1.0).abs() }
+        fn wrap(x: Number) -> Number { x.rem_euclid(1.0) }
         fn mirror(x: Number) -> Number { ((x % 2.0) - 1.0).abs() }
 
         match self {
-            Self::None => uvs,
             Self::Wrap => Point2::new(wrap(uvs.x), wrap(uvs.y)),
             Self::Mirror => Point2::new(mirror(uvs.x), mirror(uvs.y)),
         }

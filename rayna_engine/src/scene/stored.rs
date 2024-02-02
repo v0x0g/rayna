@@ -106,11 +106,11 @@ pub static TESTING: Scene = {
         //     None,
         // ));
 
-        let v = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0]];
+        let v = [[0.0, 0.0, -1.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]].map(Vector3::from);
         let r = 0.1;
 
         objects.push(SimpleObject::new(
-            ParallelogramMesh::from([v[0], v[1], v[2]]),
+            InfinitePlaneMesh::from([v[0], v[1], v[2]]),
             LambertianMaterial::default(),
             None,
         ));
@@ -120,7 +120,17 @@ pub static TESTING: Scene = {
             None,
         ));
         objects.push(SimpleObject::new(
+            SphereMesh::new(v[0] / 2., r),
+            LambertianMaterial::from(TextureInstance::from([1., 0., 0.])),
+            None,
+        ));
+        objects.push(SimpleObject::new(
             SphereMesh::new(v[1], r),
+            LambertianMaterial::from(TextureInstance::from([0., 1., 0.])),
+            None,
+        ));
+        objects.push(SimpleObject::new(
+            SphereMesh::new(v[1] / 2., r),
             LambertianMaterial::from(TextureInstance::from([0., 1., 0.])),
             None,
         ));
@@ -130,13 +140,13 @@ pub static TESTING: Scene = {
             None,
         ));
         objects.push(SimpleObject::new(
-            SphereMesh::new(v[3], r),
-            LambertianMaterial::from(TextureInstance::from([0., 0., 0.])),
+            SphereMesh::new(v[2] / 2., r),
+            LambertianMaterial::from(TextureInstance::from([0., 0., 1.])),
             None,
         ));
         objects.push(SimpleObject::new(
-            SphereMesh::new([0.5, 0.5, 0.0], r),
-            LambertianMaterial::from(TextureInstance::from([1., 1., 1.])),
+            SphereMesh::new(Point3::ZERO, r),
+            LambertianMaterial::from(TextureInstance::from([0.; 3])),
             None,
         ));
 

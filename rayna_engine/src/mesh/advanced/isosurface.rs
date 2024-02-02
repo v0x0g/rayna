@@ -41,10 +41,10 @@ pub trait SdfGeneratorFunction = Fn(Point3) -> Number;
 impl IsosurfaceMesh {
     pub fn generate<F: SdfGeneratorFunction>(resolution: usize, func: F) -> Self {
         // let source = SdfSource { func };
-        let mut raw_vertices = vec![];
+        let mut raw_vertex_coords = vec![];
         // let mut raw_indices = vec![];
         let source = isosurface::implicit::Sphere::new(1.0);
-        let mut extractor = isosurface::extractor::OnlyVertices::new(&mut raw_vertices);
+        let mut extractor = isosurface::extractor::OnlyVertices::new(&mut raw_vertex_coords);
         let sampler = Sampler::new(&source);
         MarchingCubes::<Signed>::new(resolution).extract(&sampler, &mut extractor);
 
@@ -56,10 +56,10 @@ impl IsosurfaceMesh {
         // );
 
         // Group the vertex coordinates into groups of three, so we get a 3D point
-        // let isosurface_vertices = raw_vertices
-        //     .array_chunks::<3>()
-        //     .map(|vs| Point3::from(vs.map(|v| v as Number)))
-        //     .collect_vec();
+        let raw_vertices = raw_vertex_coords
+            .array_chunks::<3>()
+            .map(|vs| Point3::from(vs.map(|v| v as Number)))
+            .collect_vec();
 
         // let isosurface_indices = raw_indices
         //     .array_chunks::<3>()
@@ -69,15 +69,10 @@ impl IsosurfaceMesh {
         // let mut triangles = Vec::with_capacity(raw_indices.len() % 3);
         let mut triangles = vec![];
 
-        for &vertices in raw_vertices.array_chunks::<9>() {
-            // If we imagine the three vertices as `a, b, c`,
-            // We get the coordinates as:
-            // [a.x, b.x, c.x,
-            //  a.y, b.y, c.y,
-            //  a.z, b.z, c.z]
-            // let [ax, bx, cx, ay, by, cy, az, bz, cz] = vertices.map(|n| n as Number);
-            let [ax, ay, az, bx, by, bz, cx, cy, cz] = vertices.map(|n| n as Number);
-            triangles.push(TriangleMesh::from([[ax, ay, az], [bx, by, bz], [cx, cy, cz]]));
+        // The vertices are given as a triangle strip, where each vertex follows on from the previous two vertices
+        // E.g. for vertices `[a, b, c, d]`, we have triangles `[a,b,c]` and `[b,c,d]`, etc
+        for &vertices in raw_vertices.array_windows::<3>() {
+            triangles.push(TriangleMesh::from(vertices));
         }
 
         // for indices in isosurface_indices {

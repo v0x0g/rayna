@@ -12,6 +12,7 @@
 #![feature(const_trait_impl)]
 #![feature(const_mut_refs)]
 #![feature(error_generic_member_access)]
+#![feature(array_windows)]
 
 pub mod core;
 pub mod material;

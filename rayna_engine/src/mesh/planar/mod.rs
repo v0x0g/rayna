@@ -171,18 +171,16 @@ impl Planar {
         }
 
         let pos_w = ray.at(t);
-        let pos_l = pos_w - self.p.to_vector();
+        let pos_l = pos_w - self.p;
 
-        // We would normally project so the point is `P = Q + α*u + β*v`
+        // We would normally project so the point is `P = P_local + α*u + β*v`
         // But since the vectors `u, v` don't have to be orthogonal, have to account for that too
-        // Because `P = pos`, `Q = pos_l`, we need to use local pos for this
-        let q = pos_l.to_vector();
-        let alpha = Vector3::dot(self.w, Vector3::cross(q, self.v));
-        let beta = Vector3::dot(self.w, Vector3::cross(self.u, q));
+        let alpha = Vector3::dot(self.w, Vector3::cross(pos_l, self.v));
+        let beta = Vector3::dot(self.w, Vector3::cross(self.u, pos_l));
 
         Some(Intersection {
             pos_w,
-            pos_l,
+            pos_l: pos_l.to_point(),
             dist: t,
             normal: self.n,
             // Positive => ray and normal same dir => must be behind plane => backface

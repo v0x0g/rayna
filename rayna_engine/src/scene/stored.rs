@@ -107,14 +107,14 @@ pub static TESTING: Scene = {
         // ));
 
         let v = [[0.0, 0.0, -1.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]].map(Vector3::from);
-        let [vr, vg, vb, vw] = [v[0], v[1], v[2], (v[1] + v[2]) - v[0] * 2.];
+        let [vr, vg, vb, vw] = [v[0], v[1], v[2], (v[1] + v[2]) - v[0]];
         let [vrg, vgb, vbr] = [(vr + vg) / 2., (vg + vb) / 2., (vb + vr) / 2.];
         let [r, g, b, w] = [[1., 0., 0.], [0., 1., 0.], [0., 0., 1.], [1., 1., 1.]].map(Colour::from);
         let [rg, gb, br] = [(r + g) / 2., (g + b) / 2., (b + r) / 2.];
         let radius = 0.1;
 
         objects.push(SimpleObject::new(
-            ParallelogramMesh::from(v),
+            InfinitePlaneMesh::from(v),
             LambertianMaterial::default(),
             None,
         ));

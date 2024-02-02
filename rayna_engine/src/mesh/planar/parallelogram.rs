@@ -49,7 +49,7 @@ impl Mesh for ParallelogramMesh {
     fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         let i = self.plane.intersect_bounded(ray, interval)?;
         // Check in interval for our segment of the plane: `uv in [0, 1]`
-        if 0. <= i.uv.x && i.uv.x <= 1. && 0. <= i.uv.y && i.uv.y <= 1.0 {
+        if (i.uv.cmple(Point2::ONE) & i.uv.cmpge(Point2::ZERO)).all() {
             Some(i)
         } else {
             None

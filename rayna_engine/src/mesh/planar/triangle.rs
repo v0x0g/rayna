@@ -1,7 +1,7 @@
 use getset::CopyGetters;
 use rand_core::RngCore;
 
-use crate::core::types::{Number, Point3};
+use crate::core::types::{Number, Point2, Point3};
 
 use crate::mesh::planar::Planar;
 use crate::mesh::{Mesh, MeshProperties};
@@ -24,9 +24,14 @@ pub struct TriangleMesh {
 impl TriangleMesh {
     pub fn new(plane: impl Into<Planar>) -> Self {
         let plane = plane.into();
-        let (p, a, b) = (plane.p(), plane.p() + plane.u(), plane.p() + plane.v());
+        let (p, a, b, ab) = (
+            plane.p(),
+            plane.p() + plane.u(),
+            plane.p() + plane.v(),
+            plane.p() + plane.u() + plane.v(),
+        );
         let centre = p + (plane.u() / 2.) + (plane.v() / 2.);
-        let aabb = Aabb::encompass_points([p, a, b]).min_padded(super::AABB_PADDING);
+        let aabb = Aabb::encompass_points([p, a, b, ab]).min_padded(super::AABB_PADDING);
 
         Self { plane, aabb, centre }
     }
@@ -43,15 +48,13 @@ impl<P: Into<Planar>> From<P> for TriangleMesh {
 impl Mesh for TriangleMesh {
     fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         let i = self.plane.intersect_bounded(ray, interval)?;
-        // Check in interval for our segment of the plane: `u + v: [0..1]`
+        // Check in interval for our segment of the plane: `u + v: [0..=1]; u, v: [0..=1]`
         // TODO: Bayesian coordinates for triangles??
-        if (i.uv.x + i.uv.y) < 1. {
+        if (i.uv.cmple(Point2::ONE) & i.uv.cmpge(Point2::ZERO)).all() && (i.uv.x + i.uv.y) <= 1. {
             Some(i)
         } else {
             None
-        };
-
-        Some(i)
+        }
     }
 }
 

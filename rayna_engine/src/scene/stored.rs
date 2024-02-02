@@ -115,7 +115,8 @@ pub static TESTING: Scene = {
 
         objects.push(SimpleObject::new(
             // InfinitePlaneMesh::new(v, UvWrappingMode::ClampZero),
-            ParallelogramMesh::new(v),
+            // ParallelogramMesh::new(v),
+            TriangleMesh::new(v),
             LambertianMaterial::default(),
             None,
         ));
@@ -143,12 +144,6 @@ pub static TESTING: Scene = {
         sphere(vbr, br);
 
         sphere(vw, w);
-
-        // objects.push(SimpleObject::new(
-        //     TriangleMesh::from([v[3], v[0], v[1]]),
-        //     LambertianMaterial::default(),
-        //     None,
-        // ));
     }
 
     Scene {

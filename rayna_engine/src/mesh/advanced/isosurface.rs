@@ -43,7 +43,7 @@ impl IsosurfaceMesh {
         // let source = SdfSource { func };
         let mut raw_vertices = vec![];
         // let mut raw_indices = vec![];
-        let source = isosurface::implicit::Sphere::new(0.5);
+        let source = isosurface::implicit::Sphere::new(1.0);
         let mut extractor = isosurface::extractor::OnlyVertices::new(&mut raw_vertices);
         let sampler = Sampler::new(&source);
         MarchingCubes::<Signed>::new(resolution).extract(&sampler, &mut extractor);
@@ -75,7 +75,8 @@ impl IsosurfaceMesh {
             // [a.x, b.x, c.x,
             //  a.y, b.y, c.y,
             //  a.z, b.z, c.z]
-            let [ax, bx, cx, ay, by, cy, az, bz, cz] = vertices.map(|n| n as Number);
+            // let [ax, bx, cx, ay, by, cy, az, bz, cz] = vertices.map(|n| n as Number);
+            let [ax, ay, az, bx, by, bz, cx, cy, cz] = vertices.map(|n| n as Number);
             triangles.push(TriangleMesh::from([[ax, ay, az], [bx, by, bz], [cx, cy, cz]]));
         }
 

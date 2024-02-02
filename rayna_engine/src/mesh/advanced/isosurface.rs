@@ -56,10 +56,10 @@ impl IsosurfaceMesh {
         // );
 
         // Group the vertex coordinates into groups of three, so we get a 3D point
-        let isosurface_vertices = raw_vertices
-            .array_chunks::<3>()
-            .map(|vs| Point3::from(vs.map(|v| v as Number)))
-            .collect_vec();
+        // let isosurface_vertices = raw_vertices
+        //     .array_chunks::<3>()
+        //     .map(|vs| Point3::from(vs.map(|v| v as Number)))
+        //     .collect_vec();
 
         // let isosurface_indices = raw_indices
         //     .array_chunks::<3>()
@@ -69,8 +69,14 @@ impl IsosurfaceMesh {
         // let mut triangles = Vec::with_capacity(raw_indices.len() % 3);
         let mut triangles = vec![];
 
-        for &vertices in isosurface_vertices.array_chunks::<3>() {
-            triangles.push(TriangleMesh::from(vertices));
+        for &vertices in raw_vertices.array_chunks::<9>() {
+            // If we imagine the three vertices as `a, b, c`,
+            // We get the coordinates as:
+            // [a.x, b.x, c.x,
+            //  a.y, b.y, c.y,
+            //  a.z, b.z, c.z]
+            let [ax, bx, cx, ay, by, cy, az, bz, cz] = vertices.map(|n| n as Number);
+            triangles.push(TriangleMesh::from([[ax, ay, az], [bx, by, bz], [cx, cy, cz]]));
         }
 
         // for indices in isosurface_indices {

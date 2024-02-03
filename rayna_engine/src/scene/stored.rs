@@ -86,16 +86,15 @@ pub static TESTING: Scene = {
 
     {
         objects.push(SimpleObject::new(
-            IsosurfaceMesh::new(8, |p| {
+            IsosurfaceMesh::new(10, |p| {
                 dbg!(p);
                 let Vector3 { x, y, z } = p.to_vector();
 
-                // const A: Number = 5.0;
-                // const B: Number = 0.155;
-                // let y = 1.0 - y;
+                const A: Number = 5.0;
+                const B: Number = 0.155;
+                let y = 1.0 - y;
                 // x.powi(2) + z.powi(2) + y.powf(A + (A * B)) - y.powf(A)
-
-                x.powi(2) + y.powi(2) + z.powi(2) - 1.
+                x.powi(2) + z.powi(2) + y.powi(4) - y.powi(3)
             }),
             // DielectricMaterial {
             //     albedo: [0.68, 0.73, 0.8].into(),

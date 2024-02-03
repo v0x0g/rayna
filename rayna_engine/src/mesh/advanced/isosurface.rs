@@ -56,31 +56,33 @@ impl Mesh for IsosurfaceMesh {
         const EPSILON: Number = 1e-5;
 
         // Start point at earliest pos on ray, or ray origin if unbounded
-        let ro = interval.start.map(|t| ray.at(t)).unwrap_or(ray.pos());
-        let dir = ray.dir();
-
-        let mut point = ro;
-        let mut dist = 0.0;
+        let mut total_dist = interval.start.unwrap_or(0.0);
+        let mut point = ray.at(total_dist);
         let mut i = 0;
         loop {
             // Ray march towards surface
-            let step = (self.sdf)(point);
-            dist += step;
-            point += dir * step;
+            let dist = (self.sdf)(point);
+            // Always step forwards
+            total_dist += dist.abs();
+            // point += dir * step; // Causes compounding floating-point errors
+            point = ray.at(total_dist);
 
-            if step.abs() < EPSILON {
+            // Arbitrarily close to surface, counts as an intersection
+            // Also needs to be in valid bounds
+            if dist.abs() < EPSILON && interval.contains(&total_dist) {
                 return Some(Intersection {
                     pos_w: point,
                     pos_l: point,
                     uv: Point2::ZERO,
-                    dist,
-                    front_face: step.is_sign_positive(),
+                    dist: total_dist,
+                    front_face: dist.is_sign_positive(),
                     face: i,
                     normal: Vector3::X,
                     ray_normal: Vector3::X,
                 });
             }
 
+            // Exceeded the limit
             if i > MAX_ITERATIONS {
                 return None;
             }

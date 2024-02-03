@@ -9,9 +9,9 @@ use crate::shared::ray::Ray;
 use derivative::Derivative;
 use getset::{CopyGetters, Getters};
 use isosurface::distance::Signed;
+use isosurface::extractor::IndexedVertices;
 use isosurface::sampler::Sampler;
 use isosurface::source::ScalarSource;
-use isosurface::MarchingCubes;
 use itertools::Itertools;
 use rand_core::RngCore;
 
@@ -49,9 +49,9 @@ impl IsosurfaceMesh {
         let source = SdfSource { func: sdf };
         let mut raw_vertex_coords = vec![];
         let mut raw_indices = vec![];
-        let mut extractor = isosurface::extractor::IndexedVertices::new(&mut raw_vertex_coords, &mut raw_indices);
+        let mut extractor = IndexedVertices::new(&mut raw_vertex_coords, &mut raw_indices);
         let sampler = Sampler::new(&source);
-        MarchingCubes::<Signed>::new(resolution).extract(&sampler, &mut extractor);
+        isosurface::LinearHashedMarchingCubes::new(resolution).extract(&sampler, &mut extractor);
 
         assert_eq!(
             raw_indices.len() % 3,

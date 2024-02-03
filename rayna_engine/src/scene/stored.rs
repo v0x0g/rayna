@@ -87,7 +87,7 @@ pub static TESTING: Scene = {
 
     {
         objects.push(SimpleObject::new(
-            IsosurfaceMesh::new(32, |p_raw| {
+            IsosurfaceMesh::new(6, |p_raw| {
                 // NOTE: Point is given to us inside range `0.0..=1.0`
                 //  So map it to the appropriate range for our shape
                 let [x, y, z] = p_raw.into();

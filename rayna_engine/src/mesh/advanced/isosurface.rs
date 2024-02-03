@@ -5,7 +5,6 @@ use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
-use crate::shared::math::Lerp;
 use crate::shared::ray::Ray;
 use derivative::Derivative;
 use getset::{CopyGetters, Getters};

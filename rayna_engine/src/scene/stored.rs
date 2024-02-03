@@ -76,7 +76,7 @@ use super::Scene;
 #[dynamic]
 pub static TESTING: Scene = {
     let camera = Camera {
-        pos: Point3::new(0., 0., 2.),
+        pos: Point3::new(0.5, 0.2, 0.9),
         fwd: Vector3::new(0., 0., -1.).normalize(),
         v_fov: Angle::from_degrees(75.),
         focus_dist: 1.,
@@ -110,36 +110,36 @@ pub static TESTING: Scene = {
             None,
         ));
 
-        let v = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 1.0, 1.0]].map(Vector3::from);
-        let [vr, vg, vb, vw] = v;
-        let [vrg, vgb, vbr] = [(vr + vg) / 2., (vg + vb) / 2., (vb + vr) / 2.];
-        let [r, g, b, w] = [[1., 0., 0.], [0., 1., 0.], [0., 0., 1.], [1., 1., 1.]].map(Colour::from);
-        let [rg, gb, br] = [(r + g) / 2., (g + b) / 2., (b + r) / 2.];
-        let radius = 0.05;
-
-        let mut sphere = |p: Vector3, c: Colour| {
-            objects.push(SimpleObject::new(
-                SphereMesh::new(p, radius),
-                LambertianMaterial::from(TextureInstance::from(c)),
-                None,
-            ));
-        };
-
-        sphere(Vector3::ZERO, Colour::BLACK);
-
-        sphere(vr, r);
-        sphere(vg, g);
-        sphere(vb, b);
-
-        sphere(vr / 2., r);
-        sphere(vg / 2., g);
-        sphere(vb / 2., b);
-
-        sphere(vrg, rg);
-        sphere(vgb, gb);
-        sphere(vbr, br);
-
-        sphere(vw, w);
+        // let v = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 1.0, 1.0]].map(Vector3::from);
+        // let [vr, vg, vb, vw] = v;
+        // let [vrg, vgb, vbr] = [(vr + vg) / 2., (vg + vb) / 2., (vb + vr) / 2.];
+        // let [r, g, b, w] = [[1., 0., 0.], [0., 1., 0.], [0., 0., 1.], [1., 1., 1.]].map(Colour::from);
+        // let [rg, gb, br] = [(r + g) / 2., (g + b) / 2., (b + r) / 2.];
+        // let radius = 0.05;
+        //
+        // let mut sphere = |p: Vector3, c: Colour| {
+        //     objects.push(SimpleObject::new(
+        //         SphereMesh::new(p, radius),
+        //         LambertianMaterial::from(TextureInstance::from(c)),
+        //         None,
+        //     ));
+        // };
+        //
+        // sphere(Vector3::ZERO, Colour::BLACK);
+        //
+        // sphere(vr, r);
+        // sphere(vg, g);
+        // sphere(vb, b);
+        //
+        // sphere(vr / 2., r);
+        // sphere(vg / 2., g);
+        // sphere(vb / 2., b);
+        //
+        // sphere(vrg, rg);
+        // sphere(vgb, gb);
+        // sphere(vbr, br);
+        //
+        // sphere(vw, w);
     }
 
     Scene {

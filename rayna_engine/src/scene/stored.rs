@@ -75,7 +75,7 @@ use super::Scene;
 #[dynamic]
 pub static TESTING: Scene = {
     let camera = Camera {
-        pos: Point3::new(0., -0.15, 0.6),
+        pos: Point3::new(0., 0., 2.),
         fwd: Vector3::new(0., 0., -1.).normalize(),
         v_fov: Angle::from_degrees(75.),
         focus_dist: 1.,

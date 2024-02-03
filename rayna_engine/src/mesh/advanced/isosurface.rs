@@ -61,6 +61,8 @@ impl IsosurfaceMesh {
         let raw_vertices = raw_vertex_coords
             .array_chunks::<3>()
             .map(|vs| Point3::from(vs.map(|v| v as Number)))
+            .skip(1 /* For some reason the first vertex is duplicated? */)
+            .take(3)
             .collect_vec();
 
         // let isosurface_indices = raw_indices
@@ -70,8 +72,9 @@ impl IsosurfaceMesh {
 
         let mut spheres = vec![];
 
-        for p in raw_vertices {
-            spheres.push(SphereMesh::new(p, 0.05));
+        let count = raw_vertices.len();
+        for (i, p) in raw_vertices.into_iter().enumerate() {
+            spheres.push(SphereMesh::new(p, (i + 1) as Number / count as Number * 0.1));
         }
 
         // for indices in isosurface_indices {

@@ -87,26 +87,27 @@ pub static TESTING: Scene = {
 
     {
         objects.push(SimpleObject::new(
-            IsosurfaceMesh::new(32, |p_raw| {
-                // NOTE: Point is given to us inside range `0.0..=1.0`
-                //  So map it to the appropriate range for our shape
+            IsosurfaceMesh::new(|p_raw| {
                 let [x, y, z] = p_raw.into();
-                let [x, y, z] = [
-                    Lerp::lerp(-0.5, 0.5, x),
-                    Lerp::lerp(1.0, 0.0, y),
-                    Lerp::lerp(-0.5, 0.5, z),
-                ];
+
+                // // NOTE: Point is given to us inside range `0.0..=1.0`
+                // //  So map it to the appropriate range for our shape
+                // let [x, y, z] = [
+                //     Lerp::lerp(-0.5, 0.5, x),
+                //     Lerp::lerp(1.0, 0.0, y),
+                //     Lerp::lerp(-0.5, 0.5, z),
+                // ];
 
                 const A: Number = 11.0;
                 const B: Number = 0.6;
                 x.powi(2) + z.powi(2) + y.powf(A + (B)) - y.powf(A)
             }),
-            DielectricMaterial {
-                albedo: [0.68, 0.73, 0.8].into(),
-                density: 4.0,
-                refractive_index: 1.335,
-            },
-            // LambertianMaterial::default(),
+            // DielectricMaterial {
+            //     albedo: [0.68, 0.73, 0.8].into(),
+            //     density: 4.0,
+            //     refractive_index: 1.335,
+            // },
+            LambertianMaterial::default(),
             None,
         ));
 

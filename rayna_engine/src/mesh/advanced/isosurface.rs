@@ -10,7 +10,7 @@ use derivative::Derivative;
 use getset::{CopyGetters, Getters};
 use isosurface::distance::Signed;
 use isosurface::extractor::IndexedVertices;
-use isosurface::feature::MinimiseQEF;
+use isosurface::feature::{MinimiseQEF, ParticleBasedMinimisation};
 use isosurface::sampler::Sampler;
 use isosurface::source::{CentralDifference, ScalarSource};
 use itertools::Itertools;
@@ -52,7 +52,7 @@ impl IsosurfaceMesh {
         let mut raw_indices = vec![];
         let mut extractor = IndexedVertices::new(&mut raw_vertex_coords, &mut raw_indices);
         let sampler = Sampler::new(&source);
-        isosurface::DualContouring::new(resolution, MinimiseQEF {}).extract(&sampler, &mut extractor);
+        isosurface::DualContouring::new(resolution, ParticleBasedMinimisation {}).extract(&sampler, &mut extractor);
 
         assert_eq!(
             raw_indices.len() % 3,

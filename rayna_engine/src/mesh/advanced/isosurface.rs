@@ -53,8 +53,14 @@ impl IsosurfaceMesh {
         assert_eq!(
             raw_indices.len() % 3,
             0,
-            "`indices.len` should be multiple of 3 (was {})",
+            "`raw_indices.len` should be multiple of 3 (was {})",
             raw_indices.len()
+        );
+        assert_eq!(
+            raw_vertex_coords.len() % 3,
+            0,
+            "`raw_vertex_coords.len` should be multiple of 3 (was {})",
+            raw_vertex_coords.len()
         );
 
         // Group the vertex coordinates into groups of three, so we get a 3D point
@@ -76,19 +82,13 @@ impl IsosurfaceMesh {
             .into_iter()
             .map(|vert_indices| vert_indices.map(|v_i| triangle_vertices[v_i]))
         {
-            // Skip empty triangles
+            // Sometimes this generates "empty" triangles that have duplicate vertices
+            // This is invalid, so skip those. Not sure if it's a bug or intentional :(
             if a == b || b == c || c == a {
                 continue;
             }
             triangles.push(TriangleMesh::new([a, b, c]));
         }
-
-        // for indices in isosurface_indices {
-        //     // Each index refers to the index of the `x` vertex coordinate in the buffer,
-        //     // so we can divide by 3 to get the proper index as a point
-        //     let vertices = indices.map(|idx| isosurface_vertices[idx]);
-        //     triangles.push(TriangleMesh::from(vertices));
-        // }
 
         let count = triangles.len();
         let mesh = BvhMesh::new(triangles);

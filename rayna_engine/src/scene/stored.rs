@@ -86,7 +86,7 @@ pub static TESTING: Scene = {
 
     {
         objects.push(SimpleObject::new(
-            IsosurfaceMesh::generate(5, |p| {
+            IsosurfaceMesh::generate(6, |p| {
                 dbg!(p);
                 let Vector3 { x, y, z } = p.to_vector();
 

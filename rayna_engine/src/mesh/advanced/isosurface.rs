@@ -71,9 +71,12 @@ impl IsosurfaceMesh {
         let mut spheres = vec![];
 
         let count = raw_vertices.len();
-        for (i, p) in raw_vertices.into_iter().enumerate() {
-            println!("{i}:\t{p:.3?}", p = p.to_array());
-            spheres.push(SphereMesh::new(p, (i + 1) as Number / count as Number * 0.1));
+        for (i, p) in raw_vertices.clone().into_iter().enumerate() {
+            spheres.push(SphereMesh::new(
+                p,
+                raw_vertices.iter().filter(|&&v| v == p).count() as Number * 0.05,
+            ));
+            // spheres.push(SphereMesh::new(p, (i + 1) as Number / count as Number * 0.1));
         }
 
         // for indices in isosurface_indices {

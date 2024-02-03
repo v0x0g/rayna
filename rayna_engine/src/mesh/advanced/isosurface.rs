@@ -10,8 +10,9 @@ use derivative::Derivative;
 use getset::{CopyGetters, Getters};
 use isosurface::distance::Signed;
 use isosurface::extractor::IndexedVertices;
+use isosurface::feature::MinimiseQEF;
 use isosurface::sampler::Sampler;
-use isosurface::source::ScalarSource;
+use isosurface::source::{CentralDifference, ScalarSource};
 use itertools::Itertools;
 use rand_core::RngCore;
 
@@ -46,12 +47,12 @@ impl IsosurfaceMesh {
     /// The resulting mesh has dimensions of a `N*N*N` grid, where `N = resolution`
     /// * `sdf`: The **SDF** that defines the surface for the mesh
     pub fn new<F: SdfGeneratorFunction>(resolution: usize, sdf: F) -> Self {
-        let source = SdfSource { func: sdf };
+        let source = CentralDifference::new(SdfSource { func: sdf });
         let mut raw_vertex_coords = vec![];
         let mut raw_indices = vec![];
         let mut extractor = IndexedVertices::new(&mut raw_vertex_coords, &mut raw_indices);
         let sampler = Sampler::new(&source);
-        isosurface::LinearHashedMarchingCubes::new(resolution).extract(&sampler, &mut extractor);
+        isosurface::DualContouring::new(resolution, MinimiseQEF {}).extract(&sampler, &mut extractor);
 
         assert_eq!(
             raw_indices.len() % 3,

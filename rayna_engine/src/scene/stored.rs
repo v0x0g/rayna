@@ -28,6 +28,7 @@ use crate::mesh::MeshInstance;
 use crate::object::volumetric::VolumetricObject;
 use crate::object::ObjectInstance;
 use crate::scene::camera::Camera;
+use crate::shared::math::Lerp;
 use crate::shared::rng;
 use crate::skybox::SkyboxInstance;
 use crate::texture::image::ImageTexture;
@@ -86,9 +87,15 @@ pub static TESTING: Scene = {
 
     {
         objects.push(SimpleObject::new(
-            IsosurfaceMesh::new(10, |p| {
-                dbg!(p);
-                let Vector3 { x, y, z } = p.to_vector();
+            IsosurfaceMesh::new(10, |p_raw| {
+                // NOTE: Point is given to us inside range `0.0..=1.0`
+                //  So map it to the appropriate range for our shape
+                let [x, y, z] = p_raw.into();
+                let [x, y, z] = [
+                    Lerp::lerp(-0.5, 0.5, x),
+                    Lerp::lerp(0.0, 1.0, y),
+                    Lerp::lerp(-0.5, 0.5, z),
+                ];
 
                 const A: Number = 5.0;
                 const B: Number = 0.155;

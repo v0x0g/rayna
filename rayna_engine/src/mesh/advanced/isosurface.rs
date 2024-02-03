@@ -114,7 +114,7 @@ struct SdfSource<F: SdfGeneratorFunction> {
 }
 impl<F: SdfGeneratorFunction> ScalarSource for SdfSource<F> {
     fn sample_scalar(&self, isosurface::math::Vec3 { x, y, z }: isosurface::math::Vec3) -> Signed {
-        let point = [x, y, z].map(|n| Lerp::lerp(-1., 1., n as Number)).into();
+        let point = [x, y, z].map(|n| n as Number).into();
         Signed((self.func)(point) as f32)
     }
 }

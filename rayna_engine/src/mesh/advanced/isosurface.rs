@@ -50,27 +50,32 @@ impl IsosurfaceMesh {
         let sampler = Sampler::new(&source);
         MarchingCubes::<Signed>::new(resolution).extract(&sampler, &mut extractor);
 
-        // assert_eq!(
-        //     raw_indices.len() % 3,
-        //     0,
-        //     "`indices.len` should be multiple of 3 (was {})",
-        //     raw_indices.len()
-        // );
+        assert_eq!(
+            raw_indices.len() % 3,
+            0,
+            "`indices.len` should be multiple of 3 (was {})",
+            raw_indices.len()
+        );
 
         // Group the vertex coordinates into groups of three, so we get a 3D point
-        let raw_vertices = raw_vertex_coords
+        let triangle_vertices = raw_vertex_coords
             .array_chunks::<3>()
             .map(|vs| Point3::from(vs.map(|v| v as Number)))
             .collect_vec();
 
-        // let isosurface_indices = raw_indices
-        //     .array_chunks::<3>()
-        //     .map(|vs| vs.map(|v| v as usize))
-        //     .collect_vec();
+        // Group the indices in chunks of three as well, for the three vertices of each triangle
+        let triangle_indices = raw_indices
+            .array_chunks::<3>()
+            .map(|vs| vs.map(|v| v as usize))
+            .collect_vec();
 
         let mut triangles = vec![];
 
-        for &[a, b, c] in raw_vertices.array_windows::<3>() {
+        // Loop over all indices, map them to the vertex positions, and create a triangle
+        for [a, b, c] in triangle_indices
+            .into_iter()
+            .map(|vert_indices| vert_indices.map(|v_i| triangle_vertices[v_i]))
+        {
             // Skip empty triangles
             if a == b || b == c || c == a {
                 continue;

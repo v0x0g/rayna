@@ -90,6 +90,7 @@ impl IsosurfaceMesh {
             if a == b || b == c || c == a {
                 continue;
             }
+            // NOTE: Vertex ordering is important, should be `[a,b,c]` where `b` is adjacent to `a,c`
             triangles.push(TriangleMesh::new([a, b, c]));
         }
 

@@ -115,7 +115,7 @@ impl Planar {
     ///  ░░░░                             ░░░░                                              
     ///  ██                               ▓▓                                                
     ///  ▒▒                             ░░▒▒                                                
-    ///  P ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ B                                                  
+    ///  B ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ C                                                  
     /// ```
     ///
     /// TEXT ART CREDITS:
@@ -123,9 +123,9 @@ impl Planar {
     /// Author: Textart.sh
     ///
     /// URL: https://textart.sh/topic/parallelogram
-    pub fn new_points(p: impl Into<Point3>, a: impl Into<Point3>, b: impl Into<Point3>) -> Self {
-        let (p, a, b) = (p.into(), a.into(), b.into());
-        Self::new(p, a - p, b - p)
+    pub fn new_points(a: impl Into<Point3>, b: impl Into<Point3>, c: impl Into<Point3>) -> Self {
+        let (a, b, c) = (a.into(), b.into(), c.into());
+        Self::new(b, a - b, c - b)
     }
 }
 

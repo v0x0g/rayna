@@ -1,7 +1,6 @@
 use crate::core::types::{Number, Point3};
 use crate::mesh::advanced::bvh::BvhMesh;
 use crate::mesh::planar::triangle::TriangleMesh;
-use crate::mesh::primitive::sphere::SphereMesh;
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::intersect::Intersection;
@@ -16,7 +15,6 @@ use isosurface::source::ScalarSource;
 use isosurface::MarchingCubes;
 use itertools::Itertools;
 use rand_core::RngCore;
-use tracing::debug;
 
 /// A mesh struct that is created by creating an isosurface from a given SDF
 ///
@@ -41,11 +39,17 @@ pub trait SdfGeneratorFunction = Fn(Point3) -> Number;
 // region Constructors
 
 impl IsosurfaceMesh {
-    pub fn generate<F: SdfGeneratorFunction>(resolution: usize, func: F) -> Self {
-        // let source = SdfSource { func };
+    /// Creates a new mesh from the given isosurface, as defined by the **Signed-Distance Function** (**SDF**)
+    ///
+    /// # Arguments
+    ///
+    /// * `resolution`: How dense the resulting mesh should be.
+    /// The resulting mesh has dimensions of a `N*N*N` grid, where `N = resolution`
+    /// * `sdf`: The **SDF** that defines the surface for the mesh
+    pub fn new<F: SdfGeneratorFunction>(resolution: usize, sdf: F) -> Self {
+        let source = SdfSource { func: sdf };
         let mut raw_vertex_coords = vec![];
         let mut raw_indices = vec![];
-        let source = isosurface::implicit::Sphere::new(1.0);
         let mut extractor = isosurface::extractor::IndexedVertices::new(&mut raw_vertex_coords, &mut raw_indices);
         let sampler = Sampler::new(&source);
         MarchingCubes::<Signed>::new(resolution).extract(&sampler, &mut extractor);

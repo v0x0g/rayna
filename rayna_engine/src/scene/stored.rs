@@ -101,12 +101,12 @@ pub static TESTING: Scene = {
                 const B: Number = 0.6;
                 x.powi(2) + z.powi(2) + y.powf(A + (B)) - y.powf(A)
             }),
-            // DielectricMaterial {
-            //     albedo: [0.68, 0.73, 0.8].into(),
-            //     density: 40.0,
-            //     refractive_index: 1.335,
-            // },
-            LambertianMaterial::default(),
+            DielectricMaterial {
+                albedo: [0.68, 0.73, 0.8].into(),
+                density: 4.0,
+                refractive_index: 1.335,
+            },
+            // LambertianMaterial::default(),
             None,
         ));
 

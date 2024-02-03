@@ -33,7 +33,7 @@ pub struct IsosurfaceMesh {
     count: usize,
     #[derivative(Debug = "ignore")]
     #[get = "pub"]
-    mesh: BvhMesh<SphereMesh>,
+    mesh: BvhMesh<TriangleMesh>,
 }
 
 pub trait SdfGeneratorFunction = Fn(Point3) -> Number;
@@ -68,15 +68,14 @@ impl IsosurfaceMesh {
         //     .map(|vs| vs.map(|v| v as usize))
         //     .collect_vec();
 
-        let mut spheres = vec![];
+        let mut triangles = vec![];
 
-        let count = raw_vertices.len();
-        for (i, p) in raw_vertices.clone().into_iter().enumerate() {
-            spheres.push(SphereMesh::new(
-                p,
-                raw_vertices.iter().filter(|&&v| v == p).count() as Number * 0.05,
-            ));
-            // spheres.push(SphereMesh::new(p, (i + 1) as Number / count as Number * 0.1));
+        for &[a, b, c] in raw_vertices.array_windows::<3>() {
+            // Skip empty triangles
+            if a == b || b == c || c == a {
+                continue;
+            }
+            triangles.push(TriangleMesh::new([a, b, c]));
         }
 
         // for indices in isosurface_indices {
@@ -86,8 +85,8 @@ impl IsosurfaceMesh {
         //     triangles.push(TriangleMesh::from(vertices));
         // }
 
-        let count = spheres.len();
-        let mesh = BvhMesh::new(spheres);
+        let count = triangles.len();
+        let mesh = BvhMesh::new(triangles);
 
         Self {
             count,

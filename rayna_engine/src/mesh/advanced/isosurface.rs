@@ -44,9 +44,9 @@ impl IsosurfaceMesh {
     pub fn generate<F: SdfGeneratorFunction>(resolution: usize, func: F) -> Self {
         // let source = SdfSource { func };
         let mut raw_vertex_coords = vec![];
-        // let mut raw_indices = vec![];
+        let mut raw_indices = vec![];
         let source = isosurface::implicit::Sphere::new(1.0);
-        let mut extractor = isosurface::extractor::OnlyVertices::new(&mut raw_vertex_coords);
+        let mut extractor = isosurface::extractor::IndexedVertices::new(&mut raw_vertex_coords, &mut raw_indices);
         let sampler = Sampler::new(&source);
         MarchingCubes::<Signed>::new(resolution).extract(&sampler, &mut extractor);
 

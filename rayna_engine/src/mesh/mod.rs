@@ -36,7 +36,7 @@ use rand_core::RngCore;
 #[allow(unused_imports)]
 use self::{
     advanced::{bvh::BvhMesh, dynamic::DynamicMesh, list::MeshList},
-    isosurface::raymarched::RaymarchedMesh,
+    isosurface::{polygonised::PolygonisedIsosurfaceMesh, raymarched::RaymarchedIsosurfaceMesh},
     planar::{infinite_plane::InfinitePlaneMesh, parallelogram::ParallelogramMesh, triangle::TriangleMesh},
     primitive::{axis_box::AxisBoxMesh, cylinder::CylinderMesh, sphere::SphereMesh},
 };
@@ -70,7 +70,8 @@ pub enum MeshInstance {
     AxisBoxMesh,
     ParallelogramMesh,
     InfinitePlaneMesh,
-    RaymarchedMesh,
+    RaymarchedIsosurfaceMesh,
+    PolygonisedIsosurfaceMesh,
     TriangleMesh,
     BvhMesh(BvhMesh<MeshInstance>),
     MeshList(MeshList<MeshInstance>),

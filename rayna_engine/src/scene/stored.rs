@@ -17,7 +17,8 @@ use crate::material::light::LightMaterial;
 use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::mesh::advanced::bvh::BvhMesh;
-use crate::mesh::isosurface::raymarched::RaymarchedMesh;
+use crate::mesh::isosurface::polygonised::PolygonisedIsosurfaceMesh;
+use crate::mesh::isosurface::raymarched::RaymarchedIsosurfaceMesh;
 use crate::mesh::planar::infinite_plane::{InfinitePlaneMesh, UvWrappingMode};
 use crate::mesh::planar::parallelogram::ParallelogramMesh;
 use crate::mesh::planar::triangle::TriangleMesh;
@@ -87,16 +88,16 @@ pub static TESTING: Scene = {
 
     {
         objects.push(SimpleObject::new(
-            RaymarchedMesh::new(|p_raw| {
+            PolygonisedIsosurfaceMesh::new(64, |p_raw| {
                 let [x, y, z] = p_raw.into();
 
-                // // NOTE: Point is given to us inside range `0.0..=1.0`
-                // //  So map it to the appropriate range for our shape
-                // let [x, y, z] = [
-                //     Lerp::lerp(-0.5, 0.5, x),
-                //     Lerp::lerp(1.0, 0.0, y),
-                //     Lerp::lerp(-0.5, 0.5, z),
-                // ];
+                // NOTE: Point is given to us inside range `0.0..=1.0`
+                //  So map it to the appropriate range for our shape
+                let [x, y, z] = [
+                    Lerp::lerp(-0.5, 0.5, x),
+                    Lerp::lerp(1.0, 0.0, y),
+                    Lerp::lerp(-0.5, 0.5, z),
+                ];
 
                 const A: Number = 11.0;
                 const B: Number = 0.6;

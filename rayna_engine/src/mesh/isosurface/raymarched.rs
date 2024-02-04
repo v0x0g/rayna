@@ -1,18 +1,18 @@
 use crate::core::types::{Number, Point2, Point3, Vector3};
+use crate::mesh::isosurface::SdfGeneratorFunction;
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use derivative::Derivative;
-use dyn_clone::DynClone;
 use getset::{CopyGetters, Getters};
 use rand_core::RngCore;
 
 /// A mesh struct that is created by ray-marching for a given SDF.
 #[derive(CopyGetters, Getters, Derivative, Clone)]
 #[derivative(Debug)]
-pub struct RaymarchedMesh {
+pub struct RaymarchedIsosurfaceMesh {
     #[derivative(Debug = "ignore")]
     #[get = "pub"]
     sdf: Box<dyn SdfGeneratorFunction>,
@@ -21,13 +21,9 @@ pub struct RaymarchedMesh {
     epsilon: Number,
 }
 
-pub trait SdfGeneratorFunction: Fn(Point3) -> Number + Send + Sync + DynClone {}
-impl<T: Fn(Point3) -> Number + Send + Sync + Clone> SdfGeneratorFunction for T {}
-dyn_clone::clone_trait_object!(SdfGeneratorFunction);
-
 // region Constructors
 
-impl RaymarchedMesh {
+impl RaymarchedIsosurfaceMesh {
     pub const DEFAULT_EPSILON: Number = 1e-7;
     pub const DEFAULT_ITERATIONS: usize = 150;
 
@@ -35,7 +31,8 @@ impl RaymarchedMesh {
     ///
     /// # Arguments
     ///
-    /// * `sdf`: The **SDF** that defines the surface for the mesh
+    /// * `sdf`: The **SDF** that defines the surface for the mesh.
+    /// This SDF will be evaluated in world-space coordinates
     pub fn new<F: SdfGeneratorFunction + 'static>(sdf: F) -> Self {
         Self {
             sdf: Box::new(sdf),
@@ -64,15 +61,15 @@ impl RaymarchedMesh {
 
 // region Mesh Impl
 
-impl HasAabb for RaymarchedMesh {
+impl HasAabb for RaymarchedIsosurfaceMesh {
     fn aabb(&self) -> Option<&Aabb> { None }
 }
 
-impl MeshProperties for RaymarchedMesh {
+impl MeshProperties for RaymarchedIsosurfaceMesh {
     fn centre(&self) -> Point3 { Point3::ZERO }
 }
 
-impl Mesh for RaymarchedMesh {
+impl Mesh for RaymarchedIsosurfaceMesh {
     fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         let epsilon = self.epsilon;
 

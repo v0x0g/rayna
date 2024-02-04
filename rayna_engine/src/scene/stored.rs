@@ -17,7 +17,7 @@ use crate::material::light::LightMaterial;
 use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
 use crate::mesh::advanced::bvh::BvhMesh;
-use crate::mesh::advanced::isosurface::IsosurfaceMesh;
+use crate::mesh::advanced::raymarched::RaymarchedMesh;
 use crate::mesh::planar::infinite_plane::{InfinitePlaneMesh, UvWrappingMode};
 use crate::mesh::planar::parallelogram::ParallelogramMesh;
 use crate::mesh::planar::triangle::TriangleMesh;
@@ -87,7 +87,7 @@ pub static TESTING: Scene = {
 
     {
         objects.push(SimpleObject::new(
-            IsosurfaceMesh::new(|p_raw| {
+            RaymarchedMesh::new(|p_raw| {
                 let [x, y, z] = p_raw.into();
 
                 // // NOTE: Point is given to us inside range `0.0..=1.0`

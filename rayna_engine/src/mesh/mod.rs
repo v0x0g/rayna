@@ -35,7 +35,7 @@ use rand_core::RngCore;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
 use self::{
-    advanced::{bvh::BvhMesh, dynamic::DynamicMesh, isosurface::IsosurfaceMesh, list::MeshList},
+    advanced::{bvh::BvhMesh, dynamic::DynamicMesh, list::MeshList, raymarched::RaymarchedMesh},
     planar::{infinite_plane::InfinitePlaneMesh, parallelogram::ParallelogramMesh, triangle::TriangleMesh},
     primitive::{axis_box::AxisBoxMesh, cylinder::CylinderMesh, sphere::SphereMesh},
 };
@@ -68,7 +68,7 @@ pub enum MeshInstance {
     AxisBoxMesh,
     ParallelogramMesh,
     InfinitePlaneMesh,
-    IsosurfaceMesh,
+    RaymarchedMesh,
     TriangleMesh,
     BvhMesh(BvhMesh<MeshInstance>),
     MeshList(MeshList<MeshInstance>),

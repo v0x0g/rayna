@@ -9,14 +9,10 @@ use dyn_clone::DynClone;
 use getset::{CopyGetters, Getters};
 use rand_core::RngCore;
 
-/// A mesh struct that is created by creating an isosurface from a given SDF
-///
-/// # Transforming
-/// This mesh purposefully does not have any properties for transforming, so you must you a
-/// [ObjectTransform].
+/// A mesh struct that is created by ray-marching for a given SDF.
 #[derive(CopyGetters, Getters, Derivative, Clone)]
 #[derivative(Debug)]
-pub struct IsosurfaceMesh {
+pub struct RaymarchedMesh {
     #[derivative(Debug = "ignore")]
     sdf: Box<dyn SdfGeneratorFunction>,
 }
@@ -27,7 +23,7 @@ dyn_clone::clone_trait_object!(SdfGeneratorFunction);
 
 // region Constructors
 
-impl IsosurfaceMesh {
+impl RaymarchedMesh {
     /// Creates a new mesh from the given isosurface, as defined by the **Signed-Distance Function** (**SDF**)
     ///
     /// # Arguments
@@ -42,18 +38,18 @@ impl IsosurfaceMesh {
 
 // region Mesh Impl
 
-impl HasAabb for IsosurfaceMesh {
+impl HasAabb for RaymarchedMesh {
     fn aabb(&self) -> Option<&Aabb> { None }
 }
 
-impl MeshProperties for IsosurfaceMesh {
+impl MeshProperties for RaymarchedMesh {
     fn centre(&self) -> Point3 { Point3::ZERO }
 }
 
-impl Mesh for IsosurfaceMesh {
+impl Mesh for RaymarchedMesh {
     fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
-        const MAX_ITERATIONS: usize = 100;
-        const EPSILON: Number = 1e-5;
+        const MAX_ITERATIONS: usize = 150;
+        const EPSILON: Number = 1e-7;
 
         // Start point at earliest pos on ray, or ray origin if unbounded
         let mut total_dist = interval.start.unwrap_or(0.0);
@@ -70,15 +66,27 @@ impl Mesh for IsosurfaceMesh {
             // Arbitrarily close to surface, counts as an intersection
             // Also needs to be in valid bounds
             if dist.abs() < EPSILON && interval.contains(&total_dist) {
+                // let point_pos = point + Vector3::splat(EPSILON);
+                // let point_neg = point - Vector3::splat(EPSILON);
+                let p = point;
+                let normal = Vector3::normalize(
+                    [
+                        (self.sdf)((p.x + EPSILON, p.y, p.z).into()) - (self.sdf)((p.x - EPSILON, p.y, p.z).into()),
+                        (self.sdf)((p.x, p.y + EPSILON, p.z).into()) - (self.sdf)((p.x, p.y - EPSILON, p.z).into()),
+                        (self.sdf)((p.x, p.y, p.z + EPSILON).into()) - (self.sdf)((p.x, p.y, p.z - EPSILON).into()),
+                    ]
+                    .into(),
+                );
+
                 return Some(Intersection {
-                    pos_w: point,
-                    pos_l: point,
+                    pos_w: p,
+                    pos_l: p,
                     uv: Point2::ZERO,
                     dist: total_dist,
                     front_face: dist.is_sign_positive(),
                     face: i,
-                    normal: Vector3::X,
-                    ray_normal: Vector3::X,
+                    normal,
+                    ray_normal: normal,
                 });
             }
 

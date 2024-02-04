@@ -35,12 +35,14 @@ use rand_core::RngCore;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
 use self::{
-    advanced::{bvh::BvhMesh, dynamic::DynamicMesh, list::MeshList, raymarched::RaymarchedMesh},
+    advanced::{bvh::BvhMesh, dynamic::DynamicMesh, list::MeshList},
+    isosurface::raymarched::RaymarchedMesh,
     planar::{infinite_plane::InfinitePlaneMesh, parallelogram::ParallelogramMesh, triangle::TriangleMesh},
     primitive::{axis_box::AxisBoxMesh, cylinder::CylinderMesh, sphere::SphereMesh},
 };
 
 pub mod advanced;
+pub mod isosurface;
 pub mod planar;
 pub mod primitive;
 

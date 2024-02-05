@@ -23,6 +23,7 @@ pub struct Triangle {
     d: Number,
     /// Part of the plane equation: `cross(u, v) / cross(u,v).length_squared()`. Used for UV projection
     w: Vector3,
+    aabb: Aabb,
 }
 
 impl Triangle {
@@ -46,6 +47,7 @@ impl Triangle {
             d,
             w,
             edges,
+            aabb: Aabb::encompass_points(vertices),
         }
     }
 }
@@ -58,7 +60,7 @@ impl MeshProperties for Triangle {
 }
 
 impl HasAabb for Triangle {
-    fn aabb(&self) -> Option<&Aabb> { Some(&Aabb::encompass_points(self.vertices)) }
+    fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
 }
 
 impl Mesh for Triangle {
@@ -83,32 +85,32 @@ impl Mesh for Triangle {
         let [e0, e1, e2] = self.edges;
 
         let vp0 = pos_w - v0;
-        let c0 = e0.crossProduct(vp0);
+        let c0 = Vector3::cross(e0, vp0);
         let uv0 = Vector3::dot(self.w, c0);
         if uv0 < 0. {
             return None;
         }
 
         let vp1 = pos_w - v1;
-        let c1 = e1.crossProduct(vp1);
+        let c1 = Vector3::cross(e1, vp1);
         let uv1 = Vector3::dot(self.w, c1);
         if uv1 < 0. {
             return None;
         }
 
         let vp2 = pos_w - v2;
-        let c2 = e2.crossProduct(vp2);
+        let c2 = Vector3::cross(e2, vp2);
         let uv2 = Vector3::dot(self.w, c2);
         if uv2 < 0. {
             return None;
         }
 
-        let pos_barycentric = [uv0, uv1, uv2].into();
-        let normal = self.normals * pos_barycentric;
+        let pos_barycentric = Point3::from([uv0, uv1, uv2]);
+        let normal = self.normals[0] * uv0 + self.normals[1] * uv1 + self.normals[2] * uv2;
 
         return Some(Intersection {
             pos_w,
-            pos_l: pos_barycentric.to_point(),
+            pos_l: pos_barycentric,
             normal,
             ray_normal: normal * -denominator.signum(),
             front_face: denominator.is_sign_negative(),

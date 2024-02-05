@@ -1,7 +1,7 @@
-use crate::core::types::{Number, Point3};
+use crate::core::types::{Number, Point3, Vector3};
 use crate::mesh::advanced::bvh::BvhMesh;
+use crate::mesh::advanced::triangle::Triangle;
 use crate::mesh::isosurface::SdfGeneratorFunction;
-use crate::mesh::planar::triangle::TriangleMesh;
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::intersect::Intersection;
@@ -31,7 +31,7 @@ pub struct PolygonisedIsosurfaceMesh {
     count: usize,
     #[derivative(Debug = "ignore")]
     #[get = "pub"]
-    mesh: BvhMesh<TriangleMesh>,
+    mesh: BvhMesh<Triangle>,
 }
 
 // region Constructors
@@ -91,7 +91,7 @@ impl PolygonisedIsosurfaceMesh {
                 continue;
             }
             // NOTE: Vertex ordering is important, should be `[a,b,c]` where `b` is adjacent to `a,c`
-            triangles.push(TriangleMesh::new([a, b, c]));
+            triangles.push(Triangle::new([a, b, c], [Vector3::cross(b - a, c - b).normalize(); 3]));
         }
 
         let count = triangles.len();

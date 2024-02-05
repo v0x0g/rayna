@@ -21,7 +21,6 @@ use crate::mesh::isosurface::polygonised::PolygonisedIsosurfaceMesh;
 use crate::mesh::isosurface::raymarched::RaymarchedIsosurfaceMesh;
 use crate::mesh::planar::infinite_plane::{InfinitePlaneMesh, UvWrappingMode};
 use crate::mesh::planar::parallelogram::ParallelogramMesh;
-use crate::mesh::planar::triangle::TriangleMesh;
 use crate::mesh::planar::Planar;
 use crate::mesh::primitive::axis_box::AxisBoxMesh;
 use crate::mesh::primitive::sphere::SphereMesh;

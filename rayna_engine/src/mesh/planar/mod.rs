@@ -16,7 +16,6 @@ use num_traits::Zero;
 
 pub mod infinite_plane;
 pub mod parallelogram;
-pub mod triangle;
 
 /// The recommended amount of padding around AABB's for planar objects
 pub const AABB_PADDING: Number = 1e-6;

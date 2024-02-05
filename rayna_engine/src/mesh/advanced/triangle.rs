@@ -111,7 +111,7 @@ impl Mesh for Triangle {
             pos_l: pos_barycentric,
             normal,
             ray_normal: normal * denominator.signum(),
-            // Positive => ray and normal same dir => must be behind plane => backface
+            // if positive => ray and normal same dir => must be behind plane => backface
             front_face: denominator.is_sign_negative(),
             uv: [uv1, uv2].into(),
             face: 0,

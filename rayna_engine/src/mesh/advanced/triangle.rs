@@ -80,48 +80,16 @@ impl Mesh for Triangle {
 
         let pos_w = ray.at(t);
 
-        // let mut uv = [0.; 3];
-        //
-        // for i in 0..2 {
-        //     let vp = pos_w - self.vertices[i];
-        //     let c = Vector3::cross(self.edges[i], vp);
-        //     uv[i] = Vector3::dot(self.w, c);
-        //     if uv[i] < 0. {
-        //         return None;
-        //     }
-        // }
-        //
-        // let pos_barycentric = Point3::from(uv);
-        // // let normal = std::iter::zip(self.normals, uv)
-        // //     .map(|(n, u)| n * u)
-        // //     .fold(Vector3::ZERO, Vector3::add);
-        // let normal = self.normals[0] * uv[0] + self.normals[1] * uv[1] + self.normals[2] * uv[2];
-
-        let [v0, v1, v2] = self.vertices;
-        let [e0, e1, e2] = self.edges;
-
-        let vp0 = pos_w - v0;
-        let c0 = Vector3::cross(e0, vp0);
-        let uv0 = Vector3::dot(self.w, c0);
-        if uv0 < 0. {
-            return None;
+        let mut uvs = [0.; 3];
+        for i in 0..3 {
+            let vp = pos_w - self.vertices[i];
+            let c = Vector3::cross(self.edges[i], vp);
+            uvs[i] = Vector3::dot(self.w, c);
+            if uvs[i] < 0. {
+                return None;
+            }
         }
 
-        let vp1 = pos_w - v1;
-        let c1 = Vector3::cross(e1, vp1);
-        let uv1 = Vector3::dot(self.w, c1);
-        if uv1 < 0. {
-            return None;
-        }
-
-        let vp2 = pos_w - v2;
-        let c2 = Vector3::cross(e2, vp2);
-        let uv2 = Vector3::dot(self.w, c2);
-        if uv2 < 0. {
-            return None;
-        }
-
-        let uvs = [uv0, uv1, uv2];
         let pos_barycentric = Point3::from(uvs);
         let normal = std::iter::zip(self.normals, uvs)
             .map(|(n, u)| n * u)
@@ -134,8 +102,7 @@ impl Mesh for Triangle {
             ray_normal: normal * denominator.signum(),
             // if positive => ray and normal same dir => must be behind plane => backface
             front_face: denominator.is_sign_negative(),
-            // uv: [uv[1], uv[2]].into(),
-            uv: [uv1, uv2].into(),
+            uv: [uvs[1], uvs[2]].into(),
             face: 0,
             dist: t,
         });

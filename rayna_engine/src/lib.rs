@@ -14,6 +14,7 @@
 #![feature(error_generic_member_access)]
 #![feature(array_windows)]
 #![feature(portable_simd)]
+#![feature(slice_flatten)]
 
 pub mod core;
 pub mod material;

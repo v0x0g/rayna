@@ -4,9 +4,9 @@ use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
+use num_traits::Zero;
 use rand_core::RngCore;
 use std::fmt::Debug;
-use num_traits::Zero;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Triangle {
@@ -16,8 +16,6 @@ pub struct Triangle {
     normals: [Vector3; 3],
     /// The normal for the plane that the triangle lays upon
     n: Vector3,
-    /// Normal vector, but not normalised
-    n_denorm: Vector3,
     /// The vectors along the edges of the triangle
     /// Stored as `[v0->v1, v1->v2, v2->v0]`
     edges: [Vector3; 3],
@@ -33,7 +31,7 @@ impl Triangle {
 
         let [a, b, c] = vertices;
         assert!(a != b && b != c && c != a, "triangles cannot have duplicate vertices");
-        let (u, v) = (a - b, c - b);
+        let edges @ [u, v, _] = [b - a, c - b, a - c];
         let n_raw = Vector3::cross(u, v);
         let n = n_raw
             .try_normalize()
@@ -41,6 +39,14 @@ impl Triangle {
         let d = -Vector3::dot(n, b.to_vector());
         // NOTE: using non-normalised normal here
         let w = n_raw / n_raw.length_squared();
+        Self {
+            vertices,
+            normals,
+            n,
+            d,
+            w,
+            edges,
+        }
     }
 }
 
@@ -57,7 +63,6 @@ impl HasAabb for Triangle {
 
 impl Mesh for Triangle {
     fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
-
         // Check if ray is parallel to plane
         let denominator = Vector3::dot(self.n, ray.dir());
         if denominator.is_zero() {
@@ -74,24 +79,42 @@ impl Mesh for Triangle {
         // TODO: pos_l is pos in barycentric coordinates
         // let pos_l = pos_w - self.vertices[1];
 
-        let C; // vector perpendicular to triangle's plane
-
         let [v0, v1, v2] = self.vertices;
         let [e0, e1, e2] = self.edges;
 
-        let e0 = v1 - v0;
         let vp0 = pos_w - v0;
         let c0 = e0.crossProduct(vp0);
-        if (self.n.dot(c0) < 0.0) return false; // pos_w is on the right side
+        let uv0 = Vector3::dot(self.w, c0);
+        if uv0 < 0. {
+            return None;
+        }
 
-        let e1 = v2 - v1;
         let vp1 = pos_w - v1;
-        C = e1.crossProduct(vp1);
-        if ((u = N.dotProduct(C)) < 0)  return false; // pos_w is on the right side
+        let c1 = e1.crossProduct(vp1);
+        let uv1 = Vector3::dot(self.w, c1);
+        if uv1 < 0. {
+            return None;
+        }
 
-        let e2 = v0 - v2;
         let vp2 = pos_w - v2;
-        C = e2.crossProduct(vp2);
-        if ((v = N.dotProduct(C)) < 0) return false; // pos_w is on the right side;
+        let c2 = e2.crossProduct(vp2);
+        let uv2 = Vector3::dot(self.w, c2);
+        if uv2 < 0. {
+            return None;
+        }
+
+        let pos_barycentric = [uv0, uv1, uv2].into();
+        let normal = self.normals * pos_barycentric;
+
+        return Some(Intersection {
+            pos_w,
+            pos_l: pos_barycentric.to_point(),
+            normal,
+            ray_normal: normal * -denominator.signum(),
+            front_face: denominator.is_sign_negative(),
+            uv: [uv1, uv2].into(),
+            face: 0,
+            dist: t,
+        });
     }
 }

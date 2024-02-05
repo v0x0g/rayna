@@ -80,29 +80,29 @@ impl Mesh for Triangle {
 
         let pos_w = ray.at(t);
 
-        let mut uvs = Vector3::ZERO;
+        // Barycentric coordinates
+        let mut pos_b = Vector3::ZERO;
         for i in 0..3 {
             let vp = pos_w - self.vertices[i];
             let c = Vector3::cross(self.edges[i], vp);
-            uvs[i] = Vector3::dot(self.w, c);
-            if uvs[i] < 0. {
+            pos_b[i] = Vector3::dot(self.w, c);
+            if pos_b[i] < 0. {
                 return None;
             }
         }
 
-        let pos_barycentric = Point3::from(uvs);
-        let normal = std::iter::zip(self.normals, uvs)
+        let normal = std::iter::zip(self.normals, pos_b)
             .map(|(n, u)| n * u)
             .fold(Vector3::ZERO, Vector3::add);
 
         return Some(Intersection {
             pos_w,
-            pos_l: pos_barycentric,
+            pos_l: pos_b.to_point(),
             normal,
             ray_normal: normal * denominator.signum(),
             // if positive => ray and normal same dir => must be behind plane => backface
             front_face: denominator.is_sign_negative(),
-            uv: [uvs[1], uvs[2]].into(),
+            uv: [pos_b[1], pos_b[2]].into(),
             face: 0,
             dist: t,
         });

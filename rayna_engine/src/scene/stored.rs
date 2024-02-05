@@ -111,43 +111,44 @@ pub static TESTING: Scene = {
             //     density: 4.0,
             //     refractive_index: 1.335,
             // },
-            MetalMaterial {
-                albedo: [0.5; 3].into(),
-                fuzz: 0.2,
-            },
+            // MetalMaterial {
+            //     albedo: [0.5; 3].into(),
+            //     fuzz: 0.5,
+            // },
+            LambertianMaterial::default(),
             None,
         ));
 
-        let v = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 1.0, 1.0]].map(Vector3::from);
-        let [vr, vg, vb, vw] = v;
-        let [vrg, vgb, vbr] = [(vr + vg) / 2., (vg + vb) / 2., (vb + vr) / 2.];
-        let [r, g, b, w] = [[1., 0., 0.], [0., 1., 0.], [0., 0., 1.], [1., 1., 1.]].map(Colour::from);
-        let [rg, gb, br] = [(r + g) / 2., (g + b) / 2., (b + r) / 2.];
-        let radius = 0.05;
-
-        let mut sphere = |p: Vector3, c: Colour| {
-            objects.push(SimpleObject::new(
-                SphereMesh::new(p, radius),
-                LambertianMaterial::from(TextureInstance::from(c)),
-                None,
-            ));
-        };
-
-        sphere(Vector3::ZERO, Colour::BLACK);
-
-        sphere(vr, r);
-        sphere(vg, g);
-        sphere(vb, b);
-
-        sphere(vr / 2., r);
-        sphere(vg / 2., g);
-        sphere(vb / 2., b);
-
-        sphere(vrg, rg);
-        sphere(vgb, gb);
-        sphere(vbr, br);
-
-        sphere(vw, w);
+        // let v = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 1.0, 1.0]].map(Vector3::from);
+        // let [vr, vg, vb, vw] = v;
+        // let [vrg, vgb, vbr] = [(vr + vg) / 2., (vg + vb) / 2., (vb + vr) / 2.];
+        // let [r, g, b, w] = [[1., 0., 0.], [0., 1., 0.], [0., 0., 1.], [1., 1., 1.]].map(Colour::from);
+        // let [rg, gb, br] = [(r + g) / 2., (g + b) / 2., (b + r) / 2.];
+        // let radius = 0.05;
+        //
+        // let mut sphere = |p: Vector3, c: Colour| {
+        //     objects.push(SimpleObject::new(
+        //         SphereMesh::new(p, radius),
+        //         LambertianMaterial::from(TextureInstance::from(c)),
+        //         None,
+        //     ));
+        // };
+        //
+        // sphere(Vector3::ZERO, Colour::BLACK);
+        //
+        // sphere(vr, r);
+        // sphere(vg, g);
+        // sphere(vb, b);
+        //
+        // sphere(vr / 2., r);
+        // sphere(vg / 2., g);
+        // sphere(vb / 2., b);
+        //
+        // sphere(vrg, rg);
+        // sphere(vgb, gb);
+        // sphere(vbr, br);
+        //
+        // sphere(vw, w);
     }
 
     Scene {

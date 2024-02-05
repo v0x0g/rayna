@@ -82,28 +82,6 @@ impl Mesh for Triangle {
 
         let pos_w = ray.at(t);
 
-        /// Given three arrays of 3 numbers, turns it into a SIMD vec with other elements zeroed  
-        fn load_number_3x3<N: Into<[Number; 3]>>(nums: [N; 3]) -> Simd<Number, 16> {
-            // Map the indices 1:1
-            let gather_numbers_idx = Simd::<usize, 16>::from_array(array::from_fn(std::convert::identity));
-            // Only enable the first nine numbers
-            let gather_numbers_enable = Mask::from_bitmask(u64::MAX >> (u64::BITS - 9));
-            // Disabled values are zero
-            let simd_zero = Simd::<Number, 16>::splat(0.0);
-
-            Simd::gather_select(
-                nums.map(N::into).flatten().as_ref(),
-                gather_numbers_enable,
-                gather_numbers_idx,
-                simd_zero,
-            )
-        }
-
-        let simd_verts = load_number_3x3(self.vertices);
-        let simd_pos_w = load_number_3x3([pos_w; 3]);
-        let simd_vp = simd_pos_w - simd_verts;
-        let simd_c =
-
         // Barycentric coordinates
         let mut pos_b = Vector3::ZERO;
         for i in 0..3 {

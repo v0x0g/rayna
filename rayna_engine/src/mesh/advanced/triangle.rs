@@ -6,10 +6,8 @@ use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use num_traits::Zero;
 use rand_core::RngCore;
-use std::array;
 use std::fmt::Debug;
 use std::ops::Add;
-use std::simd::{Mask, Simd};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Triangle {

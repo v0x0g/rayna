@@ -69,7 +69,13 @@ impl From<image::DynamicImage> for Image<Colour> {
             )
         };
 
-        Self::new(ArcArray::from_shape_vec(Shape::from(Ix2(width, height)), data).expect("array creation failed"))
+        Self::new(
+            // `NDarray` and `image` seem to have different row/column ordering, so swap the axes to compensate
+            // else our image is sideways
+            ArcArray::from_shape_vec(Shape::from(Ix2(width, height)), data)
+                .expect("array creation failed")
+                .reversed_axes(),
+        )
     }
 }
 

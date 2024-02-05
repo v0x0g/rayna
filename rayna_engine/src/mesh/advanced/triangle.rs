@@ -80,7 +80,7 @@ impl Mesh for Triangle {
 
         let pos_w = ray.at(t);
 
-        let mut uvs = [0.; 3];
+        let mut uvs = Vector3::ZERO;
         for i in 0..3 {
             let vp = pos_w - self.vertices[i];
             let c = Vector3::cross(self.edges[i], vp);

@@ -4,11 +4,14 @@
 //!
 //! There are some common ones [CORNELL] and [RTIAW_DEMO], that should be well known.
 #![allow(unused)]
+
 use crate::core::types::{Angle, Channel, Colour, Image, Number, Point3, Size3, Transform3, Vector3};
 use crate::object::simple::SimpleObject;
+use image::ImageFormat;
 use noise::*;
 use rand::{thread_rng, Rng};
 use static_init::*;
+use std::io::BufReader;
 
 use crate::material::dielectric::DielectricMaterial;
 use crate::material::isotropic::IsotropicMaterial;
@@ -30,6 +33,7 @@ use crate::object::ObjectInstance;
 use crate::scene::camera::Camera;
 use crate::shared::math::Lerp;
 use crate::shared::rng;
+use crate::skybox::hdri::HdrImageSkybox;
 use crate::skybox::SkyboxInstance;
 use crate::texture::image::ImageTexture;
 use crate::texture::noise::{ColourSource, LocalNoiseTexture, WorldNoiseTexture};
@@ -107,46 +111,57 @@ pub static TESTING: Scene = {
             //     density: 4.0,
             //     refractive_index: 1.335,
             // },
-            LambertianMaterial::default(),
+            MetalMaterial {
+                albedo: [0.5; 3].into(),
+                fuzz: 0.2,
+            },
             None,
         ));
 
-        // let v = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 1.0, 1.0]].map(Vector3::from);
-        // let [vr, vg, vb, vw] = v;
-        // let [vrg, vgb, vbr] = [(vr + vg) / 2., (vg + vb) / 2., (vb + vr) / 2.];
-        // let [r, g, b, w] = [[1., 0., 0.], [0., 1., 0.], [0., 0., 1.], [1., 1., 1.]].map(Colour::from);
-        // let [rg, gb, br] = [(r + g) / 2., (g + b) / 2., (b + r) / 2.];
-        // let radius = 0.05;
-        //
-        // let mut sphere = |p: Vector3, c: Colour| {
-        //     objects.push(SimpleObject::new(
-        //         SphereMesh::new(p, radius),
-        //         LambertianMaterial::from(TextureInstance::from(c)),
-        //         None,
-        //     ));
-        // };
-        //
-        // sphere(Vector3::ZERO, Colour::BLACK);
-        //
-        // sphere(vr, r);
-        // sphere(vg, g);
-        // sphere(vb, b);
-        //
-        // sphere(vr / 2., r);
-        // sphere(vg / 2., g);
-        // sphere(vb / 2., b);
-        //
-        // sphere(vrg, rg);
-        // sphere(vgb, gb);
-        // sphere(vbr, br);
-        //
-        // sphere(vw, w);
+        let v = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 1.0, 1.0]].map(Vector3::from);
+        let [vr, vg, vb, vw] = v;
+        let [vrg, vgb, vbr] = [(vr + vg) / 2., (vg + vb) / 2., (vb + vr) / 2.];
+        let [r, g, b, w] = [[1., 0., 0.], [0., 1., 0.], [0., 0., 1.], [1., 1., 1.]].map(Colour::from);
+        let [rg, gb, br] = [(r + g) / 2., (g + b) / 2., (b + r) / 2.];
+        let radius = 0.05;
+
+        let mut sphere = |p: Vector3, c: Colour| {
+            objects.push(SimpleObject::new(
+                SphereMesh::new(p, radius),
+                LambertianMaterial::from(TextureInstance::from(c)),
+                None,
+            ));
+        };
+
+        sphere(Vector3::ZERO, Colour::BLACK);
+
+        sphere(vr, r);
+        sphere(vg, g);
+        sphere(vb, b);
+
+        sphere(vr / 2., r);
+        sphere(vg / 2., g);
+        sphere(vb / 2., b);
+
+        sphere(vrg, rg);
+        sphere(vgb, gb);
+        sphere(vbr, br);
+
+        sphere(vw, w);
     }
 
     Scene {
         camera,
         objects: objects.into(),
-        skybox: Default::default(),
+        skybox: HdrImageSkybox::from(Image::from({
+            let file = std::fs::File::open("media/skybox/misty-farm-road/4096x2048.exr")
+                .expect("compile-time image resource should be valid");
+            let mut reader = image::io::Reader::new(BufReader::new(file));
+            reader.no_limits();
+            reader.set_format(ImageFormat::OpenExr);
+            reader.decode().expect("compile-time image resource should be valid")
+        }))
+        .into(),
     }
 };
 

@@ -91,7 +91,7 @@ impl PolygonisedIsosurfaceMesh {
                 continue;
             }
             // NOTE: Vertex ordering is important, should be `[a,b,c]` where `b` is adjacent to `a,c`
-            triangles.push(Triangle::new([a, b, c], [Vector3::cross(b - a, c - b).normalize(); 3]));
+            triangles.push(Triangle::new([a, b, c], [Vector3::cross(b - c, a - b).normalize(); 3]));
         }
 
         let count = triangles.len();

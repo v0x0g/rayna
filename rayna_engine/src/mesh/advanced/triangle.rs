@@ -78,8 +78,6 @@ impl Mesh for Triangle {
         }
 
         let pos_w = ray.at(t);
-        // TODO: pos_l is pos in barycentric coordinates
-        // let pos_l = pos_w - self.vertices[1];
 
         let [v0, v1, v2] = self.vertices;
         let [e0, e1, e2] = self.edges;
@@ -112,7 +110,8 @@ impl Mesh for Triangle {
             pos_w,
             pos_l: pos_barycentric,
             normal,
-            ray_normal: normal * -denominator.signum(),
+            ray_normal: normal * denominator.signum(),
+            // Positive => ray and normal same dir => must be behind plane => backface
             front_face: denominator.is_sign_negative(),
             uv: [uv1, uv2].into(),
             face: 0,

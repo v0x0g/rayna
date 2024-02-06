@@ -58,6 +58,8 @@ impl Triangle {
     }
 }
 
+// region Mesh Impl
+
 impl MeshProperties for Triangle {
     fn centre(&self) -> Point3 {
         let [a, b, c] = self.vertices.map(Vector3::from_point);
@@ -127,3 +129,5 @@ impl Triangle {
             .try_normalize()
     }
 }
+
+// endregion Mesh Impl

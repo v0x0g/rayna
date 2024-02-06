@@ -1,4 +1,4 @@
-use crate::core::types::{Number, Point3, Vector3};
+use crate::core::types::{Number, Point2, Point3, Vector3};
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::intersect::Intersection;
@@ -15,15 +15,6 @@ pub struct Triangle {
     vertices: [Point3; 3],
     /// The corresponding normal vectors at the vertices
     normals: [Vector3; 3],
-    /// The normal for the plane that the triangle lays upon
-    n: Vector3,
-    /// The vectors along the edges of the triangle
-    /// Stored as `[v0->v1, v1->v2, v2->v0]`
-    edges: [Vector3; 3],
-    /// Part of the plane equation: `dot(normal, vertices[0])`
-    d: Number,
-    /// Part of the plane equation: `cross(u, v) / cross(u,v).length_squared()`. Used for UV projection
-    w: Vector3,
     aabb: Aabb,
 }
 
@@ -37,22 +28,9 @@ impl Triangle {
             normals.into_iter().all(Vector3::is_normalized),
             "normals must be normalised"
         );
-        let edges = [b - a, c - b, a - c];
-        // Important to choose `edges[0, 1]`, else won't work
-        let n_raw = Vector3::cross(edges[2], edges[0]);
-        let n = n_raw
-            .try_normalize()
-            .expect("couldn't normalise plane normal: cross(u, v) == 0");
-        let d = -Vector3::dot(n, b.to_vector());
-        // NOTE: using non-normalised plane normal here
-        let w = n_raw / n_raw.length_squared();
         Self {
             vertices,
             normals,
-            n,
-            d,
-            w,
-            edges,
             aabb: Aabb::encompass_points(vertices),
         }
     }
@@ -73,50 +51,97 @@ impl HasAabb for Triangle {
 
 impl Mesh for Triangle {
     fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
-        // Check if ray is parallel to plane
-        let denominator = Vector3::dot(self.n, ray.dir());
-        if denominator.is_zero() {
+        // // Check if ray is parallel to plane
+        // let denominator = Vector3::dot(self.n, ray.dir());
+        // if denominator.is_zero() {
+        //     return None;
+        // }
+        //
+        // let t = -(Vector3::dot(self.n, ray.pos().to_vector()) + self.d) / denominator;
+        //
+        // if !interval.contains(&t) {
+        //     return None;
+        // }
+        //
+        // let pos_w = ray.at(t);
+        //
+        // // Barycentric coordinates
+        // let mut pos_b = Vector3::ZERO;
+        // for i in 0..3 {
+        //     let vp = pos_w - self.vertices[i];
+        //     let c = Vector3::cross(self.edges[i], vp);
+        //     let b = Vector3::dot(self.w, c);
+        //     if b < 0. {
+        //         return None;
+        //     }
+        //     // For some reason, these coordinates are slightly off and give results for the
+        //     // previous vertex (i.e. `pos_b[0]` is how close the point is to `vertex[2]`
+        //     // So counteract that here by rotating the index.
+        //     pos_b[(i + 2) % 3] = b;
+        // }
+        //
+        // // If we can't normalize, the vertex normals must have all added to (close to) zero
+        // // Therefore they must be opposing. Current way of handling this is to skip the point
+        // let normal = Self::interpolate_normals(self.normals, pos_b)?;
+        //
+        // return Some(Intersection {
+        //     pos_w,
+        //     pos_l: pos_b.to_point(),
+        //     normal,
+        //     ray_normal: normal * denominator.signum(),
+        //     // if positive => ray and normal same dir => must be behind plane => backface
+        //     front_face: denominator.is_sign_positive(),
+        //     uv: [pos_b[1], pos_b[2]].into(),
+        //     side: 0,
+        //     dist: t,
+        // });
+
+        let [v0, v1, v2] = self.vertices;
+
+        let v0v1 = v1 - v0;
+        let v0v2 = v2 - v0;
+        let p_vec = ray.dir().cross(v0v2);
+        let det = v0v1.dot(p_vec);
+
+        // ray and triangle are parallel
+        if det.is_zero() {
             return None;
         }
 
-        let t = -(Vector3::dot(self.n, ray.pos().to_vector()) + self.d) / denominator;
+        let inv_det = 1. / det;
+
+        let t_vec = ray.pos() - v0;
+        let u = t_vec.dot(p_vec) * inv_det;
+        if u < 0. || u > 1. {
+            return None;
+        }
+
+        let q_vec = t_vec.cross(v0v1);
+        let v = ray.dir().dot(q_vec) * inv_det;
+        if v < 0. || u + v > 1. {
+            return None;
+        }
+        let t = v0v2.dot(q_vec) * inv_det;
 
         if !interval.contains(&t) {
             return None;
         }
 
         let pos_w = ray.at(t);
-
-        // Barycentric coordinates
-        let mut pos_b = Vector3::ZERO;
-        for i in 0..3 {
-            let vp = pos_w - self.vertices[i];
-            let c = Vector3::cross(self.edges[i], vp);
-            let b = Vector3::dot(self.w, c);
-            if b < 0. {
-                return None;
-            }
-            // For some reason, these coordinates are slightly off and give results for the
-            // previous vertex (i.e. `pos_b[0]` is how close the point is to `vertex[2]`
-            // So counteract that here by rotating the index.
-            pos_b[(i + 2) % 3] = b;
-        }
-
+        let bary_coords = Vector3::new(1. - u - v, u, v);
         // If we can't normalize, the vertex normals must have all added to (close to) zero
         // Therefore they must be opposing. Current way of handling this is to skip the point
-        let normal = Self::interpolate_normals(self.normals, pos_b)?;
-
-        return Some(Intersection {
+        let normal = Self::interpolate_normals(self.normals, bary_coords)?;
+        Some(Intersection {
             pos_w,
-            pos_l: pos_b.to_point(),
-            normal,
-            ray_normal: normal * denominator.signum(),
-            // if positive => ray and normal same dir => must be behind plane => backface
-            front_face: denominator.is_sign_positive(),
-            uv: [pos_b[1], pos_b[2]].into(),
-            side: 0,
+            pos_l: bary_coords.to_point(),
+            front_face: det.is_sign_positive(),
             dist: t,
-        });
+            uv: Point2::new(u, v),
+            side: 0,
+            ray_normal: normal * -det.signum(),
+            normal,
+        })
     }
 }
 

@@ -3,7 +3,6 @@ use crate::core::types::{Number, Point3, Vector3};
 use crate::mesh::advanced::bvh::BvhMesh;
 use crate::mesh::advanced::triangle::Triangle;
 use crate::mesh::isosurface::SdfGeneratorFunction;
-use crate::mesh::primitive::sphere::SphereMesh;
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::intersect::Intersection;

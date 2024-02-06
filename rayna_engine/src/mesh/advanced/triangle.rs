@@ -4,7 +4,6 @@ use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
-use itertools::Itertools;
 use num_traits::Zero;
 use rand_core::RngCore;
 use std::fmt::Debug;

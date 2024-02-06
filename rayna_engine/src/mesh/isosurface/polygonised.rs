@@ -92,6 +92,7 @@ impl PolygonisedIsosurfaceMesh {
             .collect_vec();
 
         let mut triangles = vec![];
+        let mut spheres = vec![];
 
         // Loop over all indices, map them to the vertex positions, and create a triangle
         for [(a, u), (b, v), (c, w)] in triangle_indices
@@ -112,13 +113,10 @@ impl PolygonisedIsosurfaceMesh {
                 continue;
             };
             triangles.push(Triangle::new([a, b, c], [u, v, w]));
+            spheres.push(SphereMesh::new(a + (u * 0.003), 0.001));
+            spheres.push(SphereMesh::new(b + (v * 0.003), 0.001));
+            spheres.push(SphereMesh::new(c + (w * 0.003), 0.001));
         }
-
-        let mut spheres = vec![];
-        for (p, n) in triangle_vertices {
-            spheres.push(SphereMesh::new(p + (n.normalize_or_zero() * 0.003), 0.001));
-        }
-
         let count = triangles.len();
         let mesh = BvhMesh::new(triangles);
 

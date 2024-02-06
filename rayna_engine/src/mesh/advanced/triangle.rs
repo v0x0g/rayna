@@ -38,8 +38,9 @@ impl Triangle {
             normals.into_iter().all(Vector3::is_normalized),
             "normals must be normalised"
         );
-        let edges @ [u, v, _] = [b - a, c - b, a - c];
-        let n_raw = Vector3::cross(u, v);
+        let edges = [b - a, c - b, a - c];
+        // Important to choose `edges[0, 1]`, else won't work
+        let n_raw = Vector3::cross(edges[0], edges[1]);
         let n = n_raw
             .try_normalize()
             .expect("couldn't normalise plane normal: cross(u, v) == 0");
@@ -100,17 +101,14 @@ impl Mesh for Triangle {
 
         // If we can't normalize, the vertex normals must have all added to (close to) zero
         // Therefore they must be opposing. Current way of handling this is to skip the point
-        // let normal = Self::interpolate_normals(self.normals, pos_b)?;
-        let normal = self.normals[(Vector3::ONE - pos_b)
-            .into_iter()
-            .position_max_by(Number::total_cmp)
-            .unwrap()];
+        let normal = Self::interpolate_normals(self.normals, pos_b)?;
 
         return Some(Intersection {
             pos_w,
             pos_l: pos_b.to_point(),
             normal,
-            ray_normal: normal * denominator.signum(),
+            // ray_normal: normal * denominator.signum(),
+            ray_normal: pos_b.normalize(),
             // if positive => ray and normal same dir => must be behind plane => backface
             front_face: denominator.is_sign_negative(),
             uv: [pos_b[1], pos_b[2]].into(),

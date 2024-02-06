@@ -100,7 +100,7 @@ impl Mesh for Triangle {
 
         let v0v1 = v1 - v0;
         let v0v2 = v2 - v0;
-        let p_vec = ray.dir().cross(v0v2);
+        let p_vec = Vector3::cross(ray.dir(), v0v2);
         let det = v0v1.dot(p_vec);
 
         // ray and triangle are parallel
@@ -111,17 +111,17 @@ impl Mesh for Triangle {
         let inv_det = 1. / det;
 
         let t_vec = ray.pos() - v0;
-        let u = t_vec.dot(p_vec) * inv_det;
+        let u = Vector3::dot(t_vec, p_vec) * inv_det;
         if u < 0. || u > 1. {
             return None;
         }
 
-        let q_vec = t_vec.cross(v0v1);
-        let v = ray.dir().dot(q_vec) * inv_det;
+        let q_vec = Vector3::cross(t_vec, v0v1);
+        let v = Vector3::dot(ray.dir(), q_vec) * inv_det;
         if v < 0. || u + v > 1. {
             return None;
         }
-        let t = v0v2.dot(q_vec) * inv_det;
+        let t = Vector3::dot(v0v2, q_vec) * inv_det;
 
         if !interval.contains(&t) {
             return None;
@@ -132,6 +132,7 @@ impl Mesh for Triangle {
         // If we can't normalize, the vertex normals must have all added to (close to) zero
         // Therefore they must be opposing. Current way of handling this is to skip the point
         let normal = Self::interpolate_normals(self.normals, bary_coords)?;
+
         Some(Intersection {
             pos_w,
             pos_l: bary_coords.to_point(),

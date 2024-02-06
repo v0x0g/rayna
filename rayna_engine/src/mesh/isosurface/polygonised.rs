@@ -3,6 +3,7 @@ use crate::core::types::{Number, Point3, Vector3};
 use crate::mesh::advanced::bvh::BvhMesh;
 use crate::mesh::advanced::triangle::Triangle;
 use crate::mesh::isosurface::SdfGeneratorFunction;
+use crate::mesh::primitive::sphere::SphereMesh;
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::intersect::Intersection;
@@ -36,6 +37,7 @@ pub struct PolygonisedIsosurfaceMesh {
     #[derivative(Debug = "ignore")]
     #[get = "pub"]
     mesh: BvhMesh<Triangle>,
+    test: BvhMesh<SphereMesh>,
 }
 
 // region Constructors
@@ -112,6 +114,11 @@ impl PolygonisedIsosurfaceMesh {
             triangles.push(Triangle::new([a, b, c], [u, v, w]));
         }
 
+        let mut spheres = vec![];
+        for (p, n) in triangle_vertices {
+            spheres.push(SphereMesh::new(p + (n.normalize_or_zero() * 0.003), 0.001));
+        }
+
         let count = triangles.len();
         let mesh = BvhMesh::new(triangles);
 
@@ -119,6 +126,7 @@ impl PolygonisedIsosurfaceMesh {
             count,
             resolution,
             mesh,
+            test: BvhMesh::new(spheres),
         }
     }
 }
@@ -174,7 +182,11 @@ impl MeshProperties for PolygonisedIsosurfaceMesh {
 
 impl Mesh for PolygonisedIsosurfaceMesh {
     fn intersect(&self, ray: &Ray, interval: &Interval<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
-        self.mesh.intersect(ray, interval, rng)
+        Iterator::chain(
+            self.mesh.intersect(ray, interval, rng).into_iter(),
+            self.test.intersect(ray, interval, rng).into_iter(),
+        )
+        .min()
     }
 }
 

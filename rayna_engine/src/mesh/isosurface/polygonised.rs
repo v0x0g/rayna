@@ -113,9 +113,9 @@ impl PolygonisedIsosurfaceMesh {
                 continue;
             };
             triangles.push(Triangle::new([a, b, c], [u, v, w]));
-            spheres.push(SphereMesh::new(a + (u * 0.003), 0.001));
-            spheres.push(SphereMesh::new(b + (v * 0.003), 0.001));
-            spheres.push(SphereMesh::new(c + (w * 0.003), 0.001));
+            // spheres.push(SphereMesh::new(a + (u * 0.003), 0.001));
+            // spheres.push(SphereMesh::new(b + (v * 0.003), 0.001));
+            // spheres.push(SphereMesh::new(c + (w * 0.003), 0.001));
         }
         let count = triangles.len();
         let mesh = BvhMesh::new(triangles);

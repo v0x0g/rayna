@@ -120,7 +120,8 @@ impl Mesh for Triangle {
 
 impl Triangle {
     /// Interpolates across the vertex normals for a given point in barycentric coordinates
-    fn interpolate_normals(normals: [Vector3; 3], coords: Vector3) -> Option<Vector3> {
+    fn interpolate_normals(normals: [Vector3; 3], mut coords: Vector3) -> Option<Vector3> {
+        coords.as_array_mut().rotate_right(2);
         std::iter::zip(normals, coords)
             .map(|(n, u)| n * u)
             .fold(Vector3::ZERO, Vector3::add)

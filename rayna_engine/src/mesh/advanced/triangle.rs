@@ -87,16 +87,18 @@ impl Mesh for Triangle {
         let pos_w = ray.at(t);
 
         // Barycentric coordinates
-        // TODO: I believe that barycentric coordinates are currently slightly off, and are
-        //  giving the distance to the adjacent vertex, not the opposing vertex
         let mut pos_b = Vector3::ZERO;
         for i in 0..3 {
             let vp = pos_w - self.vertices[i];
             let c = Vector3::cross(self.edges[i], vp);
-            pos_b[i] = Vector3::dot(self.w, c);
-            if pos_b[i] < 0. {
+            let b = Vector3::dot(self.w, c);
+            if b < 0. {
                 return None;
             }
+            // For some reason, these coordinates are slightly off and give results for the
+            // previous vertex (i.e. `pos_b[0]` is how close the point is to `vertex[2]`
+            // So counteract that here by rotating the index.
+            pos_b[(i + 2) % 3] = b;
         }
 
         // If we can't normalize, the vertex normals must have all added to (close to) zero
@@ -107,8 +109,7 @@ impl Mesh for Triangle {
             pos_w,
             pos_l: pos_b.to_point(),
             normal,
-            // ray_normal: normal * denominator.signum(),
-            ray_normal: pos_b.normalize(),
+            ray_normal: normal * denominator.signum(),
             // if positive => ray and normal same dir => must be behind plane => backface
             front_face: denominator.is_sign_negative(),
             uv: [pos_b[1], pos_b[2]].into(),
@@ -120,9 +121,8 @@ impl Mesh for Triangle {
 
 impl Triangle {
     /// Interpolates across the vertex normals for a given point in barycentric coordinates
-    fn interpolate_normals(normals: [Vector3; 3], mut coords: Vector3) -> Option<Vector3> {
-        coords.as_array_mut().rotate_right(2);
-        std::iter::zip(normals, coords)
+    fn interpolate_normals(normals: [Vector3; 3], bary_coords: Vector3) -> Option<Vector3> {
+        std::iter::zip(normals, bary_coords)
             .map(|(n, u)| n * u)
             .fold(Vector3::ZERO, Vector3::add)
             .try_normalize()

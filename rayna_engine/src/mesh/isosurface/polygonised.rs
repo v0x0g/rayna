@@ -37,7 +37,6 @@ pub struct PolygonisedIsosurfaceMesh {
     #[derivative(Debug = "ignore")]
     #[get = "pub"]
     mesh: BvhMesh<Triangle>,
-    test: BvhMesh<SphereMesh>,
 }
 
 // region Constructors
@@ -92,7 +91,6 @@ impl PolygonisedIsosurfaceMesh {
             .collect_vec();
 
         let mut triangles = vec![];
-        let mut spheres = vec![];
 
         // Loop over all indices, map them to the vertex positions, and create a triangle
         for [(a, u), (b, v), (c, w)] in triangle_indices
@@ -113,9 +111,6 @@ impl PolygonisedIsosurfaceMesh {
                 continue;
             };
             triangles.push(Triangle::new([a, b, c], [u, v, w]));
-            // spheres.push(SphereMesh::new(a + (u * 0.003), 0.001));
-            // spheres.push(SphereMesh::new(b + (v * 0.003), 0.001));
-            // spheres.push(SphereMesh::new(c + (w * 0.003), 0.001));
         }
         let count = triangles.len();
         let mesh = BvhMesh::new(triangles);
@@ -124,7 +119,6 @@ impl PolygonisedIsosurfaceMesh {
             count,
             resolution,
             mesh,
-            test: BvhMesh::new(spheres),
         }
     }
 }
@@ -180,11 +174,7 @@ impl MeshProperties for PolygonisedIsosurfaceMesh {
 
 impl Mesh for PolygonisedIsosurfaceMesh {
     fn intersect(&self, ray: &Ray, interval: &Interval<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
-        Iterator::chain(
-            self.mesh.intersect(ray, interval, rng).into_iter(),
-            self.test.intersect(ray, interval, rng).into_iter(),
-        )
-        .min()
+        self.mesh.intersect(ray, interval, rng)
     }
 }
 

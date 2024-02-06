@@ -1,3 +1,4 @@
+use crate::core::targets::MESH;
 use crate::core::types::{Number, Point3, Vector3};
 use crate::mesh::advanced::bvh::BvhMesh;
 use crate::mesh::advanced::triangle::Triangle;
@@ -10,11 +11,14 @@ use crate::shared::ray::Ray;
 use derivative::Derivative;
 use getset::{CopyGetters, Getters};
 use isosurface::distance::Signed;
+use isosurface::extractor::IndexedInterleavedNormals;
+use isosurface::math::Vec3;
 use isosurface::sampler::Sampler;
-use isosurface::source::ScalarSource;
+use isosurface::source::{HermiteSource, ScalarSource};
 use isosurface::MarchingCubes;
 use itertools::Itertools;
 use rand_core::RngCore;
+use tracing::warn;
 
 /// A mesh struct that is created by creating an isosurface from a given SDF
 ///
@@ -46,12 +50,16 @@ impl PolygonisedIsosurfaceMesh {
     /// * `sdf`: The **SDF** that defines the surface for the mesh.
     /// This SDF will be evaluated in local-space: `x,y,z: [0, 1]`
     pub fn new<F: SdfGeneratorFunction>(resolution: usize, sdf: F) -> Self {
-        let source = SdfSource { func: sdf };
+        let source = SdfWrapper {
+            func: sdf,
+            epsilon: 1e-7,
+        };
         let mut raw_vertex_coords = vec![];
         let mut raw_indices = vec![];
-        let mut extractor = isosurface::extractor::IndexedVertices::new(&mut raw_vertex_coords, &mut raw_indices);
-        let sampler = Sampler::new(&source);
-        MarchingCubes::<Signed>::new(resolution).extract(&sampler, &mut extractor);
+        MarchingCubes::<Signed>::new(resolution).extract(
+            &Sampler::new(&source),
+            &mut IndexedInterleavedNormals::new(&mut raw_vertex_coords, &mut raw_indices, &source),
+        );
 
         assert_eq!(
             raw_indices.len() % 3,
@@ -60,16 +68,19 @@ impl PolygonisedIsosurfaceMesh {
             raw_indices.len()
         );
         assert_eq!(
-            raw_vertex_coords.len() % 3,
+            raw_vertex_coords.len() % 6,
             0,
-            "`raw_vertex_coords.len` should be multiple of 3 (was {})",
+            "`raw_vertex_coords.len` should be multiple of 6 (was {})",
             raw_vertex_coords.len()
         );
 
         // Group the vertex coordinates into groups of three, so we get a 3D point
+        // Interleaved with normals, so extract that out too
         let triangle_vertices = raw_vertex_coords
             .array_chunks::<3>()
-            .map(|vs| Point3::from(vs.map(|v| v as Number)))
+            .map(|vs| vs.map(|v| v as Number))
+            .array_chunks::<2>()
+            .map(|[v, n]| (Point3::from(v), Vector3::from(n)))
             .collect_vec();
 
         // Group the indices in chunks of three as well, for the three vertices of each triangle
@@ -81,17 +92,24 @@ impl PolygonisedIsosurfaceMesh {
         let mut triangles = vec![];
 
         // Loop over all indices, map them to the vertex positions, and create a triangle
-        for [a, b, c] in triangle_indices
+        for [(a, u), (b, v), (c, w)] in triangle_indices
             .into_iter()
             .map(|vert_indices| vert_indices.map(|v_i| triangle_vertices[v_i]))
         {
             // Sometimes this generates "empty" triangles that have duplicate vertices
             // This is invalid, so skip those. Not sure if it's a bug or intentional :(
             if a == b || b == c || c == a {
+                warn!(target: MESH,  "triangle with empty vertices; verts: [{a:?}, {b:?}, {c:?}]");
                 continue;
             }
-            // NOTE: Vertex ordering is important, should be `[a,b,c]` where `b` is adjacent to `a,c`
-            triangles.push(Triangle::new([a, b, c], [Vector3::cross(b - c, a - b).normalize(); 3]));
+            // Normals are not normalised by [SdfSource], so do that here.
+            // If for any vertex there is a zero gradient normal, skip those because
+            // I don't know a good way to handle them
+            let Some([u, v, w]) = [u, v, w].try_map(Vector3::try_normalize) else {
+                warn!(target: MESH,  "triangle with empty normals; normals: [{u:?}, {v:?}, {w:?}]");
+                continue;
+            };
+            triangles.push(Triangle::new([a, b, c], [u, v, w]));
         }
 
         let count = triangles.len();
@@ -109,13 +127,36 @@ impl PolygonisedIsosurfaceMesh {
 
 // region Isosurface Helper
 
-struct SdfSource<F: SdfGeneratorFunction> {
+/// A custom wrapper struct around an [SdfGeneratorFunction]
+///
+/// It is used for
+struct SdfWrapper<F: SdfGeneratorFunction> {
     pub func: F,
+    pub epsilon: Number,
 }
-impl<F: SdfGeneratorFunction> ScalarSource for SdfSource<F> {
-    fn sample_scalar(&self, isosurface::math::Vec3 { x, y, z }: isosurface::math::Vec3) -> Signed {
+
+// TODO: See if we can use Numbers (f64) with [SdfWrapper],
+//  instead of converting to/from f32
+impl<F: SdfGeneratorFunction> ScalarSource for SdfWrapper<F> {
+    fn sample_scalar(&self, Vec3 { x, y, z }: Vec3) -> Signed {
         let point = [x, y, z].map(|n| n as Number).into();
         Signed((self.func)(point) as f32)
+    }
+}
+
+impl<F: SdfGeneratorFunction> HermiteSource for SdfWrapper<F> {
+    fn sample_normal(&self, Vec3 { x, y, z }: Vec3) -> Vec3 {
+        let p = [x, y, z].map(|n| n as Number).into();
+        let v = (self.func)(p);
+        let dx = (self.func)(p + Vector3::new(self.epsilon, 0.0, 0.0)) - v;
+        let dy = (self.func)(p + Vector3::new(0.0, self.epsilon, 0.0)) - v;
+        let dz = (self.func)(p + Vector3::new(0.0, 0.0, self.epsilon)) - v;
+
+        // NOTE: In the case that the scalar field is completely homogenous in the region,
+        //  all the values will be the same and we will have no gradient, so this will be zero.
+        //  Since this is an internal API, we can skip that check here and do it in the mesh generation part
+        let grad = Vector3::new(dx, dy, dz);
+        Vec3::new(grad.x as f32, grad.y as f32, grad.z as f32)
     }
 }
 

@@ -33,13 +33,17 @@ impl Triangle {
 
         let [a, b, c] = vertices;
         assert!(a != b && b != c && c != a, "triangles cannot have duplicate vertices");
+        assert!(
+            normals.into_iter().all(Vector3::is_normalized),
+            "normals must be normalised"
+        );
         let edges @ [u, v, _] = [b - a, c - b, a - c];
         let n_raw = Vector3::cross(u, v);
         let n = n_raw
             .try_normalize()
             .expect("couldn't normalise plane normal: cross(u, v) == 0");
         let d = -Vector3::dot(n, b.to_vector());
-        // NOTE: using non-normalised normal here
+        // NOTE: using non-normalised plane normal here
         let w = n_raw / n_raw.length_squared();
         Self {
             vertices,
@@ -91,9 +95,12 @@ impl Mesh for Triangle {
             }
         }
 
+        // If we can't normalize, the vertex normals must have all added to (close to) zero
+        // Therefore they must be opposing. Current way of handling this is to skip the point
         let normal = std::iter::zip(self.normals, pos_b)
             .map(|(n, u)| n * u)
-            .fold(Vector3::ZERO, Vector3::add);
+            .fold(Vector3::ZERO, Vector3::add)
+            .try_normalize()?;
 
         return Some(Intersection {
             pos_w,

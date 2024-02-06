@@ -4,6 +4,7 @@ use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
+use itertools::Itertools;
 use num_traits::Zero;
 use rand_core::RngCore;
 use std::fmt::Debug;
@@ -85,6 +86,8 @@ impl Mesh for Triangle {
         let pos_w = ray.at(t);
 
         // Barycentric coordinates
+        // TODO: I believe that barycentric coordinates are currently slightly off, and are
+        //  giving the distance to the adjacent vertex, not the opposing vertex
         let mut pos_b = Vector3::ZERO;
         for i in 0..3 {
             let vp = pos_w - self.vertices[i];
@@ -97,10 +100,11 @@ impl Mesh for Triangle {
 
         // If we can't normalize, the vertex normals must have all added to (close to) zero
         // Therefore they must be opposing. Current way of handling this is to skip the point
-        let normal = std::iter::zip(self.normals, pos_b)
-            .map(|(n, u)| n * u)
-            .fold(Vector3::ZERO, Vector3::add)
-            .try_normalize()?;
+        // let normal = Self::interpolate_normals(self.normals, pos_b)?;
+        let normal = self.normals[(Vector3::ONE - pos_b)
+            .into_iter()
+            .position_max_by(Number::total_cmp)
+            .unwrap()];
 
         return Some(Intersection {
             pos_w,
@@ -113,5 +117,15 @@ impl Mesh for Triangle {
             face: 0,
             dist: t,
         });
+    }
+}
+
+impl Triangle {
+    /// Interpolates across the vertex normals for a given point in barycentric coordinates
+    fn interpolate_normals(normals: [Vector3; 3], coords: Vector3) -> Option<Vector3> {
+        std::iter::zip(normals, coords)
+            .map(|(n, u)| n * u)
+            .fold(Vector3::ZERO, Vector3::add)
+            .try_normalize()
     }
 }

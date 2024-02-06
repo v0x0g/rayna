@@ -90,8 +90,13 @@ pub static TESTING: Scene = {
     let mut objects = Vec::new();
 
     {
+        let material = DielectricMaterial {
+            albedo: [0.28, 0.53, 0.7].into(),
+            density: 1.0,
+            refractive_index: 1.335,
+        };
         objects.push(SimpleObject::new(
-            PolygonisedIsosurfaceMesh::new(32, |p_raw| {
+            PolygonisedIsosurfaceMesh::new(64, |p_raw| {
                 let [x, y, z] = p_raw.into();
 
                 // NOTE: Point is given to us inside range `0.0..=1.0`
@@ -106,16 +111,18 @@ pub static TESTING: Scene = {
                 const B: Number = 0.6;
                 x.powi(2) + z.powi(2) + y.powf(A + (B)) - y.powf(A)
             }),
-            DielectricMaterial {
-                albedo: [0.68, 0.73, 0.9].into(),
-                density: 4.0,
-                refractive_index: 1.335,
-            },
+            material.clone(),
             // MetalMaterial {
             //     albedo: [0.5; 3].into(),
             //     fuzz: 0.5,
             // },
             // LambertianMaterial::default(),
+            None,
+        ));
+
+        objects.push(SimpleObject::new(
+            SphereMesh::new((0., -0.3, 0.), 0.1),
+            material.clone(),
             None,
         ));
 

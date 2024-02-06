@@ -106,7 +106,7 @@ impl Mesh for RaymarchedIsosurfaceMesh {
                     uv: Point2::ZERO,
                     dist: total_dist,
                     front_face: dist.is_sign_positive(),
-                    face: i,
+                    side: i,
                     normal,
                     ray_normal: normal,
                 });

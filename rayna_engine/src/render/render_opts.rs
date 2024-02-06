@@ -26,9 +26,10 @@ pub enum RenderMode {
     RayNormal,
     OutwardNormal,
     Scatter,
+    FrontFace,
     Distance,
     Uv,
-    Face,
+    Side,
 }
 
 impl RenderOpts {

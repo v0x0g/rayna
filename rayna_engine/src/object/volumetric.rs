@@ -149,7 +149,7 @@ where
             normal: rng::normal_on_unit_sphere(rng),
             ray_normal: rng::normal_on_unit_sphere(rng),
             uv: rng::vector_in_unit_square_01(rng).to_point(),
-            face: 0,
+            side: 0,
             front_face: true,
         };
 

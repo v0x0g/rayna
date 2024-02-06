@@ -178,7 +178,7 @@ impl Mesh for CylinderMesh {
             front_face: inside_sign.is_sign_negative(),
             dist,
             uv,
-            face,
+            side: face,
         });
     }
 }

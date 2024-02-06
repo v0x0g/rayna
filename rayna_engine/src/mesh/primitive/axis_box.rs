@@ -126,7 +126,7 @@ impl Mesh for AxisBoxMesh {
                             dist,
                             uv: uvs.to_point(),
                             // x: 0,1; y: 2,3; z: 4,5; -ve sign first then positive sign
-                            face: ((glam::uvec3(1, 5, 9).$u + sgn.$u as u32) / 2) as usize,
+                            side: ((glam::uvec3(1, 5, 9).$u + sgn.$u as u32) / 2) as usize,
                         });
                     }
                 }

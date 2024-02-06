@@ -94,7 +94,7 @@ impl Mesh for SphereMesh {
             ray_normal,
             front_face: !ray_pos_inside,
             uv: sphere_uv(local_point),
-            face: 0,
+            side: 0,
         });
     }
 }

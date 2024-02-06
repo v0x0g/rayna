@@ -41,7 +41,7 @@ pub struct Intersection {
     ///
     /// For objects with a single 'surface' (like a [sphere](crate::mesh::sphere::SphereMesh), this would be always [Number::ZERO].
     /// For an mesh that may have multiple faces (like a [box](crate::mesh::axis_box::AxisBoxMesh), this would unique per-side.
-    pub face: usize,
+    pub side: usize,
 }
 
 impl Eq for Intersection {}

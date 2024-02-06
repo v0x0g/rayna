@@ -39,7 +39,7 @@ impl Triangle {
         );
         let edges = [b - a, c - b, a - c];
         // Important to choose `edges[0, 1]`, else won't work
-        let n_raw = Vector3::cross(edges[0], edges[1]);
+        let n_raw = Vector3::cross(edges[2], edges[0]);
         let n = n_raw
             .try_normalize()
             .expect("couldn't normalise plane normal: cross(u, v) == 0");
@@ -110,9 +110,9 @@ impl Mesh for Triangle {
             normal,
             ray_normal: normal * denominator.signum(),
             // if positive => ray and normal same dir => must be behind plane => backface
-            front_face: denominator.is_sign_negative(),
+            front_face: denominator.is_sign_positive(),
             uv: [pos_b[1], pos_b[2]].into(),
-            face: 0,
+            side: 0,
             dist: t,
         });
     }

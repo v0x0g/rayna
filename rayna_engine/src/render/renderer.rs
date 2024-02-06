@@ -370,9 +370,10 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
                 (intersect.uv.y as Channel).clamp(0., 1.),
                 0.,
             ]),
-            RenderMode::Face => {
+            RenderMode::FrontFace => COLOURS[intersect.front_face as usize],
+            RenderMode::Side => {
                 // TODO: Make `Object: Hash`
-                let hash = intersect.face % (N_COL - 1) + 1;
+                let hash = intersect.side % (N_COL - 1) + 1;
                 COLOURS[hash]
             }
             RenderMode::Distance => {

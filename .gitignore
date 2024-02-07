@@ -134,18 +134,5 @@ Cargo.lock
 
 .idea/*
 !.idea/vcs.xml
-/renders/.obsidian/app.json
-/renders/.obsidian/appearance.json
-/renders/.obsidian/core-plugins.json
-/renders/.obsidian/core-plugins-migration.json
-/renders/.obsidian/types.json
-/renders/.obsidian/workspace.json
-/renders/2024-01-01 - Ballz/info.md
-/renders/2024-01-01 - Ballz/render.exr
-/renders/2024-01-02 - Balls and Cubes/info.md
-/renders/2024-01-02 - Balls and Cubes/render.exr
-/renders/2024-01-03 - Balls and Cubes (Alt)/info.md
-/renders/2024-01-03 - Balls and Cubes (Alt)/render.exr
-/renders/2024-01-03 07-42 - Glass Test/info.md
-/renders/2024-01-03 07-42 - Glass Test/render.exr
-/renders/Template/info.md
+/renders/
+/renders/*

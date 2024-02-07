@@ -136,3 +136,4 @@ Cargo.lock
 !.idea/vcs.xml
 /renders/
 /renders/*
+render.exr

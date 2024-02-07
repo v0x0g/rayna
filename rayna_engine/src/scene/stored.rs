@@ -3,6 +3,7 @@
 //! There is no significance to them, apart from not having to manually create scenes by hand.
 //!
 //! There are some common ones [CORNELL] and [RTIAW_DEMO], that should be well known.
+#![allow(non_snake_case)]
 #![allow(unused)]
 
 use crate::core::types::{Angle, Channel, Colour, Image, Number, Point3, Size3, Transform3, Vector3};
@@ -10,7 +11,6 @@ use crate::object::simple::SimpleObject;
 use image::ImageFormat;
 use noise::*;
 use rand::{thread_rng, Rng};
-use static_init::*;
 use std::io::BufReader;
 
 use crate::material::dielectric::DielectricMaterial;
@@ -42,43 +42,7 @@ use crate::texture::TextureInstance;
 
 use super::Scene;
 
-// /// Super simple scene, just a ground sphere and a small sphere
-// #[dynamic]
-// pub static SIMPLE: Scene = {
-//     Scene {
-//         camera: Camera {
-//             pos: Point3::new(0., 0.5, -3.),
-//             fwd: Vector3::Z,
-//             v_fov: Angle::from_degrees(45.),
-//             focus_dist: 3.,
-//             defocus_angle: Angle::from_degrees(0.),
-//         },
-//         objects: [
-//             SimpleObject::new(
-//                 // Small, top
-//                 SphereMesh::new((0., 0., 1.), 0.5),
-//                 MetalMaterial {
-//                     albedo: [0.8; 3].into(),
-//                     fuzz: 1.,
-//                 },
-//                 None,
-//             ),
-//             SimpleObject::new(
-//                 // Ground
-//                 SphereMesh::new((0., -100.5, -1.), 100.),
-//                 LambertianMaterial {
-//                     albedo: [0.5; 3].into(),
-//                 },
-//                 None,
-//             ),
-//         ]
-//         .into(),
-//         skybox: SkyboxInstance::default(),
-//     }
-// };
-
-#[dynamic]
-pub static TESTING: Scene = {
+pub fn TESTING() -> Scene {
     let camera = Camera {
         pos: Point3::new(0.5, 0.1, 0.7),
         fwd: Vector3::new(0., 0., -1.).normalize(),
@@ -171,11 +135,10 @@ pub static TESTING: Scene = {
         }))
         .into(),
     }
-};
+}
 
 /// From **RayTracing in A Weekend**, the demo scene at the end of the chapter (extended of course)
-#[dynamic]
-pub static RTIAW_DEMO: Scene = {
+pub fn RTIAW_DEMO() -> Scene {
     let mut objects = Vec::new();
 
     let grid_dims = -15..=15;
@@ -269,12 +232,10 @@ pub static RTIAW_DEMO: Scene = {
         objects: objects.into(),
         skybox: SkyboxInstance::default(),
     }
-};
+}
 
-//noinspection SpellCheckingInspection
 /// From **RayTracing The Next Week**, the demo scene at the end of the chapter (extended of course)
-#[dynamic]
-pub static RTTNW_DEMO: Scene = {
+pub fn RTTNW_DEMO() -> Scene {
     let mut objects: Vec<ObjectInstance<MeshInstance, MaterialInstance<TextureInstance>>> = Vec::new();
     let rng = &mut thread_rng();
 
@@ -481,11 +442,10 @@ pub static RTTNW_DEMO: Scene = {
         objects: objects.into(),
         skybox: None.into(),
     }
-};
+}
 
 /// The classic cornell box scene
-#[dynamic]
-pub static CORNELL: Scene = {
+pub fn CORNELL() -> Scene {
     let camera = Camera {
         pos: Point3::new(0.5, 0.5, 2.3),
         fwd: Vector3::new(0., 0., -1.).normalize(),
@@ -560,4 +520,4 @@ pub static CORNELL: Scene = {
         skybox: None.into(),
         // skybox: SkyboxInstance::default(),
     }
-};
+}

@@ -42,7 +42,7 @@ strum = { workspace = true }
 strum_macros = { workspace = true }
 smallvec = { version = "1.11.2", features = ["const_generics", "const_new", "specialization"] }
 enum_dispatch = "0.3.12"
-static_init = { workspace =  true }
+#static_init = { workspace =  true }
 getset = { workspace = true }
 itertools = { workspace = true }
 indextree = "4.6.0"

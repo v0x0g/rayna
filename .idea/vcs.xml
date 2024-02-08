@@ -12,5 +12,6 @@
     <mapping directory="$PROJECT_DIR$/lib/noise-rs" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/lib/puffin" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/media" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/renders" vcs="Git" />
   </component>
 </project>

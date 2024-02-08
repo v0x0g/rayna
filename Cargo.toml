@@ -26,8 +26,9 @@ rand_pcg = "0.3.1"
 rand_xorshift = "0.3.0"
 rand_hc = "0.3.2"
 rand_isaac = "0.3.0"
-noise = { version = "0.8.2", features = ["images"] }
 ndarray = { version = "0.15.6", features = ["rayon"] }
+# Using a custom version of `noise` where I have added a lot of #[derive()] macros
+noise = { path = "lib/noise-rs", features = ["images"] }
 
 # Errors
 
@@ -61,18 +62,11 @@ static_assertions = "1.1.0"
 
 # Performance
 
-puffin = { version = "0.18.1" }
-puffin_http = { version = "0.15.0"}
-rayon = "1.8.0"
-
-[patch.crates-io]
-# Using a custom version of puffin (cloned locally in libs/puffin)
-# So that we can have multiple instances of the puffin_http::Server
-# That DON'T share the same global profiler instance
+# Using a custom fork of `puffin`, so we can have multiple instances
+# of the `puffin_http::Server` that are disjoint
 puffin = { path = "lib/puffin/puffin" }
 puffin_http = { path = "lib/puffin/puffin_http" }
-# Using a custom version of noise-rs (cloned locally)
-noise = { path = "lib/noise-rs" }
+rayon = "1.8.0"
 
 [profile.dev]
 # Default dev profile, fast compile times

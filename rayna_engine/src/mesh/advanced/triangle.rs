@@ -136,7 +136,7 @@ impl Mesh for Triangle {
         Some(Intersection {
             pos_w,
             pos_l: bary_coords.to_point(),
-            front_face: det.is_sign_positive(),
+            front_face: det.is_sign_negative(),
             dist: t,
             uv: Point2::new(u, v),
             side: 0,

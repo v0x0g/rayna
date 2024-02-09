@@ -15,6 +15,7 @@ use crate::shared::generic_bvh::{GenericBvh, GenericBvhNode};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
+use crate::shared::validate;
 
 #[derive(Getters, Clone, Debug)]
 #[get = "pub"]
@@ -82,6 +83,7 @@ impl<Mesh: MeshTrait> BvhMesh<Mesh> {
                         continue;
                     };
 
+                    validate::intersection(ray, &intersect, &shrunk_interval);
                     shrunk_interval = shrunk_interval.with_some_end(intersect.dist);
                     closest_intersect = Some(intersect)
                 }

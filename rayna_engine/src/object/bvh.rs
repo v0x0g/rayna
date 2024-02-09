@@ -15,6 +15,7 @@ use crate::shared::generic_bvh::{GenericBvh, GenericBvhNode};
 use crate::shared::intersect::FullIntersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
+use crate::shared::validate;
 
 #[derive(Getters, Clone, Debug)]
 #[get = "pub"]
@@ -88,6 +89,7 @@ impl<Obj: Object> BvhObject<Obj> {
                         continue;
                     };
 
+                    validate::intersection(ray, &intersect.intersection, &shrunk_interval);
                     shrunk_interval = shrunk_interval.with_some_end(intersect.intersection.dist);
                     closest_intersect = Some(intersect)
                 }

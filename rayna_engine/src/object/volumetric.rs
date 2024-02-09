@@ -91,16 +91,14 @@ where
     ) -> Option<FullIntersection<'o, Mat>> {
         let ray = self.transform.incoming_ray(orig_ray);
 
-        // SECTION: This is all the heavy-lifting for the volumetric calculations
-
         // Find two samples on surface of volume
         // These should be as the ray enters and exits the mesh
 
         // NOTE: We should be using the `interval` parameter here, however that won't work for rays inside meshes,
-        // where the mesh is convex (many primitives are) - the first intersection will be 'behind' the ray,
-        // and so we will only get *one* forward intersection (entering), which means we don't an exiting intersection.
-        // To solve this, we check for entering intersection without interval, so that we can still check if an intersection
-        // exists at all along the ray. Then, we clamp that distance value to our interval, so we still get the right value
+        //  where the mesh is convex (many primitives are) - the first intersection will be 'behind' the ray,
+        //  and so we will only get *one* forward intersection (entering), which means we don't an exiting intersection.
+        //  To solve this, we check for entering intersection without interval, so that we can still check if an intersection
+        //  exists at all along the ray. Then, we clamp that distance value to our interval, so we still get the right value
         let entering_dist = {
             let enter_interval = Interval::FULL;
             let d = self.mesh.intersect(&ray, &enter_interval, rng)?.dist;
@@ -116,7 +114,8 @@ where
             let exit_interval = Interval::from(entering_dist + 0.001..);
             let d = self.mesh.intersect(&ray, &exit_interval, rng)?.dist;
 
-            if let Some(end) = exit_interval.end {
+            // Clamp intersection dist to end of interval (if volume larger than interval)
+            if let Some(end) = interval.end {
                 d.min(end)
             } else {
                 d
@@ -127,16 +126,19 @@ where
         let dist_inside = exiting_dist - entering_dist;
         // Random distance at which we will hit
         let hit_dist = self.neg_inv_density * Number::ln(rng.gen());
+        // Actual distance along the ray of the volume intersection that we'll use
+        let dist = entering_dist + hit_dist;
 
         // NOTE: We don't do normal interval checks on intersections here, due to concavity issues given above.
         // Also, even if `exiting_dist` is outside of the range, the value `hit_dist` might be inside
         // And `hit_dist` is the one we actually use, so check that instead
         // We don't need to check `if !interval.contains(&dist)`, it's guaranteed to be inside `interval`
+        // Since we clamped the entry/exit distances to the interval already
+
         if hit_dist > dist_inside {
             return None;
         }
 
-        let dist = entering_dist + hit_dist;
         let pos_w = ray.at(dist);
         let pos_l = pos_w;
 

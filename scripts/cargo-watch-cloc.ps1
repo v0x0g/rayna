@@ -1,0 +1,1 @@
+cargo watch -c -s "cloc --vcs=git . --3 --hide-rate --quiet"

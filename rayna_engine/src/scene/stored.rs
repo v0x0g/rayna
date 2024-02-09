@@ -346,11 +346,12 @@ pub fn RTTNW_DEMO() -> Scene {
         objects.push(
             VolumetricObject::new(
                 // BLUE HAZE INSIDE
-                SphereMesh::new((3.6, 1.5, 1.45), 0.6),
+                SphereMesh::new((3.6, 1.5, 1.45), 0.6999),
                 IsotropicMaterial {
                     albedo: [0.2, 0.4, 0.9].into(),
+                    density: 1.,
                 },
-                1.0,
+                4.0,
                 None,
             )
             .into(),
@@ -420,15 +421,15 @@ pub fn RTTNW_DEMO() -> Scene {
     {
         // HAZE
 
-        objects.push(
-            VolumetricObject::new(
-                SphereMesh::new(Point3::ZERO, 50.),
-                IsotropicMaterial { albedo: [1.; 3].into() },
-                0.003,
-                None,
-            )
-            .into(),
-        );
+        // objects.push(
+        //     VolumetricObject::new(
+        //         SphereMesh::new(Point3::ZERO, 50.),
+        //         IsotropicMaterial { albedo: [1.; 3].into() },
+        //         0.003,
+        //         None,
+        //     )
+        //     .into(),
+        // );
     }
 
     Scene {

@@ -7,15 +7,14 @@ use crate::shared::ray::Ray;
 use core::ops::*;
 use num_traits::Zero;
 use rand_core::RngCore;
-use std::arch::x86_64::{__m256d, _mm256_mul_pd, _mm256_shuffle_pd, _mm256_sub_pd, _mm_shuffle_ps, _MM_SHUFFLE};
 use std::fmt::Debug;
-use std::simd::{f64x4, Simd};
+use std::simd::Simd;
 use std::simd::{prelude::*, simd_swizzle};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Triangle {
     /// The three corner vertices of the triangle
-    vertices: [f64x4; 3],
+    vertices: [Point3; 3],
     /// The corresponding normal vectors at the vertices
     normals: [Vector3; 3],
     aabb: Aabb,
@@ -32,7 +31,7 @@ impl Triangle {
             "normals must be normalised"
         );
         Self {
-            vertices: vertices.map(to_simd),
+            vertices,
             normals,
             aabb: Aabb::encompass_points(vertices),
         }
@@ -43,10 +42,9 @@ impl Triangle {
 
 impl MeshProperties for Triangle {
     fn centre(&self) -> Point3 {
-        let [a, b, c] = self.vertices;
+        let [a, b, c] = self.vertices.map(Point3::to_vector);
         // Average the points
-        let [x, y, z, _] = ((a + b + c) / f64x4::splat(3.)).to_array();
-        [x, y, z].into()
+        ((a + b + c) / 3.).to_point()
     }
 }
 
@@ -56,6 +54,11 @@ impl HasAabb for Triangle {
 
 #[inline(always)]
 fn simd_cross_prod(a: Simd<Number, 4>, b: Simd<Number, 4>) -> Simd<Number, 4> {
+    return to_simd(Vector3::cross(
+        Vector3::new(a[0], a[1], a[2]),
+        Vector3::new(b[0], b[1], b[2]),
+    ));
+
     // let mut tmp0 = simd_swizzle!(b, [3, 0, 2, 1]);
     // let mut tmp1 = simd_swizzle!(a, [3, 0, 2, 1]);
     // tmp0 = tmp0 * a;
@@ -63,18 +66,18 @@ fn simd_cross_prod(a: Simd<Number, 4>, b: Simd<Number, 4>) -> Simd<Number, 4> {
     // let tmp2 = tmp0 - tmp1;
     // return simd_swizzle!(tmp2, [3, 0, 2, 1]);
 
-    unsafe {
-        let b = __m256d::from(b);
-        let a = __m256d::from(a);
-
-        let mut tmp0 = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(b, b);
-        let mut tmp1 = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(a, a);
-        tmp0 = _mm256_mul_pd(tmp0, a);
-        tmp1 = _mm256_mul_pd(tmp1, b);
-        let tmp2 = _mm256_sub_pd(tmp0, tmp1);
-        let ret = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(tmp2, tmp2);
-        return ret.into();
-    }
+    // unsafe {
+    //     let b = __m256d::from(b);
+    //     let a = __m256d::from(a);
+    //
+    //     let mut tmp0 = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(b, b);
+    //     let mut tmp1 = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(a, a);
+    //     tmp0 = _mm256_mul_pd(tmp0, a);
+    //     tmp1 = _mm256_mul_pd(tmp1, b);
+    //     let tmp2 = _mm256_sub_pd(tmp0, tmp1);
+    //     let ret = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(tmp2, tmp2);
+    //     return ret.into();
+    // }
 }
 
 #[inline(always)]
@@ -101,7 +104,7 @@ impl Mesh for Triangle {
         Url:    <https://geometrian.com/programming/tutorials/cross-product/index.php>
         */
 
-        let [v0, v1, v2] = self.vertices;
+        let [v0, v1, v2] = self.vertices.map(to_simd);
         let rd = to_simd(ray.dir());
         let ro = to_simd(ray.pos());
 

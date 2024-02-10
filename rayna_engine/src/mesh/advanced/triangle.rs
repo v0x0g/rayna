@@ -51,50 +51,13 @@ impl HasAabb for Triangle {
 
 impl Mesh for Triangle {
     fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
-        // // Check if ray is parallel to plane
-        // let denominator = Vector3::dot(self.n, ray.dir());
-        // if denominator.is_zero() {
-        //     return None;
-        // }
-        //
-        // let t = -(Vector3::dot(self.n, ray.pos().to_vector()) + self.d) / denominator;
-        //
-        // if !interval.contains(&t) {
-        //     return None;
-        // }
-        //
-        // let pos_w = ray.at(t);
-        //
-        // // Barycentric coordinates
-        // let mut pos_b = Vector3::ZERO;
-        // for i in 0..3 {
-        //     let vp = pos_w - self.vertices[i];
-        //     let c = Vector3::cross(self.edges[i], vp);
-        //     let b = Vector3::dot(self.w, c);
-        //     if b < 0. {
-        //         return None;
-        //     }
-        //     // For some reason, these coordinates are slightly off and give results for the
-        //     // previous vertex (i.e. `pos_b[0]` is how close the point is to `vertex[2]`
-        //     // So counteract that here by rotating the index.
-        //     pos_b[(i + 2) % 3] = b;
-        // }
-        //
-        // // If we can't normalize, the vertex normals must have all added to (close to) zero
-        // // Therefore they must be opposing. Current way of handling this is to skip the point
-        // let normal = Self::interpolate_normals(self.normals, pos_b)?;
-        //
-        // return Some(Intersection {
-        //     pos_w,
-        //     pos_l: pos_b.to_point(),
-        //     normal,
-        //     ray_normal: normal * denominator.signum(),
-        //     // if positive => ray and normal same dir => must be behind plane => backface
-        //     front_face: denominator.is_sign_positive(),
-        //     uv: [pos_b[1], pos_b[2]].into(),
-        //     side: 0,
-        //     dist: t,
-        // });
+        /*
+        CREDITS:
+
+        Title: "Ray-Tracing: Rendering a Triangle (Möller-Trumbore algorithm)"
+        Author: Scratchapixel
+        URL: <https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection.html>
+        */
 
         let [v0, v1, v2] = self.vertices;
 

@@ -349,9 +349,9 @@ pub fn RTTNW_DEMO() -> Scene {
                 SphereMesh::new((3.6, 1.5, 1.45), 0.6999),
                 IsotropicMaterial {
                     albedo: [0.2, 0.4, 0.9].into(),
-                    density: 1.,
+                    density: 0.3,
                 },
-                4.0,
+                2.0,
                 None,
             )
             .into(),

@@ -14,7 +14,7 @@ use std::simd::{prelude::*, simd_swizzle};
 #[derive(Copy, Clone, Debug)]
 pub struct Triangle {
     /// The three corner vertices of the triangle
-    vertices: [Point3; 3],
+    vertices: [Simd<Number, 4>; 3],
     /// The corresponding normal vectors at the vertices
     normals: [Vector3; 3],
     aabb: Aabb,
@@ -31,7 +31,7 @@ impl Triangle {
             "normals must be normalised"
         );
         Self {
-            vertices,
+            vertices: vertices.map(to_simd),
             normals,
             aabb: Aabb::encompass_points(vertices),
         }
@@ -42,9 +42,10 @@ impl Triangle {
 
 impl MeshProperties for Triangle {
     fn centre(&self) -> Point3 {
-        let [a, b, c] = self.vertices.map(Point3::to_vector);
+        let [a, b, c] = self.vertices;
         // Average the points
-        ((a + b + c) / 3.).to_point()
+        let [x, y, z, _] = ((a + b + c) / Simd::splat(3.)).to_array();
+        (x, y, z).into()
     }
 }
 
@@ -104,7 +105,7 @@ impl Mesh for Triangle {
         Url:    <https://geometrian.com/programming/tutorials/cross-product/index.php>
         */
 
-        let [v0, v1, v2] = self.vertices.map(to_simd);
+        let [v0, v1, v2] = self.vertices;
         let rd = to_simd(ray.dir());
         let ro = to_simd(ray.pos());
 

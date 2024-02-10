@@ -4,15 +4,17 @@ use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
+use core::ops::*;
 use num_traits::Zero;
 use rand_core::RngCore;
 use std::fmt::Debug;
-use std::ops::Add;
+use std::simd::{f64x4, Simd};
+use std::simd::{prelude::*, simd_swizzle};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Triangle {
     /// The three corner vertices of the triangle
-    vertices: [Point3; 3],
+    vertices: [f64x4; 3],
     /// The corresponding normal vectors at the vertices
     normals: [Vector3; 3],
     aabb: Aabb,
@@ -29,7 +31,7 @@ impl Triangle {
             "normals must be normalised"
         );
         Self {
-            vertices,
+            vertices: vertices.map(to_simd),
             normals,
             aabb: Aabb::encompass_points(vertices),
         }
@@ -40,8 +42,10 @@ impl Triangle {
 
 impl MeshProperties for Triangle {
     fn centre(&self) -> Point3 {
-        let [a, b, c] = self.vertices.map(Vector3::from_point);
-        ((a + b + c) / 3.).to_point()
+        let [a, b, c] = self.vertices;
+        // Average the points
+        let [x, y, z, _] = ((a + b + c) / f64x4::splat(3.)).to_array();
+        [x, y, z].into()
     }
 }
 
@@ -49,22 +53,48 @@ impl HasAabb for Triangle {
     fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
 }
 
+#[inline(always)]
+fn simd_cross_prod(a: Simd<Number, 4>, b: Simd<Number, 4>) -> Simd<Number, 4> {
+    // __m128 tmp0 = _mm_shuffle_ps(b,b,_MM_SHUFFLE(3,0,2,1));
+    let mut tmp0 = simd_swizzle!(b, [3, 0, 2, 1]);
+    // __m128 tmp1 = _mm_shuffle_ps(a,a,_MM_SHUFFLE(3,0,2,1));
+    let mut tmp1 = simd_swizzle!(a, [3, 0, 2, 1]);
+    tmp0 = tmp0 * a;
+    tmp1 = tmp1 * b;
+    let tmp2 = tmp0 - tmp1;
+    return simd_swizzle!(tmp2, [3, 0, 2, 1]);
+}
+
+fn simd_dot_prod(a: Simd<Number, 4>, b: Simd<Number, 4>) -> Number { Simd::mul(a, b).reduce_sum() }
+
+fn to_simd(n: impl Into<[Number; 3]>) -> Simd<Number, 4> {
+    let arr = n.into();
+    [arr[0], arr[1], arr[2], 0.0].into()
+}
+
 impl Mesh for Triangle {
     fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         /*
         CREDITS:
 
-        Title: "Ray-Tracing: Rendering a Triangle (Möller-Trumbore algorithm)"
+        Title:  "Ray-Tracing: Rendering a Triangle (Möller-Trumbore algorithm)"
         Author: Scratchapixel
-        URL: <https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection.html>
+        Url:    <https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection.html>
+
+        ADAPTED USING:
+        Title:  "Optimized SIMD Cross-Product"
+        Author: imallet (Ian Mallet)
+        Url:    <https://geometrian.com/programming/tutorials/cross-product/index.php>
         */
 
         let [v0, v1, v2] = self.vertices;
+        let rd = to_simd(ray.dir());
+        let ro = to_simd(ray.pos());
 
         let v0v1 = v1 - v0;
         let v0v2 = v2 - v0;
-        let p_vec = Vector3::cross(ray.dir(), v0v2);
-        let det = v0v1.dot(p_vec);
+        let p_vec = simd_cross_prod(rd, v0v2);
+        let det = simd_dot_prod(v0v1, p_vec);
 
         // ray and triangle are parallel
         if det.is_zero() {
@@ -73,18 +103,18 @@ impl Mesh for Triangle {
 
         let inv_det = 1. / det;
 
-        let t_vec = ray.pos() - v0;
-        let u = Vector3::dot(t_vec, p_vec) * inv_det;
+        let t_vec = ro - v0;
+        let u = simd_dot_prod(t_vec, p_vec) * inv_det;
         if u < 0. || u > 1. {
             return None;
         }
 
-        let q_vec = Vector3::cross(t_vec, v0v1);
-        let v = Vector3::dot(ray.dir(), q_vec) * inv_det;
+        let q_vec = simd_cross_prod(t_vec, v0v1);
+        let v = simd_dot_prod(rd, q_vec) * inv_det;
         if v < 0. || u + v > 1. {
             return None;
         }
-        let t = Vector3::dot(v0v2, q_vec) * inv_det;
+        let t = simd_dot_prod(v0v2, q_vec) * inv_det;
 
         if !interval.contains(&t) {
             return None;

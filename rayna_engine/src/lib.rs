@@ -16,6 +16,7 @@
 #![feature(portable_simd)]
 #![feature(slice_flatten)]
 #![feature(iter_array_chunks)]
+#![feature(stdarch)]
 
 pub mod core;
 pub mod material;

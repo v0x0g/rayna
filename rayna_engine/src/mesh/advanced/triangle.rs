@@ -7,6 +7,7 @@ use crate::shared::ray::Ray;
 use core::ops::*;
 use num_traits::Zero;
 use rand_core::RngCore;
+use std::arch::x86_64::{__m256d, _mm256_mul_pd, _mm256_shuffle_pd, _mm256_sub_pd, _mm_shuffle_ps, _MM_SHUFFLE};
 use std::fmt::Debug;
 use std::simd::{f64x4, Simd};
 use std::simd::{prelude::*, simd_swizzle};
@@ -55,18 +56,31 @@ impl HasAabb for Triangle {
 
 #[inline(always)]
 fn simd_cross_prod(a: Simd<Number, 4>, b: Simd<Number, 4>) -> Simd<Number, 4> {
-    // __m128 tmp0 = _mm_shuffle_ps(b,b,_MM_SHUFFLE(3,0,2,1));
-    let mut tmp0 = simd_swizzle!(b, [3, 0, 2, 1]);
-    // __m128 tmp1 = _mm_shuffle_ps(a,a,_MM_SHUFFLE(3,0,2,1));
-    let mut tmp1 = simd_swizzle!(a, [3, 0, 2, 1]);
-    tmp0 = tmp0 * a;
-    tmp1 = tmp1 * b;
-    let tmp2 = tmp0 - tmp1;
-    return simd_swizzle!(tmp2, [3, 0, 2, 1]);
+    // let mut tmp0 = simd_swizzle!(b, [3, 0, 2, 1]);
+    // let mut tmp1 = simd_swizzle!(a, [3, 0, 2, 1]);
+    // tmp0 = tmp0 * a;
+    // tmp1 = tmp1 * b;
+    // let tmp2 = tmp0 - tmp1;
+    // return simd_swizzle!(tmp2, [3, 0, 2, 1]);
+
+    unsafe {
+        let b = __m256d::from(b);
+        let a = __m256d::from(a);
+
+        let mut tmp0 = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(b, b);
+        let mut tmp1 = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(a, a);
+        tmp0 = _mm256_mul_pd(tmp0, a);
+        tmp1 = _mm256_mul_pd(tmp1, b);
+        let tmp2 = _mm256_sub_pd(tmp0, tmp1);
+        let ret = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(tmp2, tmp2);
+        return ret.into();
+    }
 }
 
+#[inline(always)]
 fn simd_dot_prod(a: Simd<Number, 4>, b: Simd<Number, 4>) -> Number { Simd::mul(a, b).reduce_sum() }
 
+#[inline(always)]
 fn to_simd(n: impl Into<[Number; 3]>) -> Simd<Number, 4> {
     let arr = n.into();
     [arr[0], arr[1], arr[2], 0.0].into()

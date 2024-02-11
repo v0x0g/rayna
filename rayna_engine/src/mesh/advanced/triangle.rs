@@ -7,7 +7,6 @@ use crate::shared::ray::Ray;
 use core::ops::*;
 use num_traits::Zero;
 use rand_core::RngCore;
-use std::arch::x86_64::{_mm256_mul_pd, _mm256_shuffle_pd, _mm256_sub_pd, _MM_SHUFFLE};
 use std::fmt::Debug;
 use std::simd::Simd;
 use std::simd::{prelude::*, simd_swizzle};
@@ -56,27 +55,20 @@ impl HasAabb for Triangle {
 
 #[inline(always)]
 fn simd_cross_prod(a: Simd<Number, 4>, b: Simd<Number, 4>) -> Simd<Number, 4> {
-    let vec_result = to_simd(Vector3::cross(
-        Vector3::new(a[0], a[1], a[2]),
-        Vector3::new(b[0], b[1], b[2]),
-    ));
-
     /*
-    x: self.y * rhs.z - rhs.y * self.z,
-    y: self.z * rhs.x - rhs.z * self.x,
-    z: self.x * rhs.y - rhs.x * self.y,
+    CREDITS:
 
-    lhs.yzxw * rhs.zxyw - rhs.yzxw * lhs.zxyw
+    I used the code from the `glam` crate for this.
+    I did find other versions, but they seem to give me incorrect results, perhaps they have a different element ordering?:
+    - Ian Mallet: "Optimized SIMD Cross-Product" <https://threadlocalmutex.com/?p=8>
+    - rawunprotected: "Investigating SSE Cross Product Performance" <https://geometrian.com/programming/tutorials/cross-product/index.php>
      */
+    let a_zxy = simd_swizzle!(a, [2, 0, 1, 1]);
+    let b_zxy = simd_swizzle!(b, [2, 0, 1, 1]);
+    let sub = (a_zxy * b) - (b_zxy * a);
+    let result = simd_swizzle!(sub, [2, 0, 1, 1]);
 
-    let lhs_1 = simd_swizzle!(a, [1, 2, 0, 3] /* YZXW */);
-    let lhs_2 = simd_swizzle!(b, [2, 0, 1, 3] /* ZXYW */);
-    let rhs_1 = simd_swizzle!(b, [1, 2, 0, 3] /* YZXW */);
-    let rhs_2 = simd_swizzle!(a, [2, 0, 1, 3] /* ZXYW */);
-
-    let simd_result = (lhs_1 * lhs_2) - (rhs_1 * rhs_2);
-
-    return simd_result;
+    return result;
 }
 
 #[inline(always)]
@@ -96,11 +88,6 @@ impl Mesh for Triangle {
         Title:  "Ray-Tracing: Rendering a Triangle (Möller-Trumbore algorithm)"
         Author: Scratchapixel
         Url:    <https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection.html>
-
-        ADAPTED USING:
-        Title:  "Optimized SIMD Cross-Product"
-        Author: imallet (Ian Mallet)
-        Url:    <https://geometrian.com/programming/tutorials/cross-product/index.php>
         */
 
         let [v0, v1, v2] = self.vertices;

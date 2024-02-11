@@ -178,11 +178,6 @@ where
             return None;
         }
 
-        // let test: [_; N] = std::array::from_fn(|i| if failed_mask.test(i) { None } else { Some(t[i]) });
-        // dbg!(t);
-        // dbg!(failed_mask);
-        // dbg!(test, tri_idx);
-
         let (t, u, v, norms, det) = (t[tri_idx], u[tri_idx], v[tri_idx], self.normals[tri_idx], det[tri_idx]);
 
         let pos_w = ray.at(t);
@@ -225,8 +220,7 @@ where
 
     #[inline(always)]
     fn simd_multi_dot(a: [Simd<Number, N>; 3], b: [Simd<Number, N>; 3]) -> Simd<Number, N> {
-        std::iter::zip(a, b).map(|(u, v)| u * v).sum()
-        // (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2])
+        (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2])
     }
 
     #[inline(always)]

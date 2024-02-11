@@ -1,7 +1,7 @@
 use crate::core::targets::MESH;
 use crate::core::types::{Number, Point3, Vector3};
 use crate::mesh::advanced::bvh::BvhMesh;
-use crate::mesh::advanced::triangle::Triangle;
+use crate::mesh::advanced::triangle::BatchTriangle;
 use crate::mesh::isosurface::SdfGeneratorFunction;
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
@@ -20,6 +20,9 @@ use itertools::Itertools;
 use rand_core::RngCore;
 use tracing::warn;
 
+/// How many triangles we batch at once
+const N_TRI: usize = 8;
+
 /// A mesh struct that is created by creating an isosurface from a given SDF
 ///
 /// # Transforming
@@ -35,7 +38,7 @@ pub struct PolygonisedIsosurfaceMesh {
     count: usize,
     #[derivative(Debug = "ignore")]
     #[get = "pub"]
-    mesh: BvhMesh<Triangle>,
+    mesh: BvhMesh<BatchTriangle<N_TRI>>,
 }
 
 // region Constructors
@@ -92,25 +95,36 @@ impl PolygonisedIsosurfaceMesh {
         let mut triangles = vec![];
 
         // Loop over all indices, map them to the vertex positions, and create a triangle
-        for [(a, u), (b, v), (c, w)] in triangle_indices
+        // TODO: I think I'm transposing twice here which is pointless. Maybe optimise that?
+        //  Not super important though since this isn't a hot path
+        let unbatched_tris = triangle_indices
             .into_iter()
             .map(|vert_indices| vert_indices.map(|v_i| triangle_vertices[v_i]))
-        {
-            // Sometimes this generates "empty" triangles that have duplicate vertices
-            // This is invalid, so skip those. Not sure if it's a bug or intentional :(
-            if a == b || b == c || c == a {
-                warn!(target: MESH,  "triangle with empty vertices; verts: [{a:?}, {b:?}, {c:?}]");
-                continue;
-            }
-            // Normals are not normalised by [SdfSource], so do that here.
-            // If for any vertex there is a zero gradient normal, skip those because
-            // I don't know a good way to handle them
-            let Some([u, v, w]) = [u, v, w].try_map(Vector3::try_normalize) else {
-                warn!(target: MESH,  "triangle with empty normals; normals: [{u:?}, {v:?}, {w:?}]");
-                continue;
-            };
-            triangles.push(Triangle::new([a, b, c], [u, v, w]));
+            .filter_map(|[(a, u), (b, v), (c, w)]| {
+                // Sometimes this generates "empty" triangles that have duplicate vertices
+                // This is invalid, so skip those. Not sure if it's a bug or intentional :(
+                if a == b || b == c || c == a {
+                    warn!(target: MESH,  "triangle with empty vertices; verts: [{a:?}, {b:?}, {c:?}]");
+                    return None;
+                }
+                // Normals are not normalised by [SdfSource], so do that here.
+                // If for any vertex there is a zero gradient normal, skip those because
+                // I don't know a good way to handle them
+                let Some([u, v, w]) = [u, v, w].try_map(Vector3::try_normalize) else {
+                    warn!(target: MESH,  "triangle with empty normals; normals: [{u:?}, {v:?}, {w:?}]");
+                    return None;
+                };
+                return Some(([a, b, c], [u, v, w]));
+            });
+
+        // Now batch the triangles together
+        // TODO: Don't skip the remainder
+        for tris in unbatched_tris.array_chunks::<N_TRI>() {
+            let vertices = tris.map(|t| t.0);
+            let normals = tris.map(|t| t.1);
+            triangles.push(BatchTriangle::new(vertices, normals));
         }
+
         let count = triangles.len();
         let mesh = BvhMesh::new(triangles);
 

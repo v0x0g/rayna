@@ -7,6 +7,7 @@ use crate::shared::ray::Ray;
 use core::ops::*;
 use num_traits::Zero;
 use rand_core::RngCore;
+use std::arch::x86_64::{_mm256_mul_pd, _mm256_shuffle_pd, _mm256_sub_pd, _MM_SHUFFLE};
 use std::fmt::Debug;
 use std::simd::Simd;
 use std::simd::{prelude::*, simd_swizzle};
@@ -55,30 +56,44 @@ impl HasAabb for Triangle {
 
 #[inline(always)]
 fn simd_cross_prod(a: Simd<Number, 4>, b: Simd<Number, 4>) -> Simd<Number, 4> {
-    return to_simd(Vector3::cross(
-        Vector3::new(a[0], a[1], a[2]),
-        Vector3::new(b[0], b[1], b[2]),
-    ));
+    unsafe {
+        // return to_simd(Vector3::cross(
+        //     Vector3::new(a[0], a[1], a[2]),
+        //     Vector3::new(b[0], b[1], b[2]),
+        // ));
 
-    // let mut tmp0 = simd_swizzle!(b, [3, 0, 2, 1]);
-    // let mut tmp1 = simd_swizzle!(a, [3, 0, 2, 1]);
-    // tmp0 = tmp0 * a;
-    // tmp1 = tmp1 * b;
-    // let tmp2 = tmp0 - tmp1;
-    // return simd_swizzle!(tmp2, [3, 0, 2, 1]);
+        // let mut tmp0 = simd_swizzle!(b, [3, 0, 2, 1]);
+        // let mut tmp1 = simd_swizzle!(a, [3, 0, 2, 1]);
+        // tmp0 = tmp0 * a;
+        // tmp1 = tmp1 * b;
+        // let tmp2 = tmp0 - tmp1;
+        // return simd_swizzle!(tmp2, [3, 0, 2, 1]);
 
-    // unsafe {
-    //     let b = __m256d::from(b);
-    //     let a = __m256d::from(a);
-    //
-    //     let mut tmp0 = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(b, b);
-    //     let mut tmp1 = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(a, a);
-    //     tmp0 = _mm256_mul_pd(tmp0, a);
-    //     tmp1 = _mm256_mul_pd(tmp1, b);
-    //     let tmp2 = _mm256_sub_pd(tmp0, tmp1);
-    //     let ret = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(tmp2, tmp2);
-    //     return ret.into();
-    // }
+        // method 3
+        //     let b = __m256d::from(b);
+        //     let a = __m256d::from(a);
+        //
+        //     let mut tmp0 = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(b, b);
+        //     let mut tmp1 = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(a, a);
+        //     tmp0 = _mm256_mul_pd(tmp0, a);
+        //     tmp1 = _mm256_mul_pd(tmp1, b);
+        //     let tmp2 = _mm256_sub_pd(tmp0, tmp1);
+        //     let ret = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(tmp2, tmp2);
+        //     return ret.into();
+
+        // method 5
+        let a = a.into();
+        let b = b.into();
+
+        // Shuffle the elements
+        let a_s = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(a, a);
+        let b_s = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 1, 0, 2) }>(b, b);
+        let tmp2 = _mm256_mul_pd(a_s, b);
+        let tmp3 = _mm256_mul_pd(a_s, b_s);
+        let tmp4 = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(tmp2, tmp2);
+
+        return _mm256_sub_pd(tmp3, tmp4).into();
+    }
 }
 
 #[inline(always)]

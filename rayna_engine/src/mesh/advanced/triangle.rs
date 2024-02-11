@@ -56,44 +56,27 @@ impl HasAabb for Triangle {
 
 #[inline(always)]
 fn simd_cross_prod(a: Simd<Number, 4>, b: Simd<Number, 4>) -> Simd<Number, 4> {
-    unsafe {
-        // return to_simd(Vector3::cross(
-        //     Vector3::new(a[0], a[1], a[2]),
-        //     Vector3::new(b[0], b[1], b[2]),
-        // ));
+    let vec_result = to_simd(Vector3::cross(
+        Vector3::new(a[0], a[1], a[2]),
+        Vector3::new(b[0], b[1], b[2]),
+    ));
 
-        // let mut tmp0 = simd_swizzle!(b, [3, 0, 2, 1]);
-        // let mut tmp1 = simd_swizzle!(a, [3, 0, 2, 1]);
-        // tmp0 = tmp0 * a;
-        // tmp1 = tmp1 * b;
-        // let tmp2 = tmp0 - tmp1;
-        // return simd_swizzle!(tmp2, [3, 0, 2, 1]);
+    /*
+    x: self.y * rhs.z - rhs.y * self.z,
+    y: self.z * rhs.x - rhs.z * self.x,
+    z: self.x * rhs.y - rhs.x * self.y,
 
-        // method 3
-        //     let b = __m256d::from(b);
-        //     let a = __m256d::from(a);
-        //
-        //     let mut tmp0 = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(b, b);
-        //     let mut tmp1 = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(a, a);
-        //     tmp0 = _mm256_mul_pd(tmp0, a);
-        //     tmp1 = _mm256_mul_pd(tmp1, b);
-        //     let tmp2 = _mm256_sub_pd(tmp0, tmp1);
-        //     let ret = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(tmp2, tmp2);
-        //     return ret.into();
+    lhs.yzxw * rhs.zxyw - rhs.yzxw * lhs.zxyw
+     */
 
-        // method 5
-        let a = a.into();
-        let b = b.into();
+    let lhs_1 = simd_swizzle!(a, [1, 2, 0, 3] /* YZXW */);
+    let lhs_2 = simd_swizzle!(b, [2, 0, 1, 3] /* ZXYW */);
+    let rhs_1 = simd_swizzle!(b, [1, 2, 0, 3] /* YZXW */);
+    let rhs_2 = simd_swizzle!(a, [2, 0, 1, 3] /* ZXYW */);
 
-        // Shuffle the elements
-        let a_s = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(a, a);
-        let b_s = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 1, 0, 2) }>(b, b);
-        let tmp2 = _mm256_mul_pd(a_s, b);
-        let tmp3 = _mm256_mul_pd(a_s, b_s);
-        let tmp4 = _mm256_shuffle_pd::<{ _MM_SHUFFLE(3, 0, 2, 1) }>(tmp2, tmp2);
+    let simd_result = (lhs_1 * lhs_2) - (rhs_1 * rhs_2);
 
-        return _mm256_sub_pd(tmp3, tmp4).into();
-    }
+    return simd_result;
 }
 
 #[inline(always)]

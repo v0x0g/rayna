@@ -153,11 +153,11 @@ where
         let t = Self::simd_multi_dot(v0v2, q_vec) * inv_det;
         // Validate `t` is in the given interval
 
-        let interval_min = Simd::splat(interval.start.unwrap_or(Number::NAN));
-        let interval_max = Simd::splat(interval.end.unwrap_or(Number::NAN));
         // Set intervals to `NaN` if there is no bound. This way we can use the fact that `NaN`
         // cannot be compared (always is false), to check if it is out of (maybe missing) bounds
         // It's a bit faster than a branching `if let Some(...) = interval.xxx`
+        let interval_min = Simd::splat(interval.start.unwrap_or(Number::NAN));
+        let interval_max = Simd::splat(interval.end.unwrap_or(Number::NAN));
         failed_mask |= Simd::simd_lt(t, interval_min);
         failed_mask |= Simd::simd_gt(t, interval_max);
 
@@ -165,12 +165,11 @@ where
         // Replace any failed values with `Number::POS_INF`
         // This way when we find the min, the failed ones are all at the end
         // Can't use `filter()` because then we'd get the position after filtering
-        let mr_nice_t = failed_mask.select(Self::POS_INF, t);
-        let tri_idx = mr_nice_t.to_array().into_iter().position_min_by(Number::total_cmp)?;
-        // If all values failed, this will be `Number::POS_INF`
-        if failed_mask.test(tri_idx) {
+        if failed_mask.all() {
             return None;
         }
+        let mr_nice_t = failed_mask.select(Self::POS_INF, t);
+        let tri_idx = mr_nice_t.to_array().into_iter().position_min_by(Number::total_cmp)?;
 
         let (t, u, v, norms, det) = (t[tri_idx], u[tri_idx], v[tri_idx], self.normals[tri_idx], det[tri_idx]);
 

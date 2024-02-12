@@ -153,19 +153,13 @@ where
         let t = Self::simd_multi_dot(v0v2, q_vec) * inv_det;
         // Validate `t` is in the given interval
 
-        // let interval_min = Simd::splat(interval.start.unwrap_or(Number::NAN));
-        // let interval_max = Simd::splat(interval.start.unwrap_or(Number::NAN));
-        // // Set intervals to `NaN` if there is no bound. This way we can use the fact that `NaN`
-        // // cannot be compared (always is false), to check if it is out of bounds
-
-        if let Some(start) = interval.start {
-            // Lower than start bound
-            failed_mask |= Simd::simd_lt(t, Simd::splat(start))
-        }
-        if let Some(end) = interval.end {
-            // Greater than end bound
-            failed_mask |= Simd::simd_gt(t, Simd::splat(end))
-        }
+        let interval_min = Simd::splat(interval.start.unwrap_or(Number::NAN));
+        let interval_max = Simd::splat(interval.end.unwrap_or(Number::NAN));
+        // Set intervals to `NaN` if there is no bound. This way we can use the fact that `NaN`
+        // cannot be compared (always is false), to check if it is out of (maybe missing) bounds
+        // It's a bit faster than a branching `if let Some(...) = interval.xxx`
+        failed_mask |= Simd::simd_lt(t, interval_min);
+        failed_mask |= Simd::simd_gt(t, interval_max);
 
         // Choose smallest `t`
         // Replace any failed values with `Number::POS_INF`

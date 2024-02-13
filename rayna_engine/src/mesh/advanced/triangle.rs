@@ -4,12 +4,12 @@ use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
-use crate::shared::simd_math::SimdMath;
+use crate::shared::simd_math::{SimdConstants, SimdVector};
 use core::ops::*;
 use itertools::Itertools;
 use rand_core::RngCore;
 use std::fmt::Debug;
-use std::simd::{prelude::*, SimdElement};
+use std::simd::prelude::*;
 use std::simd::{LaneCount, Simd, SupportedLaneCount};
 
 #[derive(Copy, Clone, Debug)]
@@ -19,9 +19,9 @@ where
 {
     // The points are stored as [[x1, x2, ..., xn], [y1, y2, ..., yn], [z1, z2, ..., zn]]
     // So we have all the packed X values, then packed Y values, then packed Z values
-    v0: [Simd<Number, N>; 3],
-    v1: [Simd<Number, N>; 3],
-    v2: [Simd<Number, N>; 3],
+    v0: SimdVector<N, 3>,
+    v1: SimdVector<N, 3>,
+    v2: SimdVector<N, 3>,
     // Normals don't use SIMD acceleration yet, so just store as a plain array
     normals: [[Vector3; 3]; N],
     aabb: Aabb,
@@ -49,14 +49,14 @@ where
         // Now transpose, so we do all the `X` components, then `Y` components
         // We have the numbers interleaved as AOS,
         // and we want to unpack it to SOA
-        fn aos_to_soa<const N: usize>(v_n: [Point3; N]) -> [Simd<Number, N>; 3]
+        fn aos_to_soa<const N: usize>(v_n: [Point3; N]) -> SimdVector<N, 3>
         where
             LaneCount<N>: SupportedLaneCount,
         {
             let x: Simd<Number, N> = v_n.map(|v| v.x).into();
             let y: Simd<Number, N> = v_n.map(|v| v.y).into();
             let z: Simd<Number, N> = v_n.map(|v| v.z).into();
-            [x, y, z]
+            SimdVector([x, y, z])
         }
         let v0 = aos_to_soa(v0_aos);
         let v1 = aos_to_soa(v1_aos);
@@ -79,7 +79,7 @@ where
 {
     fn centre(&self) -> Point3 {
         // TODO: BatchTriangle centre
-        let [[x1, y1, z1], [x2, y2, z2], [x3, y3, z3]] = [self.v0, self.v1, self.v2];
+        let [[x1, y1, z1], [x2, y2, z2], [x3, y3, z3]] = [self.v0.0, self.v1.0, self.v2.0];
 
         let xs = (x1 + x2 + x3) / Simd::splat(3.);
         let ys = (y1 + y2 + y3) / Simd::splat(3.);
@@ -118,40 +118,40 @@ where
             Url: <https://stackoverflow.com/a/45626274>
         */
 
-        let rd = [
+        let rd = SimdVector([
             Simd::splat(ray.dir().x),
             Simd::splat(ray.dir().y),
             Simd::splat(ray.dir().z),
-        ];
-        let ro = [
+        ]);
+        let ro = SimdVector([
             Simd::splat(ray.pos().x),
             Simd::splat(ray.pos().y),
             Simd::splat(ray.pos().z),
-        ];
+        ]);
 
-        let v0v1 = SimdMath::simd_multi_sub(self.v1, self.v0); // v1 - v0
-        let v0v2 = SimdMath::simd_multi_sub(self.v2, self.v0); // v2 - v0
-        let p_vec = SimdMath::simd_multi_cross(rd, v0v2); // rd X v0v2
-        let det = SimdMath::simd_multi_dot(v0v1, p_vec); // v0v1 * p_vec
+        let v0v1 = self.v1 - self.v0; // v1 - v0
+        let v0v2 = self.v2 - self.v0; // v2 - v0
+        let p_vec = SimdVector::cross(rd, v0v2); // rd X v0v2
+        let det = SimdVector::dot(v0v1, p_vec); // v0v1 * p_vec
 
-        let mut failed_mask = Mask::<<Number as SimdElement>::Mask, N>::from_array([false; N]);
+        let mut failed_mask = Mask::from_array([false; N]);
 
         // Check if ray and triangle are parallel
-        failed_mask |= Simd::simd_eq(det, SimdMath::ZERO);
+        failed_mask |= Simd::simd_eq(det, SimdConstants::ZERO);
 
         let inv_det = Simd::splat(1.) / det;
 
-        let t_vec = SimdMath::simd_multi_sub(ro, self.v0);
-        let u = SimdMath::simd_multi_dot(t_vec, p_vec) * inv_det;
+        let t_vec = ro - self.v0;
+        let u = SimdVector::dot(t_vec, p_vec) * inv_det;
         // Validate `u` in the range `0..=1`
-        failed_mask |= Simd::simd_lt(u, SimdMath::ZERO) | Simd::simd_gt(u, SimdMath::ONE);
+        failed_mask |= Simd::simd_lt(u, SimdConstants::ZERO) | Simd::simd_gt(u, SimdConstants::ONE);
 
-        let q_vec = SimdMath::simd_multi_cross(t_vec, v0v1);
-        let v = SimdMath::simd_multi_dot(rd, q_vec) * inv_det;
+        let q_vec = SimdVector::cross(t_vec, v0v1);
+        let v = SimdVector::dot(rd, q_vec) * inv_det;
         // Validate `v` in the range `0..=1`
-        failed_mask |= Simd::simd_lt(v, SimdMath::ZERO) | Simd::simd_gt(v, SimdMath::ONE);
+        failed_mask |= Simd::simd_lt(v, SimdConstants::ZERO) | Simd::simd_gt(v, SimdConstants::ONE);
 
-        let t = SimdMath::simd_multi_dot(v0v2, q_vec) * inv_det;
+        let t = SimdVector::dot(v0v2, q_vec) * inv_det;
         // Validate `t` is in the given interval
 
         // Set intervals to `NaN` if there is no bound. This way we can use the fact that `NaN`
@@ -169,7 +169,7 @@ where
         if failed_mask.all() {
             return None;
         }
-        let mr_nice_t = failed_mask.select(SimdMath::POS_INFINITY, t);
+        let mr_nice_t = failed_mask.select(SimdConstants::POS_INFINITY, t);
         let tri_idx = mr_nice_t
             .to_array()
             .into_iter()

@@ -4,6 +4,7 @@ use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
+use crate::shared::simd_math::SimdMath;
 use core::ops::*;
 use itertools::Itertools;
 use rand_core::RngCore;
@@ -128,29 +129,29 @@ where
             Simd::splat(ray.pos().z),
         ];
 
-        let v0v1 = Self::simd_multi_sub(self.v1, self.v0); // v1 - v0
-        let v0v2 = Self::simd_multi_sub(self.v2, self.v0); // v2 - v0
-        let p_vec = Self::simd_multi_cross(rd, v0v2); // rd X v0v2
-        let det = Self::simd_multi_dot(v0v1, p_vec); // v0v1 * p_vec
+        let v0v1 = SimdMath::simd_multi_sub(self.v1, self.v0); // v1 - v0
+        let v0v2 = SimdMath::simd_multi_sub(self.v2, self.v0); // v2 - v0
+        let p_vec = SimdMath::simd_multi_cross(rd, v0v2); // rd X v0v2
+        let det = SimdMath::simd_multi_dot(v0v1, p_vec); // v0v1 * p_vec
 
         let mut failed_mask = Mask::<<Number as SimdElement>::Mask, N>::from_array([false; N]);
 
         // Check if ray and triangle are parallel
-        failed_mask |= Simd::simd_eq(det, Self::ZERO);
+        failed_mask |= Simd::simd_eq(det, SimdMath::ZERO);
 
         let inv_det = Simd::splat(1.) / det;
 
-        let t_vec = Self::simd_multi_sub(ro, self.v0);
-        let u = Self::simd_multi_dot(t_vec, p_vec) * inv_det;
+        let t_vec = SimdMath::simd_multi_sub(ro, self.v0);
+        let u = SimdMath::simd_multi_dot(t_vec, p_vec) * inv_det;
         // Validate `u` in the range `0..=1`
-        failed_mask |= Simd::simd_lt(u, Self::ZERO) | Simd::simd_gt(u, Self::ONE);
+        failed_mask |= Simd::simd_lt(u, SimdMath::ZERO) | Simd::simd_gt(u, SimdMath::ONE);
 
-        let q_vec = Self::simd_multi_cross(t_vec, v0v1);
-        let v = Self::simd_multi_dot(rd, q_vec) * inv_det;
+        let q_vec = SimdMath::simd_multi_cross(t_vec, v0v1);
+        let v = SimdMath::simd_multi_dot(rd, q_vec) * inv_det;
         // Validate `v` in the range `0..=1`
-        failed_mask |= Simd::simd_lt(v, Self::ZERO) | Simd::simd_gt(v, Self::ONE);
+        failed_mask |= Simd::simd_lt(v, SimdMath::ZERO) | Simd::simd_gt(v, SimdMath::ONE);
 
-        let t = Self::simd_multi_dot(v0v2, q_vec) * inv_det;
+        let t = SimdMath::simd_multi_dot(v0v2, q_vec) * inv_det;
         // Validate `t` is in the given interval
 
         // Set intervals to `NaN` if there is no bound. This way we can use the fact that `NaN`
@@ -168,8 +169,12 @@ where
         if failed_mask.all() {
             return None;
         }
-        let mr_nice_t = failed_mask.select(Self::POS_INF, t);
-        let tri_idx = mr_nice_t.to_array().into_iter().position_min_by(Number::total_cmp)?;
+        let mr_nice_t = failed_mask.select(SimdMath::POS_INFINITY, t);
+        let tri_idx = mr_nice_t
+            .to_array()
+            .into_iter()
+            .position_min_by(Number::total_cmp)
+            .expect("already checked at least one triangle didn't fail");
 
         let (t, u, v, norms, det) = (t[tri_idx], u[tri_idx], v[tri_idx], self.normals[tri_idx], det[tri_idx]);
 
@@ -198,29 +203,6 @@ impl<const N: usize> BatchTriangle<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    const ZERO: Simd<Number, N> = Simd::from_array([0.; N]);
-    const ONE: Simd<Number, N> = Simd::from_array([1.; N]);
-    const POS_INF: Simd<Number, N> = Simd::from_array([Number::INFINITY; N]);
-
-    #[inline(always)]
-    fn simd_multi_cross(a: [Simd<Number, N>; 3], b: [Simd<Number, N>; 3]) -> [Simd<Number, N>; 3] {
-        [
-            (a[1] * b[2]) - (b[1] * a[2]),
-            (a[2] * b[0]) - (b[2] * a[0]),
-            (a[0] * b[1]) - (b[0] * a[1]),
-        ]
-    }
-
-    #[inline(always)]
-    fn simd_multi_dot(a: [Simd<Number, N>; 3], b: [Simd<Number, N>; 3]) -> Simd<Number, N> {
-        (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2])
-    }
-
-    #[inline(always)]
-    fn simd_multi_sub(a: [Simd<Number, N>; 3], b: [Simd<Number, N>; 3]) -> [Simd<Number, N>; 3] {
-        [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
-    }
-
     /// Interpolates across the vertex normals for a given point in barycentric coordinates
     fn interpolate_normals(normals: [Vector3; 3], bary_coords: Vector3) -> Option<Vector3> {
         std::iter::zip(normals, bary_coords)

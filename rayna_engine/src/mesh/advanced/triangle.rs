@@ -10,7 +10,7 @@ use itertools::Itertools;
 use rand_core::RngCore;
 use std::fmt::Debug;
 use std::simd::prelude::*;
-use std::simd::{LaneCount, Simd, SupportedLaneCount};
+use std::simd::{LaneCount, Simd, SimdElement, SupportedLaneCount};
 
 #[derive(Copy, Clone, Debug)]
 pub struct BatchTriangle<const N: usize>
@@ -24,6 +24,8 @@ where
     v2: SimdVector<N, 3>,
     // Normals don't use SIMD acceleration yet, so just store as a plain array
     normals: [[Vector3; 3]; N],
+    /// Bitmask for which elements are disabled
+    disabled_mask: Mask<<Number as SimdElement>::Mask, N>,
     aabb: Aabb,
 }
 
@@ -31,10 +33,10 @@ impl<const N: usize> BatchTriangle<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    pub fn new<Vert: Into<Point3>, Norm: Into<Vector3>>(vertices: [[Vert; 3]; N], normals: [[Norm; 3]; N]) -> Self {
-        // Convert the vertices and normals into actual points and vectors
-        let vertices: [[Point3; 3]; N] = vertices.map(|vs| vs.map(Vert::into));
-        let normals: [[Vector3; 3]; N] = normals.map(|ns| ns.map(Norm::into));
+    pub fn new(vertices: &[[Point3; 3]], normals: &[[Vector3; 3]]) -> Self {
+        assert!(vertices.len() <= N, "too many vertices");
+        assert!(normals.len() <= N, "too many normals");
+        assert_eq!(normals.len(), vertices.len(), "must have one normal per vertex");
 
         // let [a, b, c] = vertices;
         // assert!(a != b && b != c && c != a, "triangles cannot have duplicate vertices");
@@ -42,6 +44,16 @@ where
         //     normals.into_iter().all(Vector3::is_normalized),
         //     "normals must be normalised"
         // );
+
+        // Create arrays from slices, padding the unused space with NaN vectors
+        let disabled_mask = {
+            let mut m = [true; N];
+            (&mut m[..vertices.len()]).fill(false);
+            Mask::from_array(m)
+        };
+        let vertices: [[Point3; 3]; N] = slice_to_array(vertices, [Point3::NAN; 3]);
+        let normals: [[Vector3; 3]; N] = slice_to_array(normals, [Vector3::NAN; 3]);
+
         // Unpack the vertices, so we have arrays for all the 0'th vertices for all triangles, etc
         let v0_aos: [Point3; N] = vertices.map(|v| v[0]);
         let v1_aos: [Point3; N] = vertices.map(|v| v[1]);
@@ -49,6 +61,9 @@ where
         // Now transpose, so we do all the `X` components, then `Y` components
         // We have the numbers interleaved as AOS,
         // and we want to unpack it to SOA
+
+        /// Helper function that converts an AoS (**Array of Structs**) of vertices to
+        /// an SoA (**Struct of Arrays**) of vertices.
         fn aos_to_soa<const N: usize>(v_n: [Point3; N]) -> SimdVector<N, 3>
         where
             LaneCount<N>: SupportedLaneCount,
@@ -58,14 +73,24 @@ where
             let z: Simd<Number, N> = v_n.map(|v| v.z).into();
             SimdVector([x, y, z])
         }
+
+        fn slice_to_array<const N: usize, T: Copy>(slice: &[T], default: T) -> [T; N] {
+            // array::from_fn(|v_idx| slice.get(v_idx).cloned().unwrap_or_default());
+            let mut v = [default; N];
+            (&mut v[..slice.len()]).copy_from_slice(slice);
+            v
+        }
+
         let v0 = aos_to_soa(v0_aos);
         let v1 = aos_to_soa(v1_aos);
         let v2 = aos_to_soa(v2_aos);
+
         Self {
             v0,
             v1,
             v2,
             normals,
+            disabled_mask,
             aabb: Aabb::encompass_points(vertices.flatten()),
         }
     }
@@ -161,6 +186,8 @@ where
         let interval_max = Simd::splat(interval.end.unwrap_or(Number::NAN));
         failed_mask |= Simd::simd_lt(t, interval_min);
         failed_mask |= Simd::simd_gt(t, interval_max);
+
+        failed_mask |= self.disabled_mask;
 
         // Choose smallest `t`
         // Replace any failed values with `Number::POS_INF`

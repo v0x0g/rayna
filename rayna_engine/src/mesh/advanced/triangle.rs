@@ -154,17 +154,17 @@ where
             Simd::splat(ray.pos().z),
         ]);
 
-        let v0v1 = self.v1 - self.v0; // v1 - v0
-        let v0v2 = self.v2 - self.v0; // v2 - v0
-        let p_vec = SimdVector::cross(rd, v0v2); // rd X v0v2
-        let det = SimdVector::dot(v0v1, p_vec); // v0v1 * p_vec
+        let v0v1 = self.v1 - self.v0;
+        let v0v2 = self.v2 - self.v0;
+        let p_vec = SimdVector::cross(rd, v0v2);
+        let det = SimdVector::dot(v0v1, p_vec);
 
         let mut failed_mask = Mask::from_array([false; N]);
 
         // Check if ray and triangle are parallel
         failed_mask |= Simd::simd_eq(det, SimdConstants::ZERO);
 
-        let inv_det = Simd::splat(1.) / det;
+        let inv_det = SimdConstants::ONE / det;
 
         let t_vec = ro - self.v0;
         let u = SimdVector::dot(t_vec, p_vec) * inv_det;
@@ -182,8 +182,8 @@ where
         // Set intervals to `NaN` if there is no bound. This way we can use the fact that `NaN`
         // cannot be compared (always is false), to check if it is out of (maybe missing) bounds
         // It's a bit faster than a branching `if let Some(...) = interval.xxx`
-        let interval_min = Simd::splat(interval.start.unwrap_or(Number::NAN));
-        let interval_max = Simd::splat(interval.end.unwrap_or(Number::NAN));
+        let interval_min = Simd::splat(interval.start.unwrap_or(Number::NEG_INFINITY));
+        let interval_max = Simd::splat(interval.end.unwrap_or(Number::INFINITY));
         failed_mask |= Simd::simd_lt(t, interval_min);
         failed_mask |= Simd::simd_gt(t, interval_max);
 

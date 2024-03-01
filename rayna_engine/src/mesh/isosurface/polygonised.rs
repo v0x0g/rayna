@@ -18,10 +18,11 @@ use isosurface::source::{HermiteSource, ScalarSource};
 use isosurface::MarchingCubes;
 use itertools::Itertools;
 use rand_core::RngCore;
+use std::iter::zip;
 use tracing::warn;
 
 /// How many triangles we batch at once
-const N_TRI: usize = 8;
+const N_TRI: usize = 1;
 
 /// A mesh struct that is created by creating an isosurface from a given SDF
 ///
@@ -57,11 +58,12 @@ impl PolygonisedIsosurfaceMesh {
             func: sdf,
             epsilon: 1e-7,
         };
-        let mut raw_vertex_coords = vec![];
+        // Raw coordinates for the vertices and normals
+        let mut raw_vertex_normal_coords = vec![];
         let mut raw_indices = vec![];
         MarchingCubes::<Signed>::new(resolution).extract(
             &Sampler::new(&source),
-            &mut IndexedInterleavedNormals::new(&mut raw_vertex_coords, &mut raw_indices, &source),
+            &mut IndexedInterleavedNormals::new(&mut raw_vertex_normal_coords, &mut raw_indices, &source),
         );
 
         assert_eq!(
@@ -71,20 +73,20 @@ impl PolygonisedIsosurfaceMesh {
             raw_indices.len()
         );
         assert_eq!(
-            raw_vertex_coords.len() % 6,
+            raw_vertex_normal_coords.len() % 6,
             0,
             "`raw_vertex_coords.len` should be multiple of 6 (was {})",
-            raw_vertex_coords.len()
+            raw_vertex_normal_coords.len()
         );
 
         // Group the vertex coordinates into groups of three, so we get a 3D point
         // Interleaved with normals, so extract that out too
-        let triangle_vertices = raw_vertex_coords
+        let (raw_verts, raw_normals): (Vec<_>, Vec<_>) = raw_vertex_normal_coords
             .array_chunks::<3>()
             .map(|vs| vs.map(|v| v as Number))
             .array_chunks::<2>()
             .map(|[v, n]| (Point3::from(v), Vector3::from(n)))
-            .collect_vec();
+            .unzip();
 
         // Group the indices in chunks of three as well, for the three vertices of each triangle
         let triangle_indices = raw_indices
@@ -97,31 +99,31 @@ impl PolygonisedIsosurfaceMesh {
         // Loop over all indices, map them to the vertex positions, and create a triangle
         // TODO: I think I'm transposing twice here which is pointless. Maybe optimise that?
         //  Not super important though since this isn't a hot path
-        let unbatched_tris = triangle_indices
+        let (tri_verts, tri_normals): (Vec<_>, Vec<_>) = triangle_indices
             .into_iter()
-            .map(|vert_indices| vert_indices.map(|v_i| triangle_vertices[v_i]))
-            .filter_map(|[(a, u), (b, v), (c, w)]| {
+            // Unpack the vertices and normals for the triangle
+            .map(|vert_indices| (vert_indices.map(|i| raw_verts[i]), vert_indices.map(|i| raw_normals[i])))
+            .filter_map(|(verts, normals)| {
                 // Sometimes this generates "empty" triangles that have duplicate vertices
                 // This is invalid, so skip those. Not sure if it's a bug or intentional :(
-                if a == b || b == c || c == a {
-                    warn!(target: MESH,  "triangle with empty vertices; verts: [{a:?}, {b:?}, {c:?}]");
+                if verts[0] == verts[1] || verts[1] == verts[2] || verts[2] == verts[0] {
+                    warn!(target: MESH,  "triangle with empty vertices; verts: [{verts:?}]");
                     return None;
                 }
                 // Normals are not normalised by [SdfSource], so do that here.
                 // If for any vertex there is a zero gradient normal, skip those because
                 // I don't know a good way to handle them
-                let Some([u, v, w]) = [u, v, w].try_map(Vector3::try_normalize) else {
-                    warn!(target: MESH,  "triangle with empty normals; normals: [{u:?}, {v:?}, {w:?}]");
+                let Some(normals) = normals.try_map(Vector3::try_normalize) else {
+                    warn!(target: MESH,  "triangle with empty normals; normals: {normals:?}");
                     return None;
                 };
-                return Some(([a, b, c], [u, v, w]));
-            });
+                return Some((verts, normals));
+            })
+            .unzip();
 
         // Now batch the triangles together
         // TODO: Don't skip the remainder
-        for tris in unbatched_tris.array_chunks::<N_TRI>() {
-            let vertices = tris.map(|t| t.0);
-            let normals = tris.map(|t| t.1);
+        for (vertices, normals) in zip(tri_verts.chunks(N_TRI), tri_normals.chunks(N_TRI)) {
             triangles.push(BatchTriangle::new(vertices, normals));
         }
 

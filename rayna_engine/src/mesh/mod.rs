@@ -77,6 +77,7 @@ pub enum MeshInstance {
     BatchTriangle4(BatchTriangle<4>),
     BatchTriangle8(BatchTriangle<8>),
     BatchTriangle16(BatchTriangle<16>),
+    TriangleMesh(primitive::triangle::Triangle),
     BvhMesh(BvhMesh<MeshInstance>),
     MeshList(MeshList<MeshInstance>),
     DynamicMesh,

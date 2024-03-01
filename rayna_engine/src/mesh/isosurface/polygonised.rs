@@ -3,6 +3,7 @@ use crate::core::types::{Number, Point3, Vector3};
 use crate::mesh::advanced::bvh::BvhMesh;
 use crate::mesh::advanced::triangle::BatchTriangle;
 use crate::mesh::isosurface::SdfGeneratorFunction;
+use crate::mesh::primitive::triangle::Triangle;
 use crate::mesh::{Mesh, MeshProperties};
 use crate::shared::aabb::{Aabb, HasAabb};
 use crate::shared::intersect::Intersection;
@@ -39,7 +40,7 @@ pub struct PolygonisedIsosurfaceMesh {
     count: usize,
     #[derivative(Debug = "ignore")]
     #[get = "pub"]
-    mesh: BvhMesh<BatchTriangle<N_TRI>>,
+    mesh: BvhMesh<Triangle>,
 }
 
 // region Constructors
@@ -123,8 +124,9 @@ impl PolygonisedIsosurfaceMesh {
 
         // Now batch the triangles together
         // TODO: Don't skip the remainder
-        for (vertices, normals) in zip(tri_verts.chunks(N_TRI), tri_normals.chunks(N_TRI)) {
-            triangles.push(BatchTriangle::new(vertices, normals));
+        // for (vertices, normals) in zip(tri_verts.chunks(N_TRI), tri_normals.chunks(N_TRI)) {
+        for (vertices, normals) in zip(tri_verts, tri_normals) {
+            triangles.push(Triangle::new(vertices, normals));
         }
 
         let count = triangles.len();

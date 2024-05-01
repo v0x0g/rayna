@@ -6,7 +6,7 @@ use crate::targets::*;
 use crate::ui_val::{DRAG_SLOW, UNIT_DEG, UNIT_LEN, UNIT_PX};
 use eframe::epaint::textures::TextureFilter;
 use egui::load::SizedTexture;
-use egui::{Context, CursorIcon, Key, RichText, Sense, TextureHandle, TextureOptions, Vec2, Widget};
+use egui::{Context, CursorIcon, Key, RichText, Sense, TextureHandle, TextureOptions, TextureWrapMode, Vec2, Widget};
 use puffin::{profile_function, profile_scope};
 use rayna_engine::core::types::{Angle, Number, Vector3};
 use rayna_engine::render::render::RenderStats;
@@ -42,7 +42,7 @@ impl RaynaApp {
     /// Creates a new app instance, with an [`Context`] for configuring the app
     pub fn new_ctx(_ctx: &Context) -> Self {
         info!(target: UI, "ui app init");
-        let scene = scene::stored::TESTING();
+        let scene = scene::stored::RTTNW_DEMO();
         let render_opts = Default::default();
         Self {
             render_opts,
@@ -99,8 +99,8 @@ impl crate::backend::app::App for RaynaApp {
                 ui.label("Image Height");
                 let h_drag = egui::DragValue::new(&mut h).suffix(UNIT_PX).ui(ui);
 
-                render_opts_dirty |= w_drag.drag_released() || w_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
-                render_opts_dirty |= h_drag.drag_released() || h_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
+                render_opts_dirty |= w_drag.drag_stopped() || w_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
+                render_opts_dirty |= h_drag.drag_stopped() || h_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
 
                 self.render_opts.width = NonZeroUsize::new(w).unwrap_or(NonZeroUsize::MIN);
                 self.render_opts.height = NonZeroUsize::new(h).unwrap_or(NonZeroUsize::MIN);
@@ -290,7 +290,7 @@ impl crate::backend::app::App for RaynaApp {
             }
 
             if img_resp.hovered() {
-                fov_zoom -= ui.input(|i| i.scroll_delta.y as Number);
+                fov_zoom -= ui.input(|i| i.raw_scroll_delta.y as Number);
                 fov_zoom -= 10. * (ui.input(|i| i.zoom_delta() as Number) - 1.);
                 fov_zoom *= 0.05;
                 cam_changed |= fov_zoom != 0.;
@@ -371,6 +371,7 @@ impl RaynaApp {
             let opts = TextureOptions {
                 magnification: TextureFilter::Nearest,
                 minification: TextureFilter::Linear,
+                wrap_mode: TextureWrapMode::ClampToEdge,
             };
             match &mut self.render_buf_tex {
                 None => {

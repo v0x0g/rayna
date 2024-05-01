@@ -1,6 +1,5 @@
 #![feature(array_chunks)]
 #![feature(array_try_map)]
-#![feature(array_methods)]
 #![feature(iter_map_windows)]
 #![feature(iter_collect_into)]
 #![feature(const_for)]
@@ -16,7 +15,6 @@
 #![feature(portable_simd)]
 #![feature(slice_flatten)]
 #![feature(iter_array_chunks)]
-#![feature(stdarch)]
 
 pub mod core;
 pub mod material;

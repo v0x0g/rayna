@@ -2,16 +2,19 @@
 
 #[macro_export]
 macro_rules! profiler {
-    ($(
-        {name: $name:ident, port: $port:expr $(,install: |$install_var:ident| $install:block, drop: |$drop_var:ident| $drop:block)? $(,)?}),*
-    $(,)?)
+    (
+        $tracing_target:expr,
+        $(
+            {name: $name:ident, port: $port:expr $(,install: |$install_var:ident| $install:block, drop: |$drop_var:ident| $drop:block)? $(,)?}
+        ),*
+    $(,)? )
     => {
         $(
-            $crate::profiler!(@inner {name: $name, port: $port $(,install: |$install_var| $install, drop: |$drop_var| $drop)?});
+            $crate::profiler!(@inner {tracing_target: $tracing_target, name: $name, port: $port $(,install: |$install_var| $install, drop: |$drop_var| $drop)?});
         )*
     };
 
-    (@inner {name: $name:ident, port: $port:expr}) => {
+    (@inner {tracing_target: $tracing_target:expr, name: $name:ident, port: $port:expr}) => {
         pub mod $name {
             use std::sync::{Mutex, MutexGuard};
             use once_cell::sync::Lazy;
@@ -20,8 +23,6 @@ macro_rules! profiler {
                 FrameSink, FrameSinkId, StreamInfoRef, ScopeDetails,
                 ThreadProfiler, ThreadInfo, GlobalProfiler
             };
-
-            use crate::core::targets;
 
             #[doc = concat!("The address to bind the ", stringify!($name), " thread profilers' server to")]
             pub const ADDR: &'static str = concat!("127.0.0.1:", $port);
@@ -42,7 +43,7 @@ macro_rules! profiler {
             pub static SERVER : Lazy<Mutex<Server>>
                 = Lazy::new(|| {
                     tracing::debug!(
-                        target: targets::MAIN,
+                        target: $tracing_target,
                         "starting puffin_http server for {} profiler at {}",
                         stringify!($name),
                         self::ADDR
@@ -67,9 +68,9 @@ macro_rules! profiler {
             #[doc = concat!("Initialises the ", stringify!($name), " thread reporter and server.\
             Call this on each different thread you want to register with this profiler")]
             pub fn init_thread() {
-                tracing::trace!(target: targets::MAIN, "init thread profiler \"{}\"", stringify!($name));
+                tracing::trace!(target: $tracing_target, "init thread profiler \"{}\"", stringify!($name));
                 std::mem::drop(self::SERVER.lock());
-                tracing::trace!(target: targets::MAIN, "set thread custom profiler \"{}\"", stringify!($name));
+                tracing::trace!(target: $tracing_target, "set thread custom profiler \"{}\"", stringify!($name));
                 ThreadProfiler::initialize(::puffin::now_ns, self::reporter);
             }
         }

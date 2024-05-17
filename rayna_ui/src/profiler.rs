@@ -1,6 +1,4 @@
-use crate::targets;
-
-/// A special flag used to mark whether [egui][egui] (or [eframe][eframe] are calling
+/// A special flag used to mark whether [egui][egui] or [eframe][eframe] are calling
 /// [GlobalProfiler::new_frame()] for us. It controls (in `rayna_ui`) whether the
 /// app calls `new_frame` itself, or lets [egui][egui] do so, as well as the pass-through to
 /// our custom profiler (since egui calls [GlobalProfiler::lock()], which locks the global
@@ -11,5 +9,6 @@ use crate::targets;
 pub static EGUI_CALLS_PUFFIN: bool = false;
 
 rayna_engine::profiler! {
-    {name: MAIN,     port: 8587},
+    crate::targets::MAIN,
+    {name: main,     port: 8587},
 }

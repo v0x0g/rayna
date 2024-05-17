@@ -60,14 +60,15 @@ fn main() -> anyhow::Result<()> {
     trace!(target: MAIN, "enable profiling");
     puffin::set_scopes_on(true);
     trace!(target: MAIN, "init main profiler");
-    profiler::main_profiler_init();
+    profiler::main::init_thread();
     // Special handling so the 'default' profiler passes on to our custom profiler
     // In this case, we already overrode the ThreadProfiler for "main" using `main_profiler_init()`,
     // So the events are already going to our custom profiler, but egui still calls `new_frame()` on the
     // global profiler. So here, pass along the `new_frame()`s to the custom one
     puffin::GlobalProfiler::lock().add_sink(Box::new(|_| {
+        // Skip however if we are calling egui manually, as we don't want to double-call
         if profiler::EGUI_CALLS_PUFFIN {
-            profiler::main_profiler_lock().new_frame();
+            profiler::main::lock().new_frame();
         }
     }));
 

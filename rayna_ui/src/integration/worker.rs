@@ -45,7 +45,7 @@ impl BgWorker {
     #[instrument(level = tracing::Level::DEBUG, skip(self), parent = None)]
     pub fn thread_run(self) {
         info!(target: BG_WORKER, "BgWorker thread start");
-        profiler::renderer_profiler_init();
+        profiler::renderer::init_thread();
 
         let Self {
             msg_tx,
@@ -57,7 +57,7 @@ impl BgWorker {
         } = self;
 
         loop {
-            profiler::renderer_profiler_lock().new_frame();
+            profiler::renderer::lock().new_frame();
 
             profile_function!(); // place here not at the start since we are looping
 

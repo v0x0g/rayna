@@ -26,9 +26,9 @@
 
 ### CODE ###
 
-!rayna_engine
+!rayna_engine/
 !rayna_engine/**
-!rayna_ui
+!rayna_ui/
 !rayna_ui/**
 
 

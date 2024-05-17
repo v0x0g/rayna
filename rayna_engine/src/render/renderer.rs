@@ -27,7 +27,6 @@ use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use smallvec::SmallVec;
 use std::marker::PhantomData;
 use std::ops::DerefMut;
-use std::sync::OnceLock;
 use std::time::Duration;
 use thiserror::Error;
 use tracing::{error, trace};
@@ -62,7 +61,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
             .thread_name(|id| format!("Renderer::worker_{id}"))
             .start_handler(|id| {
                 trace!(target: RENDERER, "renderer worker {id} start");
-                profiler::renderer_profiler_init();
+                profiler::renderer::init_thread();
             })
             .exit_handler(|id| trace!(target: RENDERER, "renderer worker {id} exit"))
             .build()
@@ -215,9 +214,19 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
                 move || {
                     // Can't use puffin's macro because of macro hygiene :(
                     let profiler_scope = if puffin::are_scopes_on() {
-                        static LOCATION: OnceLock<String> = OnceLock::new();
-                        let location = LOCATION.get_or_init(|| format!("{}:{}", puffin::current_file_name!(), line!()));
-                        Some(puffin::ProfilerScope::new("inner", location, ""))
+                        static SCOPE_ID: std::sync::OnceLock<puffin::ScopeId> = std::sync::OnceLock::new();
+                        let scope_id = SCOPE_ID.get_or_init(|| {
+                            puffin::ThreadProfiler::call(|tp| {
+                                let id = tp.register_named_scope(
+                                    "inner",
+                                    puffin::clean_function_name(puffin::current_function_name!()),
+                                    puffin::short_file_name(file!()),
+                                    line!(),
+                                );
+                                id
+                            })
+                        });
+                        Some(puffin::ProfilerScope::new(*scope_id, ""))
                     } else {
                         None
                     };

@@ -12,62 +12,66 @@ macro_rules! profiler {
     };
 
     (@inner {name: $name:ident, port: $port:expr}) => {
-        paste::paste!{
-            #[doc = concat!("The address to bind the ", std::stringify!([< $name:lower >]), " thread profiler's server to")]
-                pub const [< $name:upper _PROFILER_ADDR >] : &'static str
-                    = std::concat!("127.0.0.1:", $port);
+        pub mod $name {
+            use std::sync::{Mutex, MutexGuard};
+            use once_cell::sync::Lazy;
+            use puffin_http::Server;
+            use puffin::{
+                FrameSink, FrameSinkId, StreamInfoRef, ScopeDetails,
+                ThreadProfiler, ThreadInfo, GlobalProfiler
+            };
 
-                /// Installs the server's sink into the custom profiler
-                #[doc(hidden)]
-                fn [< $name:lower _profiler_server_install >](sink: puffin::FrameSink) -> puffin::FrameSinkId {
-                    [< $name:lower _profiler_lock >]().add_sink(sink)
-                }
+            use crate::core::targets;
 
-                /// Drops the server's sink and removes from profiler
-                #[doc(hidden)]
-                fn [< $name:lower _profiler_server_drop >](id: puffin::FrameSinkId){
-                    [< $name:lower _profiler_lock >]().remove_sink(id);
-                }
+            #[doc = concat!("The address to bind the ", stringify!($name), " thread profilers' server to")]
+            pub const ADDR: &'static str = concat!("127.0.0.1:", $port);
 
-                #[doc = concat!("The instance of the ", std::stringify!([< $name:lower >]), " thread profiler's server")]
-                pub static [< $name:upper _PROFILER_SERVER >] : once_cell::sync::Lazy<std::sync::Mutex<puffin_http::Server>>
-                    = once_cell::sync::Lazy::new(|| {
-                        tracing::debug!(
-                            target: targets::MAIN,
-                            "starting puffin_http server for {} profiler at {}",
-                            std::stringify!([<$name:lower>]),
-                            [< $name:upper _PROFILER_ADDR >])
-                        ;
-                        std::sync::Mutex::new(
-                            puffin_http::Server::new_custom(
-                                [< $name:upper _PROFILER_ADDR >],
-                                // Can't use closures in a const context, use fn-pointers instead
-                                [< $name:lower _profiler_server_install >],
-                                [< $name:lower _profiler_server_drop >],
-                            )
-                            .expect(&format!("{} puffin_http server failed to start", std::stringify!([<$name:lower>])))
-                        )
-                    });
+            /// Installs the server's sink into the custom profiler
+            #[doc(hidden)]
+            fn install(sink: FrameSink) -> FrameSinkId {
+                self::lock().add_sink(sink)
+            }
 
-                #[doc = concat!("A custom reporter for the ", std::stringify!([< $name:lower >]), " thread reporter")]
-                pub fn [< $name:lower _profiler_reporter >] (info: puffin::ThreadInfo, stream: &puffin::StreamInfoRef<'_>) {
-                    [< $name:lower _profiler_lock >]().report(info, stream)
-                }
+            /// Drops the server's sink and removes from profiler
+            #[doc(hidden)]
+            fn drop(id: FrameSinkId){
+                self::lock().remove_sink(id);
+            }
 
-                #[doc = concat!("Accessor for the ", std::stringify!([< $name:lower >]), " thread reporter")]
-                pub fn [< $name:lower _profiler_lock >]() -> std::sync::MutexGuard<'static, puffin::GlobalProfiler> {
-                    static [< $name _PROFILER >] : once_cell::sync::Lazy<std::sync::Mutex<puffin::GlobalProfiler>> = once_cell::sync::Lazy::new(Default::default);
-                    [< $name _PROFILER >].lock().expect("poisoned std::sync::mutex")
-                }
+            #[doc = concat!("The instance of the ", stringify!($name), " thread profilers' server")]
+            pub static SERVER : Lazy<Mutex<Server>>
+                = Lazy::new(|| {
+                    tracing::debug!(
+                        target: targets::MAIN,
+                        "starting puffin_http server for {} profiler at {}",
+                        stringify!($name),
+                        self::ADDR
+                    );
+                    Mutex::new(
+                        Server::new_custom(self::ADDR, self::install, self::drop)
+                        .expect(&format!("{} puffin_http server failed to start", stringify!($name)))
+                    )
+                });
 
-                #[doc = concat!("Initialises the ", std::stringify!([< $name:lower >]), " thread reporter and server.\
-                Call this on each different thread you want to register with this profiler")]
-                pub fn [< $name:lower _profiler_init >]() {
-                    tracing::trace!(target: targets::MAIN, "init thread profiler \"{}\"", std::stringify!([<$name:lower>]));
-                    std::mem::drop([< $name:upper _PROFILER_SERVER >].lock());
-                    tracing::trace!(target: targets::MAIN, "set thread custom profiler \"{}\"", std::stringify!([<$name:lower>]));
-                    puffin::ThreadProfiler::initialize(::puffin::now_ns, [< $name:lower _profiler_reporter >]);
-                }
+            #[doc = concat!("A custom reporter for the ", std::stringify!($name), " thread reporter")]
+            pub fn reporter(info: ThreadInfo, details: &[ScopeDetails], stream: &StreamInfoRef<'_>) {
+                self::lock().report(info, details, stream)
+            }
+
+            #[doc = concat!("Accessor for the ", stringify!($name), " thread reporter")]
+            pub fn lock() -> MutexGuard<'static, GlobalProfiler> {
+                static PROFILER: Lazy<Mutex<GlobalProfiler>> = Lazy::new(Default::default);
+                PROFILER.lock().expect(&format!("poisoned std::sync::mutex for {}", stringify!($name)))
+            }
+
+            #[doc = concat!("Initialises the ", stringify!($name), " thread reporter and server.\
+            Call this on each different thread you want to register with this profiler")]
+            pub fn init_thread() {
+                tracing::trace!(target: targets::MAIN, "init thread profiler \"{}\"", stringify!($name));
+                std::mem::drop(self::SERVER.lock());
+                tracing::trace!(target: targets::MAIN, "set thread custom profiler \"{}\"", stringify!($name));
+                ThreadProfiler::initialize(::puffin::now_ns, self::reporter);
+            }
         }
     };
 }

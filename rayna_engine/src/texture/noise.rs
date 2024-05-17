@@ -1,34 +1,36 @@
 use crate::core::types::{Channel, Colour, Number};
 use crate::shared::intersect::Intersection;
-use crate::shared::RtRequirement;
 use crate::texture::{Texture, TextureInstance};
 use dyn_clone::DynClone;
 
+use derivative::Derivative;
 use noise::utils::ColorGradient;
 use rand_core::RngCore;
-use std::fmt::Debug;
 
 /// An extended trait what wraps a few other traits.
 ///
 /// Essentially a noise function that's safe to use in the engine
-pub trait RtNoiseFn<const D: usize>: noise::NoiseFn<Number, { D }> + RtRequirement + DynClone {}
-impl<const D: usize, N: noise::NoiseFn<Number, { D }> + RtRequirement + Clone> RtNoiseFn<D> for N {}
+pub trait RtNoiseFn<const D: usize>: noise::NoiseFn<Number, { D }> + Send + Sync + DynClone {}
+impl<const D: usize, N: noise::NoiseFn<Number, { D }> + Send + Sync + Clone> RtNoiseFn<D> for N {}
 dyn_clone::clone_trait_object!(<const D: usize> RtNoiseFn<D>);
+
+// TODO: The [derivative] crate seems to be abandoned, try the [educe] crate instead
 
 /// Enum that describes how a noise source is used to generate a colour for a pixel
 ///
 /// The values can be output in the range `-1.0..=1.0`
 ///
 /// If using this in a scene, you might need to call [ColourSource::to_dyn_box()].
-#[derive(Clone, Debug)]
+#[derive(Clone, Derivative)]
+#[derivative(Debug)]
 pub enum ColourSource<N: RtNoiseFn<D>, const D: usize> {
     /// Treat the noise generator's values as greyscale values
-    Greyscale(N),
+    Greyscale(#[derivative(Debug = "ignore")] N),
     /// Use the given gradient to convert noise values to colours
     ///
     /// Note this is a 24-bit RGB gradient, not the 96-bit RGB gradient used in the rest of the engine
-    Gradient(N, ColorGradient),
-    Rgb([N; 3]),
+    Gradient(#[derivative(Debug = "ignore")] N, ColorGradient),
+    Rgb(#[derivative(Debug = "ignore")] [N; 3]),
 }
 
 impl<const D: usize, N: RtNoiseFn<D>> ColourSource<N, D> {
@@ -54,8 +56,10 @@ impl<'n, const D: usize, N: RtNoiseFn<D> + 'n> ColourSource<N, D> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Derivative)]
+#[derivative(Debug)]
 pub struct UvNoiseTexture<N: RtNoiseFn<2>> {
+    #[derivative(Debug = "ignore")]
     pub source: ColourSource<N, 2>,
 }
 
@@ -75,8 +79,10 @@ impl<N: RtNoiseFn<2> + Clone + 'static> From<UvNoiseTexture<Box<N>>> for Texture
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Derivative)]
+#[derivative(Debug)]
 pub struct WorldNoiseTexture<N: RtNoiseFn<3>> {
+    #[derivative(Debug = "ignore")]
     pub source: ColourSource<N, 3>,
 }
 
@@ -95,8 +101,10 @@ impl<N: RtNoiseFn<3> + Clone + 'static> From<WorldNoiseTexture<Box<N>>> for Text
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Derivative)]
+#[derivative(Debug)]
 pub struct LocalNoiseTexture<N: RtNoiseFn<3>> {
+    #[derivative(Debug = "ignore")]
     pub source: ColourSource<N, 3>,
 }
 

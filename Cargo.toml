@@ -27,8 +27,7 @@ rand_xorshift = "0.3.0"
 rand_hc = "0.3.2"
 rand_isaac = "0.3.0"
 ndarray = { version = "0.15.6", features = ["rayon"] }
-# Using a custom version of `noise` where I have added a lot of #[derive()] macros
-noise = { path = "lib/noise-rs", features = ["images"] }
+noise = { version = "0.9.0", features = ["images"] }
 
 # Errors
 
@@ -64,8 +63,8 @@ static_assertions = "1.1.0"
 
 # Using a custom fork of `puffin`, so we can have multiple instances
 # of the `puffin_http::Server` that are disjoint
-puffin = { path = "lib/puffin/puffin" }
-puffin_http = { path = "lib/puffin/puffin_http" }
+puffin = { git = "https://github.com/v0x0g/puffin.git", branch = "feature/puffin_http_server_custom_profiler" }
+puffin_http = { git = "https://github.com/v0x0g/puffin.git", branch = "feature/puffin_http_server_custom_profiler" }
 rayon = "1.8.0"
 
 [profile.dev]

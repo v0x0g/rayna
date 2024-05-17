@@ -357,21 +357,21 @@ pub fn RTTNW_DEMO() -> Scene {
             .into(),
         );
 
-        // EARTH SPHERE
-        objects.push(
-            SimpleObject::new(
-                SphereMesh::new((4., 2., 4.), 1.0),
-                LambertianMaterial {
-                    albedo: ImageTexture::from(Image::from(
-                        image::load_from_memory(include_bytes!("../../../media/texture/nasa-earthmap/5400x2700.jpg"))
-                            .expect("compile-time image resource should be valid"),
-                    ))
-                    .into(),
-                },
-                None,
-            )
-            .into(),
-        );
+        // // EARTH SPHERE
+        // objects.push(
+        //     SimpleObject::new(
+        //         SphereMesh::new((4., 2., 4.), 1.0),
+        //         LambertianMaterial {
+        //             albedo: ImageTexture::from(Image::from(
+        //                 image::load_from_memory(include_bytes!("../../../media/texture/nasa-earthmap/5400x2700.jpg"))
+        //                     .expect("compile-time image resource should be valid"),
+        //             ))
+        //             .into(),
+        //         },
+        //         None,
+        //     )
+        //     .into(),
+        // );
 
         // NOISE SPHERE
         objects.push(

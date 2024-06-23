@@ -4,7 +4,6 @@
 #![feature(error_generic_member_access)]
 #![feature(slice_as_chunks)]
 #![feature(vec_into_raw_parts)]
-#![feature(slice_flatten)] // Used by [`thiserror::Error`] and `#[source]`
 
 use crate::backend::UiBackend;
 use crate::rayna_app::RaynaApp;

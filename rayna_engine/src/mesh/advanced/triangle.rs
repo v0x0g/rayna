@@ -91,7 +91,7 @@ where
             v2,
             normals,
             disabled_mask,
-            aabb: Aabb::encompass_points(vertices.flatten()),
+            aabb: Aabb::encompass_points(vertices.as_flattened()),
         }
     }
 }

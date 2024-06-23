@@ -13,7 +13,6 @@
 #![feature(error_generic_member_access)]
 #![feature(array_windows)]
 #![feature(portable_simd)]
-#![feature(slice_flatten)]
 #![feature(iter_array_chunks)]
 
 pub mod core;

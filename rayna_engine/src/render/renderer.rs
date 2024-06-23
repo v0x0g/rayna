@@ -5,6 +5,7 @@ use crate::material::Material;
 use crate::object::Object;
 use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::{RenderMode, RenderOpts};
+use crate::scene::camera::Camera;
 use crate::scene::camera::Viewport;
 use crate::scene::Scene;
 use crate::shared::intersect::FullIntersection;
@@ -136,7 +137,7 @@ where
     Rng: SeedableRng,
 {
     // TODO: Should `render()` be fallible?
-    pub fn render(&self, scene: &Scene<Obj, Sky>, render_opts: &RenderOpts) -> Render<Image> {
+    pub fn render(&self, scene: &Scene<Obj, Sky>, camera: &Camera, render_opts: &RenderOpts) -> Render<Image> {
         profile_function!();
 
         // Render image, and collect stats
@@ -144,7 +145,7 @@ where
         let start = puffin::now_ns();
         let num_threads = self.thread_pool.current_num_threads();
 
-        let image = match scene.camera.calculate_viewport(render_opts) {
+        let image = match camera.calculate_viewport(render_opts) {
             Err(err) => {
                 trace!(target: RENDERER, ?err, "couldn't calculate viewport");
                 let [w, h] = render_opts.dims();

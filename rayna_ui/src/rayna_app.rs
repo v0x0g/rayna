@@ -11,7 +11,8 @@ use puffin::{profile_function, profile_scope};
 use rayna_engine::core::types::{Angle, Number, Vector3};
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
-use rayna_engine::scene::{self, Scene};
+use rayna_engine::scene::camera::Camera;
+use rayna_engine::scene::{self, SimpleScene};
 use std::num::NonZeroUsize;
 use std::ops::Deref;
 use std::time::Duration;
@@ -22,7 +23,8 @@ use tracing::{error, info, trace, warn};
 pub struct RaynaApp {
     // Engine things
     render_opts: RenderOpts,
-    scene: Scene,
+    scene: SimpleScene,
+    camera: Camera,
 
     // Display things
     /// A handle to the texture that holds the current render buffer
@@ -42,14 +44,16 @@ impl RaynaApp {
     /// Creates a new app instance, with an [`Context`] for configuring the app
     pub fn new_ctx(_ctx: &Context) -> Self {
         info!(target: UI, "ui app init");
-        let scene = scene::stored::RTTNW_DEMO();
+        let preset = scene::preset::RTTNW_DEMO();
         let render_opts = Default::default();
         Self {
             render_opts,
             render_buf_tex: None,
             render_display_size: egui::vec2(1.0, 1.0),
-            integration: Integration::new(&render_opts, &scene).expect("couldn't create integration"),
-            scene,
+            integration: Integration::new(&render_opts, &preset.scene, &preset.camera)
+                .expect("couldn't create integration"),
+            scene: preset.scene,
+            camera: preset.camera,
             render_stats: Default::default(),
             // Max ten failures in a row, once per second
             worker_death_throttle: Throttle::new(Duration::from_secs(1), 10),
@@ -69,8 +73,9 @@ impl crate::backend::app::App for RaynaApp {
         self.process_worker_messages();
         self.process_worker_render(ctx);
 
-        let mut render_opts_dirty = false;
-        let mut scene_dirty = false;
+        let mut dirty_render_opts = false;
+        let mut dirty_scene = false;
+        let mut dirty_camera = false;
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             profile_scope!("panel/top");
@@ -99,8 +104,8 @@ impl crate::backend::app::App for RaynaApp {
                 ui.label("Image Height");
                 let h_drag = egui::DragValue::new(&mut h).suffix(UNIT_PX).ui(ui);
 
-                render_opts_dirty |= w_drag.drag_stopped() || w_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
-                render_opts_dirty |= h_drag.drag_stopped() || h_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
+                dirty_render_opts |= w_drag.drag_stopped() || w_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
+                dirty_render_opts |= h_drag.drag_stopped() || h_drag.lost_focus(); // don't use `.changed()` so it waits till interact complete
 
                 self.render_opts.width = NonZeroUsize::new(w).unwrap_or(NonZeroUsize::MIN);
                 self.render_opts.height = NonZeroUsize::new(h).unwrap_or(NonZeroUsize::MIN);
@@ -108,7 +113,7 @@ impl crate::backend::app::App for RaynaApp {
                 // Button: Fill Image Dimensions
 
                 if ui.button("Fill Canvas").clicked() {
-                    render_opts_dirty = true;
+                    dirty_render_opts = true;
                     self.render_opts.width =
                         NonZeroUsize::new(self.render_display_size.x as usize).unwrap_or(NonZeroUsize::MIN);
                     self.render_opts.height =
@@ -119,19 +124,19 @@ impl crate::backend::app::App for RaynaApp {
 
                 ui.label("MSAA");
                 let mut msaa = self.render_opts.samples.get();
-                render_opts_dirty |= egui::DragValue::new(&mut msaa).ui(ui).changed();
+                dirty_render_opts |= egui::DragValue::new(&mut msaa).ui(ui).changed();
                 self.render_opts.samples = NonZeroUsize::new(msaa).unwrap_or(NonZeroUsize::MIN);
 
                 // RAY BOUNCE DEPTH
 
                 ui.label("Ray Depth");
-                render_opts_dirty |= egui::DragValue::new(&mut self.render_opts.ray_depth).ui(ui).changed();
+                dirty_render_opts |= egui::DragValue::new(&mut self.render_opts.ray_depth).ui(ui).changed();
 
                 // RAY BRANCHING
 
                 ui.label("Ray Branching");
                 let mut ray_branching = self.render_opts.ray_branching.get();
-                render_opts_dirty |= egui::DragValue::new(&mut ray_branching).ui(ui).changed();
+                dirty_render_opts |= egui::DragValue::new(&mut ray_branching).ui(ui).changed();
                 self.render_opts.ray_branching = NonZeroUsize::new(ray_branching).unwrap_or(NonZeroUsize::MIN);
 
                 // RENDER MODE
@@ -146,7 +151,7 @@ impl crate::backend::app::App for RaynaApp {
                                 variant,
                                 <&'static str>::from(variant),
                             );
-                            render_opts_dirty |= resp.changed();
+                            dirty_render_opts |= resp.changed();
                         }
                     });
             });
@@ -156,13 +161,13 @@ impl crate::backend::app::App for RaynaApp {
 
                 ui.heading("Camera");
 
-                let cam = &mut self.scene.camera;
+                let cam = &mut self.camera;
                 ui.label("look from");
-                scene_dirty |= ui.vec3_edit(cam.pos.as_array_mut(), UNIT_LEN).changed();
+                dirty_camera |= ui.vec3_edit(cam.pos.as_array_mut(), UNIT_LEN).changed();
                 ui.label("fwd");
-                scene_dirty |= ui.vec3_edit(cam.fwd.as_array_mut(), UNIT_LEN).changed();
+                dirty_camera |= ui.vec3_edit(cam.fwd.as_array_mut(), UNIT_LEN).changed();
                 ui.label("fov");
-                scene_dirty |= ui
+                dirty_camera |= ui
                     .add(
                         egui::DragValue::from_get_set(|o| {
                             if let Some(val) = o {
@@ -177,13 +182,13 @@ impl crate::backend::app::App for RaynaApp {
                     )
                     .changed();
                 ui.label("focus dist");
-                scene_dirty |= egui::DragValue::new(&mut cam.focus_dist)
+                dirty_camera |= egui::DragValue::new(&mut cam.focus_dist)
                     .suffix(UNIT_LEN)
                     .speed(DRAG_SLOW)
                     .ui(ui)
                     .changed();
                 ui.label("defocus angle");
-                scene_dirty |= ui
+                dirty_camera |= ui
                     .add(
                         egui::DragValue::from_get_set(|o| {
                             if let Some(val) = o {
@@ -203,6 +208,8 @@ impl crate::backend::app::App for RaynaApp {
                 profile_scope!("sec/scene");
 
                 ui.heading("Scene");
+
+                dirty_scene |= false;
             });
 
             ui.group(|ui| {
@@ -305,14 +312,13 @@ impl crate::backend::app::App for RaynaApp {
             };
 
             if cam_changed {
-                scene_dirty = true;
-                self.scene
-                    .camera
+                dirty_camera = true;
+                self.camera
                     .apply_motion(move_dirs * speed_mult, rot_dirs * speed_mult, fov_zoom * speed_mult);
             }
         });
 
-        if render_opts_dirty {
+        if dirty_render_opts {
             profile_scope!("update_render_opts");
             info!(target: UI, render_opts = ?self.render_opts, "render opts dirty, sending to worker");
 
@@ -324,13 +330,25 @@ impl crate::backend::app::App for RaynaApp {
             }
         }
 
-        if scene_dirty {
+        if dirty_scene {
             profile_scope!("update_scene");
             trace!(target: UI, /*scene = ?self.scene, */ "scene dirty, sending to worker");
 
             if let Err(err) = self
                 .integration
                 .send_message(MessageToWorker::SetScene(self.scene.clone()))
+            {
+                warn!(target: UI, ?err)
+            }
+        }
+
+        if dirty_camera {
+            profile_scope!("update_camera");
+            trace!(target: UI, /*scene = ?self.scene, */ "camera dirty, sending to worker");
+
+            if let Err(err) = self
+                .integration
+                .send_message(MessageToWorker::SetCamera(self.camera.clone()))
             {
                 warn!(target: UI, ?err)
             }
@@ -400,7 +418,7 @@ impl RaynaApp {
                     if self.worker_death_throttle.accept().is_ok() {
                         warn!(target: UI, err = ? err.deref(), "worker thread died");
                         // Try restarting integration
-                        self.integration = Integration::new(&self.render_opts, &self.scene)
+                        self.integration = Integration::new(&self.render_opts, &self.scene, &self.camera)
                             .expect("failed to re-initialise integration");
                     } else {
                         trace!(target: UI, "worker thread died again... sigh")

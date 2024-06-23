@@ -1,16 +1,16 @@
-use crate::material::MaterialInstance;
-use crate::mesh::MeshInstance;
-use crate::object::ObjectInstance;
-use crate::scene::camera::Camera;
-use crate::skybox::SkyboxInstance;
-use crate::texture::TextureInstance;
-
 pub mod camera;
-pub mod stored;
+pub mod preset;
 
 #[derive(Clone, Debug)]
-pub struct Scene<Obj = ObjectInstance<MeshInstance, MaterialInstance<TextureInstance>>, Sky = SkyboxInstance> {
+pub struct Scene<Obj, Sky> {
     pub objects: Obj,
     pub skybox: Sky,
-    pub camera: Camera,
 }
+
+pub type SimpleScene = Scene<
+    crate::object::ObjectInstance<
+        crate::mesh::MeshInstance,
+        crate::material::MaterialInstance<crate::texture::TextureInstance>,
+    >,
+    crate::skybox::SkyboxInstance,
+>;

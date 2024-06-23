@@ -10,7 +10,8 @@ use rayna_engine::object::ObjectInstance;
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
-use rayna_engine::scene::Scene;
+use rayna_engine::scene::camera::Camera;
+use rayna_engine::scene::SimpleScene;
 use rayna_engine::skybox::SkyboxInstance;
 use rayna_engine::texture::TextureInstance;
 use rayon::iter::IntoParallelIterator;
@@ -23,7 +24,8 @@ use tracing::{info, instrument, trace, warn};
 #[derive(Clone, Debug)]
 pub(super) struct BgWorker {
     pub render_opts: RenderOpts,
-    pub scene: Scene,
+    pub scene: SimpleScene,
+    pub camera: Camera,
     /// Sender for messages from the worker, back to the UI
     pub msg_tx: flume::Sender<MessageToUi>,
     /// Receiver for messages from the UI, to the worker
@@ -54,6 +56,7 @@ impl BgWorker {
             render_tx,
             mut render_opts,
             mut scene,
+            mut camera,
             renderer,
         } = self;
 
@@ -73,13 +76,17 @@ impl BgWorker {
                 profile_scope!("receive_messages");
                 while let Ok(msg) = msg_rx.try_recv() {
                     match msg {
-                        MessageToWorker::SetRenderOpts(opts) => {
-                            trace!(target: BG_WORKER, ?opts, "got render opts from ui");
-                            render_opts = opts
+                        MessageToWorker::SetRenderOpts(o) => {
+                            trace!(target: BG_WORKER, ?o, "got render opts from ui");
+                            render_opts = o
                         }
                         MessageToWorker::SetScene(s) => {
-                            trace!(target: BG_WORKER, ?scene, "got scene from ui");
+                            trace!(target: BG_WORKER, ?s, "got scene from ui");
                             scene = s;
+                        }
+                        MessageToWorker::SetCamera(c) => {
+                            trace!(target: BG_WORKER, ?c, "got scene from ui");
+                            camera = c;
                         }
                     }
                 }
@@ -99,7 +106,7 @@ impl BgWorker {
 
             let render_result = {
                 profile_scope!("make_render");
-                let render = renderer.render(&scene, &render_opts);
+                let render = renderer.render(&scene, &camera, &render_opts);
 
                 // // TODO: REMOVE THIS IT'S TESTING ONLY
                 // // save image

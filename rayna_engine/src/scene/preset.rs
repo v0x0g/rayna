@@ -40,9 +40,14 @@ use crate::texture::noise::{ColourSource, LocalNoiseTexture, WorldNoiseTexture};
 use crate::texture::solid::SolidTexture;
 use crate::texture::TextureInstance;
 
-use super::Scene;
+use super::{Scene, SimpleScene};
 
-pub fn TESTING() -> Scene {
+pub struct PresetScene {
+    pub camera: Camera,
+    pub scene: SimpleScene,
+}
+
+pub fn TESTING() -> PresetScene {
     let camera = Camera {
         pos: Point3::new(0.5, 0.1, 0.7),
         fwd: Vector3::new(0., 0., -1.).normalize(),
@@ -122,23 +127,25 @@ pub fn TESTING() -> Scene {
         // sphere(vw, w);
     }
 
-    Scene {
+    PresetScene {
         camera,
-        objects: objects.into(),
-        skybox: HdrImageSkybox::from(Image::from({
-            let file = std::fs::File::open("media/skybox/misty-farm-road/4096x2048.exr")
-                .expect("compile-time image resource should be valid");
-            let mut reader = image::io::Reader::new(BufReader::new(file));
-            reader.no_limits();
-            reader.set_format(ImageFormat::OpenExr);
-            reader.decode().expect("compile-time image resource should be valid")
-        }))
-        .into(),
+        scene: Scene {
+            objects: objects.into(),
+            skybox: HdrImageSkybox::from(Image::from({
+                let file = std::fs::File::open("media/skybox/misty-farm-road/4096x2048.exr")
+                    .expect("compile-time image resource should be valid");
+                let mut reader = image::io::Reader::new(BufReader::new(file));
+                reader.no_limits();
+                reader.set_format(ImageFormat::OpenExr);
+                reader.decode().expect("compile-time image resource should be valid")
+            }))
+            .into(),
+        },
     }
 }
 
 /// From **RayTracing in A Weekend**, the demo scene at the end of the chapter (extended of course)
-pub fn RTIAW_DEMO() -> Scene {
+pub fn RTIAW_DEMO() -> PresetScene {
     let mut objects = Vec::new();
 
     let grid_dims = -15..=15;
@@ -221,7 +228,7 @@ pub fn RTIAW_DEMO() -> Scene {
         None,
     ));
 
-    Scene {
+    PresetScene {
         camera: Camera {
             pos: Point3::new(13., 2., 3.),
             fwd: Vector3::new(-13., -2., -3.).normalize(),
@@ -229,13 +236,15 @@ pub fn RTIAW_DEMO() -> Scene {
             focus_dist: 10.,
             defocus_angle: Angle::from_degrees(0.6),
         },
-        objects: objects.into(),
-        skybox: SkyboxInstance::default(),
+        scene: Scene {
+            objects: objects.into(),
+            skybox: SkyboxInstance::default(),
+        },
     }
 }
 
 /// From **RayTracing The Next Week**, the demo scene at the end of the chapter (extended of course)
-pub fn RTTNW_DEMO() -> Scene {
+pub fn RTTNW_DEMO() -> PresetScene {
     let mut objects: Vec<ObjectInstance<MeshInstance, MaterialInstance<TextureInstance>>> = Vec::new();
     let rng = &mut thread_rng();
 
@@ -432,7 +441,7 @@ pub fn RTTNW_DEMO() -> Scene {
         // );
     }
 
-    Scene {
+    PresetScene {
         camera: Camera {
             pos: Point3::new(4.78, 2.78, -6.0),
             fwd: Vector3::new(-1., 0., 3.).normalize(),
@@ -440,13 +449,15 @@ pub fn RTTNW_DEMO() -> Scene {
             focus_dist: 1.,
             defocus_angle: Angle::from_degrees(0.0),
         },
-        objects: objects.into(),
-        skybox: None.into(),
+        scene: Scene {
+            objects: objects.into(),
+            skybox: None.into(),
+        },
     }
 }
 
 /// The classic cornell box scene
-pub fn CORNELL() -> Scene {
+pub fn CORNELL() -> PresetScene {
     let camera = Camera {
         pos: Point3::new(0.5, 0.5, 2.3),
         fwd: Vector3::new(0., 0., -1.).normalize(),
@@ -515,10 +526,11 @@ pub fn CORNELL() -> Scene {
         ));
     }
 
-    Scene {
+    PresetScene {
         camera,
-        objects: objects.into(),
-        skybox: None.into(),
-        // skybox: SkyboxInstance::default(),
+        scene: Scene {
+            objects: objects.into(),
+            skybox: None.into(),
+        },
     }
 }

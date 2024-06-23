@@ -10,7 +10,8 @@ use egui::ColorImage;
 use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
-use rayna_engine::scene::Scene;
+use rayna_engine::scene::camera::Camera;
+use rayna_engine::scene::SimpleScene;
 use std::any::Any;
 use std::sync::Arc;
 use std::thread::JoinHandle;
@@ -58,7 +59,11 @@ enum WorkerHandle {
 }
 
 impl Integration {
-    pub(crate) fn new(initial_render_opts: &RenderOpts, initial_scene: &Scene) -> IResult<Self> {
+    pub(crate) fn new(
+        initial_render_opts: &RenderOpts,
+        initial_scene: &SimpleScene,
+        initial_camera: &Camera,
+    ) -> IResult<Self> {
         debug!(target: INTEGRATION, "creating new integration instance");
 
         trace!(target: INTEGRATION, "creating channels");
@@ -76,6 +81,7 @@ impl Integration {
             render_tx: rend_tx,
             render_opts: initial_render_opts.clone(),
             scene: initial_scene.clone(),
+            camera: initial_camera.clone(),
             renderer: Renderer::new().expect("failed to create renderer"),
         };
         let thread = worker.start_bg_thread().map_err(IntegrationError::from)?;

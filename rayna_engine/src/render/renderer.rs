@@ -136,7 +136,7 @@ where
     Rng: SeedableRng,
 {
     // TODO: Should `render()` be fallible?
-    pub fn render(&mut self, scene: &Scene<Obj, Sky>, render_opts: &RenderOpts) -> Render<Image> {
+    pub fn render(&self, scene: &Scene<Obj, Sky>, render_opts: &RenderOpts) -> Render<Image> {
         profile_function!();
 
         // Render image, and collect stats
@@ -201,7 +201,7 @@ where
     ///
     /// This is only called when the viewport is valid, and therefore an image can be rendered
     fn render_actual(
-        &mut self,
+        &self,
         scene: &Scene<Obj, Sky>,
         render_opts: &RenderOpts,
         viewport: &Viewport,

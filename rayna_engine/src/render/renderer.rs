@@ -31,7 +31,12 @@ use tracing::{error, trace};
 
 #[derive(Derivative)]
 #[derivative(Debug)]
-pub struct Renderer<Obj: Object + Clone, Sky: Skybox + Clone, Rng: RngCore + SeedableRng> {
+pub struct Renderer<Obj, Sky, Rng>
+where
+    // For now, require RNG can be pooled due to requirements in [`opool`] API
+    // TODO: Find a fix so we don't require RNG being pool-able in the struct definition
+    Rng: SeedableRng,
+{
     /// A thread pool used to distribute the workload
     thread_pool: ThreadPool,
     #[derivative(Debug = "ignore")]
@@ -51,7 +56,10 @@ pub enum RendererCreateError {
 
 // region Construction
 
-impl<Obj: Object + Clone, Sky: Skybox + Clone, Rng: RngCore + SeedableRng> Renderer<Obj, Sky, Rng> {
+impl<Obj, Sky, Rng> Renderer<Obj, Sky, Rng>
+where
+    Rng: SeedableRng,
+{
     /// Creates a new renderer instance
     pub fn new() -> Result<Self, RendererCreateError> {
         let thread_pool = ThreadPoolBuilder::new()
@@ -79,7 +87,10 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone, Rng: RngCore + SeedableRng> Rende
 }
 
 /// Clone Renderer
-impl<Obj: Object + Clone, Sky: Skybox + Clone, Rng: RngCore + SeedableRng> Clone for Renderer<Obj, Sky, Rng> {
+impl<Obj: Clone, Sky: Clone, Rng> Clone for Renderer<Obj, Sky, Rng>
+where
+    Rng: SeedableRng,
+{
     fn clone(&self) -> Self { Self::new().expect("could not clone: couldn't create renderer") }
 }
 
@@ -89,7 +100,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone, Rng: RngCore + SeedableRng> Clone
 
 /// A helper struct that holds data we want to be pooled
 #[derive(Clone, Debug)]
-struct PooledData<Rng: RngCore + SeedableRng> {
+struct PooledData<Rng> {
     /// PRNG's
     pub rngs: [Rng; 2],
     /// Buffer of [Vector2] values
@@ -102,7 +113,7 @@ struct PooledData<Rng: RngCore + SeedableRng> {
 
 #[derive(Copy, Clone, Debug, Default)]
 struct PooledDataAllocator;
-impl<Rng: SeedableRng + RngCore> opool::PoolAllocator<PooledData<Rng>> for PooledDataAllocator {
+impl<Rng: SeedableRng> opool::PoolAllocator<PooledData<Rng>> for PooledDataAllocator {
     fn allocate(&self) -> PooledData<Rng> {
         // I will admit I have no idea if you can fill an array from a function like this
         let rngs = [(); 2].map(|()| Rng::from_entropy());
@@ -120,7 +131,10 @@ impl<Rng: SeedableRng + RngCore> opool::PoolAllocator<PooledData<Rng>> for Poole
 
 // region High-level Rendering
 
-impl<Obj: Object + Clone, Sky: Skybox + Clone, Rng: RngCore + SeedableRng + Send> Renderer<Obj, Sky, Rng> {
+impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send> Renderer<Obj, Sky, Rng>
+where
+    Rng: SeedableRng,
+{
     // TODO: Should `render()` be fallible?
     pub fn render(&mut self, scene: &Scene<Obj, Sky>, render_opts: &RenderOpts) -> Render<Image> {
         profile_function!();
@@ -248,7 +262,10 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone, Rng: RngCore + SeedableRng + Send
 
 // region Low-level Rendering
 
-impl<Obj: Object + Clone, Sky: Skybox + Clone, Rng: SeedableRng + RngCore> Renderer<Obj, Sky, Rng> {
+impl<Obj: Object, Sky: Skybox, Rng: RngCore> Renderer<Obj, Sky, Rng>
+where
+    Rng: SeedableRng,
+{
     /// Renders a single pixel in the scene, and returns the colour
     ///
     /// Takes into account [`RenderOpts::msaa`]

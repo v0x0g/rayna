@@ -12,7 +12,7 @@ use rayna_engine::core::types::{Angle, Number, Vector3};
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
 use rayna_engine::scene::camera::Camera;
-use rayna_engine::scene::{self, SimpleScene};
+use rayna_engine::scene::{self, StandardScene};
 use std::num::NonZeroUsize;
 use std::ops::Deref;
 use std::time::Duration;
@@ -23,7 +23,7 @@ use tracing::{error, info, trace, warn};
 pub struct RaynaApp {
     // Engine things
     render_opts: RenderOpts,
-    scene: SimpleScene,
+    scene: StandardScene,
     camera: Camera,
 
     // Display things

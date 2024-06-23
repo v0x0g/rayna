@@ -11,7 +11,7 @@ use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
 use rayna_engine::scene::camera::Camera;
-use rayna_engine::scene::SimpleScene;
+use rayna_engine::scene::StandardScene;
 use std::any::Any;
 use std::sync::Arc;
 use std::thread::JoinHandle;
@@ -61,7 +61,7 @@ enum WorkerHandle {
 impl Integration {
     pub(crate) fn new(
         initial_render_opts: &RenderOpts,
-        initial_scene: &SimpleScene,
+        initial_scene: &StandardScene,
         initial_camera: &Camera,
     ) -> IResult<Self> {
         debug!(target: INTEGRATION, "creating new integration instance");

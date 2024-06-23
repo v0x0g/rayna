@@ -40,11 +40,11 @@ use crate::texture::noise::{ColourSource, LocalNoiseTexture, WorldNoiseTexture};
 use crate::texture::solid::SolidTexture;
 use crate::texture::TextureInstance;
 
-use super::{Scene, SimpleScene};
+use super::{Scene, StandardScene};
 
 pub struct PresetScene {
     pub camera: Camera,
-    pub scene: SimpleScene,
+    pub scene: StandardScene,
 }
 
 pub fn TESTING() -> PresetScene {

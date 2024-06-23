@@ -17,6 +17,7 @@ rayna_engine = { path = "../rayna_engine" }
 #glam = { workspace = true }
 #glamour = { workspace = true }
 mint = { workspace = true }
+rand = { workspace = true }
 
 # Display/UI
 egui = { workspace = true }

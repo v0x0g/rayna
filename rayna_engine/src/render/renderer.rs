@@ -19,8 +19,6 @@ use num_integer::Roots;
 use puffin::profile_function;
 use rand::distributions::Distribution;
 use rand::distributions::Uniform;
-use rand::rngs::SmallRng;
-use rand::Rng;
 use rand_core::{RngCore, SeedableRng};
 use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
@@ -33,11 +31,11 @@ use tracing::{error, trace};
 
 #[derive(Derivative)]
 #[derivative(Debug)]
-pub struct Renderer<Obj: Object + Clone, Sky: Skybox + Clone> {
+pub struct Renderer<Obj: Object + Clone, Sky: Skybox + Clone, Rng: RngCore + SeedableRng> {
     /// A thread pool used to distribute the workload
     thread_pool: ThreadPool,
     #[derivative(Debug = "ignore")]
-    data_pool: opool::Pool<PooledDataAllocator, PooledData>,
+    data_pool: opool::Pool<PooledDataAllocator, PooledData<Rng>>,
     phantom: PhantomData<Scene<Obj, Sky>>,
 }
 
@@ -53,7 +51,7 @@ pub enum RendererCreateError {
 
 // region Construction
 
-impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
+impl<Obj: Object + Clone, Sky: Skybox + Clone, Rng: RngCore + SeedableRng> Renderer<Obj, Sky, Rng> {
     /// Creates a new renderer instance
     pub fn new() -> Result<Self, RendererCreateError> {
         let thread_pool = ThreadPoolBuilder::new()
@@ -81,7 +79,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 }
 
 /// Clone Renderer
-impl<Obj: Object + Clone, Sky: Skybox + Clone> Clone for Renderer<Obj, Sky> {
+impl<Obj: Object + Clone, Sky: Skybox + Clone, Rng: RngCore + SeedableRng> Clone for Renderer<Obj, Sky, Rng> {
     fn clone(&self) -> Self { Self::new().expect("could not clone: couldn't create renderer") }
 }
 
@@ -91,9 +89,9 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Clone for Renderer<Obj, Sky> {
 
 /// A helper struct that holds data we want to be pooled
 #[derive(Clone, Debug)]
-struct PooledData<R: RngCore + SeedableRng = SmallRng> {
+struct PooledData<Rng: RngCore + SeedableRng> {
     /// PRNG's
-    pub rngs: [R; 2],
+    pub rngs: [Rng; 2],
     /// Buffer of [Vector2] values
     pub px_coords: Vec<Vector2>,
     /// Buffer of [Colour] values
@@ -104,10 +102,10 @@ struct PooledData<R: RngCore + SeedableRng = SmallRng> {
 
 #[derive(Copy, Clone, Debug, Default)]
 struct PooledDataAllocator;
-impl<R: SeedableRng + RngCore> opool::PoolAllocator<PooledData<R>> for PooledDataAllocator {
-    fn allocate(&self) -> PooledData<R> {
+impl<Rng: SeedableRng + RngCore> opool::PoolAllocator<PooledData<Rng>> for PooledDataAllocator {
+    fn allocate(&self) -> PooledData<Rng> {
         // I will admit I have no idea if you can fill an array from a function like this
-        let rngs = [(); 2].map(|()| R::from_entropy());
+        let rngs = [(); 2].map(|()| Rng::from_entropy());
         let msaa_dist = Uniform::new_inclusive(-0.5, 0.5);
         PooledData {
             rngs,
@@ -122,7 +120,7 @@ impl<R: SeedableRng + RngCore> opool::PoolAllocator<PooledData<R>> for PooledDat
 
 // region High-level Rendering
 
-impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
+impl<Obj: Object + Clone, Sky: Skybox + Clone, Rng: RngCore + SeedableRng + Send> Renderer<Obj, Sky, Rng> {
     // TODO: Should `render()` be fallible?
     pub fn render(&mut self, scene: &Scene<Obj, Sky>, render_opts: &RenderOpts) -> Render<Image> {
         profile_function!();
@@ -250,7 +248,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
 
 // region Low-level Rendering
 
-impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
+impl<Obj: Object + Clone, Sky: Skybox + Clone, Rng: SeedableRng + RngCore> Renderer<Obj, Sky, Rng> {
     /// Renders a single pixel in the scene, and returns the colour
     ///
     /// Takes into account [`RenderOpts::msaa`]
@@ -261,7 +259,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         interval: &Interval<Number>,
         x: usize,
         y: usize,
-        pooled_data: &mut PooledData,
+        pooled_data: &mut PooledData<Rng>,
     ) -> Colour {
         let px = x as Number;
         let py = y as Number;
@@ -326,7 +324,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         interval: &Interval<Number>,
         x: Number,
         y: Number,
-        rng: &mut impl Rng,
+        rng: &mut Rng,
     ) -> Colour {
         let ray = viewport.calc_ray(x, y, rng);
         validate::ray(ray);
@@ -406,7 +404,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         scene: &'o Scene<Obj, Sky>,
         ray: &Ray,
         interval: &Interval<Number>,
-        rng: &mut dyn RngCore,
+        rng: &mut Rng,
     ) -> Option<FullIntersection<'o, Obj::Mat>> {
         scene.objects.full_intersect(ray, interval, rng)
     }
@@ -422,7 +420,7 @@ impl<Obj: Object + Clone, Sky: Skybox + Clone> Renderer<Obj, Sky> {
         opts: &RenderOpts,
         interval: &Interval<Number>,
         depth: usize,
-        rng: &mut impl Rng,
+        rng: &mut Rng,
     ) -> Colour {
         if depth > opts.ray_depth {
             return Colour::from([0.; 3]);

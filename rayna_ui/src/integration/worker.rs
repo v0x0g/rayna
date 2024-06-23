@@ -29,7 +29,8 @@ pub(super) struct BgWorker {
     /// Receiver for messages from the UI, to the worker
     pub msg_rx: flume::Receiver<MessageToWorker>,
     pub render_tx: flume::Sender<Render<ColorImage>>,
-    pub renderer: Renderer<ObjectInstance<MeshInstance, MaterialInstance<TextureInstance>>, SkyboxInstance>,
+    pub renderer:
+        Renderer<ObjectInstance<MeshInstance, MaterialInstance<TextureInstance>>, SkyboxInstance, rand::rngs::SmallRng>,
 }
 
 impl BgWorker {

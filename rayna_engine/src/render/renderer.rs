@@ -24,7 +24,6 @@ use rand_core::{RngCore, SeedableRng};
 use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use smallvec::SmallVec;
-use std::marker::PhantomData;
 use std::ops::DerefMut;
 use std::time::Duration;
 use thiserror::Error;
@@ -42,7 +41,11 @@ where
     thread_pool: ThreadPool,
     #[derivative(Debug = "ignore")]
     data_pool: opool::Pool<PooledDataAllocator, PooledData<Rng>>,
-    phantom: PhantomData<Scene<Obj, Sky>>,
+    // Purposefully storing these in the render (though not really required)
+    // for future compatibility with GPU renderer
+    pub scene: Scene<Obj, Sky>,
+    pub camera: Camera,
+    pub options: RenderOpts,
 }
 
 #[derive(Error, Debug)]
@@ -61,9 +64,37 @@ impl<Obj, Sky, Rng> Renderer<Obj, Sky, Rng>
 where
     Rng: SeedableRng,
 {
-    /// Creates a new renderer instance
-    pub fn new() -> Result<Self, RendererCreateError> {
-        let thread_pool = ThreadPoolBuilder::new()
+    /// Creates a new renderer instance, using default values for the scene, camera, and render options
+    pub fn new_default() -> Result<Self, RendererCreateError>
+    where
+        Obj: Default,
+        Sky: Default,
+    {
+        Self::new_from(
+            Scene {
+                objects: Obj::default(),
+                skybox: Sky::default(),
+            },
+            Camera::default(),
+            RenderOpts::default(),
+        )
+    }
+
+    pub fn new_from(scene: Scene<Obj, Sky>, camera: Camera, options: RenderOpts) -> Result<Self, RendererCreateError> {
+        let thread_pool = Self::create_thread_pool().map_err(RendererCreateError::from)?;
+        let data_pool = Self::create_data_pool();
+
+        Ok(Self {
+            thread_pool,
+            data_pool,
+            scene,
+            camera,
+            options,
+        })
+    }
+
+    fn create_thread_pool() -> Result<ThreadPool, ThreadPoolBuildError> {
+        ThreadPoolBuilder::new()
             .num_threads(6)
             .thread_name(|id| format!("Renderer::worker_{id}"))
             .start_handler(|id| {
@@ -72,18 +103,12 @@ where
             })
             .exit_handler(|id| trace!(target: RENDERER, "renderer worker {id} exit"))
             .build()
-            .map_err(RendererCreateError::from)?;
+    }
 
+    fn create_data_pool() -> opool::Pool<PooledDataAllocator, PooledData<Rng>> {
         // Create a pool that should have enough RNGs stored for all of our threads
         // We pool randoms so we don't have to init/create them in hot paths
-        // `SmallRng` is the (slightly) fastest of all RNGs tested
-        let data_pool = opool::Pool::new_prefilled(256, PooledDataAllocator);
-
-        Ok(Self {
-            thread_pool,
-            data_pool,
-            phantom: PhantomData {},
-        })
+        opool::Pool::new_prefilled(256, PooledDataAllocator)
     }
 }
 
@@ -92,7 +117,11 @@ impl<Obj: Clone, Sky: Clone, Rng> Clone for Renderer<Obj, Sky, Rng>
 where
     Rng: SeedableRng,
 {
-    fn clone(&self) -> Self { Self::new().expect("could not clone: couldn't create renderer") }
+    fn clone(&self) -> Self {
+        // TODO: Clone the thread pool and data pool when cloning renderer
+        Self::new_from(self.scene.clone(), self.camera.clone(), self.options.clone())
+            .expect("could not clone: couldn't create renderer")
+    }
 }
 
 // endregion Construction
@@ -137,23 +166,27 @@ where
     Rng: SeedableRng,
 {
     // TODO: Should `render()` be fallible?
-    pub fn render(&self, scene: &Scene<Obj, Sky>, camera: &Camera, render_opts: &RenderOpts) -> Render<Image> {
+    pub fn render(&self) -> Render<Image> {
         profile_function!();
 
         // Render image, and collect stats
 
+        let &Self {
+            camera, scene, options, ..
+        } = &self;
+
         let start = puffin::now_ns();
         let num_threads = self.thread_pool.current_num_threads();
 
-        let image = match camera.calculate_viewport(render_opts) {
+        let image = match camera.calculate_viewport(options) {
             Err(err) => {
                 trace!(target: RENDERER, ?err, "couldn't calculate viewport");
-                let [w, h] = render_opts.dims();
+                let [w, h] = options.dims();
                 Self::render_failed(w, h)
             }
             Ok(viewport) => {
                 let interval = Interval::from(1e-3..Number::MAX);
-                self.render_actual(scene, render_opts, &viewport, &interval)
+                self.render_actual(scene, options, &viewport, &interval)
             }
         };
 
@@ -165,7 +198,7 @@ where
             stats: RenderStats {
                 duration,
                 num_threads,
-                opts: *render_opts,
+                opts: *options,
             },
         }
     }

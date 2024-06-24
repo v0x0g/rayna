@@ -21,8 +21,6 @@ use tracing::{debug, error, trace};
 pub mod message;
 mod worker;
 
-pub type IResult<T> = Result<T, IntegrationError>;
-
 #[derive(Error, Debug)]
 pub enum IntegrationError {
     #[error("message channel to background worker disconnected")]
@@ -63,7 +61,7 @@ impl Integration {
         initial_render_opts: &RenderOpts,
         initial_scene: &StandardScene,
         initial_camera: &Camera,
-    ) -> IResult<Self> {
+    ) -> Result<Self, IntegrationError> {
         debug!(target: INTEGRATION, "creating new integration instance");
 
         trace!(target: INTEGRATION, "creating channels");
@@ -79,10 +77,12 @@ impl Integration {
             msg_rx: work_rx,
             msg_tx: work_tx,
             render_tx: rend_tx,
-            render_opts: initial_render_opts.clone(),
-            scene: initial_scene.clone(),
-            camera: initial_camera.clone(),
-            renderer: Renderer::new().expect("failed to create renderer"),
+            renderer: Renderer::new_from(
+                initial_scene.clone(),
+                initial_camera.clone(),
+                initial_render_opts.clone(),
+            )
+            .expect("failed to create renderer"),
         };
         let thread = worker.start_bg_thread().map_err(IntegrationError::from)?;
 
@@ -94,7 +94,7 @@ impl Integration {
         })
     }
 
-    fn ensure_worker_alive(&mut self) -> IResult<()> {
+    fn ensure_worker_alive(&mut self) -> Result<(), IntegrationError> {
         puffin::profile_function!();
 
         if let WorkerHandle::Running(ref h_join) = self.worker_handle {
@@ -124,7 +124,7 @@ impl Integration {
     // region ===== SENDING =====
 
     /// Sends a message to the worker
-    pub fn send_message(&mut self, message: MessageToWorker) -> IResult<()> {
+    pub fn send_message(&mut self, message: MessageToWorker) -> Result<(), IntegrationError> {
         puffin::profile_function!();
 
         self.ensure_worker_alive()?;
@@ -143,7 +143,7 @@ impl Integration {
     ///
     /// # Return Value
     /// See [Self::try_recv_message]
-    pub fn try_recv_render(&mut self) -> Option<IResult<Render<ColorImage>>> {
+    pub fn try_recv_render(&mut self) -> Option<Result<Render<ColorImage>, IntegrationError>> {
         puffin::profile_function!();
 
         if let Err(e) = self.ensure_worker_alive() {
@@ -163,7 +163,7 @@ impl Integration {
     /// # Return Value
     /// The outer [`IResult`] corresponds to whether there was an error during message reception,
     /// or all messages were received successfully. The inner [`Option`] corresponds to whether or not there was
-    pub fn try_recv_message(&mut self) -> Option<IResult<MessageToUi>> {
+    pub fn try_recv_message(&mut self) -> Option<Result<MessageToUi, IntegrationError>> {
         puffin::profile_function!();
 
         if let Err(e) = self.ensure_worker_alive() {

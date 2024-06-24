@@ -19,6 +19,18 @@ pub struct Camera {
     pub defocus_angle: Angle,
 }
 
+impl Default for Camera {
+    fn default() -> Self {
+        Self {
+            pos: Point3::ZERO,
+            v_fov: Angle::from_degrees(45.0),
+            fwd: Vector3::Z,
+            focus_dist: 1.0,
+            defocus_angle: Angle::from_degrees(0.0),
+        }
+    }
+}
+
 #[derive(Error, Copy, Clone, Debug, Valuable)]
 pub enum CamInvalidError {
     /// The provided `up_vector` was too close to zero, and so vector normalisation failed

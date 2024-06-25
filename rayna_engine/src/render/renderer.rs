@@ -14,9 +14,8 @@ use crate::shared::math::Lerp;
 use crate::shared::ray::Ray;
 use crate::shared::validate;
 use crate::skybox::Skybox;
-use derivative::Derivative;
 use ndarray::Zip;
-use num_integer::Roots;
+use num_integer::Roots as _;
 use puffin::profile_function;
 use rand::distributions::Distribution;
 use rand::distributions::Uniform;
@@ -24,23 +23,25 @@ use rand_core::{RngCore, SeedableRng};
 use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use smallvec::SmallVec;
-use std::ops::DerefMut;
+use std::ops::DerefMut as _;
 use std::time::Duration;
 use thiserror::Error;
 use tracing::{error, trace};
 
-#[derive(Derivative)]
+#[derive(derivative::Derivative, getset::Getters, getset::Setters)]
 #[derivative(Debug)]
 pub struct Renderer<Obj, Sky, Rng> {
     /// A thread pool used to distribute the workload
     thread_pool: ThreadPool,
-    #[derivative(Debug = "ignore")]
     data_pool: opool::Pool<PooledDataAllocator, PooledData<Rng>>,
     // Purposefully storing these in the render (though not really required)
     // for future compatibility with GPU renderer
-    pub scene: Scene<Obj, Sky>,
-    pub camera: Camera,
-    pub options: RenderOpts,
+    #[getset(get = "pub", set = "pub")]
+    scene: Scene<Obj, Sky>,
+    #[getset(get = "pub", set = "pub")]
+    camera: Camera,
+    #[getset(get = "pub", set = "pub")]
+    options: RenderOpts,
 }
 
 #[derive(Error, Debug)]
@@ -72,6 +73,7 @@ impl<Obj, Sky, Rng: SeedableRng> Renderer<Obj, Sky, Rng> {
         )
     }
 
+    /// Creates a new renderer instance, from the given scene, camera, and render options
     pub fn new_from(scene: Scene<Obj, Sky>, camera: Camera, options: RenderOpts) -> Result<Self, RendererCreateError> {
         let thread_pool = Self::create_thread_pool().map_err(RendererCreateError::from)?;
         let data_pool = Self::create_data_pool();
@@ -85,6 +87,7 @@ impl<Obj, Sky, Rng: SeedableRng> Renderer<Obj, Sky, Rng> {
         })
     }
 
+    /// Helper method to create the thread pool
     fn create_thread_pool() -> Result<ThreadPool, ThreadPoolBuildError> {
         ThreadPoolBuilder::new()
             .num_threads(6)
@@ -97,6 +100,7 @@ impl<Obj, Sky, Rng: SeedableRng> Renderer<Obj, Sky, Rng> {
             .build()
     }
 
+    /// Helper method to create the data pool
     fn create_data_pool() -> opool::Pool<PooledDataAllocator, PooledData<Rng>> {
         // Create a pool that should have enough RNGs stored for all of our threads
         // We pool randoms so we don't have to init/create them in hot paths
@@ -107,7 +111,7 @@ impl<Obj, Sky, Rng: SeedableRng> Renderer<Obj, Sky, Rng> {
 /// Clone Renderer
 impl<Obj: Clone, Sky: Clone, Rng: SeedableRng> Clone for Renderer<Obj, Sky, Rng> {
     fn clone(&self) -> Self {
-        // TODO: Clone the thread pool and data pool when cloning renderer
+        // No good way to clone thread pool or data pool
         Self::new_from(self.scene.clone(), self.camera.clone(), self.options.clone())
             .expect("could not clone: couldn't create renderer")
     }

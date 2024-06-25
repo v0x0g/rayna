@@ -69,15 +69,15 @@ impl BgWorker {
                     match msg {
                         MessageToWorker::SetRenderOpts(o) => {
                             trace!(target: BG_WORKER, ?o, "got render opts from ui");
-                            renderer.options = o
+                            renderer.set_options(o);
                         }
                         MessageToWorker::SetScene(s) => {
                             trace!(target: BG_WORKER, ?s, "got scene from ui");
-                            renderer.scene = s;
+                            renderer.set_scene(s);
                         }
                         MessageToWorker::SetCamera(c) => {
                             trace!(target: BG_WORKER, ?c, "got scene from ui");
-                            renderer.camera = c;
+                            renderer.set_camera(c);
                         }
                     }
                 }

@@ -31,12 +31,7 @@ use tracing::{error, trace};
 
 #[derive(Derivative)]
 #[derivative(Debug)]
-pub struct Renderer<Obj, Sky, Rng>
-where
-    // For now, require RNG can be pooled due to requirements in [`opool`] API
-    // TODO: Find a fix so we don't require RNG being pool-able in the struct definition
-    Rng: SeedableRng,
-{
+pub struct Renderer<Obj, Sky, Rng> {
     /// A thread pool used to distribute the workload
     thread_pool: ThreadPool,
     #[derivative(Debug = "ignore")]
@@ -60,10 +55,7 @@ pub enum RendererCreateError {
 
 // region Construction
 
-impl<Obj, Sky, Rng> Renderer<Obj, Sky, Rng>
-where
-    Rng: SeedableRng,
-{
+impl<Obj, Sky, Rng: SeedableRng> Renderer<Obj, Sky, Rng> {
     /// Creates a new renderer instance, using default values for the scene, camera, and render options
     pub fn new_default() -> Result<Self, RendererCreateError>
     where
@@ -113,10 +105,7 @@ where
 }
 
 /// Clone Renderer
-impl<Obj: Clone, Sky: Clone, Rng> Clone for Renderer<Obj, Sky, Rng>
-where
-    Rng: SeedableRng,
-{
+impl<Obj: Clone, Sky: Clone, Rng: SeedableRng> Clone for Renderer<Obj, Sky, Rng> {
     fn clone(&self) -> Self {
         // TODO: Clone the thread pool and data pool when cloning renderer
         Self::new_from(self.scene.clone(), self.camera.clone(), self.options.clone())
@@ -161,10 +150,7 @@ impl<Rng: SeedableRng> opool::PoolAllocator<PooledData<Rng>> for PooledDataAlloc
 
 // region High-level Rendering
 
-impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send> Renderer<Obj, Sky, Rng>
-where
-    Rng: SeedableRng,
-{
+impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send + SeedableRng> Renderer<Obj, Sky, Rng> {
     // TODO: Should `render()` be fallible?
     pub fn render(&self) -> Render<Image> {
         profile_function!();
@@ -279,10 +265,7 @@ where
 
 // region Low-level Rendering
 
-impl<Obj: Object, Sky: Skybox, Rng: RngCore> Renderer<Obj, Sky, Rng>
-where
-    Rng: SeedableRng,
-{
+impl<Obj: Object, Sky: Skybox, Rng: RngCore> Renderer<Obj, Sky, Rng> {
     /// Renders a single pixel in the scene, and returns the colour
     ///
     /// Takes into account [`RenderOpts::msaa`]

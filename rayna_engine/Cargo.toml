@@ -56,4 +56,5 @@ static_assertions = { workspace = true }
 puffin = { workspace = true }
 puffin_http = { workspace = true }
 rayon = { workspace = true }
-opool = "0.1.1"
+# Custom features from fork
+opool = { git = "https://github.com/v0x0g/fork-opool.git", branch = "main" }

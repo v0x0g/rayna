@@ -256,6 +256,7 @@ impl crate::backend::app::App for RaynaApp {
                 ui.label(format!("branching:\t\t\t {}", stats.opts.ray_branching));
                 ui.label(format!("mode:\t\t\t {}", stats.opts.mode));
                 ui.label(format!("num threads: {}", stats.num_threads));
+                ui.label(format!("accumulated: {}", stats.accum_frames));
                 ui.label(format!("duration:\t\t {}", humantime::format_duration(stats.duration)));
             });
         });

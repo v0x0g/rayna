@@ -28,19 +28,23 @@ use std::time::Duration;
 use thiserror::Error;
 use tracing::{error, trace};
 
+use super::accum_buffer::AccumulationBuffer;
+
 #[derive(derivative::Derivative, getset::Getters, getset::Setters)]
 #[derivative(Debug)]
 pub struct Renderer<Obj, Sky, Rng> {
     /// A thread pool used to distribute the workload
     thread_pool: ThreadPool,
     data_pool: opool::Pool<PooledDataAllocator, PooledData<Rng>>,
+    /// Accumulation buffer storing the [accumulated] result of previous renders.
+    accum_buffer: AccumulationBuffer,
     // Purposefully storing these in the render (though not really required)
     // for future compatibility with GPU renderer
-    #[getset(get = "pub", set = "pub")]
+    #[getset(get = "pub")]
     scene: Scene<Obj, Sky>,
-    #[getset(get = "pub", set = "pub")]
+    #[getset(get = "pub")]
     camera: Camera,
-    #[getset(get = "pub", set = "pub")]
+    #[getset(get = "pub")]
     options: RenderOpts,
 }
 
@@ -77,10 +81,12 @@ impl<Obj, Sky, Rng: SeedableRng> Renderer<Obj, Sky, Rng> {
     pub fn new_from(scene: Scene<Obj, Sky>, camera: Camera, options: RenderOpts) -> Result<Self, RendererCreateError> {
         let thread_pool = Self::create_thread_pool().map_err(RendererCreateError::from)?;
         let data_pool = Self::create_data_pool();
+        let accum_buffer =  AccumulationBuffer::default();
 
         Ok(Self {
             thread_pool,
             data_pool,
+            accum_buffer,
             scene,
             camera,
             options,
@@ -119,6 +125,28 @@ impl<Obj: Clone, Sky: Clone, Rng: SeedableRng> Clone for Renderer<Obj, Sky, Rng>
 
 // endregion Construction
 
+// region Properties
+
+impl<Obj, Sky, Rng> Renderer<Obj, Sky, Rng> {
+    fn set_dirty(&mut self) {
+        self.accum_buffer.clear();
+    }
+    pub fn set_camera(&mut self, camera: Camera) {
+        self.camera = camera;
+        self.set_dirty();
+    }
+    pub fn set_scene(&mut self, scene: Scene<Obj, Sky>) {
+        self.scene = scene;
+        self.set_dirty();
+    }
+    pub fn set_options(&mut self, options: RenderOpts) {
+        self.options = options;
+        self.set_dirty();
+    }
+}
+
+// endregion Properties
+
 // region Pooled/Cached Data
 
 /// A helper struct that holds data we want to be pooled
@@ -156,27 +184,31 @@ impl<Rng: SeedableRng> opool::PoolAllocator<PooledData<Rng>> for PooledDataAlloc
 
 impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send + SeedableRng> Renderer<Obj, Sky, Rng> {
     // TODO: Should `render()` be fallible?
-    pub fn render(&self) -> Render<Image> {
+    pub fn render(&mut self) -> Render<Image> {
         profile_function!();
 
         // Render image, and collect stats
 
-        let &Self {
-            camera, scene, options, ..
-        } = &self;
-
         let start = puffin::now_ns();
         let num_threads = self.thread_pool.current_num_threads();
 
-        let image = match camera.calculate_viewport() {
+        let image = match self.camera.calculate_viewport() {
             Err(err) => {
                 trace!(target: RENDERER, ?err, "couldn't calculate viewport");
-                let [w, h] = options.dims();
+                let [w, h] = self.options.dims();
                 Self::render_failed(w, h)
             }
             Ok(viewport) => {
                 let interval = Interval::from(1e-3..Number::MAX);
-                self.render_actual(scene, options, &viewport, &interval)
+                Self::render_actual(
+                    &self.thread_pool,
+                    &self.data_pool,
+                    &mut self.accum_buffer,
+                    &self.scene,
+                    &self.options,
+                    &viewport,
+                    &interval
+                )
             }
         };
 
@@ -188,7 +220,8 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send + SeedableRng> Renderer<Obj, 
             stats: RenderStats {
                 duration,
                 num_threads,
-                opts: *options,
+                opts: self.options,
+                accum_frames: self.accum_buffer.frame_count(),
             },
         }
     }
@@ -225,7 +258,9 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send + SeedableRng> Renderer<Obj, 
     ///
     /// This is only called when the viewport is valid, and therefore an image can be rendered
     fn render_actual(
-        &self,
+        thread_pool: &ThreadPool,
+        data_pool: &opool::Pool<PooledDataAllocator, PooledData<Rng>>,
+        accum_buffer: &mut AccumulationBuffer,
         scene: &Scene<Obj, Sky>,
         render_opts: &RenderOpts,
         viewport: &Viewport,
@@ -235,12 +270,12 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send + SeedableRng> Renderer<Obj, 
 
         let [w, h] = render_opts.dims();
 
-        let mut img = Image::new_blank(w, h);
+        let mut dest_img = Image::new_blank(w, h); // Output image
+        let accum = accum_buffer.new_frame([w,h]);
 
-        self.thread_pool.install(|| {
-            let data_pool = &self.data_pool;
-
-            let pixels = Zip::indexed(img.deref_mut())
+        thread_pool.install(|| {
+            let pixels = Zip::indexed(accum.deref_mut())
+                .and(dest_img.deref_mut())
                 .into_par_iter()
                 // Return on panic as fast as possible; don't keep processing all the pixels on panic
                 // Otherwise we get (literally) millions of panics (1 per pixel) which just hangs the renderer as it prints
@@ -255,13 +290,15 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send + SeedableRng> Renderer<Obj, 
                     (profiler_scope, data_pool.get())
                 },
                 // Process each pixel
-                |(_scope, pooled), ((x, y), p)| {
-                    *p = Self::render_px_msaa(scene, render_opts, viewport, interval, x, y, pooled.deref_mut());
+                |(_scope, pooled), ((x, y,), accum, dest)| {
+                    let sample = Self::render_px_msaa(scene, render_opts, viewport, interval, x, y, pooled.deref_mut());
+                    accum.insert_sample(sample);
+                    *dest = accum.get();
                 },
             );
         });
 
-        return img;
+        return dest_img;
     }
 }
 

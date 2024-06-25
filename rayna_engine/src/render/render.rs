@@ -9,6 +9,8 @@ pub struct RenderStats {
     pub num_threads: usize,
     /// The render options that were used to make the render
     pub opts: RenderOpts,
+    /// Number of frames that were accumulated so far
+    pub accum_frames: usize,
 }
 
 #[derive(Clone, Debug)]

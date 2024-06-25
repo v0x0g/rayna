@@ -261,12 +261,6 @@ impl crate::backend::app::App for RaynaApp {
             .sense(Sense::click_and_drag())
             .ui(ui);
 
-            let mut cam_changed = false;
-
-            let mut rot_dirs = Vector3::ZERO;
-            let mut move_dirs = Vector3::ZERO;
-            let mut fov_zoom = 0.;
-
             ctx.set_cursor_icon(if img_resp.is_pointer_button_down_on() {
                 CursorIcon::Grabbing
             } else if img_resp.hovered() {
@@ -275,34 +269,7 @@ impl crate::backend::app::App for RaynaApp {
                 CursorIcon::Default
             });
 
-            if img_resp.dragged() {
-                let [x, y] = img_resp.drag_delta().into();
-                rot_dirs = Vector3::new(x as Number, y as Number, 0.);
-                rot_dirs.z += ui.input(|i| i.key_down(Key::Q)) as u8 as Number;
-                rot_dirs.z -= ui.input(|i| i.key_down(Key::E)) as u8 as Number;
-                rot_dirs *= ui.input(|i| i.stable_dt as Number) * 5.;
-                cam_changed |= rot_dirs != Vector3::ZERO;
-            }
-
-            // Now also detect key presses if the mouse button is help
-            if img_resp.is_pointer_button_down_on() {
-                move_dirs.x += ui.input(|i| i.key_down(Key::D)) as u8 as Number;
-                move_dirs.x -= ui.input(|i| i.key_down(Key::A)) as u8 as Number;
-                move_dirs.y += ui.input(|i| i.key_down(Key::Space)) as u8 as Number;
-                move_dirs.y -= ui.input(|i| i.modifiers.ctrl) as u8 as Number;
-                move_dirs.z += ui.input(|i| i.key_down(Key::W)) as u8 as Number;
-                move_dirs.z -= ui.input(|i| i.key_down(Key::S)) as u8 as Number;
-                move_dirs *= ui.input(|i| i.stable_dt as Number) * 0.5;
-                cam_changed |= move_dirs != Vector3::ZERO;
-            }
-
-            if img_resp.hovered() {
-                fov_zoom -= ui.input(|i| i.raw_scroll_delta.y as Number);
-                fov_zoom -= 10. * (ui.input(|i| i.zoom_delta() as Number) - 1.);
-                fov_zoom *= 0.05;
-                cam_changed |= fov_zoom != 0.;
-            }
-
+            // Speed multiplier to change how fast we move/rotate/zoom
             let mut speed_mult = 1.;
             if ui.input(|i| i.modifiers.shift) {
                 speed_mult *= 5.;
@@ -311,10 +278,51 @@ impl crate::backend::app::App for RaynaApp {
                 speed_mult /= 5.;
             };
 
-            if cam_changed {
+            // Rotate when dragged
+            if img_resp.dragged() {
+                // X: Yaw, Y: Pitch, Z: Roll
+                let mut rot = Vector3::ZERO;
+                rot.x = -img_resp.drag_delta().x as Number;
+                rot.y = -img_resp.drag_delta().y as Number;
+                rot.z += ui.input(|i| i.key_down(Key::Q)) as u8 as Number;
+                rot.z -= ui.input(|i| i.key_down(Key::E)) as u8 as Number;
+
+                rot *= speed_mult * ui.input(|i| i.stable_dt as Number) * 25.;
+
+                let [yaw, pitch, roll] = rot.to_array().map(Angle::from_degrees);
+
+                let _ = self.camera.apply_rot_delta(yaw, pitch, roll);
                 dirty_camera = true;
-                self.camera
-                    .apply_motion(move_dirs * speed_mult, rot_dirs * speed_mult, fov_zoom * speed_mult);
+            }
+
+            // Also detect key presses (movement) if the mouse button is held
+            if img_resp.is_pointer_button_down_on() {
+                let mut pos = Vector3::ZERO;
+                pos.x += ui.input(|i| i.key_down(Key::D)) as u8 as Number;
+                pos.x -= ui.input(|i| i.key_down(Key::A)) as u8 as Number;
+                pos.y += ui.input(|i| i.key_down(Key::Space)) as u8 as Number;
+                pos.y -= ui.input(|i| i.key_down(Key::C)) as u8 as Number;
+                pos.z += ui.input(|i| i.key_down(Key::W)) as u8 as Number;
+                pos.z -= ui.input(|i| i.key_down(Key::S)) as u8 as Number;
+
+                pos *= speed_mult * ui.input(|i| i.stable_dt as Number) * 5.;
+
+                let [right_left, up_down, fwd_back] = pos.to_array();
+
+                let _ = self.camera.apply_pos_delta(fwd_back, right_left, up_down);
+                dirty_camera = true;
+            }
+
+            // Change FOV when mouse hovered
+            if img_resp.hovered() {
+                let mut fov_zoom = 0.;
+                fov_zoom -= ui.input(|i| i.raw_scroll_delta.y as Number);
+                fov_zoom -= 10. * (ui.input(|i| i.zoom_delta() as Number) - 1.);
+                fov_zoom *= speed_mult * ui.input(|i| i.stable_dt as Number) * 20.;
+                if fov_zoom != 0. {
+                    self.camera.v_fov += Angle::from_degrees(fov_zoom);
+                    dirty_camera = true;
+                }
             }
         });
 

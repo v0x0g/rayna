@@ -14,8 +14,15 @@ pub struct Camera {
     pub pos: Point3,
     /// Vertical FOV
     pub v_fov: Angle,
+    /// Direction the camera is looking in
+    // TODO: Refactor this to store a quaternion for the rotation instead,
+    //  and calculate fwd/up/right by multiplying basis vectors by rotation
     pub fwd: Vector3,
+    /// Distance at which the camera is focused at
     pub focus_dist: Number,
+    /// How large the defocus cone for each ray is.
+    ///
+    /// Larger angles increase defocus blur, zero gives perfect focus.
     pub defocus_angle: Angle,
 }
 
@@ -48,24 +55,55 @@ pub enum CamInvalidError {
 }
 
 impl Camera {
-    pub fn apply_motion(&mut self, position: Vector3, rotate: Vector3, fov: Number) {
-        profile_function!();
-
-        let right_dir = Vector3::cross(self.fwd, Vector3::Y).normalize();
-
-        self.pos += Vector3::Y * position.y;
-        self.pos += self.fwd * position.z;
-        self.pos += right_dir * position.x;
-
-        let yaw_quat = Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(-rotate.x));
-        let pitch_quat = Transform3::from_axis_angle(right_dir, Angle::from_degrees(-rotate.y));
-        // TODO: Implement roll (rotation around `fwd` axis)
-        self.fwd = (yaw_quat * pitch_quat).map_vector(self.fwd).normalize();
-
-        self.v_fov += Angle::from_degrees(fov);
+    /// Helper function to calculate the right vector
+    fn right_dir(&self) -> Result<Vector3, CamInvalidError> {
+        Vector3::cross(self.fwd, Vector3::Y)
+            .try_normalize()
+            .ok_or(CamInvalidError::ForwardVectorInvalid)
     }
 
-    /// A method for creating a camera
+    /// Applies a change in position to the camera
+    ///
+    /// Positive deltas imply a 'forwards' motion along the axis, negatives imply the opposite.
+    /// E.g. `up_down = -2.0` is a downward motion of 2 units
+    pub fn apply_pos_delta(
+        &mut self,
+        fwd_back: Number,
+        right_left: Number,
+        up_down: Number,
+    ) -> Result<(), CamInvalidError> {
+        let right_dir = Vector3::cross(self.fwd, Vector3::Y)
+            .try_normalize()
+            .ok_or(CamInvalidError::ForwardVectorInvalid)?;
+
+        self.pos += Vector3::Y * up_down;
+        self.pos += self.fwd * fwd_back;
+        self.pos += right_dir * right_left;
+
+        Ok(())
+    }
+
+    /// Applies rotation to the camera
+    ///
+    /// # Note
+    /// Currently, `roll` is not implemented, and rotations around that axis will be silently ignored
+    pub fn apply_rot_delta(&mut self, yaw: Angle, pitch: Angle, _roll: Angle) -> Result<(), CamInvalidError> {
+        profile_function!();
+
+        let right_dir = self.right_dir()?;
+
+        let yaw_quat = Transform3::from_axis_angle(Vector3::Y, yaw);
+        let pitch_quat = Transform3::from_axis_angle(right_dir, pitch);
+        // TODO: Implement roll (rotation around `fwd` axis)
+        self.fwd = (yaw_quat * pitch_quat)
+            .map_vector(self.fwd)
+            .try_normalize()
+            .ok_or(CamInvalidError::ForwardVectorInvalid)?;
+
+        Ok(())
+    }
+
+    /// A method for calculating the viewport from a camera
     ///
     /// # Return
     /// Returns a viewport with values according to the current camera state,
@@ -74,14 +112,17 @@ impl Camera {
     /// # Note
     /// Once created, the viewport should be used for a single frame only, and is only valid given that the
     /// state of the renderer system does not mutate.
-    /// This is because it depends on variables such as rendering image dimensions (e.g. [RenderOpts::width])
+    /// This is because it depends on variables such as rendering image dimensions (e.g. [`RenderOpts::width`])
     ///
     /// # Errors
-    /// This will return [Option::None] if the `up_vector` points in the same direction as
-    /// the forward vector (`look_from -> look_towards`),
-    /// equivalent to the case where `cross(look_direction, up_vector) == Vec3::Zero`
+    /// This will return a [`CamInvalidError`] if any of the settings of the camera are not valid, and so
+    /// the viewport couldn't be calculated. This might happen if the FOV is zero ([`CamInvalidError::FovInvalid`]).
     pub fn calculate_viewport(&self, render_opts: &RenderOpts) -> Result<Viewport, CamInvalidError> {
         profile_function!();
+
+        // TODO: See if it's possible to separate out the image dimensions from
+        //  these calculations, and make the renderer responsible for the calculation
+        //  of the pixel in UV coordinates
 
         let img_width = render_opts.width.get() as Number;
         let img_height = render_opts.height.get() as Number;

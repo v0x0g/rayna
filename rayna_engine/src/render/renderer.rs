@@ -353,12 +353,9 @@ where
             .collect_into(samples);
 
         let overall_colour = {
-            // Find mean of all samples
             let accum: Colour = samples.iter().copied().sum();
-
-            let mean = accum.map(|c| c / (samples.len() as Channel));
-            let pix = Colour::from(mean);
-            pix
+            let count = samples.len() as Channel;
+            accum / count // Mean
         };
 
         validate::colour(overall_colour);

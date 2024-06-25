@@ -178,7 +178,7 @@ where
         let start = puffin::now_ns();
         let num_threads = self.thread_pool.current_num_threads();
 
-        let image = match camera.calculate_viewport(options) {
+        let image = match camera.calculate_viewport() {
             Err(err) => {
                 trace!(target: RENDERER, ?err, "couldn't calculate viewport");
                 let [w, h] = options.dims();
@@ -374,7 +374,7 @@ where
         y: Number,
         rng: &mut Rng,
     ) -> Colour {
-        let ray = viewport.calc_ray(x, y, rng);
+        let ray = viewport.calc_ray(x, y, opts.width.get() as Number, opts.height.get() as Number, rng);
         validate::ray(ray);
         let mode = opts.mode;
 

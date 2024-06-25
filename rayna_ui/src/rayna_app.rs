@@ -12,6 +12,7 @@ use rayna_engine::core::types::{Angle, Number, Vector3};
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
 use rayna_engine::scene::camera::Camera;
+use rayna_engine::scene::preset::PresetScene;
 use rayna_engine::scene::{self, StandardScene};
 use std::num::NonZeroUsize;
 use std::ops::Deref;
@@ -25,6 +26,7 @@ pub struct RaynaApp {
     render_opts: RenderOpts,
     scene: StandardScene,
     camera: Camera,
+    all_presets: Vec<PresetScene>,
 
     // Display things
     /// A handle to the texture that holds the current render buffer
@@ -47,16 +49,19 @@ impl RaynaApp {
         let preset = scene::preset::RTTNW_DEMO();
         let render_opts = Default::default();
         Self {
-            render_opts,
-            render_buf_tex: None,
-            render_display_size: egui::vec2(1.0, 1.0),
             integration: Integration::new(&render_opts, &preset.scene, &preset.camera)
                 .expect("couldn't create integration"),
-            scene: preset.scene,
-            camera: preset.camera,
-            render_stats: Default::default(),
             // Max ten failures in a row, once per second
             worker_death_throttle: Throttle::new(Duration::from_secs(1), 10),
+
+            scene: preset.scene,
+            camera: preset.camera,
+            render_opts,
+            all_presets: scene::preset::ALL().into(),
+
+            render_buf_tex: None,
+            render_display_size: egui::vec2(1.0, 1.0),
+            render_stats: Default::default(),
         }
     }
 }
@@ -209,7 +214,23 @@ impl crate::backend::app::App for RaynaApp {
 
                 ui.heading("Scene");
 
-                dirty_scene |= false;
+                let mut preset_index = None;
+
+                egui::ComboBox::from_label("Scene Presets")
+                    .selected_text("<Select a Scene>")
+                    .show_ui(ui, |ui| {
+                        for (i, preset) in self.all_presets.iter().enumerate() {
+                            ui.selectable_value(&mut preset_index, Some(i), preset.name);
+                        }
+                    });
+
+                if let Some(idx) = preset_index {
+                    self.scene = self.all_presets[idx].scene.clone();
+                    self.camera = self.all_presets[idx].camera.clone();
+
+                    dirty_scene = true;
+                    dirty_camera = true;
+                }
             });
 
             ui.group(|ui| {

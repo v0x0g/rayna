@@ -2,12 +2,14 @@
 //!
 //! There is no significance to them, apart from not having to manually create scenes by hand.
 //!
-//! There are some common ones [CORNELL] and [RTIAW_DEMO], that should be well known.
+//! There are some common ones that should be well known (such as the infamous [cornell box](`self::CORNELL`)).
+
 #![allow(non_snake_case)]
 #![allow(unused)]
 
 use crate::core::types::{Angle, Channel, Colour, Image, Number, Point3, Size3, Transform3, Vector3};
 use crate::object::simple::SimpleObject;
+use crate::skybox::default::DefaultSkybox;
 use image::ImageFormat;
 use noise::*;
 use rand::{thread_rng, Rng};
@@ -42,20 +44,24 @@ use crate::texture::TextureInstance;
 
 use super::{Scene, StandardScene};
 
+/// Holds a preset scene that is pre-made, so that scenes can easily be loaded
+/// without having to recreate them each time
+#[derive(Debug, Clone)]
 pub struct PresetScene {
+    pub name: &'static str,
     pub camera: Camera,
     pub scene: StandardScene,
 }
 
-pub fn TESTING() -> PresetScene {
-    let camera = Camera {
-        pos: Point3::new(0.5, 0.1, 0.7),
-        fwd: Vector3::new(0., 0., -1.).normalize(),
-        v_fov: Angle::from_degrees(40.),
-        focus_dist: 1.,
-        defocus_angle: Angle::from_degrees(0.),
-    };
+/// All the preset scenes.
+///
+/// # Warning
+/// Currently all scenes are re-created each time this is called.
+/// You will want to cache this value somewhere
+pub fn ALL() -> [PresetScene; 4] { [TESTING(), RTIAW_DEMO(), RTTNW_DEMO(), CORNELL()] }
 
+/// A testing scene used only during development
+pub fn TESTING() -> PresetScene {
     let mut objects = Vec::new();
 
     {
@@ -128,18 +134,17 @@ pub fn TESTING() -> PresetScene {
     }
 
     PresetScene {
-        camera,
+        name: "Test",
+        camera: Camera {
+            pos: Point3::new(0.5, 0.1, 0.7),
+            fwd: Vector3::new(0., 0., -1.).normalize(),
+            v_fov: Angle::from_degrees(40.),
+            focus_dist: 1.,
+            defocus_angle: Angle::from_degrees(0.),
+        },
         scene: Scene {
             objects: objects.into(),
-            skybox: HdrImageSkybox::from(Image::from({
-                let file = std::fs::File::open("media/skybox/misty-farm-road/4096x2048.exr")
-                    .expect("compile-time image resource should be valid");
-                let mut reader = image::io::Reader::new(BufReader::new(file));
-                reader.no_limits();
-                reader.set_format(ImageFormat::OpenExr);
-                reader.decode().expect("compile-time image resource should be valid")
-            }))
-            .into(),
+            skybox: DefaultSkybox.into(),
         },
     }
 }
@@ -229,6 +234,7 @@ pub fn RTIAW_DEMO() -> PresetScene {
     ));
 
     PresetScene {
+        name: "RTIAW Demo",
         camera: Camera {
             pos: Point3::new(13., 2., 3.),
             fwd: Vector3::new(-13., -2., -3.).normalize(),
@@ -442,6 +448,7 @@ pub fn RTTNW_DEMO() -> PresetScene {
     }
 
     PresetScene {
+        name: "RTTNW Demo",
         camera: Camera {
             pos: Point3::new(4.78, 2.78, -6.0),
             fwd: Vector3::new(-1., 0., 3.).normalize(),
@@ -458,14 +465,6 @@ pub fn RTTNW_DEMO() -> PresetScene {
 
 /// The classic cornell box scene
 pub fn CORNELL() -> PresetScene {
-    let camera = Camera {
-        pos: Point3::new(0.5, 0.5, 2.3),
-        fwd: Vector3::new(0., 0., -1.).normalize(),
-        v_fov: Angle::from_degrees(40.),
-        focus_dist: 1.,
-        defocus_angle: Angle::from_degrees(0.),
-    };
-
     let mut objects = Vec::new();
 
     fn quad(
@@ -527,7 +526,14 @@ pub fn CORNELL() -> PresetScene {
     }
 
     PresetScene {
-        camera,
+        name: "Cornell Box",
+        camera: Camera {
+            pos: Point3::new(0.5, 0.5, 2.3),
+            fwd: Vector3::new(0., 0., -1.).normalize(),
+            v_fov: Angle::from_degrees(40.),
+            focus_dist: 1.,
+            defocus_angle: Angle::from_degrees(0.),
+        },
         scene: Scene {
             objects: objects.into(),
             skybox: None.into(),

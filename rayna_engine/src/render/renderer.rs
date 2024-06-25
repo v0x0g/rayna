@@ -257,25 +257,8 @@ where
                 .panic_fuse();
 
             pixels.for_each_init(
-                move || {
-                    // Can't use puffin's macro because of macro hygiene :(
-                    let profiler_scope = if puffin::are_scopes_on() {
-                        static SCOPE_ID: std::sync::OnceLock<puffin::ScopeId> = std::sync::OnceLock::new();
-                        let scope_id = SCOPE_ID.get_or_init(|| {
-                            puffin::ThreadProfiler::call(|tp| {
-                                let id = tp.register_named_scope(
-                                    "inner",
-                                    puffin::clean_function_name(puffin::current_function_name!()),
-                                    puffin::short_file_name(file!()),
-                                    line!(),
-                                );
-                                id
-                            })
-                        });
-                        Some(puffin::ProfilerScope::new(*scope_id, ""))
-                    } else {
-                        None
-                    };
+                || {
+                    let profiler_scope = puffin::profile_scope_custom!("inner");
 
                     // Pull values from our thread pool
                     // We hold them for the duration of each work segment, so we don't pull/push each pixel
@@ -283,7 +266,7 @@ where
                 },
                 // Process each pixel
                 |(_scope, pooled), ((x, y), p)| {
-                    *p = Self::render_px(scene, render_opts, viewport, interval, x, y, pooled.deref_mut());
+                    *p = Self::render_px_msaa(scene, render_opts, viewport, interval, x, y, pooled.deref_mut());
                 },
             );
         });
@@ -303,7 +286,7 @@ where
     /// Renders a single pixel in the scene, and returns the colour
     ///
     /// Takes into account [`RenderOpts::msaa`]
-    fn render_px(
+    fn render_px_msaa(
         scene: &Scene<Obj, Sky>,
         opts: &RenderOpts,
         viewport: &Viewport,
@@ -312,43 +295,42 @@ where
         y: usize,
         pooled_data: &mut PooledData<Rng>,
     ) -> Colour {
-        let px = x as Number;
-        let py = y as Number;
         let sample_count = opts.samples.get();
 
         let PooledData {
             px_coords: sample_coords,
             px_samples: samples,
             msaa_distr,
-            rngs: [rng1, rng2],
+            rngs: [rng_sample, rng_render],
         } = pooled_data;
 
         // Samples are chosen stratified within the area of the pixel.
         // To keep things O(Samples) not O(Samples^2), we might have to skip stratifying some samples
         sample_coords.resize(sample_count, Vector2::ZERO);
-        let px_centre: Vector2 = [px, py].into();
+        let px_centre = Vector2::new(x as Number, y as Number);
 
         let stratify_dim = sample_count.sqrt();
-        let stratify_dim_f = stratify_dim as Number;
+        let stratify_dim_inv = 1.0 / stratify_dim as Number;
         for i in 0..stratify_dim {
             for j in 0..stratify_dim {
-                let rand: Vector2 = [msaa_distr.sample(rng1), msaa_distr.sample(rng1)].into();
+                let rand: Vector2 = [msaa_distr.sample(rng_sample), msaa_distr.sample(rng_sample)].into();
                 let stratify_coord: Vector2 = [i as Number, j as Number].into();
                 // Make sure to divide `randomness` and `stratify_coord`
                 // so that it doesn't spill out across the stratified sub-pixels
-                let coord: Vector2 = px_centre + (rand / stratify_dim_f) + (stratify_coord / stratify_dim_f);
+                let coord: Vector2 = px_centre + (rand * stratify_dim_inv) + (stratify_coord * stratify_dim_inv);
                 sample_coords[i + (stratify_dim * j)] = coord;
             }
         }
         // The remainder are fully random
         for i in (stratify_dim * stratify_dim)..sample_count {
-            sample_coords[i] = px_centre + Vector2::from([msaa_distr.sample(rng1), msaa_distr.sample(rng1)]);
+            sample_coords[i] =
+                px_centre + Vector2::from([msaa_distr.sample(rng_sample), msaa_distr.sample(rng_sample)]);
         }
 
         samples.clear();
         sample_coords
-            .into_iter()
-            .map(|&mut Vector2 { x, y }| Self::render_px_once(scene, viewport, opts, interval, x, y, rng2))
+            .iter()
+            .map(|&Vector2 { x, y }| Self::render_px_once(scene, viewport, opts, interval, x, y, rng_render))
             .inspect(|p| validate::colour(p))
             .collect_into(samples);
 

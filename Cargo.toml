@@ -61,10 +61,11 @@ static_assertions = "1.1.0"
 
 # Performance
 
-# Using a custom fork of `puffin`, so we can have multiple instances
-# of the `puffin_http::Server` that are disjoint
-puffin = { git = "https://github.com/v0x0g/puffin.git", branch = "feature/puffin_http_server_custom_profiler" }
-puffin_http = { git = "https://github.com/v0x0g/puffin.git", branch = "feature/puffin_http_server_custom_profiler" }
+# Using a custom fork of `puffin`
+# - So we can have multiple instances of the `puffin_http::Server` that are disjoint
+# - So that we can use
+puffin = { git = "https://github.com/v0x0g/fork-puffin.git", branch = "main" }
+puffin_http = { git = "https://github.com/v0x0g/fork-puffin.git", branch = "main" }
 rayon = "1.8.0"
 
 [profile.dev]

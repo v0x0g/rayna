@@ -165,7 +165,7 @@ impl Aabb {
 use crate::{material::MaterialInstance, mesh::MeshInstance};
 
 /// Trait that requires some type possibly has an AABB
-///
+// TODO: Needs refactor
 #[enum_dispatch]
 pub trait HasAabb: RtRequirement {
     /// Gets the bounding box for this mesh. If the mesh can't be bounded (e.g. infinite plane), return [None]

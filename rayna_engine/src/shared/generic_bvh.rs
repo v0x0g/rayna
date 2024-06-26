@@ -37,7 +37,7 @@ pub enum GenericBvhNode<Node: HasAabb> {
 }
 
 impl<BNode: HasAabb> GenericBvh<BNode> {
-    /// Creates a new [BvhObject] tree from the given slice of objects
+    /// Creates a new [`Self`] tree from the given slice of objects
     ///
     /// # Note
     /// The given slice of `objects` should only contain *bounded* objects (i.e. [HasAabb::aabb()] returns [`Some(_)`]).

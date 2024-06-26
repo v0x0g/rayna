@@ -23,7 +23,7 @@ pub enum UvWrappingMode {
     Wrap,
     /// Mirror the UV coordinates when they reach `1.0`, repeating each interval
     ///
-    /// Equivalent to `abs((x % 2.0) - 1.0)
+    /// Equivalent to `abs((x % 2.0) - 1.0)`
     Mirror,
     /// If either of the UV coordinates goes out of the range `0..=1`, sets both components to zero
     ClampZero,

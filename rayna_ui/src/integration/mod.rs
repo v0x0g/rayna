@@ -161,7 +161,7 @@ impl Integration {
     /// Tries to receive the next message from the worker
     ///
     /// # Return Value
-    /// The outer [`IResult`] corresponds to whether there was an error during message reception,
+    /// The outer [`Result`] corresponds to whether there was an error during message reception,
     /// or all messages were received successfully. The inner [`Option`] corresponds to whether or not there was
     pub fn try_recv_message(&mut self) -> Option<Result<MessageToUi, IntegrationError>> {
         puffin::profile_function!();

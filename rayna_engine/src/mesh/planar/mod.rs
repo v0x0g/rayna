@@ -1,11 +1,11 @@
 //! This module is not an mesh module per-se, but a helper module that provides abstractions for
 //! planar types (such as planes, quads, triangles, etc)
 //!
-//! You should store an instance of [Planar] inside your mesh struct, and then simply validate the UV coordinates
+//! You should store an instance of [`Planar`] inside your mesh struct, and then simply validate the UV coordinates
 //! of the planar intersection for whichever shape your dreams do so desire...
 //!
-//! Most planar types ([super::parallelogram], [super::triangle], [super::infinite_plane]) can't be instantiated directly,
-//! but can be easily converted via the [From<Planar>] conversion.
+//! Most planar types ([`self::parallelogram::ParallelogramMesh`], [`self::infinite_plane::InfinitePlaneMesh`]) can't be instantiated directly,
+//! but can be easily converted via the [`From<Planar>`] conversion.
 
 use crate::core::types::{Number, Point2, Point3, Vector3};
 use crate::shared::intersect::Intersection;
@@ -17,10 +17,13 @@ use num_traits::Zero;
 pub mod infinite_plane;
 pub mod parallelogram;
 
-/// The recommended amount of padding around AABB's for planar objects
+/// The recommended amount of padding around AABBs for planar objects
+///
+/// Because planes are infinitely thin, we need to add padding to ensure they have at least some volume.
+/// Otherwise, there is a chance that the [`crate::shared::aabb::Aabb`] will always be missed because it has zero size.
 pub const AABB_PADDING: Number = 1e-6;
 
-/// A helper struct that is used in planar objects (objects that exist in a subsection of a 2D plane
+/// A helper struct that is used in planar objects (objects that exist in a subsection of a 2D plane)
 ///
 /// Use this for calculating the ray-plane intersection, instead of reimplementing for each type.
 /// Then, you can restrict by validating the UV coordinates returned by the intersection
@@ -32,7 +35,7 @@ pub struct Planar {
     u: Vector3,
     /// The vector for the `V` direction, typically the 'up' direction
     v: Vector3,
-    /// The normal vector for the plane, perpendicular to [u] and [v], and normalised
+    /// The normal vector for the plane, perpendicular to `u` and `v`, and normalised
     n: Vector3,
     /// Part of the plane equation
     d: Number,
@@ -68,11 +71,11 @@ impl Planar {
     ///  P ▓▓▓▓▓▓▓▓▓▓▓ -> U -> ▓▓▓▓▓▓▓▓▓▓▓                                                  
     /// ```
     ///
-    /// TEXT ART CREDITS:
+    /// # Credits
     ///
     /// Author: Textart.sh
     ///
-    /// URL: https://textart.sh/topic/parallelogram
+    /// URL: <https://textart.sh/topic/parallelogram>
     pub fn new(p: impl Into<Point3>, u: impl Into<Vector3>, v: impl Into<Vector3>) -> Self {
         let (p, u, v) = (p.into(), u.into(), v.into());
 
@@ -117,11 +120,11 @@ impl Planar {
     ///  B ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ C                                                  
     /// ```
     ///
-    /// TEXT ART CREDITS:
+    /// # Credits
     ///
     /// Author: Textart.sh
     ///
-    /// URL: https://textart.sh/topic/parallelogram
+    /// URL: <https://textart.sh/topic/parallelogram>
     pub fn new_points(a: impl Into<Point3>, b: impl Into<Point3>, c: impl Into<Point3>) -> Self {
         let (a, b, c) = (a.into(), b.into(), c.into());
         Self::new(b, a - b, c - b)

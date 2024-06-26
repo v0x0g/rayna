@@ -2,7 +2,7 @@
 ///
 /// The function should take in an owned `Self`-type reference.
 ///
-/// I would use the [auto_ops]/[impl_ops] crates, but they don't support const generics, so roll my own
+/// I would use the `auto_ops`/`impl_ops` crates, but they don't support const generics, so roll my own
 #[macro_export]
 macro_rules! impl_op {
     (impl $({$($bounds:tt)*})? $($operator:ident)::+ : fn $fn_name:ident ($a:ident : $a_ty:ty, $b:ident : $b_ty:ty) -> $ret_ty:ty $body:block) => {

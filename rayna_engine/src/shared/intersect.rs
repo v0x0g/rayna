@@ -27,8 +27,6 @@ pub struct Intersection {
     pub ray_normal: Vector3,
     pub front_face: bool,
     /// Distance along the ray that the intersection occurred
-    ///
-    ///
     pub dist: Number,
     /// The UV coordinates for the point on the mesh's surface. Normally used for texture mapping.
     ///
@@ -39,8 +37,8 @@ pub struct Intersection {
     pub uv: Point2,
     /// Numeric ID for which "face" was hit
     ///
-    /// For objects with a single 'surface' (like a [sphere](crate::mesh::sphere::SphereMesh), this would be always [Number::ZERO].
-    /// For an mesh that may have multiple faces (like a [box](crate::mesh::axis_box::AxisBoxMesh), this would unique per-side.
+    /// For objects with a single 'surface' (like a [sphere](crate::mesh::primitive::sphere::SphereMesh), this would be always zero.
+    /// For an mesh that may have multiple faces (like a [box](`crate::mesh::primitive::axis_box::AxisBoxMesh`), this would unique per-side.
     pub side: usize,
 }
 
@@ -60,7 +58,7 @@ impl Ord for Intersection {
 /// A small wrapper class that includes a reference to a material as well as
 /// the actual intersection with the model.
 ///
-/// Only really used to provide a nicer return value for [crate::object::Object::full_intersect()].
+/// Only really used to provide a nicer return value for [`crate::object::Object::full_intersect()`].
 #[derive(Clone, Debug, Derivative)]
 #[derivative(Ord, PartialOrd, Eq, PartialEq)]
 pub struct FullIntersection<'mat, Mat: Material + 'mat> {
@@ -75,7 +73,7 @@ impl<'mat, Mat: Material + 'mat> From<(&'mat Mat, Intersection)> for FullInterse
 }
 
 impl Intersection {
-    /// Converts a partial [Intersection] into a [FullIntersection<Mat>]
+    /// Converts a partial [`Intersection`] into a [`FullIntersection<Mat>`]
     pub fn make_full<Mat: Material>(self, material: &Mat) -> FullIntersection<Mat> {
         FullIntersection {
             intersection: self,

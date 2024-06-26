@@ -17,7 +17,7 @@ pub struct CylinderMesh {
     /// The vector `p2 - p1`, that goes along the length of the cylinder, with a magnitude equal
     /// to the length of the cylinder. The normalised value of this is the surface normal for the end caps
     along: Vector3,
-    /// The square magnitude of [along] (how long the cylinder is, squared)
+    /// The square magnitude of `along` (how long the cylinder is, squared)
     length_sqr: Number,
     /// How long the cylinder is
     length: Number,

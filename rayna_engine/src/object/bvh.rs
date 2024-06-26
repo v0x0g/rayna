@@ -44,7 +44,7 @@ impl<Obj: Object> BvhObject<Obj> {
     /// See [super::simple::SimpleObject::new_uncorrected()]
     ///
     /// # Panics
-    /// The given iterator of `objects` should only contain *bounded* objects (i.e. [Object::aabb()] returns [`Some(_)`]).
+    /// The given iterator of `objects` should only contain *bounded* objects (i.e. [`HasAabb::aabb()`] returns [`Some(_)`]).
     /// The exact behaviour is not specified, but will most likely result in a panic during building/accessing the tree
     pub fn new_uncorrected(objects: impl IntoIterator<Item = Obj>, transform: impl Into<ObjectTransform>) -> Self {
         let transform = transform.into();

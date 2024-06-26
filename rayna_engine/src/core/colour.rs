@@ -61,7 +61,7 @@ impl<const N: usize> const From<&[Channel]> for Colour<N> {
     /// Converts a slice reference into a colour
     ///
     /// # Panics
-    /// Ensure that the slice is at least [N] elements long, otherwise this will cause an assertion failure
+    /// Ensure that the slice is at least `N` elements long, otherwise this will cause an assertion failure
     fn from(val: &[Channel]) -> Self {
         assert!(
             val.len() >= N,

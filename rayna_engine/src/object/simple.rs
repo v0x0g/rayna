@@ -42,7 +42,7 @@ use rand_core::RngCore;
 ///     .then_translate(mesh.centre().to_vector());
 /// ```
 ///
-/// This pre/post transform is encapsulated in [SimpleObject::new_with_correction()]
+/// This pre/post transform is encapsulated in [`ObjectTransform::new_corrected()`]
 #[derive(Getters, Clone, Debug)]
 #[get = "pub"]
 pub struct SimpleObject<Mesh: MeshTrait, Mat: Material> {
@@ -63,7 +63,7 @@ where
     /// Creates a new transformed mesh instance, using the given mesh and transform
     ///
     /// This will apply translation-correction to the given transform (see field [Self::transform]), using the
-    /// mesh's [Mesh::centre()]
+    /// mesh's [`crate::mesh::MeshProperties::centre()`]
     pub fn new(mesh: impl Into<Mesh>, material: impl Into<Mat>, transform: impl Into<ObjectTransform>) -> Self {
         let mesh = mesh.into();
         let transform = transform.into().with_correction(mesh.centre());

@@ -15,7 +15,7 @@ use rand_core::RngCore;
 /// An mesh wrapper that treats the wrapped mesh as a constant-density volume
 ///
 /// The volume has the same shape as the wrapped `mesh`, and a constant density at all points in the volume
-/// You are strongly recommended to use an instance of [crate::material::isotropic::IsotropicMaterial]
+/// You are strongly recommended to use an instance of [`crate::material::isotropic::IsotropicMaterial`]
 #[derive(Getters, CopyGetters, Clone, Debug)]
 pub struct VolumetricObject<Mesh: MeshTrait, Mat: Material> {
     #[get = "pub"]

@@ -9,7 +9,7 @@ use rand_core::RngCore;
 
 /// A material that uniformly scatters rays in all directions
 ///
-/// Normally this is paired with a [crate::mesh::homogenous_volume::HomogeneousVolumeMesh]
+/// Normally this is paired with a [`crate::object::volumetric::VolumetricObject`]
 #[derive(Copy, Clone, Debug)]
 pub struct IsotropicMaterial<Tex: Texture> {
     pub albedo: Tex,

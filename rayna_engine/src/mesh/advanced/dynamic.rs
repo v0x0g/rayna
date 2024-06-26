@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 /// Object wrapper around a `dyn` [Mesh]; Delegates everything to the inner mesh.
 ///
-/// If possible use the enum variants on [super::MeshInstance], so that static-dispatch is used instead of dynamic dispatch
+/// If possible use the enum variants on [`crate::mesh::MeshInstance`], so that static-dispatch is used instead of dynamic dispatch
 #[derive(Clone, Debug)]
 pub struct DynamicMesh {
     pub inner: Arc<dyn Mesh>,

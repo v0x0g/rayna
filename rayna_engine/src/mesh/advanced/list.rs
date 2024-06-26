@@ -12,8 +12,8 @@ use rand_core::RngCore;
 /// A group of meshes that are rendered as one mesh
 ///
 /// # Notes
-/// Since this only implements [Object], and not [crate::scene::FullObject], all the sub-objects
-/// will share the same material (once placed inside a [crate::scene::SceneObject]
+/// Since this only implements [`MeshTrait`], and not [`crate::object::Object`], all the sub-objects
+/// will share the same material (once placed inside an actual object instance).
 #[derive(Clone, Debug, Getters)]
 #[get = "pub"]
 pub struct MeshList<Mesh: MeshTrait> {
@@ -59,12 +59,12 @@ impl<Mesh: MeshTrait> MeshList<Mesh> {
     }
 }
 
-/// Create MeshList<M> from iterator
-impl<Mesh: MeshTrait, IntoMesh: Into<Mesh>, Iter: IntoIterator<Item = IntoMesh>> From<Iter> for MeshList<Mesh> {
+/// Create `MeshList<M>` from iterator of Meshes
+impl<Mesh: MeshTrait, Iter: IntoIterator<Item: Into<Mesh>>> From<Iter> for MeshList<Mesh> {
     fn from(meshes: Iter) -> Self { Self::new(meshes) }
 }
 
-/// Create (MeshList<M> as MeshInstance) from iterator of MeshInstance
+/// Create (`MeshList<M> as MeshInstance`) from iterator of `MeshInstance`
 impl<IntoMesh: Into<MeshInstance>, Iter: IntoIterator<Item = IntoMesh>> From<Iter> for MeshInstance {
     fn from(meshes: Iter) -> Self { MeshList::<MeshInstance>::new(meshes.into_iter().map(IntoMesh::into)).into() }
 }

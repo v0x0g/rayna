@@ -1,3 +1,5 @@
+//! TODO: Crate docs
+
 #![feature(array_chunks)]
 #![feature(array_try_map)]
 #![feature(iter_map_windows)]
@@ -14,6 +16,9 @@
 #![feature(array_windows)]
 #![feature(portable_simd)]
 #![feature(iter_array_chunks)]
+// Be aggressive on warnings
+#![deny(rustdoc::all)]
+#![deny(clippy::all)]
 
 pub mod core;
 pub mod material;

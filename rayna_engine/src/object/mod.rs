@@ -20,17 +20,17 @@ use self::{bvh::BvhObject, list::ObjectList, simple::SimpleObject, volumetric::V
 
 // TODO: Should objects (as well as other traits) have some sort of identifier?
 
-/// This trait is essentially an extension of [Mesh], but with a [FullIntersection] not [Intersection],
+/// This trait is essentially an extension of [`MeshTrait`], but with a [`FullIntersection`] not [Intersection](`crate::shared::intersect::Intersection`),
 /// meaning the material of the mesh is also included.
 ///
-/// This should only be implemented on [SimpleObject], and any objects that group multiple objects together.
+/// This should only be implemented on [`SimpleObject`], and any objects that group multiple objects together.
 pub trait Object: RtRequirement + HasAabb {
     type Mesh: MeshTrait;
     type Mat: Material;
     /// Attempts to perform an intersection between the given ray and the target mesh
     ///
     /// # Return Value
-    /// This should return the *first* intersection that is within the given range, else [None]
+    /// This should return the *first* intersection that is within the given range, else [`None`]
     fn full_intersect<'o>(
         &'o self,
         ray: &Ray,

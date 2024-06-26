@@ -17,7 +17,7 @@ use crate::shared::ray::Ray;
 pub struct ObjectList<Obj: Object> {
     /// BVH-optimised tree of objects
     bvh: BvhObject<Obj>,
-    /// All the unbounded objects in the list (objects where [Object::aabb()] returned [None]
+    /// All the unbounded objects in the list (objects where [`HasAabb::aabb()`] returned [None]
     unbounded: Vec<Obj>,
     transform: ObjectTransform,
     /// The [Aabb] for all of the enclosed objects. Will be [None] if there are unbounded objects

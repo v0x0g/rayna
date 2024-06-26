@@ -30,7 +30,7 @@ impl<Mesh: MeshTrait> BvhMesh<Mesh> {
     /// Creates a new [BvhMesh] tree from the given slice of meshes
     ///
     /// # Note
-    /// The given slice of `meshes` should only contain *bounded* meshes (i.e. [Mesh::aabb()] returns [`Some(_)`]).
+    /// The given slice of `meshes` should only contain *bounded* meshes (i.e. [`HasAabb::aabb()`] returns [`Some(_)`]).
     /// The exact behaviour is not specified, but will most likely result in a panic during building/accessing the tree
     pub fn new(meshes: Vec<Mesh>) -> Self {
         Self {

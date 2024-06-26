@@ -3,11 +3,11 @@
 //! This module contains the submodules for different mesh (see [Mesh] and [MeshInstance]) types.
 //!
 //! ## Related
-//! - [Mesh]
-//! - [MeshInstance]
-//! - [sphere]
+//! - [`self::Mesh`]
+//! - [`self::MeshInstance`]
+//! - [`self::primitive::sphere::SphereMesh`]
 //!
-//! # DEV: Code Structure
+//! # Code Structure
 //!
 //! ## Object Modules
 //! Objects (and their corresponding types) are placed into named submodules, and those submodules
@@ -22,7 +22,7 @@
 //! - Add module: `pub mod sphere;`
 //! - Structs: `SphereObject`, with constructors `SphereObject::new()` etc
 //! - Add an entry to [MeshInstance] to correspond to the `SphereObject` for static-dispatch
-//! - See [sphere] for an example
+//! - See [`self::primitive::sphere`] for an example
 
 use crate::core::types::{Number, Point3};
 use crate::shared::aabb::HasAabb;
@@ -61,7 +61,7 @@ pub trait Mesh: MeshProperties + RtRequirement {
 
 /// An optimised implementation of [Mesh].
 ///
-/// See [crate::material::MaterialInstance] for an explanation of the [macro@enum_dispatch] macro usage
+/// See [`crate::material::MaterialInstance`] for an explanation of the [`macro@enum_dispatch`] macro usage
 #[enum_dispatch(Mesh, MeshProperties, HasAabb)]
 #[derive(Clone, Debug)]
 pub enum MeshInstance {

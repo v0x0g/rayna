@@ -28,8 +28,8 @@ const N_TRI: usize = 1;
 /// A mesh struct that is created by creating an isosurface from a given SDF
 ///
 /// # Transforming
-/// This mesh purposefully does not have any properties for transforming, so you must you a
-/// [ObjectTransform].
+/// This mesh purposefully does not have any properties for transforming,
+/// so you must offset the resulting object using a transform
 #[derive(CopyGetters, Getters, Derivative, Clone)]
 #[derivative(Debug)]
 pub struct PolygonisedIsosurfaceMesh {

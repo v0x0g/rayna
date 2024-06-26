@@ -81,6 +81,7 @@ impl Integration {
                 initial_scene.clone(),
                 initial_camera.clone(),
                 initial_render_opts.clone(),
+                6
             )
             .expect("failed to create renderer"),
         };

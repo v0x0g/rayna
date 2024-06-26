@@ -24,7 +24,6 @@ pub struct ObjectTransform {
     // TODO: I would like to have this generic over `<Src, Dst>`, but I can't access the traits to properly
     //  constrain the values (e.g. `glamour::scalar::FloatScalar`). Find out if we can fix this somehow.
     //  Maybe make a PR/issue or contact the devs?
-
     /// Object to world transform
     transform: Transform3,
     /// World to object transform

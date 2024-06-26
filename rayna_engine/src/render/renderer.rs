@@ -30,6 +30,9 @@ use tracing::{error, trace};
 
 use super::accum_buffer::AccumulationBuffer;
 
+/// The main struct that does the rendering of scenes
+///
+///
 #[derive(derivative::Derivative, getset::Getters, getset::Setters)]
 #[derivative(Debug)]
 pub struct Renderer<Obj, Sky, Rng> {
@@ -60,12 +63,13 @@ pub enum RendererCreateError {
 
 // region Construction
 
-impl<Obj, Sky, Rng: SeedableRng> Renderer<Obj, Sky, Rng> {
+impl<Obj, Sky, Rng> Renderer<Obj, Sky, Rng> {
     /// Creates a new renderer instance, using default values for the scene, camera, and render options
     pub fn new_default() -> Result<Self, RendererCreateError>
     where
         Obj: Default,
         Sky: Default,
+        Rng: SeedableRng,
     {
         Self::new_from(
             Scene {
@@ -74,14 +78,23 @@ impl<Obj, Sky, Rng: SeedableRng> Renderer<Obj, Sky, Rng> {
             },
             Camera::default(),
             RenderOpts::default(),
+            0,
         )
     }
 
     /// Creates a new renderer instance, from the given scene, camera, and render options
-    pub fn new_from(scene: Scene<Obj, Sky>, camera: Camera, options: RenderOpts) -> Result<Self, RendererCreateError> {
-        let thread_pool = Self::create_thread_pool().map_err(RendererCreateError::from)?;
+    pub fn new_from(
+        scene: Scene<Obj, Sky>,
+        camera: Camera,
+        options: RenderOpts,
+        num_threads: usize,
+    ) -> Result<Self, RendererCreateError>
+    where
+        Rng: SeedableRng,
+    {
+        let thread_pool = Self::create_thread_pool(num_threads).map_err(RendererCreateError::from)?;
         let data_pool = Self::create_data_pool();
-        let accum_buffer =  AccumulationBuffer::default();
+        let accum_buffer = AccumulationBuffer::default();
 
         Ok(Self {
             thread_pool,
@@ -94,9 +107,9 @@ impl<Obj, Sky, Rng: SeedableRng> Renderer<Obj, Sky, Rng> {
     }
 
     /// Helper method to create the thread pool
-    fn create_thread_pool() -> Result<ThreadPool, ThreadPoolBuildError> {
+    fn create_thread_pool(num_threads: usize) -> Result<ThreadPool, ThreadPoolBuildError> {
         ThreadPoolBuilder::new()
-            .num_threads(6)
+            .num_threads(num_threads)
             .thread_name(|id| format!("Renderer::worker_{id}"))
             .start_handler(|id| {
                 trace!(target: RENDERER, "renderer worker {id} start");
@@ -107,7 +120,10 @@ impl<Obj, Sky, Rng: SeedableRng> Renderer<Obj, Sky, Rng> {
     }
 
     /// Helper method to create the data pool
-    fn create_data_pool() -> opool::Pool<PooledDataAllocator, PooledData<Rng>> {
+    fn create_data_pool() -> opool::Pool<PooledDataAllocator, PooledData<Rng>>
+    where
+        Rng: SeedableRng,
+    {
         // Create a pool that should have enough RNGs stored for all of our threads
         // We pool randoms so we don't have to init/create them in hot paths
         opool::Pool::new_prefilled(256, PooledDataAllocator)
@@ -118,8 +134,13 @@ impl<Obj, Sky, Rng: SeedableRng> Renderer<Obj, Sky, Rng> {
 impl<Obj: Clone, Sky: Clone, Rng: SeedableRng> Clone for Renderer<Obj, Sky, Rng> {
     fn clone(&self) -> Self {
         // No good way to clone thread pool or data pool
-        Self::new_from(self.scene.clone(), self.camera.clone(), self.options.clone())
-            .expect("could not clone: couldn't create renderer")
+        Self::new_from(
+            self.scene.clone(),
+            self.camera.clone(),
+            self.options.clone(),
+            self.thread_pool.current_num_threads(),
+        )
+        .expect("could not clone: couldn't create renderer")
     }
 }
 
@@ -128,9 +149,7 @@ impl<Obj: Clone, Sky: Clone, Rng: SeedableRng> Clone for Renderer<Obj, Sky, Rng>
 // region Properties
 
 impl<Obj, Sky, Rng> Renderer<Obj, Sky, Rng> {
-    fn set_dirty(&mut self) {
-        self.accum_buffer.clear();
-    }
+    fn set_dirty(&mut self) { self.accum_buffer.clear(); }
     pub fn set_camera(&mut self, camera: Camera) {
         self.camera = camera;
         self.set_dirty();
@@ -142,6 +161,10 @@ impl<Obj, Sky, Rng> Renderer<Obj, Sky, Rng> {
     pub fn set_options(&mut self, options: RenderOpts) {
         self.options = options;
         self.set_dirty();
+    }
+    pub fn set_thread_count(&mut self, num_threads: usize) -> Result<(), ThreadPoolBuildError> {
+        self.thread_pool = Self::create_thread_pool(num_threads)?;
+        Ok(())
     }
 }
 
@@ -207,7 +230,7 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send + SeedableRng> Renderer<Obj, 
                     &self.scene,
                     &self.options,
                     &viewport,
-                    &interval
+                    &interval,
                 )
             }
         };
@@ -271,7 +294,7 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send + SeedableRng> Renderer<Obj, 
         let [w, h] = render_opts.dims();
 
         let mut dest_img = Image::new_blank(w, h); // Output image
-        let accum = accum_buffer.new_frame([w,h]);
+        let accum = accum_buffer.new_frame([w, h]);
 
         thread_pool.install(|| {
             let pixels = Zip::indexed(accum.deref_mut())
@@ -290,7 +313,7 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send + SeedableRng> Renderer<Obj, 
                     (profiler_scope, data_pool.get())
                 },
                 // Process each pixel
-                |(_scope, pooled), ((x, y,), accum, dest)| {
+                |(_scope, pooled), ((x, y), accum, dest)| {
                     let sample = Self::render_px_msaa(scene, render_opts, viewport, interval, x, y, pooled.deref_mut());
                     accum.insert_sample(sample);
                     *dest = accum.get();

@@ -23,9 +23,9 @@ use rand_core::RngCore;
 ///
 /// Alternatively, you can also apply a post and pre-transform, to counteract the mesh's position offset:
 /// ```
-/// # use crate::material::lambertian::LambertianMaterial;
-/// # use crate::mesh::axis_box::AxisBoxMesh;
-/// # use crate::core::types::{Angle, Point3, Transform3, Vector3};
+/// # use rayna_engine::material::lambertian::LambertianMaterial;
+/// # use rayna_engine::mesh::primitive::axis_box::AxisBoxMesh;
+/// # use rayna_engine::core::types::{Angle, Point3, Transform3, Vector3};
 /// #
 /// # let a: Point3 = [5., 1., 2.].into();
 /// # let b: Point3 = [3., 4., -7.].into();

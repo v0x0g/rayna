@@ -35,29 +35,30 @@ pub trait Material: RtRequirement {
     /// ```
     /// # use std::fmt::{Debug, DebugStruct, Formatter};
     /// # use rand::RngCore;
-    /// # use crate::material::Material;
-    /// # use crate::shared::intersect::Intersection;
-    /// # use crate::shared::math::reflect;
-    /// # use crate::shared::ray::Ray;
-    /// # use crate::shared::{rng, RtRequirement};
-    /// # use crate::core::types::{Colour, Vector3};
+    /// # use rayna_engine::material::Material;
+    /// # use rayna_engine::shared::intersect::Intersection;
+    /// # use rayna_engine::shared::math::reflect;
+    /// # use rayna_engine::shared::ray::Ray;
+    /// # use rayna_engine::shared::{rng, RtRequirement};
+    /// # use rayna_engine::core::types::{Colour, Vector3};
     /// #
     /// # #[derive(Copy, Clone, Eq, PartialEq, Debug)]
     /// pub struct Test;
-    /// #     /// #
+    /// #
+    /// #
     /// impl Material for Test {
-    ///     fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Vector3 {
+    ///     fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
     ///         let diffuse = false;
     ///         // Diffuse => random
     ///         if diffuse {
-    ///             rng::vector_in_unit_hemisphere(rng, intersection.normal)
+    ///             Some(rng::vector_in_unit_hemisphere(rng, intersection.normal))
     ///         }
     ///         // Reflective => reflect off normal
     ///         else {
     ///             let d = ray.dir();
     ///             let n = intersection.normal;
     ///             let r = reflect(d, n);
-    ///             r
+    ///             Some(r)
     ///         }
     ///     }
     /// #   fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
@@ -119,18 +120,18 @@ pub trait Material: RtRequirement {
     /// ```
     /// # use std::fmt::{Debug, DebugStruct, Formatter};
     /// # use rand::RngCore;
-    /// # use crate::material::Material;
-    /// # use crate::shared::intersect::Intersection;
-    /// # use crate::shared::math::reflect;
-    /// # use crate::shared::ray::Ray;
-    /// # use crate::shared::{rng, RtRequirement};
-    /// # use crate::core::types::{Colour, Vector3};
+    /// # use rayna_engine::material::Material;
+    /// # use rayna_engine::shared::intersect::Intersection;
+    /// # use rayna_engine::shared::math::reflect;
+    /// # use rayna_engine::shared::ray::Ray;
+    /// # use rayna_engine::shared::{rng, RtRequirement};
+    /// # use rayna_engine::core::types::{Colour, Vector3};
     /// #
     /// # #[derive(Copy, Clone, Eq, PartialEq, Debug)]
     /// pub struct Test;
     /// #     /// #
     /// impl Material for Test {
-    /// #   fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Vector3 { unimplemented!() }
+    /// #   fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> { unimplemented!() }
     /// #   fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour { unimplemented!() }
     ///     fn reflected_light(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Colour, rng: &mut dyn RngCore) -> Colour {
     ///         // Pure reflection

@@ -24,6 +24,7 @@ use self::{bvh::BvhObject, list::ObjectList, simple::SimpleObject, volumetric::V
 /// meaning the material of the mesh is also included.
 ///
 /// This should only be implemented on [`SimpleObject`], and any objects that group multiple objects together.
+#[doc(notable_trait)]
 pub trait Object: RtRequirement + HasAabb {
     type Mesh: MeshTrait;
     type Mat: Material;

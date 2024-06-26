@@ -13,6 +13,7 @@ use enum_dispatch::enum_dispatch;
 ///
 /// This simply needs to return the sky colour for a given ray
 #[enum_dispatch]
+#[doc(notable_trait)]
 pub trait Skybox: RtRequirement {
     fn sky_colour(&self, ray: &Ray) -> Colour;
 }

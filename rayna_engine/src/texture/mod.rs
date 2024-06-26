@@ -21,6 +21,7 @@ use self::{
 
 /// The trait that defines what properties a texture has
 #[enum_dispatch]
+#[doc(notable_trait)]
 pub trait Texture: RtRequirement {
     fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour;
 }

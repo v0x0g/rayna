@@ -49,6 +49,7 @@ pub mod primitive;
 // region Object traits
 
 #[enum_dispatch]
+#[doc(notable_trait)]
 pub trait Mesh: MeshProperties + RtRequirement {
     /// Attempts to perform an intersection between the given ray and the target mesh
     ///

@@ -1,4 +1,5 @@
 //! TODO: Crate docs
+//!
 
 #![feature(array_chunks)]
 #![feature(array_try_map)]
@@ -16,6 +17,7 @@
 #![feature(array_windows)]
 #![feature(portable_simd)]
 #![feature(iter_array_chunks)]
+#![feature(doc_notable_trait)]
 // Be aggressive on warnings
 #![deny(rustdoc::all)]
 #![deny(clippy::all)]

@@ -3,7 +3,7 @@ use crate::integration::message::MessageToWorker;
 use crate::integration::{Integration, IntegrationError};
 use crate::profiler;
 use crate::targets::*;
-use crate::ui_val::{DRAG_SLOW, UNIT_DEG, UNIT_LEN, UNIT_PX};
+use crate::ui_val::*;
 use eframe::epaint::textures::TextureFilter;
 use egui::load::SizedTexture;
 use egui::{Context, CursorIcon, Key, RichText, Sense, TextureHandle, TextureOptions, TextureWrapMode, Vec2, Widget};
@@ -42,12 +42,13 @@ pub struct RaynaApp {
     worker_death_throttle: Throttle,
 }
 
-impl RaynaApp {
+impl crate::backend::UiApp for RaynaApp {
     /// Creates a new app instance, with an [`Context`] for configuring the app
-    pub fn new_ctx(_ctx: &Context) -> Self {
+    fn new(_ctx: &Context) -> Self {
         info!(target: UI, "ui app init");
         let preset = scene::preset::RTTNW_DEMO();
         let render_opts = Default::default();
+
         Self {
             integration: Integration::new(&render_opts, &preset.scene, &preset.camera)
                 .expect("couldn't create integration"),
@@ -64,9 +65,9 @@ impl RaynaApp {
             render_stats: Default::default(),
         }
     }
-}
 
-impl crate::backend::app::App for RaynaApp {
+    fn on_shutdown(&mut self) -> () { info!(target: UI, "ui app shutdown") }
+
     fn on_update(&mut self, ctx: &Context) -> () {
         // egui/eframe call `new_frame()` for us if "puffin" feature enabled in them
         if !profiler::EGUI_CALLS_PUFFIN {
@@ -387,8 +388,6 @@ impl crate::backend::app::App for RaynaApp {
         // Continuously update UI
         ctx.request_repaint();
     }
-
-    fn on_shutdown(&mut self) -> () { info!(target: UI, "ui app shutdown") }
 }
 
 impl RaynaApp {

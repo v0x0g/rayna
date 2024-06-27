@@ -5,39 +5,20 @@
 #![feature(slice_as_chunks)]
 #![feature(vec_into_raw_parts)]
 
-use crate::backend::UiBackend;
-use crate::rayna_app::RaynaApp;
+use crate::app::RaynaApp;
 use crate::targets::*;
 use crate::ui_val::APP_NAME;
-use std::collections::HashMap;
 use tracing::metadata::LevelFilter;
 use tracing::{debug, trace};
 use tracing_subscriber::util::SubscriberInitExt;
 
+mod app;
 mod backend;
 mod ext;
 mod integration;
 mod profiler;
-mod rayna_app;
 pub(crate) mod targets;
 mod ui_val;
-
-/// Gets a map of all the [`UiBackend`] implementations available
-fn backends() -> HashMap<&'static str, Box<dyn UiBackend>> {
-    let mut backends: HashMap<&'static str, Box<dyn UiBackend>> = HashMap::new();
-    #[cfg(feature = "backend_eframe")]
-    {
-        debug!(target: MAIN, "have backend: eframe");
-        backends.insert("eframe", Box::new(backend::eframe::EframeBackend {}));
-    }
-    #[cfg(feature = "backend_miniquad")]
-    {
-        debug!(target: MAIN, "have backend: miniquad");
-        backends.insert("miniquad", Box::new(backend::miniquad::MiniquadBackend {}))
-    };
-
-    backends
-}
 
 fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::fmt()
@@ -72,17 +53,11 @@ fn main() -> anyhow::Result<()> {
     }));
 
     // TODO: Better backend selection that's not just hardcoded
-    // let backend = backends
-    //     .into_iter()
-    //     .next()
-    //     .expect("at least one backend should be enabled")
-    //     .1;
-    let mut backends = backends();
+    let mut backends = backend::get_all::<RaynaApp>();
     let backend = backends.remove("eframe").unwrap();
-    debug!(target: MAIN, "using backend {backend:?}");
 
     debug!(target: MAIN, "run");
-    match backend.run(APP_NAME, Box::new(|ctx| Box::new(RaynaApp::new_ctx(ctx)))) {
+    match backend.run(APP_NAME) {
         Ok(()) => debug!(target: MAIN, "run complete (success)"),
         Err(e) => debug!(target: MAIN, err = ?e, "run complete (error)"),
     }

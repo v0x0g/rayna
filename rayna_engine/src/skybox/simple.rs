@@ -3,10 +3,13 @@ use crate::shared::math::Lerp;
 use crate::shared::ray::Ray;
 use crate::skybox::Skybox;
 
+/// A skybox that mixes between blue and white, depending on pitch
+///
+/// Fades to blue at the top, white at the bottom
 #[derive(Copy, Clone, Debug, Default)]
-pub struct DefaultSkybox;
+pub struct SimpleSkybox;
 
-impl Skybox for DefaultSkybox {
+impl Skybox for SimpleSkybox {
     fn sky_colour(&self, ray: &Ray) -> Colour {
         let a = (0.5 * ray.dir().y) + 0.5;
 
@@ -16,4 +19,12 @@ impl Skybox for DefaultSkybox {
         // TODO: Come back once `Colour: Lerp<Number>`
         Colour::lerp(white, blue, a as Channel)
     }
+}
+
+/// An all-white skybox, uniform everywhere
+#[derive(Copy, Clone, Debug, Default)]
+pub struct WhiteSkybox;
+
+impl Skybox for WhiteSkybox {
+    fn sky_colour(&self, _ray: &Ray) -> Colour { Colour::WHITE }
 }

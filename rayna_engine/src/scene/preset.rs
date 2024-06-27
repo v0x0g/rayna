@@ -9,7 +9,8 @@
 
 use crate::core::types::{Angle, Channel, Colour, Image, Number, Point3, Size3, Transform3, Vector3};
 use crate::object::simple::SimpleObject;
-use crate::skybox::default::DefaultSkybox;
+use crate::skybox::none::NoSkybox;
+use crate::skybox::simple::SimpleSkybox;
 use image::ImageFormat;
 use noise::*;
 use rand::{thread_rng, Rng};
@@ -58,7 +59,7 @@ pub struct PresetScene {
 /// # Warning
 /// Currently all scenes are re-created each time this is called.
 /// You will want to cache this value somewhere
-pub fn ALL() -> [PresetScene; 4] { [TESTING(), RTIAW_DEMO(), RTTNW_DEMO(), CORNELL()] }
+pub fn ALL() -> [PresetScene; 5] { [TESTING(), RTIAW_DEMO(), RTIAW_DEMO_DARK(), RTTNW_DEMO(), CORNELL()] }
 
 /// A testing scene used only during development
 pub fn TESTING() -> PresetScene {
@@ -144,7 +145,7 @@ pub fn TESTING() -> PresetScene {
         },
         scene: Scene {
             objects: objects.into(),
-            skybox: DefaultSkybox.into(),
+            skybox: SimpleSkybox.into(),
         },
     }
 }
@@ -245,6 +246,143 @@ pub fn RTIAW_DEMO() -> PresetScene {
         scene: Scene {
             objects: objects.into(),
             skybox: SkyboxInstance::default(),
+        },
+    }
+}
+
+/// From **RayTracing in A Weekend**, the demo scene at the end of the chapter (night edition)
+pub fn RTIAW_DEMO_DARK() -> PresetScene {
+    let mut objects = Vec::new();
+
+    let grid_dims = -15..=15;
+    let rng = &mut thread_rng();
+
+    // Objects
+    for a in grid_dims.clone() {
+        for b in grid_dims.clone() {
+            let (a, b) = (a as Number, b as Number);
+
+            let centre = Point3::new(a, 0.2, b) + (Vector3::new(rng.gen(), 0., rng.gen()) * 0.9);
+            const BIG_BALL_CENTRE: Point3 = Point3 { x: 4., y: 0.2, z: 0. };
+
+            if (centre - BIG_BALL_CENTRE).length() <= 1.0 {
+                continue;
+            }
+
+            let material_choice = rng.gen::<Number>();
+            let material: MaterialInstance<TextureInstance> = if material_choice < 0.6 {
+                LambertianMaterial {
+                    albedo: (rng::colour_rgb(rng) * rng::colour_rgb(rng)).into(),
+                }
+                .into()
+            } else if material_choice <= 0.8 {
+                MetalMaterial {
+                    albedo: rng::colour_rgb_range(rng, 0.5..=1.0).into(),
+                    fuzz: rng.gen_range(0.0..=0.5),
+                }
+                .into()
+            } else if material_choice <= 0.95 {
+                DielectricMaterial {
+                    albedo: rng::colour_rgb_range(rng, 0.5..1.0).into(),
+                    refractive_index: rng.gen_range(1.0..=10.0),
+                    density: 69.0,
+                }
+                .into()
+            } else {
+                LightMaterial {
+                    emissive: rng::colour_rgb_range(rng, 0.0..0.8).into(),
+                }
+                .into()
+            };
+
+            let obj_choice = rng.gen::<Number>();
+            let obj: MeshInstance = if obj_choice < 0.7 {
+                SphereMesh::new(centre, 0.2).into()
+            } else {
+                AxisBoxMesh::new_centred(centre, rng::vector_in_unit_cube_01(rng) * 0.8).into()
+            };
+            objects.push(SimpleObject::new(obj, material, None));
+        }
+    }
+
+    // Lights
+    for a in grid_dims.clone() {
+        for b in grid_dims.clone() {
+            let (a, b) = (a as Number, b as Number);
+
+            let centre = Point3::new(a, 3.2, b) + (Vector3::new(rng.gen(), 0., rng.gen()) * 0.9);
+            const BIG_BALL_CENTRE: Point3 = Point3 { x: 4., y: 0.2, z: 0. };
+
+            if (centre - BIG_BALL_CENTRE).length() <= 1.8 {
+                continue;
+            }
+
+            let material_choice = rng.gen::<Number>();
+            let material: MaterialInstance<TextureInstance> = LightMaterial {
+                emissive: rng::colour_rgb_range(rng, 10.0..50.0).into(),
+            }
+            .into();
+
+            let obj_choice = rng.gen::<Number>();
+            let obj: MeshInstance = if obj_choice <= 0.99 {
+                continue;
+            } else if obj_choice <= 0.995 {
+                SphereMesh::new(centre, 0.2).into()
+            } else {
+                AxisBoxMesh::new_centred(centre, rng::vector_in_unit_cube_01(rng) * 0.8).into()
+            };
+            objects.push(SimpleObject::new(obj, material, None));
+        }
+    }
+
+    objects.push(SimpleObject::new(
+        SphereMesh::new((0., 1., 0.), 1.),
+        DielectricMaterial {
+            refractive_index: 1.5,
+            density: 69.0,
+            albedo: [1.; 3].into(),
+        },
+        None,
+    ));
+    objects.push(SimpleObject::new(
+        SphereMesh::new((-4., 1., 0.), 1.),
+        LambertianMaterial {
+            albedo: [0.4, 0.2, 0.1].into(),
+        },
+        None,
+    ));
+    objects.push(SimpleObject::new(
+        SphereMesh::new((4., 1., 0.), 1.),
+        MetalMaterial {
+            albedo: [0.7, 0.6, 0.5].into(),
+            fuzz: 0.,
+        },
+        None,
+    ));
+
+    objects.push(SimpleObject::new(
+        InfinitePlaneMesh::new(Planar::new(Point3::ZERO, Vector3::X, Vector3::Z), UvWrappingMode::Wrap),
+        LambertianMaterial {
+            albedo: LocalNoiseTexture {
+                source: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69u32)).set_scale(10000.)).to_dyn_box(),
+            }
+            .into(),
+        },
+        None,
+    ));
+
+    PresetScene {
+        name: "RTIAW Demo (Night)",
+        camera: Camera {
+            pos: Point3::new(13., 2., 3.),
+            fwd: Vector3::new(-13., -2., -3.).normalize(),
+            v_fov: Angle::from_degrees(20.),
+            focus_dist: 10.,
+            defocus_angle: Angle::from_degrees(0.6),
+        },
+        scene: Scene {
+            objects: objects.into(),
+            skybox: NoSkybox.into(),
         },
     }
 }

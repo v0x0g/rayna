@@ -1,9 +1,14 @@
-pub mod default;
 pub mod dynamic;
 pub mod hdri;
 pub mod none;
+pub mod simple;
 
-use self::{default::DefaultSkybox, dynamic::DynamicSkybox, hdri::HdrImageSkybox, none::NoSkybox};
+use self::{
+    dynamic::DynamicSkybox,
+    hdri::HdrImageSkybox,
+    none::NoSkybox,
+    simple::{SimpleSkybox, WhiteSkybox},
+};
 use crate::core::types::Colour;
 use crate::shared::ray::Ray;
 use crate::shared::RtRequirement;
@@ -21,14 +26,15 @@ pub trait Skybox: RtRequirement {
 #[enum_dispatch(Skybox)]
 #[derive(Clone, Debug)]
 pub enum SkyboxInstance {
-    DefaultSkybox,
+    SimpleSkybox,
+    WhiteSkybox,
     NoSkybox,
     DynamicSkybox,
     HdrImageSkybox,
 }
 
 impl Default for SkyboxInstance {
-    fn default() -> Self { DefaultSkybox::default().into() }
+    fn default() -> Self { SimpleSkybox::default().into() }
 }
 
 /// This allows us to use [Option::None] as shorthand for no skybox

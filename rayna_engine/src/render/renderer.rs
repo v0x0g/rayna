@@ -149,19 +149,33 @@ impl<Obj: Clone, Sky: Clone, Rng: SeedableRng> Clone for Renderer<Obj, Sky, Rng>
 // region Properties
 
 impl<Obj, Sky, Rng> Renderer<Obj, Sky, Rng> {
-    fn set_dirty(&mut self) { self.accum_buffer.clear(); }
+    /// Clears the accumulation buffer, removing all previous renderer frames
+    pub fn clear_accumulation(&mut self) { self.accum_buffer.clear(); }
+
+    /// Sets the camera.
+    ///
+    /// Also clears the accumulation buffer
     pub fn set_camera(&mut self, camera: Camera) {
         self.camera = camera;
-        self.set_dirty();
+        self.clear_accumulation();
     }
+    /// Sets the scene to be rendered.
+    ///
+    /// Also clears the accumulation buffer
     pub fn set_scene(&mut self, scene: Scene<Obj, Sky>) {
         self.scene = scene;
-        self.set_dirty();
+        self.clear_accumulation();
     }
+
+    /// Sets the render options.
+    ///
+    /// Also clears the accumulation buffer
     pub fn set_options(&mut self, options: RenderOpts) {
         self.options = options;
-        self.set_dirty();
+        self.clear_accumulation();
     }
+
+    /// Changes the number of threads used for rendering
     pub fn set_thread_count(&mut self, num_threads: usize) -> Result<(), ThreadPoolBuildError> {
         self.thread_pool = Self::create_thread_pool(num_threads)?;
         Ok(())

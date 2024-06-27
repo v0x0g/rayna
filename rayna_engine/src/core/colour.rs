@@ -50,6 +50,13 @@ impl<const N: usize> Colour<N> {
     pub const BLACK: Self = Self::new([0.; N]);
     pub const WHITE: Self = Self::new([1.; N]);
 }
+
+impl Colour<3> {
+    pub const RED: Self = Self::new([1., 0., 0.]);
+    pub const GREEN: Self = Self::new([0., 1., 0.]);
+    pub const BLUE: Self = Self::new([0., 0., 1.]);
+}
+
 // endregion Known Colours
 
 // region To/From impls

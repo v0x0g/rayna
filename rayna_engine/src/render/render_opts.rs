@@ -7,13 +7,24 @@ use valuable::Valuable;
 
 #[derive(Copy, Clone, Debug, Valuable, Serialize)]
 pub struct RenderOpts {
-    /// The target dimensions of the render, stored as `[width, height]`
+    /// The target width of the render (pixels)
     pub width: NonZeroUsize,
+    /// The target height of the render (pixels)
     pub height: NonZeroUsize,
     /// A scalar to increase the number of samples taken for each pixel.
+    /// Probably keep this at one and prefer accumulation instead.
     pub samples: NonZeroUsize,
+    /// The way in which the render is visuaised. See [RenderMode]
     pub mode: RenderMode,
+    /// How many times a ray can bounce
     pub ray_depth: usize,
+    /// (Advanced) How many sub-rays each ray should split into, each time it bounces
+    ///
+    /// E.g. If this is `2`, we get `1 -> 2 -> 4 -> 8 -> 16 -> ...` rays at each bounce (assuming they all scatter)
+    ///
+    /// # Performance
+    /// Note that this causes an exponential increase in the number of rays. It is advisable to keep this very low.
+    /// This is mostly only effective in highly diffuse scenes.
     pub ray_branching: NonZeroUsize,
 }
 
@@ -21,14 +32,22 @@ pub struct RenderOpts {
     Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Valuable, Serialize, EnumIter, IntoStaticStr, Display,
 )]
 pub enum RenderMode {
+    /// Used physically-based rendering, makes pretty images
     #[default]
     PBR,
+    /// Visualise the normal of the mesh, going against the ray
     RayNormal,
+    /// Visualise the normal of the mesh, going outwards
     OutwardNormal,
+    /// Visualise the scatter direction of the material
     Scatter,
+    /// Visualise whether the face is on the front or back face of the mesh
     FrontFace,
+    /// Visualise how far away from the camera the intersection was
     Distance,
+    /// Visualise the meshes' UV coordinates
     Uv,
+    /// Visualise which side of the object was hit
     Side,
 }
 

@@ -91,6 +91,7 @@ where
     Obj: Into<ObjectInstance<Mesh, Mat>>,
     Iter: IntoIterator<Item = Obj>,
 {
+    /// Converts an iterator of objects into an [`ObjectList`], wrapped as a [`ObjectInstance`]
     fn from(value: Iter) -> Self {
         // Convert each object into an ObjectInstance
         let object_instances = value.into_iter().map(Obj::into);

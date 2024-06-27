@@ -23,7 +23,8 @@ use std::iter::zip;
 use tracing::warn;
 
 /// How many triangles we batch at once
-const N_TRI: usize = 1;
+// TODO: BatchTriangle currently broken
+//const N_TRI: usize = 1;
 
 /// A mesh struct that is created by creating an isosurface from a given SDF
 ///

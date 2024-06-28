@@ -54,6 +54,9 @@ pub struct PresetScene {
     pub scene: StandardScene,
 }
 
+// FIXME: Calling these presets is extremely slow.
+//  `RTTNW_DEMO()` takes ~1.4 sec, `ALL()` takes ~4.1 sec
+
 /// All the preset scenes.
 ///
 /// # Warning

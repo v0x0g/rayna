@@ -42,7 +42,7 @@ pub fn get_all<App: UiApp + 'static>() -> HashMap<&'static str, Box<dyn UiBacken
     #[cfg(feature = "backend_miniquad")]
     {
         debug!(target: crate::targets::MAIN, "have backend: miniquad");
-        backends.insert("miniquad", Box::new(self::miniquad::MiniquadBackend::default()))
+        backends.insert("miniquad", Box::new(self::miniquad::MiniquadBackend::default()));
     }
 
     backends

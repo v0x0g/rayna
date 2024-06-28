@@ -6,7 +6,7 @@ use crate::targets::*;
 use crate::ui_val::*;
 use eframe::epaint::textures::TextureFilter;
 use egui::load::SizedTexture;
-use egui::{Context, CursorIcon, Key, RichText, Sense, TextureHandle, TextureOptions, TextureWrapMode, Vec2, Widget};
+use egui::{ColorImage, Context, CursorIcon, Key, Sense, TextureHandle, TextureOptions, TextureWrapMode, Vec2, Widget};
 use puffin::{profile_function, profile_scope};
 use rayna_engine::core::types::{Angle, Number, Vector3};
 use rayna_engine::render::render::RenderStats;
@@ -30,43 +30,65 @@ pub struct RaynaApp {
 
     // Display things
     /// A handle to the texture that holds the current render buffer
-    render_buf_tex: Option<TextureHandle>,
+    render_buf_tex: TextureHandle,
+    /// Options for how the render buffer texture is displayed
+    render_buf_tex_options: TextureOptions,
     /// The amount of space available to display the rendered image in
     /// This is [`egui::Ui::available_size`] inside [egui::CentralPanel]
     /// Used by the "fit canvas to screen" button
     render_display_size: Vec2,
     render_stats: RenderStats,
 
-    // The rest
+    // Integration with the engine and worker
     integration: Integration,
     worker_death_throttle: Throttle,
 }
 
 impl crate::backend::UiApp for RaynaApp {
     /// Creates a new app instance, with an [`Context`] for configuring the app
-    fn new(_ctx: &Context) -> Self {
-        info!(target: UI, "ui app init");
-        let preset = scene::preset::RTTNW_DEMO();
+    fn new(ctx: &Context) -> Self {
+        info!(target: MAIN, "ui app init");
+
+        trace!(target: MAIN, "loading preset scene and render opts");
+        let PresetScene { scene, camera, name: _ } = scene::preset::RTTNW_DEMO();
         let render_opts = Default::default();
+        let all_presets = scene::preset::ALL().into();
+
+        trace!(target: MAIN, "creating render buffer texture");
+        let render_buf_tex_options = TextureOptions {
+            magnification: TextureFilter::Nearest,
+            minification: TextureFilter::Linear,
+            wrap_mode: TextureWrapMode::ClampToEdge,
+        };
+        let render_buf_tex = ctx.load_texture(
+            // Default is tiny magenta texture so it's obvious if it wasn't set
+            "RaynaApp::render_buffer_texture",
+            ColorImage::new([128, 128], egui::Rgba::from_rgb(1., 0., 1.).into()),
+            render_buf_tex_options,
+        );
+
+        trace!(target: MAIN, "creating engine integration");
+        let integration = Integration::new(&render_opts, &scene, &camera).expect("failed to create integration");
+        // Max ten failures in a row, once per second
+        let worker_death_throttle = Throttle::new(Duration::from_secs(1), 10);
 
         Self {
-            integration: Integration::new(&render_opts, &preset.scene, &preset.camera)
-                .expect("couldn't create integration"),
-            // Max ten failures in a row, once per second
-            worker_death_throttle: Throttle::new(Duration::from_secs(1), 10),
+            integration,
+            worker_death_throttle,
 
-            scene: preset.scene,
-            camera: preset.camera,
+            scene,
+            camera,
             render_opts,
-            all_presets: scene::preset::ALL().into(),
+            all_presets,
 
-            render_buf_tex: None,
+            render_buf_tex_options,
+            render_buf_tex,
             render_display_size: egui::vec2(1.0, 1.0),
             render_stats: Default::default(),
         }
     }
 
-    fn on_shutdown(&mut self) -> () { info!(target: UI, "ui app shutdown") }
+    fn on_shutdown(&mut self) -> () { info!(target: MAIN, "ui app shutdown") }
 
     fn on_update(&mut self, ctx: &Context) -> () {
         // egui/eframe call `new_frame()` for us if "puffin" feature enabled in them
@@ -77,20 +99,20 @@ impl crate::backend::UiApp for RaynaApp {
         profile_function!();
 
         self.process_worker_messages();
-        self.process_worker_render(ctx);
+        self.process_worker_render();
 
         let mut dirty_render_opts = false;
         let mut dirty_scene = false;
         let mut dirty_camera = false;
 
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            profile_scope!("panel/top");
-
-            egui::menu::bar(ui, |ui| {
-                // TODO: QUIT HANDLING
-                egui::widgets::global_dark_light_mode_buttons(ui);
-            });
-        });
+        //        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+        //            profile_scope!("panel/top");
+        //
+        //            egui::menu::bar(ui, |ui| {
+        //                // TODO: QUIT HANDLING
+        //                egui::widgets::global_dark_light_mode_buttons(ui);
+        //            });
+        //        });
 
         egui::SidePanel::left("left_panel").show(ctx, |ui| {
             profile_scope!("panel/left");
@@ -270,15 +292,10 @@ impl crate::backend::UiApp for RaynaApp {
             let avail_space = ui.available_size();
             self.render_display_size = avail_space;
 
-            let Some(ref mut tex_handle) = self.render_buf_tex else {
-                ui.label(RichText::new("No texture").size(20.0));
-                return;
-            };
-
             // Display the image and get drag inputs
 
             let img_resp = egui::Image::new(SizedTexture {
-                id: tex_handle.id(),
+                id: self.render_buf_tex.id(),
                 size: avail_space,
             })
             .sense(Sense::click_and_drag())
@@ -392,44 +409,22 @@ impl crate::backend::UiApp for RaynaApp {
 
 impl RaynaApp {
     /// Tries to receive the next render frame from the worker
-    fn process_worker_render(&mut self, ctx: &Context) {
+    fn process_worker_render(&mut self) {
         profile_function!();
 
         let Some(res) = self.integration.try_recv_render() else {
-            return;
+            return; // No frame yet
         };
         let Ok(render) = res else {
             // warn!(target: UI, ?res);
             return;
         };
 
-        // let render = match res {
-        //     Err(err) => {
-        //         warn!(target: UI, ?err);
-        //         return;
-        //     }
-        //     Ok(r) => r,
-        // };
-
         trace!(target: UI, "received new frame from worker");
 
         {
             profile_scope!("update_tex");
-            let opts = TextureOptions {
-                magnification: TextureFilter::Nearest,
-                minification: TextureFilter::Linear,
-                wrap_mode: TextureWrapMode::ClampToEdge,
-            };
-            match &mut self.render_buf_tex {
-                None => {
-                    profile_scope!("tex_load");
-                    self.render_buf_tex = Some(ctx.load_texture("render_buffer_texture", render.img, opts))
-                }
-                Some(tex) => {
-                    profile_scope!("tex_set");
-                    tex.set(render.img, opts)
-                }
-            }
+            self.render_buf_tex.set(render.img, self.render_buf_tex_options)
         }
 
         self.render_stats = render.stats;

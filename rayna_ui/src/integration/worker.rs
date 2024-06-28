@@ -16,7 +16,7 @@ use rayon::iter::ParallelIterator;
 use std::ops::DerefMut;
 use std::thread::JoinHandle;
 use std::time::Duration;
-use tracing::{info, instrument, trace, warn};
+use tracing::{info, trace, warn};
 
 #[derive(Clone, Debug)]
 pub(super) struct BgWorker {
@@ -39,7 +39,6 @@ impl BgWorker {
 
     /// Actually runs the thread
     /// This should be called inside [std::thread::spawn], it will block
-    #[instrument(level = tracing::Level::DEBUG, skip(self), parent = None)]
     pub fn thread_run(self) {
         info!(target: BG_WORKER, "BgWorker thread start");
         profiler::renderer::init_thread();
@@ -124,7 +123,9 @@ impl BgWorker {
 
         // Got a rendered image
         // Post-process, and translate to an egui-appropriate one
-
+        // TODO: I may be doing something wrong here,
+        //  maybe should be using `ecolor::rgba::Rgba` not `ecolor::ecolor32::Color32`.
+        //  Apparently it's an
         {
             profile_scope!("correct_gamma");
             const GAMMA: Channel = 2.2;

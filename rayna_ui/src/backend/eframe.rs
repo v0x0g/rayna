@@ -1,21 +1,23 @@
 use std::marker::PhantomData;
 
-use crate::backend::UiBackend;
+use super::{UiApp, UiBackend};
+use crate::targets::MAIN;
 use anyhow::anyhow;
 use eframe::Theme;
 use egui::ViewportBuilder;
-
-use super::UiApp;
+use tracing::*;
 
 #[derive(Debug, Copy, Clone)]
-pub struct EframeBackend<Ctor>(PhantomData<Ctor>);
+pub struct EframeBackend<App: UiApp>(PhantomData<App>);
 
-impl<Ctor> Default for EframeBackend<Ctor> {
+impl<App: UiApp> Default for EframeBackend<App> {
     fn default() -> Self { Self(PhantomData::default()) }
 }
 
 impl<App: UiApp> UiBackend<App> for EframeBackend<App> {
     fn run(self: Box<Self>, app_name: &str) -> anyhow::Result<()> {
+        debug!(target: MAIN, ?app_name, "running eframe backend");
+
         eframe::run_native(
             app_name,
             eframe::NativeOptions {
@@ -33,8 +35,9 @@ impl<App: UiApp> UiBackend<App> for EframeBackend<App> {
             // This closure is called by `eframe` to initialise the app
             // It moves all the functions into itself so that they can be called at the appropriate times
             Box::new(move |ctx: &eframe::CreationContext| {
-                let app: App = App::new(&ctx.egui_ctx);
-                let wrapped: Wrapper<App> = Wrapper(app);
+                trace!(target: MAIN, "eframe app creator called");
+                let app = trace_span!(target: MAIN, "App::new()").in_scope(|| App::new(&ctx.egui_ctx));
+                let wrapped = Wrapper(app);
                 Box::new(wrapped) as Box<dyn ::eframe::App>
             }),
         )

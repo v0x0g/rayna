@@ -1,3 +1,8 @@
+//! This file is the
+//!
+//! # Dev Notes
+//! This
+
 #![feature(type_alias_impl_trait)]
 #![feature(trait_alias)]
 #![feature(associated_type_defaults)]
@@ -8,9 +13,8 @@
 use crate::app::RaynaApp;
 use crate::targets::*;
 use crate::ui_val::APP_NAME;
-use tracing::metadata::LevelFilter;
-use tracing::{debug, trace};
-use tracing_subscriber::util::SubscriberInitExt;
+use tracing::debug;
+use tracing_subscriber::prelude::*;
 
 mod app;
 mod backend;
@@ -21,25 +25,51 @@ pub(crate) mod targets;
 mod ui_val;
 
 fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt::fmt()
+    // ===== Tracing =====
+
+    let stderr_output = tracing_subscriber::fmt::layer()
         .pretty()
         .with_ansi(true)
         .log_internal_errors(true)
-        .with_max_level(LevelFilter::DEBUG)
         .with_line_number(true)
         .with_file(true)
         .with_level(true)
         .with_target(true)
         .with_thread_ids(true)
         .with_thread_names(true)
-        .finish()
+        .with_span_events(tracing_subscriber::fmt::format::FmtSpan::ACTIVE)
+        .with_writer(std::sync::Arc::new(std::io::stderr()));
+
+    let log_filter = tracing_subscriber::EnvFilter::builder()
+        .with_default_directive(tracing::metadata::LevelFilter::INFO.into())
+        .with_regex(true)
+        .from_env_lossy();
+
+    // Wrap it in an `EnvFilter` so we can configure from the environment variable,
+    // and install it as the default log subscriber
+
+    // NOTE: This is a note to future me who forgets how `tracing` works
+    //
+    // My understanding of tracing is that there is a singleton `Subscriber` instance
+    // that controls handling of *ALL* log events that occur. We set this by calling
+    // `tracing_subscriber::util::SubscriberInitExt::init()`. We choose the
+    // `tracing_subscriber::registry()` as our subscriber - it's fast or something.
+    //
+    // We then add `Layer`s onto it, using `tracing_subscriber::layer::SubscriberExt`,
+    // which branch off the main subscriber, and do their own thing. We use the
+    // `tracing_subscriber::fmt::layer()` function to create a layer, which we
+    // then configure to our liking (such as setting the output `with_writer()` to stderr.
+    tracing_subscriber::registry()
+        .with(stderr_output.with_filter(log_filter))
         .init();
+
+    // ===== Profiling =====
 
     debug!(target: MAIN, "init puffin");
     // Profiling is pretty low-cost
-    trace!(target: MAIN, "enable profiling");
+    debug!(target: MAIN, "enable profiling");
     puffin::set_scopes_on(true);
-    trace!(target: MAIN, "init main profiler");
+    debug!(target: MAIN, "init main profiler");
     profiler::main::init_thread();
     // Special handling so the 'default' profiler passes on to our custom profiler
     // In this case, we already overrode the ThreadProfiler for "main" using `main_profiler_init()`,
@@ -52,9 +82,11 @@ fn main() -> anyhow::Result<()> {
         }
     }));
 
+    // ===== UI Backend =====
+
     // TODO: Better backend selection that's not just hardcoded
     let mut backends = backend::get_all::<RaynaApp>();
-    let backend = backends.remove("eframe").unwrap();
+    let backend = backends.remove("miniquad").unwrap();
 
     debug!(target: MAIN, "run");
     match backend.run(APP_NAME) {

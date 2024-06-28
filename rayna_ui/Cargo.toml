@@ -33,7 +33,7 @@ thiserror = { workspace = true }
 
 # Logging is amazing
 tracing = { workspace = true }
-tracing-subscriber = { version = "0.3.18", features = ["json", "local-time", "ansi"] }
+tracing-subscriber = { version = "0.3.18", features = ["json", "local-time", "ansi", "tracing-log", "env-filter", "registry"] }
 
 # Other
 flume = { version = "0.11.0", features = ["async"] }

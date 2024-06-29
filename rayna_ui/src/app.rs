@@ -61,9 +61,10 @@ impl crate::backend::UiApp for RaynaApp {
             wrap_mode: TextureWrapMode::ClampToEdge,
         };
         let render_buf_tex = ctx.load_texture(
-            // Default is tiny magenta texture so it's obvious if it wasn't set
+            // Default is tiny invisible texture, so it's unobtrusive
+            // it will be visible up unlti first frame is received from renderer
             "RaynaApp::render_buffer_texture",
-            ColorImage::new([128, 128], egui::Rgba::from_rgb(1., 0., 1.).into()),
+            ColorImage::new([128, 128], egui::Color32::TRANSPARENT),
             render_buf_tex_options,
         );
 

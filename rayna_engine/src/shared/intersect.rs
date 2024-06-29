@@ -61,7 +61,7 @@ impl Ord for Intersection {
 /// Only really used to provide a nicer return value for [`crate::object::Object::full_intersect()`].
 #[derive(Clone, Debug, Derivative)]
 #[derivative(Ord, PartialOrd, Eq, PartialEq)]
-pub struct FullIntersection<'mat, Mat: Material + 'mat> {
+pub struct FullIntersection<'mat, Mat: Material> {
     pub intersection: Intersection,
     /// NOTE: For all comparisons, this field is ignored ([PartialEq], [Ord], [PartialOrd])
     #[derivative(PartialOrd = "ignore", Ord = "ignore", PartialEq = "ignore")]
@@ -74,7 +74,7 @@ impl<'mat, Mat: Material + 'mat> From<(&'mat Mat, Intersection)> for FullInterse
 
 impl Intersection {
     /// Converts a partial [`Intersection`] into a [`FullIntersection<Mat>`]
-    pub fn make_full<Mat: Material>(self, material: &Mat) -> FullIntersection<Mat> {
+    pub fn make_full<'mat, Mat: Material>(self, material: &'mat Mat) -> FullIntersection<'mat, Mat> {
         FullIntersection {
             intersection: self,
             material,

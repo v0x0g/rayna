@@ -9,6 +9,23 @@
 #![feature(error_generic_member_access)]
 #![feature(slice_as_chunks)]
 #![feature(vec_into_raw_parts)]
+// Be aggressive on warnings
+#![deny(rustdoc::all)]
+#![deny(clippy::all)]
+#![warn(
+    warnings,
+    future_incompatible,
+    keyword_idents,
+    let_underscore,
+    nonstandard_style,
+    refining_impl_trait,
+    rust_2018_compatibility,
+    rust_2021_compatibility,
+    rust_2024_compatibility,
+    unused
+)]
+// Don't allow any warnings in doctests
+#![doc(test(attr(deny(all))))]
 
 use crate::app::RaynaApp;
 use crate::targets::*;

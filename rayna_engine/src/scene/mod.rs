@@ -1,9 +1,9 @@
 pub mod camera;
 pub mod preset;
 
-/// Represents the environment, containing the objects in a scene along with the skybox
+/// Represents the environment, containing the objects in a scene along with the skybox.
 ///
-/// # Notes:
+/// # Note
 /// Only one object type `Obj` is stored, because it is expected that it will be some sort
 /// of 'group' object, such as a [`crate::object::bvh::BvhObject`], which groups multiple
 /// sub-objects into one

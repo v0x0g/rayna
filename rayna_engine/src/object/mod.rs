@@ -20,7 +20,8 @@ use self::{bvh::BvhObject, list::ObjectList, simple::SimpleObject, volumetric::V
 
 // TODO: Should objects (as well as other traits) have some sort of identifier?
 
-/// This trait is essentially an extension of [`MeshTrait`], but with a [`FullIntersection`] not [Intersection](`crate::shared::intersect::Intersection`),
+/// This trait is essentially an extension of [`MeshTrait`], but with a
+/// [`FullIntersection`] not [Intersection](`crate::shared::intersect::Intersection`),
 /// meaning the material of the mesh is also included.
 ///
 /// This should only be implemented on [`SimpleObject`], and any objects that group multiple objects together.

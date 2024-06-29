@@ -91,10 +91,14 @@ impl crate::backend::UiApp for RaynaApp {
     fn on_shutdown(&mut self) -> () { info!(target: MAIN, "ui app shutdown") }
 
     fn on_update(&mut self, ctx: &Context) -> () {
-        // egui/eframe call `new_frame()` for us if "puffin" feature enabled in them
+        // `egui`/`eframe` call `new_frame()` for us if "puffin" feature enabled in them
         if !crate::profiler::EGUI_CALLS_PUFFIN {
             crate::profiler::main::lock().new_frame();
         }
+
+        // TODO: Add tooltips to the UI
+        //  We can use the `egui_commonmark` crate, with compile-time evaluation
+        // of markdown docs (uses the `macros` feature).
 
         profile_function!();
 
@@ -282,6 +286,8 @@ impl crate::backend::UiApp for RaynaApp {
                 ui.label(format!("accumulated: {}", stats.accum_frames));
                 ui.label(format!("duration:\t\t {}", humantime::format_duration(stats.duration)));
             });
+
+            // TODO: Add a button to save the image to disk
         });
 
         // Central panel contains the main render window

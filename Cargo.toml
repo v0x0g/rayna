@@ -1,10 +1,15 @@
 # ===== WORKSPACE =====
+
 [workspace]
 resolver = "2"
 members = [
     "rayna_engine",
     "rayna_ui",
 ]
+
+
+# ===== SHARED DEPENDENCIES =====
+
 
 [workspace.dependencies]
 
@@ -63,13 +68,17 @@ static_assertions = "1.1.0"
 
 # Using a custom fork of `puffin`
 # - So we can have multiple instances of the `puffin_http::Server` that are disjoint
-# - So that we can use
-puffin = { git = "https://github.com/v0x0g/fork-puffin.git", branch = "main" }
-puffin_http = { git = "https://github.com/v0x0g/fork-puffin.git", branch = "main" }
+# - So that we can use a `profile_scope_custom!()` macro
+puffin = { git = "ssh://git@github.com/v0x0g/fork-puffin.git", branch = "main" }
+puffin_http = { git = "ssh://git@github.com/v0x0g/fork-puffin.git", branch = "main" }
 rayon = "1.8.0"
 
-[profile.dev]
+
+# ===== BUILD PROFILES =====
+
+
 # Default dev profile, fast compile times
+[profile.dev]
 debug = "full"
 lto = "off"
 incremental = true
@@ -79,19 +88,18 @@ codegen-units = 128
 [profile.dev.package."*"]
 opt-level = 3
 
-[profile.dbg]
 # Only useful for debugging, very slow
+[profile.dbg]
 inherits = "dev"
 debug = "full"
 opt-level = 0
-[profile.dbg.package.rayna_engine]
-opt-level = 0
+# Provide minor optimisations to dependencies
 [profile.dbg.package."*"]
 opt-level = 1
 codegen-units = 32
 
+# Zoomies in release, but extremely slow to compile
 [profile.release]
-# Zooomies in release
 debug = "full"
 lto = "fat"
 opt-level = 3

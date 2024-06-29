@@ -1,9 +1,9 @@
+use crate::ext::img_ext::ImageExt;
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::targets::BG_WORKER;
-use egui::{Color32, ColorImage};
+use egui::ColorImage;
 use puffin::{profile_function, profile_scope};
 use rayna_engine::core::profiler;
-use rayna_engine::core::types::{Channel, Image};
 use rayna_engine::material::MaterialInstance;
 use rayna_engine::mesh::MeshInstance;
 use rayna_engine::object::ObjectInstance;
@@ -11,9 +11,6 @@ use rayna_engine::render::render::Render;
 use rayna_engine::render::renderer::Renderer;
 use rayna_engine::skybox::SkyboxInstance;
 use rayna_engine::texture::TextureInstance;
-use rayon::iter::IntoParallelIterator;
-use rayon::iter::ParallelIterator;
-use std::ops::DerefMut;
 use std::thread::JoinHandle;
 use std::time::Duration;
 use tracing::{info, trace, warn};
@@ -99,7 +96,7 @@ impl BgWorker {
                 let render = renderer.render();
 
                 Render {
-                    img: Self::convert_img(render.img),
+                    img: render.img.to_egui(),
                     stats: render.stats,
                 }
             };
@@ -114,45 +111,5 @@ impl BgWorker {
         }
 
         info!(target: BG_WORKER, "BgWorker thread exit");
-    }
-
-    /// Converts the image outputted by the renderer into an egui-appropriate one.
-    /// Also converts from linear space to SRGB space
-    fn convert_img(mut src: Image) -> ColorImage {
-        profile_function!();
-
-        // Got a rendered image
-        // Post-process, and translate to an egui-appropriate one
-        // TODO: I may be doing something wrong here,
-        //  maybe should be using `ecolor::rgba::Rgba` not `ecolor::ecolor32::Color32`.
-        //  Apparently it's an
-        {
-            profile_scope!("correct_gamma");
-            const GAMMA: Channel = 2.2;
-            const INV_GAMMA: Channel = 1.0 / GAMMA;
-
-            // Gamma correction is per-channel, not per-pixel
-            src.deref_mut().into_par_iter().for_each(|c| *c = c.powf(INV_GAMMA));
-        }
-        // TODO: Pool the images?
-        let mut output = {
-            profile_scope!("alloc_output");
-            ColorImage {
-                size: [src.width(), src.height()],
-                // I hope the compiler optimizes this
-                pixels: vec![Color32::default(); src.len()],
-            }
-        };
-
-        // Convert each pixel into array of u8 channels and write to output
-        {
-            profile_scope!("convert_channels_u8");
-            src.indexed_iter().for_each(|((x, y), col)| {
-                let [r, g, b] = col.0.map(|c| (c * 255.0) as u8);
-                output[(x, y)] = Color32::from_rgb(r, g, b)
-            });
-        };
-
-        output
     }
 }

@@ -1,14 +1,13 @@
-use crate::ext::UiExt;
+use crate::ext::ui_ext::UiExt as _;
 use crate::integration::message::MessageToWorker;
 use crate::integration::{Integration, IntegrationError};
-use crate::profiler;
 use crate::targets::*;
 use crate::ui_val::*;
 use eframe::epaint::textures::TextureFilter;
 use egui::load::SizedTexture;
 use egui::{ColorImage, Context, CursorIcon, Key, Sense, TextureHandle, TextureOptions, TextureWrapMode, Vec2, Widget};
 use puffin::{profile_function, profile_scope};
-use rayna_engine::core::types::{Angle, Number, Vector3};
+use rayna_engine::core::types::*;
 use rayna_engine::render::render::RenderStats;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
 use rayna_engine::scene::camera::Camera;
@@ -93,8 +92,8 @@ impl crate::backend::UiApp for RaynaApp {
 
     fn on_update(&mut self, ctx: &Context) -> () {
         // egui/eframe call `new_frame()` for us if "puffin" feature enabled in them
-        if !profiler::EGUI_CALLS_PUFFIN {
-            profiler::main::lock().new_frame();
+        if !crate::profiler::EGUI_CALLS_PUFFIN {
+            crate::profiler::main::lock().new_frame();
         }
 
         profile_function!();

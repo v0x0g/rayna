@@ -65,13 +65,26 @@ paste = "1.0.14"
 static_assertions = "1.1.0"
 
 # Performance
+opool = "0.1.1" # PATCHED
+puffin = "0.19.0" # PATCHED
+puffin_http = "0.16.0" # PATCHED
+rayon = "1.8.0"
 
+
+# ===== PATCHED DEPENDENCIES =====
+
+
+[patch.crates-io]
 # Using a custom fork of `puffin`
 # - So we can have multiple instances of the `puffin_http::Server` that are disjoint
 # - So that we can use a `profile_scope_custom!()` macro
 puffin = { git = "ssh://git@github.com/v0x0g/fork-puffin.git", branch = "main" }
 puffin_http = { git = "ssh://git@github.com/v0x0g/fork-puffin.git", branch = "main" }
-rayon = "1.8.0"
+# Custom features from fork, removed type bounds
+opool = { git = "ssh://git@github.com/v0x0g/fork-opool.git", branch = "main" }
+# Latest version on <crates.io> is `0.14.0`, which is over a year old and uses incompatible version of egui
+# Github is more up-to-date
+egui_miniquad = { git = "ssh://git@github.com/not-fl3/egui-miniquad.git", branch = "master", package = "egui-miniquad" }
 
 
 # ===== BUILD PROFILES =====

@@ -26,8 +26,7 @@ rand = { workspace = true }
 egui = { workspace = true }
 # Having issues when the "accesskit" feature is enabled, so don't use it here
 eframe = { version = "0.27.2", features = ["glow", "default_fonts", "puffin"], default-features = false, optional = true }
-# Latest version on <crates.io> is `0.14.0`, which is over a year old and uses incompatible version of egui
-egui-miniquad = { git = "ssh://git@github.com/not-fl3/egui-miniquad.git", optional = true }
+egui-miniquad = { version = "0.14.0", optional = true } # PATCHED
 miniquad = { version = "0.4.0", optional = true }
 
 # Errors
@@ -50,8 +49,8 @@ paste = { workspace = true }
 once_cell = { workspace = true }
 
 # Perf
-puffin = { workspace = true }
-puffin_http = { workspace = true }
+puffin = { workspace = true } # PATCHED
+puffin_http = { workspace = true } # PATCHED
 rayon = { workspace = true }
 
 

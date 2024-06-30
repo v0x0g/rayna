@@ -56,11 +56,10 @@ image = "0.25.1"
 static_assertions = { workspace = true }
 
 # Perf
-puffin = { workspace = true }
-puffin_http = { workspace = true }
+puffin = { workspace = true } # PATCHED
+puffin_http = { workspace = true } # PATCHED
 rayon = { workspace = true }
-# Custom features from fork
-opool = { git = "ssh://git@github.com/v0x0g/fork-opool.git", branch = "main" }
+opool = { workspace = true } # PATCHED
 
 
 # ===== DEV DEPENDENCIES =====

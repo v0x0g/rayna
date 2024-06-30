@@ -15,7 +15,7 @@
 
 ### CARGO ###
 
-!Cargo.toml
+!./Cargo.toml
 # Creating a binary, so remove from .gitignore
 #!Cargo.lock
 !rustfmt.toml

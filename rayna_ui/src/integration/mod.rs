@@ -21,6 +21,8 @@ use tracing::{debug, error, trace};
 pub mod message;
 mod worker;
 
+// TODO: Refactor how the worker is handled
+
 #[derive(Error, Debug)]
 pub enum IntegrationError {
     #[error("message channel to background worker disconnected")]

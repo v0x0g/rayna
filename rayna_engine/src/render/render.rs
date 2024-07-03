@@ -11,6 +11,7 @@ pub struct RenderStats {
     pub opts: RenderOpts,
     /// Number of frames that were accumulated so far
     pub accum_frames: usize,
+    // TODO: Accumulated time
 }
 
 #[derive(Clone, Debug)]

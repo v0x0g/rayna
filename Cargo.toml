@@ -85,6 +85,10 @@ opool = { git = "ssh://git@github.com/v0x0g/fork-opool.git", branch = "main" }
 # Latest version on <crates.io> is `0.14.0`, which is over a year old and uses incompatible version of egui
 # Github is more up-to-date
 egui_miniquad = { git = "ssh://git@github.com/not-fl3/egui-miniquad.git", branch = "master", package = "egui-miniquad" }
+# Testing new version of egui per @emilk on discord
+egui = { git = "ssh://git@github.com/emilk/egui", branch = "master" }
+egui-winit = { git = "ssh://git@github.com/emilk/egui", branch = "master" }
+eframe = { git = "ssh://git@github.com/emilk/egui", branch = "master" }
 
 
 # ===== BUILD PROFILES =====

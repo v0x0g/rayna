@@ -38,7 +38,7 @@ impl<App: UiApp> UiBackend<App> for EframeBackend<App> {
                 trace!(target: MAIN, "eframe app creator called");
                 let app = trace_span!(target: MAIN, "App::new()").in_scope(|| App::new(&ctx.egui_ctx));
                 let wrapped = Wrapper(app);
-                Box::new(wrapped) as Box<dyn ::eframe::App>
+                Ok(Box::new(wrapped) as Box<dyn eframe::App>)
             }),
         )
         .map_err(|e| anyhow!("failed running eframe: {e:#?}"))
@@ -46,7 +46,7 @@ impl<App: UiApp> UiBackend<App> for EframeBackend<App> {
 }
 
 struct Wrapper<App: UiApp>(App);
-impl<App: UiApp> ::eframe::App for Wrapper<App> {
+impl<App: UiApp> eframe::App for Wrapper<App> {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) { self.0.on_update(ctx); }
 
     fn on_exit(&mut self, _glow: Option<&eframe::glow::Context>) { self.0.on_shutdown(); }

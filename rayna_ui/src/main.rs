@@ -99,7 +99,7 @@ fn main() -> anyhow::Result<()> {
 
     // TODO: Allow backend selection from CLI arguments; use `clap` crate
     let mut backends = backend::get_all::<RaynaApp>();
-    let backend = backends.remove("miniquad").unwrap();
+    let backend = backends.remove("eframe").unwrap();
 
     debug!(target: MAIN, "run");
     match backend.run(APP_NAME) {

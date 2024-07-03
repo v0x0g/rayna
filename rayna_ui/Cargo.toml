@@ -60,7 +60,7 @@ rayon = { workspace = true }
 [features]
 default = [
     "backend_eframe",
-    "backend_miniquad",
+#    "backend_miniquad",
 ]
 
 backend_eframe = ["dep:eframe"]

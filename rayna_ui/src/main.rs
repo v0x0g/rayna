@@ -1,8 +1,4 @@
-//! This file is the
-//!
-//! # Dev Notes
-//! This
-
+#![doc = include_str!("../readme.md")]
 #![feature(type_alias_impl_trait)]
 #![feature(trait_alias)]
 #![feature(associated_type_defaults)]
@@ -101,7 +97,7 @@ fn main() -> anyhow::Result<()> {
 
     // ===== UI Backend =====
 
-    // TODO: Better backend selection that's not just hardcoded
+    // TODO: Allow backend selection from CLI arguments; use `clap` crate
     let mut backends = backend::get_all::<RaynaApp>();
     let backend = backends.remove("miniquad").unwrap();
 

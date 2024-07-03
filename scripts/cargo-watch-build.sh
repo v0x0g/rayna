@@ -1,1 +1,0 @@
- cargo watch -c -x "build --profile=dev" -x "build --profile=dbg"

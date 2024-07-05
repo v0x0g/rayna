@@ -21,10 +21,7 @@ num-integer = { workspace = true }
 rand = { workspace = true }
 rand_core = { workspace = true }
 rand_chacha = { workspace = true }
-rand_pcg = { workspace = true }
 rand_xorshift = { workspace = true }
-rand_hc = { workspace = true }
-rand_isaac = { workspace = true }
 noise = { workspace = true }
 ndarray = { workspace = true }
 isosurface = "0.1.0-alpha.0"
@@ -45,13 +42,10 @@ strum = { workspace = true }
 strum_macros = { workspace = true }
 smallvec = { version = "1.11.2", features = ["const_generics", "const_new", "specialization"] }
 enum_dispatch = "0.3.12"
-#static_init = { workspace =  true }
 getset = { workspace = true }
 itertools = { workspace = true }
 indextree = "4.6.0"
-auto_ops = { workspace = true }
 once_cell = { workspace = true }
-paste = { workspace = true }
 image = "0.25.1"
 static_assertions = { workspace = true }
 

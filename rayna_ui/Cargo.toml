@@ -23,8 +23,6 @@ mint = { workspace = true }
 rand = { workspace = true }
 
 # UI
-
-# UI
 egui = { version = "0.28.0", features = ["puffin", "mint", "default_fonts", "bytemuck", "callstack", "cint", "color-hex", "persistence", "ron"] }
 # Having issues when the "accesskit" feature is enabled, so don't use it here
 eframe = { version = "0.28.0", features = ["glow", "default_fonts", "puffin"], default-features = false, optional = true }
@@ -61,7 +59,7 @@ rayon = { workspace = true }
 [features]
 default = [
     "backend_eframe",
-#    "backend_miniquad",
+    "backend_miniquad",
 ]
 
 backend_eframe = ["dep:eframe"]

@@ -15,6 +15,7 @@ members = [
 
 # Maths
 
+# Can't upgrade `glam` until `glamour` is updated
 glam = { version = "0.27.0", features = ["approx", "mint", "rand", "serde", "debug-glam-assert", "std"] }
 glamour = { version = "0.11.1", features = ["serde", "mint"] }
 num-traits = "0.2.17"
@@ -46,7 +47,7 @@ valuable = { version = "0.1.0", features = ["derive"] }
 
 nonzero = "0.2.0"
 cfg-if = "1.0.0"
-itertools = "0.12.0"
+itertools = "0.13.0"
 derivative = "2.2.0"
 memoize = "0.4.2"
 approx = "0.5.1"
@@ -79,7 +80,8 @@ puffin_http = { git = "ssh://git@github.com/v0x0g/fork-puffin.git", branch = "ma
 opool = { git = "ssh://git@github.com/v0x0g/fork-opool.git", branch = "main" }
 # Latest version on <crates.io> is `0.14.0`, which is over a year old and uses incompatible version of egui
 # Github is more up-to-date
-egui_miniquad = { git = "ssh://git@github.com/not-fl3/egui-miniquad.git", branch = "master", package = "egui-miniquad" }
+egui-miniquad = { git = "ssh://git@github.com/v0x0g/fork-egui-miniquad.git", branch = "update-egui@0.28"}
+
 
 # ===== BUILD PROFILES =====
 

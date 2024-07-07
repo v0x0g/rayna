@@ -11,6 +11,7 @@
 # Allow repo settings
 !.gitignore
 !.gitattributes
+!readme.md
 
 
 ### CARGO ###

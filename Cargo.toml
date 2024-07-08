@@ -78,9 +78,6 @@ puffin = { git = "ssh://git@github.com/v0x0g/fork-puffin.git", branch = "main" }
 puffin_http = { git = "ssh://git@github.com/v0x0g/fork-puffin.git", branch = "main" }
 # Custom features from fork, removed type bounds
 opool = { git = "ssh://git@github.com/v0x0g/fork-opool.git", branch = "main" }
-# Latest version on <crates.io> is `0.14.0`, which is over a year old and uses incompatible version of egui
-# Github is more up-to-date
-egui-miniquad = { git = "ssh://git@github.com/v0x0g/fork-egui-miniquad.git", branch = "update-egui@0.28"}
 
 
 # ===== BUILD PROFILES =====

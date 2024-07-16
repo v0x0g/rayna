@@ -42,7 +42,6 @@ enum_dispatch = "0.3.12"
 getset = { workspace = true }
 itertools = { workspace = true }
 indextree = "4.6.0"
-once_cell = { workspace = true }
 image = { workspace = true }
 paste = { workspace = true }
 const_format = { workspace = true }

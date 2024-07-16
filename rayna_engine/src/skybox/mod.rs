@@ -11,7 +11,7 @@ use self::{
 };
 use crate::core::types::Colour;
 use crate::shared::ray::Ray;
-use crate::shared::RtRequirement;
+use crate::shared::ComponentRequirements;
 use enum_dispatch::enum_dispatch;
 
 /// The main trait for implementing a skybox
@@ -19,7 +19,7 @@ use enum_dispatch::enum_dispatch;
 /// This simply needs to return the sky colour for a given ray
 #[enum_dispatch]
 #[doc(notable_trait)]
-pub trait Skybox: RtRequirement {
+pub trait Skybox: ComponentRequirements {
     fn sky_colour(&self, ray: &Ray) -> Colour;
 }
 

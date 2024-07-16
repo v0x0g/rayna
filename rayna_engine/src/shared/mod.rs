@@ -12,5 +12,5 @@ pub mod validate;
 
 /// A simple marker trait that enforces a few other traits we need
 /// in the engine
-pub trait RtRequirement: Debug + Send + Sync {}
-impl<T: Debug + Send + Sync> RtRequirement for T {}
+pub trait ComponentRequirements: Debug + Send + Sync {}
+impl<T: Debug + Send + Sync> ComponentRequirements for T {}

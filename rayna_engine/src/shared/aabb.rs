@@ -1,4 +1,4 @@
-use crate::shared::RtRequirement;
+use crate::shared::ComponentRequirements;
 use enum_dispatch::enum_dispatch;
 use std::borrow::Borrow;
 
@@ -167,7 +167,7 @@ use crate::{material::MaterialInstance, mesh::MeshInstance};
 /// Trait that requires some type possibly has an AABB
 // TODO: Needs refactor
 #[enum_dispatch]
-pub trait HasAabb: RtRequirement {
+pub trait HasAabb: ComponentRequirements {
     /// Gets the bounding box for this mesh. If the mesh can't be bounded (e.g. infinite plane), return [None]
     fn aabb(&self) -> Option<&Aabb>;
 

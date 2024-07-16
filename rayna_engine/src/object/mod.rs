@@ -12,7 +12,7 @@ use crate::shared::aabb::HasAabb;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
-use crate::shared::RtRequirement;
+use crate::shared::ComponentRequirements;
 use rand_core::RngCore;
 
 // noinspection ALL
@@ -26,7 +26,7 @@ use self::{bvh::BvhObject, list::ObjectList, simple::SimpleObject, volumetric::V
 ///
 /// This should only be implemented on [`SimpleObject`], and any objects that group multiple objects together.
 #[doc(notable_trait)]
-pub trait Object: RtRequirement + HasAabb {
+pub trait Object: ComponentRequirements + HasAabb {
     type Mesh: MeshTrait;
     type Mat: Material;
     /// Attempts to perform an intersection between the given ray and the target mesh

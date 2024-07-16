@@ -6,7 +6,7 @@ use self::{
 use crate::core::types::{Colour, Vector3};
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use crate::shared::RtRequirement;
+use crate::shared::ComponentRequirements;
 use crate::texture::{Texture, TextureInstance};
 use enum_dispatch::enum_dispatch;
 use rand::RngCore;
@@ -21,7 +21,7 @@ pub mod metal;
 /// The trait that defines what properties a material has
 #[enum_dispatch]
 #[doc(notable_trait)]
-pub trait Material: RtRequirement {
+pub trait Material: ComponentRequirements {
     /// Scatters the input ray, according to the material's properties
     ///
     /// # Arguments
@@ -39,7 +39,7 @@ pub trait Material: RtRequirement {
     /// # use rayna_engine::shared::intersect::Intersection;
     /// # use rayna_engine::shared::math::reflect;
     /// # use rayna_engine::shared::ray::Ray;
-    /// # use rayna_engine::shared::{rng, RtRequirement};
+    /// # use rayna_engine::shared::{rng, ComponentRequirements};
     /// # use rayna_engine::core::types::{Colour, Vector3};
     /// #
     /// # #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -124,7 +124,7 @@ pub trait Material: RtRequirement {
     /// # use rayna_engine::shared::intersect::Intersection;
     /// # use rayna_engine::shared::math::reflect;
     /// # use rayna_engine::shared::ray::Ray;
-    /// # use rayna_engine::shared::{rng, RtRequirement};
+    /// # use rayna_engine::shared::{rng, ComponentRequirements};
     /// # use rayna_engine::core::types::{Colour, Vector3};
     /// #
     /// # #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -155,7 +155,7 @@ pub trait Material: RtRequirement {
 ///
 /// By using an enum, we can replace dynamic-dispatch with static dispatch.
 /// Just in case we do require dynamic dispatch for some reason, there is a
-/// [MaterialInstance::DynamicMaterial] variant, which wraps a generic material in an [std::sync::Arc]
+/// [MaterialInstance::DynamicMaterial] variant, which wraps a generic material in a [std::sync::Arc]
 ///
 /// # Using This Type
 /// You generally don't want to instantiate this type directly using the variants (as the names and variants might change),

@@ -1,6 +1,5 @@
 use crate::core::types::{Colour, Number};
 use crate::shared::math::Lerp;
-use derivative::Derivative;
 use getset::{CopyGetters, Getters};
 use ndarray::{ArcArray, Ix2, Shape};
 use std::ops::{Deref, DerefMut};

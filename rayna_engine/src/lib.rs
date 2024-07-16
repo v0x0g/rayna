@@ -18,6 +18,7 @@
 #![feature(portable_simd)]
 #![feature(iter_array_chunks)]
 #![feature(doc_notable_trait)]
+#![feature(map_try_insert)]
 // Be aggressive on warnings
 #![deny(rustdoc::all)]
 #![deny(clippy::all)]

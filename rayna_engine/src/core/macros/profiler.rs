@@ -24,6 +24,9 @@ macro_rules! profiler {
                 ThreadProfiler, ThreadInfo, GlobalProfiler
             };
 
+            // TODO: Profiling should not be initialised like this,
+            //  because it panics if the port is already in use
+
             #[doc = concat!("The address to bind the ", stringify!($name), " thread profilers' server to")]
             pub const ADDR: &'static str = concat!("127.0.0.1:", $port);
 

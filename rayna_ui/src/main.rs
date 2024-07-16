@@ -29,13 +29,13 @@ use crate::ui_val::APP_NAME;
 use tracing::debug;
 use tracing_subscriber::prelude::*;
 
-mod app;
-mod backend;
-mod ext;
-mod integration;
-mod profiler;
-pub(crate) mod targets;
-mod ui_val;
+pub mod app;
+pub mod backend;
+pub mod ext;
+pub mod integration;
+pub mod profiler;
+pub mod targets;
+pub mod ui_val;
 
 fn main() -> anyhow::Result<()> {
     // ===== Tracing =====

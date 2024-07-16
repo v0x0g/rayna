@@ -39,6 +39,7 @@
 pub mod core;
 pub mod material;
 pub mod mesh;
+pub mod noise;
 pub mod object;
 pub mod render;
 pub mod scene;

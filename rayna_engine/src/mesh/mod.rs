@@ -29,7 +29,7 @@ use crate::shared::aabb::HasAabb;
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
-use crate::shared::RtRequirement;
+use crate::shared::ComponentRequirements;
 use enum_dispatch::enum_dispatch;
 use rand_core::RngCore;
 // noinspection ALL - Used by enum_dispatch macro
@@ -50,7 +50,7 @@ pub mod primitive;
 
 #[enum_dispatch]
 #[doc(notable_trait)]
-pub trait Mesh: MeshProperties + RtRequirement {
+pub trait Mesh: MeshProperties + ComponentRequirements {
     /// Attempts to perform an intersection between the given ray and the target mesh
     ///
     /// # Return Value
@@ -86,7 +86,7 @@ pub enum MeshInstance {
 
 /// This trait describes an [Mesh], and the properties it has
 #[enum_dispatch]
-pub trait MeshProperties: RtRequirement + HasAabb {
+pub trait MeshProperties: ComponentRequirements + HasAabb {
     /// Gets the centre of the mesh.
     ///
     /// Scaling and rotation will happen around this point

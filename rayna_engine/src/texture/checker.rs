@@ -1,63 +1,59 @@
+use std::fmt::Debug;
+
+use glamour::TransformMap;
 use num_traits::float::FloatCore;
 use num_traits::Euclid;
 use rand_core::RngCore;
-use std::fmt::Debug;
 
-use crate::core::types::{Colour, Number, Vector2, Vector3};
-
+use crate::core::types::{Colour, Transform2, Transform3};
+use crate::scene::Scene;
 use crate::shared::intersect::Intersection;
-use crate::texture::dynamic::DynamicTexture;
-use crate::texture::Texture;
+use crate::texture::{Texture, TextureToken};
 
 #[derive(Clone, Debug)]
-pub struct WorldCheckerTexture<Odd: Texture = DynamicTexture, Even: Texture = DynamicTexture> {
-    pub offset: Vector3,
-    pub even: Even,
-    pub odd: Odd,
-    pub scale: Number,
+pub struct WorldCheckerTexture {
+    pub even: TextureToken,
+    pub odd: TextureToken,
+    pub transform: Transform3,
 }
 
-impl<Odd: Texture, Even: Texture> Texture for WorldCheckerTexture<Odd, Even> {
-    fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
-        let pos = (intersection.pos_w.to_vector() / self.scale) + self.offset;
+impl Texture for WorldCheckerTexture {
+    fn value(&self, scene: &Scene, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
+        let pos = self.transform.map_point(intersection.pos_w);
 
-        do_checker(pos.to_array(), &self.odd, &self.even, intersection, rng)
+        let tok = choose_checker(pos.to_array(), self.odd, self.even);
+        scene.get_tex(tok).value(scene, intersection, rng)
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct UvCheckerTexture<Odd: Texture = DynamicTexture, Even: Texture = DynamicTexture> {
-    pub offset: Vector2,
-    pub even: Even,
-    pub odd: Odd,
-    pub scale: Number,
+pub struct UvCheckerTexture {
+    pub even: TextureToken,
+    pub odd: TextureToken,
+    pub transform: Transform2,
 }
 
-impl<Odd: Texture, Even: Texture> Texture for UvCheckerTexture<Odd, Even> {
-    fn value(&self, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
-        let pos = (intersection.uv.to_vector() / self.scale) + self.offset;
+impl Texture for UvCheckerTexture {
+    fn value(&self, scene: &Scene, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
+        let pos = self.transform.map(intersection.uv);
 
-        do_checker(pos.to_array(), &self.odd, &self.even, intersection, rng)
+        let tok = choose_checker(pos.to_array(), self.odd, self.even);
+        scene.get_tex(tok).value(scene, intersection, rng)
     }
 }
 
 #[inline(always)]
-pub fn do_checker<C: Euclid + FloatCore>(
+pub fn choose_checker<C: Euclid + FloatCore>(
     coords: impl IntoIterator<Item = C>,
-    odd: &impl Texture,
-    even: &impl Texture,
-    intersection: &Intersection,
-    rng: &mut dyn RngCore,
-) -> Colour {
+    odd: TextureToken,
+    even: TextureToken,
+) -> TextureToken {
     let two: C = C::one() + C::one();
-
     let sum: C = coords.into_iter().map(C::floor).fold(C::zero(), |a: C, b: C| a + b);
-
     let is_even = C::rem_euclid(&sum, &two) < C::one();
-
     if is_even {
-        even.value(intersection, rng)
+        even
     } else {
-        odd.value(intersection, rng)
+        odd
     }
 }

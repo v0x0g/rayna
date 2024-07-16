@@ -15,14 +15,11 @@ impl<T: Into<Colour>> From<T> for SolidTexture {
 }
 
 impl<T: Into<Colour>> From<T> for TextureInstance {
-    fn from(value: T) -> Self { SolidTexture { albedo: value.into() }.into() }
+    fn from(value: T) -> Self { SolidTexture::from(value).into() }
 }
 
 impl Default for SolidTexture {
-    fn default() -> Self {
-        // Black
-        Colour::from([0.; 3]).into()
-    }
+    fn default() -> Self { Colour::BLACK.into() }
 }
 
 impl Texture for SolidTexture {

@@ -46,8 +46,10 @@ getset = { workspace = true }
 itertools = { workspace = true }
 indextree = "4.6.0"
 once_cell = { workspace = true }
-image = "0.25.1"
+image = { workspace = true }
 static_assertions = { workspace = true }
+paste = { workspace = true }
+const_format = { workspace = true }
 
 # Perf
 puffin = { workspace = true } # PATCHED
@@ -64,4 +66,4 @@ tempfile = "3.10.1"
 opener = "0.7.1"
 viuer = "0.7.1"
 # Incompatible version with ours, dev-only
-image_viuer_compat = {version = "0.24.9", package = "image" }
+image_viuer_compat = { version = "0.24.9", package = "image" }

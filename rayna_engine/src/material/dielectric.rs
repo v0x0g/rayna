@@ -3,20 +3,27 @@ use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::math;
 use crate::shared::ray::Ray;
-use crate::texture::Texture;
+use crate::texture::{Texture, TextureToken};
 
+use crate::scene::Scene;
 use num_traits::Pow;
 use rand::{Rng, RngCore};
 
 #[derive(Copy, Clone, Debug)]
-pub struct DielectricMaterial<Tex: Texture> {
-    pub albedo: Tex,
+pub struct DielectricMaterial {
+    pub albedo: TextureToken,
     pub refractive_index: Number,
     pub density: Number,
 }
 
-impl<Tex: Texture> Material for DielectricMaterial<Tex> {
-    fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
+impl Material for DielectricMaterial {
+    fn scatter(
+        &self,
+        ray: &Ray,
+        _scene: &Scene,
+        intersection: &Intersection,
+        rng: &mut dyn RngCore,
+    ) -> Option<Vector3> {
         let index_ratio = if intersection.front_face {
             1.0 / self.refractive_index
         } else {
@@ -42,6 +49,7 @@ impl<Tex: Texture> Material for DielectricMaterial<Tex> {
     fn reflected_light(
         &self,
         ray: &Ray,
+        scene: &Scene,
         intersection: &Intersection,
         _future_ray: &Ray,
         future_col: &Colour,
@@ -51,7 +59,7 @@ impl<Tex: Texture> Material for DielectricMaterial<Tex> {
         // Therefore we cannot know how far we have travelled inside the material on the 'entering' intersection.
         // So on the entering intersection, do nothing, and on exiting intersection, calculate distance travelled inside
         // the object, so we can use [Beer's Law] (https://en.wikipedia.org/wiki/Beer%E2%80%93Lambert_law)
-        // Possibly sub-optimal, but not much we can do
+        // This is very suboptimal, but it has to wait for the path-tracking refactor
 
         let exiting_intersection = !intersection.front_face;
         if !exiting_intersection {
@@ -60,17 +68,16 @@ impl<Tex: Texture> Material for DielectricMaterial<Tex> {
 
         let dist_inside = Point3::distance(intersection.pos_w, ray.pos());
         let transmission = (-self.density * dist_inside) as Channel;
-        // NOTE: This is the colour at the exiting intersection, which might not be accurate if the texture
-        //  is non-homogenous
-        // TODO: Fix this texture issue somehow, maybe sample along the line and integrate that?
-        let attenuation_col = self.albedo.value(intersection, rng);
+        // TODO: This is the colour at the exiting intersection, which might not be accurate if the texture
+        //  is non-homogenous. Maybe sample along the line and integrate that?
+        let attenuation_col = scene.get_tex(self.albedo).value(intersection, rng);
 
         // future_col * (attenuation_col.exp(transmission))
         future_col * attenuation_col * transmission.exp()
     }
 }
 
-impl<Tex: Texture> DielectricMaterial<Tex> {
+impl DielectricMaterial {
     fn reflectance(cosine: Number, ref_idx: Number) -> Number {
         // Use Schlick's approximation for reflectance.
         let r0 = (1. - ref_idx) / (1. + ref_idx);

@@ -49,6 +49,7 @@ impl const From<ColourRgb> for (Channel, Channel, Channel) {
 impl<const N: usize> Colour<N> {
     pub const BLACK: Self = Self::new([0.; N]);
     pub const WHITE: Self = Self::new([1.; N]);
+    pub const HALF_GREY: Self = Self::new([0.5; N]);
 }
 
 impl Colour<3> {

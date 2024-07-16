@@ -3,20 +3,21 @@ use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::rng;
-use crate::texture::{Texture, TextureInstance};
+use crate::texture::{Texture, TextureToken};
 
+use crate::scene::Scene;
 use rand_core::RngCore;
 
 /// A material that uniformly scatters rays in all directions
 ///
 /// Normally this is paired with a [`crate::object::volumetric::VolumetricObject`]
 #[derive(Copy, Clone, Debug)]
-pub struct IsotropicMaterial<Tex: Texture> {
-    pub albedo: Tex,
+pub struct IsotropicMaterial {
+    pub albedo: TextureToken,
     pub density: Number,
 }
 
-impl Default for IsotropicMaterial<TextureInstance> {
+impl Default for IsotropicMaterial {
     fn default() -> Self {
         Self {
             albedo: [0.5; 3].into(),
@@ -25,14 +26,21 @@ impl Default for IsotropicMaterial<TextureInstance> {
     }
 }
 
-impl<Tex: Texture> Material for IsotropicMaterial<Tex> {
-    fn scatter(&self, _ray: &Ray, _intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
+impl Material for IsotropicMaterial {
+    fn scatter(
+        &self,
+        _ray: &Ray,
+        _scene: &Scene,
+        _intersection: &Intersection,
+        rng: &mut dyn RngCore,
+    ) -> Option<Vector3> {
         Some(rng::normal_on_unit_sphere(rng))
     }
     //TODO: Take into account distance along travelled ray (beer's law?)
     fn reflected_light(
         &self,
         ray: &Ray,
+        scene: &Scene,
         intersection: &Intersection,
         _future_ray: &Ray,
         future_col: &Colour,
@@ -45,7 +53,7 @@ impl<Tex: Texture> Material for IsotropicMaterial<Tex> {
         // NOTE: This is the colour at the exiting intersection, which might not be accurate if the texture
         //  is non-homogenous
         // TODO: Fix this texture issue somehow, maybe sample along the line and integrate that?
-        let attenuation_col = self.albedo.value(intersection, rng);
+        let attenuation_col = scene.get_tex(self.albedo).value(intersection, rng);
 
         // future_col * (attenuation_col.exp(transmission))
         future_col * attenuation_col * transmission.exp()

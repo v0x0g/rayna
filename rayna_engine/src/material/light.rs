@@ -1,28 +1,38 @@
 use crate::core::types::{Colour, Vector3};
 use crate::material::Material;
+use crate::scene::Scene;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
-use crate::texture::Texture;
+use crate::texture::{Texture, TextureToken};
 use rand_core::RngCore;
 
 /// A simple emissive material for turning an mesh into a light.
 ///
 /// Does not scatter.
 #[derive(Copy, Clone, Debug)]
-pub struct LightMaterial<Tex: Texture> {
-    pub emissive: Tex,
+pub struct LightMaterial {
+    pub emissive: TextureToken,
 }
 
-impl<Tex: Texture> Material for LightMaterial<Tex> {
-    fn scatter(&self, _ray: &Ray, _intersection: &Intersection, _rng: &mut dyn RngCore) -> Option<Vector3> { None }
+impl Material for LightMaterial {
+    fn scatter(
+        &self,
+        _ray: &Ray,
+        _scene: &Scene,
+        _intersection: &Intersection,
+        _rng: &mut dyn RngCore,
+    ) -> Option<Vector3> {
+        None
+    }
 
-    fn emitted_light(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
-        self.emissive.value(intersection, rng)
+    fn emitted_light(&self, _ray: &Ray, _scene: &Scene, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
+        scene.get_tex(self.emissive).value(intersection, rng)
     }
 
     fn reflected_light(
         &self,
         _ray: &Ray,
+        _scene: &Scene,
         _intersection: &Intersection,
         _future_ray: &Ray,
         _future_col: &Colour,

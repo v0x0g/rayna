@@ -3,18 +3,25 @@ use crate::material::Material;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
 use crate::shared::{math, rng};
-use crate::texture::Texture;
+use crate::texture::{Texture, TextureToken};
 
+use crate::scene::Scene;
 use rand::RngCore;
 
 #[derive(Copy, Clone, Debug)]
-pub struct MetalMaterial<Tex: Texture> {
-    pub albedo: Tex,
+pub struct MetalMaterial {
+    pub albedo: TextureToken,
     pub fuzz: Number,
 }
 
-impl<Tex: Texture> Material for MetalMaterial<Tex> {
-    fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
+impl Material for MetalMaterial {
+    fn scatter(
+        &self,
+        ray: &Ray,
+        _scene: &Scene,
+        intersection: &Intersection,
+        rng: &mut dyn RngCore,
+    ) -> Option<Vector3> {
         let reflected = math::reflect(ray.dir(), intersection.ray_normal);
         let rand = rng::normal_on_unit_sphere(rng);
 
@@ -36,11 +43,12 @@ impl<Tex: Texture> Material for MetalMaterial<Tex> {
     fn reflected_light(
         &self,
         _ray: &Ray,
+        scene: &Scene,
         intersect: &Intersection,
         _future_ray: &Ray,
         future_col: &Colour,
         rng: &mut dyn RngCore,
     ) -> Colour {
-        future_col * self.albedo.value(intersect, rng)
+        future_col * scene.get_tex(self.albedo).value(intersect, rng)
     }
 }

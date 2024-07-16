@@ -1,9 +1,9 @@
 use crate::core::types::IdToken;
 use crate::material::{MaterialInstance, MaterialToken};
 use crate::mesh::{MeshInstance, MeshToken};
+use crate::noise::{NoiseInstance, NoiseToken};
 use crate::object::{ObjectInstance, ObjectToken};
 use crate::skybox::SkyboxInstance;
-use crate::texture::r#mod::{NoiseInstance, NoiseToken};
 use crate::texture::{TextureInstance, TextureToken};
 use const_format::formatcp;
 use paste::paste;
@@ -120,7 +120,6 @@ macro_rules! gen_components {
         ($ident:ident, $field_name:ident, $inst_type:ty, $token_type:ty $(,)?)
     ),* $(,)?} => {
 
-
 impl Scene { $(paste!(
 
     #[doc(formatcp!(
@@ -164,7 +163,6 @@ impl Scene { $(paste!(
     }
 
 ))*}
-
 
     };
 }

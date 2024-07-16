@@ -4,15 +4,16 @@ use self::{
     lambertian::LambertianMaterial, light::LightMaterial, metal::MetalMaterial,
 };
 use crate::core::types::{Colour, Vector3};
+use crate::scene::Scene;
 use crate::shared::intersect::Intersection;
 use crate::shared::ray::Ray;
+use crate::shared::token::generate_component_token;
 use crate::shared::ComponentRequirements;
 use crate::texture::{Texture, TextureInstance};
 use enum_dispatch::enum_dispatch;
 use rand::RngCore;
 
 pub mod dielectric;
-pub mod dynamic;
 pub mod isotropic;
 pub mod lambertian;
 pub mod light;
@@ -70,7 +71,7 @@ pub trait Material: ComponentRequirements {
     /// #   }
     /// }
     /// ```
-    fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3>;
+    fn scatter(&self, ray: &Ray, scene: &Scene, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3>;
 
     // /// Calculates the value of the probability of the material having scattered a ray in the given direction.
     // ///
@@ -97,9 +98,8 @@ pub trait Material: ComponentRequirements {
     /// Returns the light (colour) of emission for the given intersection and ray. The default implementation
     /// is to return black (`Pixel([0.; 3])`)
     #[allow(unused_variables)]
-    fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
-        const BLACK: Colour = Colour { 0: [0.; 3] };
-        BLACK
+    fn emitted_light(&self, ray: &Ray, scene: &Scene, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
+        Colour::BLACK
     }
 
     /// This function calculates what light should be reflected, based off the future light/ray information
@@ -144,6 +144,7 @@ pub trait Material: ComponentRequirements {
     fn reflected_light(
         &self,
         ray: &Ray,
+        scene: &Scene,
         intersection: &Intersection,
         future_ray: &Ray,
         future_col: &Colour,
@@ -165,15 +166,16 @@ pub trait Material: ComponentRequirements {
 /// and only use `T = ` [MaterialInstance] at the highest level where possible
 #[enum_dispatch(Material)]
 #[derive(Clone, Debug)]
-pub enum MaterialInstance<Tex: Texture> {
-    LambertianMaterial(LambertianMaterial<Tex>),
-    MetalMaterial(MetalMaterial<Tex>),
-    DielectricMaterial(DielectricMaterial<Tex>),
-    IsotropicMaterial(IsotropicMaterial<Tex>),
-    LightMaterial(LightMaterial<Tex>),
-    DynamicMaterial,
+pub enum MaterialInstance {
+    LambertianMaterial,
+    MetalMaterial,
+    DielectricMaterial,
+    IsotropicMaterial,
+    LightMaterial,
 }
 
-impl Default for MaterialInstance<TextureInstance> {
+generate_component_token!(MaterialToken for MaterialInstance);
+
+impl Default for MaterialInstance {
     fn default() -> Self { LambertianMaterial::default().into() }
 }

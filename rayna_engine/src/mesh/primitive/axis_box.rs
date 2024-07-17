@@ -6,8 +6,8 @@ use rand_core::RngCore;
 
 use crate::core::types::{Number, Point3, Size3, Vector2, Vector3};
 
-use crate::mesh::{Mesh, MeshProperties};
-use crate::shared::aabb::{Aabb, HasAabb};
+use crate::mesh::Mesh;
+use crate::shared::aabb::{Aabb, Bounded};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
@@ -30,8 +30,8 @@ impl AxisBoxMesh {
         let aabb = Aabb::new(a, b);
         Self {
             centre: Point3::from((aabb.min().to_vector() + aabb.max().to_vector()) / 2.),
-            radius: aabb.size() / 2.,
-            inv_radius: (aabb.size() / 2.).recip(),
+            radius: aabb.size().to_vector() / 2.,
+            inv_radius: (aabb.size().to_vector() / 2.).recip(),
             aabb,
         }
     }
@@ -82,7 +82,7 @@ impl Mesh for AxisBoxMesh {
 
         // Rotation: `rd *= box.rot; ro *= box.rot;`
 
-        // Winding direction: -1 if the ray starts inside of the box (i.e., and is leaving), +1 if it is starting outside of the box
+        // Winding direction: -1 if the ray starts inside the box (i.e., and is leaving), +1 if it is starting outside of the box
         let winding = ((ro.abs() * self.inv_radius).max_element() - 1.).signum();
 
         // We'll use the negated sign of the ray direction in several places, so precompute it.
@@ -100,7 +100,7 @@ impl Mesh for AxisBoxMesh {
         macro_rules! test {
             // Preserve exactly one element of `sgn`, with the correct sign
             // Also masks the distance by the non-zero axis
-            // Dot product is faster than this CMOV chain, but doesn't work when distanceToPlane contains nans or infs.
+            // Dot product is faster than this CMOV chain, but doesn't work when distanceToPlane contains NANs or INFs.
             ($u:ident, $vw:ident) => {{
                 let dist: Number = plane_dist.$u;
                 // Is there a hit on this axis in the valid distance interval?
@@ -145,11 +145,8 @@ impl Mesh for AxisBoxMesh {
     }
 }
 
-impl HasAabb for AxisBoxMesh {
-    fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
-}
-impl MeshProperties for AxisBoxMesh {
-    fn centre(&self) -> Point3 { self.centre }
+impl Bounded for AxisBoxMesh {
+    fn aabb(&self) -> Aabb { self.aabb }
 }
 
 // endregion Mesh Implementation

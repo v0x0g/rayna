@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use valuable::Valuable;
 
+// TODO: Multiple camera types (yes, make it a component)
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Camera {
     /// Position the camera is located at

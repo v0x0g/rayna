@@ -22,7 +22,7 @@ use crate::material::lambertian::LambertianMaterial;
 use crate::material::light::LightMaterial;
 use crate::material::metal::MetalMaterial;
 use crate::material::MaterialInstance;
-use crate::mesh::advanced::bvh::BvhMesh;
+use crate::mesh::advanced::bvh_mesh::BvhMesh;
 use crate::mesh::isosurface::polygonised::PolygonisedIsosurfaceMesh;
 use crate::mesh::isosurface::raymarched::RaymarchedIsosurfaceMesh;
 use crate::mesh::planar::infinite_plane::{InfinitePlaneMesh, UvWrappingMode};

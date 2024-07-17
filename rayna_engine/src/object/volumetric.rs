@@ -3,7 +3,7 @@ use crate::material::Material;
 use crate::mesh::Mesh as MeshTrait;
 use crate::object::transform::ObjectTransform;
 use crate::object::Object;
-use crate::shared::aabb::{Aabb, HasAabb};
+use crate::shared::aabb::{Aabb, Bounded};
 use crate::shared::intersect::{FullIntersection, Intersection};
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
@@ -160,8 +160,8 @@ where
     }
 }
 
-impl<Mesh: MeshTrait, Mat: Material> HasAabb for VolumetricObject<Mesh, Mat> {
-    fn aabb(&self) -> Option<&Aabb> { self.aabb.as_ref() }
+impl<Mesh: MeshTrait, Mat: Material> Bounded for VolumetricObject<Mesh, Mat> {
+    fn aabb(&self) -> Aabb { self.aabb.as_ref() }
 }
 
 // endregion Object Impl

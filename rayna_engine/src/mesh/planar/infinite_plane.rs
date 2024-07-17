@@ -1,11 +1,10 @@
 use getset::CopyGetters;
 use rand_core::RngCore;
 
-use crate::core::types::{Number, Point2, Point3};
-
+use crate::core::types::{Number, Point2};
 use crate::mesh::planar::Planar;
-use crate::mesh::{Mesh, MeshProperties};
-use crate::shared::aabb::{Aabb, HasAabb};
+use crate::mesh::Mesh;
+use crate::shared::aabb::{Aabb, Bounded};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
@@ -92,12 +91,8 @@ impl Mesh for InfinitePlaneMesh {
     }
 }
 
-impl HasAabb for InfinitePlaneMesh {
-    fn aabb(&self) -> Option<&Aabb> { None }
-}
-
-impl MeshProperties for InfinitePlaneMesh {
-    fn centre(&self) -> Point3 { self.plane.p() }
+impl Bounded for InfinitePlaneMesh {
+    fn aabb(&self) -> Aabb { Aabb::INFINITE }
 }
 
 // endregion Mesh Impl

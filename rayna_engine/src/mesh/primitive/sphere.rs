@@ -1,6 +1,6 @@
 use crate::core::types::{Number, Point2, Point3, Vector3};
-use crate::mesh::{Mesh, MeshProperties};
-use crate::shared::aabb::{Aabb, HasAabb};
+use crate::mesh::Mesh;
+use crate::shared::aabb::{Aabb, Bounded};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
@@ -16,8 +16,6 @@ use rand_core::RngCore;
 pub struct SphereMesh {
     pos: Point3,
     radius: Number,
-    // TODO: is `radius_sqr` a perf improvement?
-    radius_sqr: Number,
     aabb: Aabb,
 }
 
@@ -52,7 +50,7 @@ impl Mesh for SphereMesh {
         //  normalised, this means that `a = 1`, and we can simplify the equations a bit
         validate::normal3(ray_dir);
         let half_b = Vector3::dot(ray_rel_pos, ray_dir);
-        let c = ray_rel_pos.length_squared() - self.radius_sqr;
+        let c = ray_rel_pos.length_squared() - (self.radius * self.radius);
         let discriminant = (half_b * half_b) - (c);
 
         //No solutions to where ray intersects with sphere because of negative square root
@@ -99,11 +97,8 @@ impl Mesh for SphereMesh {
     }
 }
 
-impl HasAabb for SphereMesh {
-    fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
-}
-impl MeshProperties for SphereMesh {
-    fn centre(&self) -> Point3 { self.pos }
+impl Bounded for SphereMesh {
+    fn aabb(&self) -> Aabb { self.aabb }
 }
 
 // endregion Mesh Impl

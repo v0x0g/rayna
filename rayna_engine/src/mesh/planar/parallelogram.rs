@@ -1,11 +1,10 @@
 use getset::CopyGetters;
 use rand_core::RngCore;
 
-use crate::core::types::{Number, Point2, Point3};
-
+use crate::core::types::{Number, Point2};
 use crate::mesh::planar::Planar;
-use crate::mesh::{Mesh, MeshProperties};
-use crate::shared::aabb::{Aabb, HasAabb};
+use crate::mesh::Mesh;
+use crate::shared::aabb::{Aabb, Bounded};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
@@ -16,7 +15,6 @@ pub struct ParallelogramMesh {
     /// The plane that this mesh sits upon
     plane: Planar,
     aabb: Aabb,
-    centre: Point3,
 }
 
 // region Constructors
@@ -30,10 +28,9 @@ impl ParallelogramMesh {
             plane.p() + plane.v(),
             plane.p() + plane.u() + plane.v(),
         );
-        let centre = p + (plane.u() / 2.) + (plane.v() / 2.);
-        let aabb = Aabb::encompass_points([p, a, b, ab]).min_padded(super::AABB_PADDING);
+        let aabb = Aabb::encompass_points([p, a, b, ab]).with_min_padding(super::AABB_PADDING);
 
-        Self { plane, aabb, centre }
+        Self { plane, aabb }
     }
 }
 
@@ -57,11 +54,8 @@ impl Mesh for ParallelogramMesh {
     }
 }
 
-impl HasAabb for ParallelogramMesh {
-    fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
-}
-impl MeshProperties for ParallelogramMesh {
-    fn centre(&self) -> Point3 { self.plane.p() }
+impl Bounded for ParallelogramMesh {
+    fn aabb(&self) -> Aabb { self.aabb }
 }
 
 // endregion Mesh Impl

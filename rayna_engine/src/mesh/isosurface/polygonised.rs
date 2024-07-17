@@ -1,15 +1,13 @@
 use crate::core::targets::MESH;
 use crate::core::types::{Number, Point3, Vector3};
-use crate::mesh::advanced::bvh::BvhMesh;
-//use crate::mesh::advanced::triangle::BatchTriangle;
-use crate::mesh::isosurface::SdfGeneratorFunction;
-use crate::mesh::primitive::triangle::Triangle;
-use crate::mesh::{Mesh, MeshProperties};
-use crate::shared::aabb::{Aabb, HasAabb};
+use crate::mesh::advanced::list::ListMesh;
+use crate::mesh::isosurface::SdfFunction;
+use crate::mesh::primitive::triangle::TriangleMesh;
+use crate::mesh::Mesh;
+use crate::shared::aabb::{Aabb, Bounded};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
-use derivative::Derivative;
 use getset::{CopyGetters, Getters};
 use isosurface::distance::Signed;
 use isosurface::extractor::IndexedInterleavedNormals;
@@ -22,26 +20,17 @@ use rand_core::RngCore;
 use std::iter::zip;
 use tracing::warn;
 
-/// How many triangles we batch at once
-// TODO: BatchTriangle currently broken
-//const N_TRI: usize = 1;
-
 /// A mesh struct that is created by creating an isosurface from a given SDF
 ///
 /// # Transforming
 /// This mesh purposefully does not have any properties for transforming,
 /// so you must offset the resulting object using a transform
-#[derive(CopyGetters, Getters, Derivative, Clone)]
-#[derivative(Debug)]
+#[derive(CopyGetters, Getters, Clone, Debug)]
 pub struct PolygonisedIsosurfaceMesh {
     #[get_copy = "pub"]
     resolution: usize,
-    /// How many total triangles there are in this [PolygonisedIsosurfaceMesh]
-    #[get_copy = "pub"]
-    count: usize,
-    #[derivative(Debug = "ignore")]
     #[get = "pub"]
-    mesh: BvhMesh<Triangle>,
+    mesh: ListMesh,
 }
 
 // region Constructors
@@ -55,7 +44,7 @@ impl PolygonisedIsosurfaceMesh {
     /// The resulting mesh has dimensions of a `N*N*N` grid, where `N = resolution`
     /// * `sdf`: The **SDF** that defines the surface for the mesh.
     /// This SDF will be evaluated in local-space: `x,y,z: [0, 1]`
-    pub fn new<F: SdfGeneratorFunction>(resolution: usize, sdf: F) -> Self {
+    pub fn new<SDF: SdfFunction>(resolution: usize, sdf: SDF) -> Self {
         let source = SdfWrapper {
             func: sdf,
             epsilon: 1e-7,
@@ -96,8 +85,6 @@ impl PolygonisedIsosurfaceMesh {
             .map(|vs| vs.map(|v| v as usize))
             .collect_vec();
 
-        let mut triangles = vec![];
-
         // Loop over all indices, map them to the vertex positions, and create a triangle
         // TODO: I think I'm transposing twice here which is pointless. Maybe optimise that?
         //  Not super important though since this isn't a hot path
@@ -123,21 +110,11 @@ impl PolygonisedIsosurfaceMesh {
             })
             .unzip();
 
-        // Now batch the triangles together
-        // TODO: Don't skip the remainder
-        // for (vertices, normals) in zip(tri_verts.chunks(N_TRI), tri_normals.chunks(N_TRI)) {
-        for (vertices, normals) in zip(tri_verts, tri_normals) {
-            triangles.push(Triangle::new(vertices, normals));
-        }
+        // TODO: Use TrianglesMesh
+        let triangles = zip(tri_verts, tri_normals).map(|(v, n)| TriangleMesh::new(v, n));
+        let mesh = ListMesh::new(triangles);
 
-        let count = triangles.len();
-        let mesh = BvhMesh::new(triangles);
-
-        Self {
-            count,
-            resolution,
-            mesh,
-        }
+        Self { resolution, mesh }
     }
 }
 
@@ -145,24 +122,24 @@ impl PolygonisedIsosurfaceMesh {
 
 // region Isosurface Helper
 
-/// A custom wrapper struct around an [SdfGeneratorFunction]
+/// A custom wrapper struct around an [SdfFunction]
 ///
 /// It is used for
-struct SdfWrapper<F: SdfGeneratorFunction> {
+struct SdfWrapper<F: SdfFunction> {
     pub func: F,
     pub epsilon: Number,
 }
 
 // TODO: See if we can use Numbers (f64) with [SdfWrapper],
 //  instead of converting to/from f32
-impl<F: SdfGeneratorFunction> ScalarSource for SdfWrapper<F> {
+impl<F: SdfFunction> ScalarSource for SdfWrapper<F> {
     fn sample_scalar(&self, Vec3 { x, y, z }: Vec3) -> Signed {
         let point = [x, y, z].map(|n| n as Number).into();
         Signed((self.func)(point) as f32)
     }
 }
 
-impl<F: SdfGeneratorFunction> HermiteSource for SdfWrapper<F> {
+impl<F: SdfFunction> HermiteSource for SdfWrapper<F> {
     fn sample_normal(&self, Vec3 { x, y, z }: Vec3) -> Vec3 {
         let p = [x, y, z].map(|n| n as Number).into();
         let v = (self.func)(p);
@@ -182,12 +159,8 @@ impl<F: SdfGeneratorFunction> HermiteSource for SdfWrapper<F> {
 
 // region Mesh Impl
 
-impl HasAabb for PolygonisedIsosurfaceMesh {
-    fn aabb(&self) -> Option<&Aabb> { self.mesh.aabb() }
-}
-
-impl MeshProperties for PolygonisedIsosurfaceMesh {
-    fn centre(&self) -> Point3 { Point3::ZERO }
+impl Bounded for PolygonisedIsosurfaceMesh {
+    fn aabb(&self) -> Aabb { self.mesh.aabb() }
 }
 
 impl Mesh for PolygonisedIsosurfaceMesh {

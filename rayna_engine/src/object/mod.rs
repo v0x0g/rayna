@@ -8,7 +8,7 @@ use crate::core::types::Number;
 use crate::material::Material;
 use crate::mesh::Mesh as MeshTrait;
 use crate::shared::aabb::Aabb;
-use crate::shared::aabb::HasAabb;
+use crate::shared::aabb::Bounded;
 use crate::shared::intersect::FullIntersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
@@ -16,7 +16,7 @@ use crate::shared::ComponentRequirements;
 use rand_core::RngCore;
 
 // noinspection ALL
-use self::{bvh::BvhObject, list::ObjectList, simple::SimpleObject, volumetric::VolumetricObject};
+use self::{bvh_object::BvhObject, list::ObjectList, simple::SimpleObject, volumetric::VolumetricObject};
 
 // TODO: Should objects (as well as other traits) have some sort of identifier?
 
@@ -26,7 +26,7 @@ use self::{bvh::BvhObject, list::ObjectList, simple::SimpleObject, volumetric::V
 ///
 /// This should only be implemented on [`SimpleObject`], and any objects that group multiple objects together.
 #[doc(notable_trait)]
-pub trait Object: ComponentRequirements + HasAabb {
+pub trait Object: ComponentRequirements + Bounded {
     type Mesh: MeshTrait;
     type Mat: Material;
     /// Attempts to perform an intersection between the given ray and the target mesh
@@ -71,8 +71,8 @@ impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> Object for ObjectInstance<M
     }
 }
 
-impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> HasAabb for ObjectInstance<Mesh, Mat> {
-    fn aabb(&self) -> Option<&Aabb> {
+impl<Mesh: MeshTrait + Clone, Mat: Material + Clone> Bounded for ObjectInstance<Mesh, Mat> {
+    fn aabb(&self) -> Aabb {
         match self {
             Self::Bvh(v) => v.aabb(),
             Self::SimpleObject(v) => v.aabb(),

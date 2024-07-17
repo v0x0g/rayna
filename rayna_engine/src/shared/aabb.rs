@@ -2,9 +2,9 @@ use crate::shared::ComponentRequirements;
 use enum_dispatch::enum_dispatch;
 use std::borrow::Borrow;
 
+use crate::core::types::{Number, Point3, Size3, Vector3};
 use getset::*;
-
-use crate::core::types::{Number, Point3, Vector3};
+use itertools::Itertools;
 
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
@@ -19,10 +19,6 @@ pub struct Aabb {
     min: Point3,
     /// The upper corner of the [Aabb]; the corner with the largest coordinates
     max: Point3,
-    /// The difference between [min](fn@Self::min) and [max](fn@Self::max); how large the [Aabb] is
-    size: Vector3,
-    area: Number,
-    volume: Number,
 }
 
 // region Constructors
@@ -33,22 +29,13 @@ impl Aabb {
         let (a, b) = (a.into(), b.into());
         let min = Point3::min(a, b);
         let max = Point3::max(a, b);
-        let size = max - min;
-        let area = ((size.x * size.y) + (size.y * size.z) + (size.z * size.x)) * 2.;
-        let volume = size.x * size.y * size.z;
-        Self {
-            min,
-            max,
-            size,
-            area,
-            volume,
-        }
+        Self { min, max }
     }
 
-    pub fn new_centred(centre: impl Into<Point3>, size: impl Into<Vector3>) -> Self {
+    pub fn new_centred(centre: impl Into<Point3>, size: impl Into<Size3>) -> Self {
         let (centre, size) = (centre.into(), size.into());
-        let min = centre - size / 2.;
-        let max = centre + size / 2.;
+        let min = centre - size.to_vector() / 2.;
+        let max = centre + size.to_vector() / 2.;
         Self::new(min, max)
     }
 
@@ -81,9 +68,9 @@ impl Aabb {
     /// Ensures that an AABB has all sides of at least `thresh` thickness.
     /// If any side widths between corners are less than this threshold, the [Aabb] will
     /// be expanded (away from the centre) to fit.
-    pub fn min_padded(&self, thresh: Number) -> Self {
+    pub fn with_min_padding(&self, thresh: Number) -> Self {
         let mut dims = self.size();
-        let centre = self.min + dims / 2.;
+        let centre = self.center();
         dims.as_array_mut().iter_mut().for_each(|d| *d = d.max(thresh));
         return Self::new_centred(centre, dims);
     }
@@ -93,8 +80,22 @@ impl Aabb {
 
 // region Helper
 impl Aabb {
+    /// A special [`Aabb`] value that indicates the lack of bounds, aka an infinite bounding box.
+    ///
+    /// This can be useful for shapes such as infinite planes, which cannot be bounded.
+    ///
+    /// This is currently implemented as an AABB with corners in both infinities,
+    /// however this should not be relied upon. If an object is not bounded, it should
+    /// *always* only return [INFINITE][`Aabb::INFINITE`], and no other possible values are allowed.
+    pub const INFINITE: Self = Self {
+        min: Point3::NEG_INFINITY,
+        max: Point3::INFINITY,
+    };
+
+    pub const fn is_infinite(&self) -> bool { *self == Self::INFINITE }
+
     // Returns the corners of the AABB
-    pub fn corners(&self) -> [Point3; 8] {
+    pub const fn corners(&self) -> [Point3; 8] {
         let (l, h) = (self.min, self.max);
         [
             [l.x, l.y, l.z].into(),
@@ -107,6 +108,15 @@ impl Aabb {
             [h.x, h.y, h.z].into(),
         ]
     }
+
+    pub const fn size(&self) -> Size3 { Size3::from_vector(self.max() - self.min()) }
+    pub const fn area(&self) -> Number {
+        let size = self.size().to_vector();
+        ((size.x * size.y) + (size.y * size.z) + (size.z * size.x)) * 2.
+    }
+    pub const fn volume(&self) -> Number { self.size().volume() }
+
+    pub const fn center(&self) -> Point3 { self.max + (self.size().to_vector() / 2.0) }
 }
 
 // endregion Helper
@@ -125,54 +135,48 @@ impl Aabb {
         */
 
         // This is actually correct, even though it appears not to handle edge cases
-        // (ray.n.{x,y,z} == 0). It works because the infinities that result from
+        // (`ray.n.{x,y,z} == 0`). It works because the infinities that result from
         // dividing by zero will still behave correctly in the comparisons. Rays
-        // which are parallel to an axis and outside the box will have tmin == inf
-        // or tmax == -inf, while rays inside the box will have tmin and tmax
+        // which are parallel to an axis and outside the box will have `t_min == INF`
+        // or `t_max == -INF`, while rays inside the box will have `t_min` and `t_max`
         // unchanged.
+
+        // PERF: Can we elide this check; does the maths still work?
+        if self.is_infinite() {
+            return true;
+        }
 
         let tx1 = (self.min.x - ray.pos().x) * ray.inv_dir().x;
         let tx2 = (self.max.x - ray.pos().x) * ray.inv_dir().x;
 
-        let mut tmin = Number::min(tx1, tx2);
-        let mut tmax = Number::max(tx1, tx2);
+        let mut t_min = Number::min(tx1, tx2);
+        let mut t_max = Number::max(tx1, tx2);
 
         let ty1 = (self.min.y - ray.pos().y) * ray.inv_dir().y;
         let ty2 = (self.max.y - ray.pos().y) * ray.inv_dir().y;
 
-        tmin = Number::max(tmin, Number::min(ty1, ty2));
-        tmax = Number::min(tmax, Number::max(ty1, ty2));
+        t_min = Number::max(t_min, Number::min(ty1, ty2));
+        t_max = Number::min(t_max, Number::max(ty1, ty2));
 
         let tz1 = (self.min.z - ray.pos().z) * ray.inv_dir().z;
         let tz2 = (self.max.z - ray.pos().z) * ray.inv_dir().z;
 
-        tmin = Number::max(tmin, Number::min(tz1, tz2));
-        tmax = Number::min(tmax, Number::max(tz1, tz2));
+        t_min = Number::max(t_min, Number::min(tz1, tz2));
+        t_max = Number::min(t_max, Number::max(tz1, tz2));
 
-        return interval.range_overlaps(&tmin, &tmax);
+        return interval.range_overlaps(&t_min, &t_max);
     }
 }
 
 // endregion Impl
 
-// region HasAabb trait
+// region Bounded trait
 
-// Sometimes `enum_dispatch` tries to generate the enum implementations in this file's scope,
-// so have to import the names here
-// Don't really like it but it's what must be done
-
-#[allow(unused)]
-use crate::{material::MaterialInstance, mesh::MeshInstance};
-
-/// Trait that requires some type possibly has an AABB
-// TODO: Needs refactor
-#[enum_dispatch]
-pub trait HasAabb: ComponentRequirements {
-    /// Gets the bounding box for this mesh. If the mesh can't be bounded (e.g. infinite plane), return [None]
-    fn aabb(&self) -> Option<&Aabb>;
-
-    /// Helper function to unwrap an AABB with a panic message
-    fn expect_aabb(&self) -> &Aabb { self.aabb().expect("aabb required as invariant of `GenericBvh`") }
+pub trait Bounded: ComponentRequirements {
+    /// Gets the bounding box for this object.
+    ///
+    /// If the mesh can't be bounded (e.g. infinite plane), return [`Aabb::INFINITE`]
+    fn aabb(&self) -> Aabb;
 }
 
-// endregion HasAabb trait
+// endregion Bounded trait

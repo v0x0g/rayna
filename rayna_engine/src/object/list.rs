@@ -5,9 +5,9 @@ use super::transform::ObjectTransform;
 use crate::core::types::{Number, Point3};
 use crate::material::Material;
 use crate::mesh;
-use crate::object::bvh::BvhObject;
+use crate::object::bvh_object::BvhObject;
 use crate::object::{Object, ObjectInstance};
-use crate::shared::aabb::{Aabb, HasAabb};
+use crate::shared::aabb::{Aabb, Bounded};
 use crate::shared::intersect::FullIntersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
@@ -17,7 +17,7 @@ use crate::shared::ray::Ray;
 pub struct ObjectList<Obj: Object> {
     /// BVH-optimised tree of objects
     bvh: BvhObject<Obj>,
-    /// All the unbounded objects in the list (objects where [`HasAabb::aabb()`] returned [None]
+    /// All the unbounded objects in the list (objects where [`Bounded::aabb()`] returned [None]
     unbounded: Vec<Obj>,
     transform: ObjectTransform,
     /// The [Aabb] for all of the enclosed objects. Will be [None] if there are unbounded objects
@@ -128,8 +128,8 @@ impl<Obj: Object> Object for ObjectList<Obj> {
         Some(intersect)
     }
 }
-impl<Obj: Object> HasAabb for ObjectList<Obj> {
-    fn aabb(&self) -> Option<&Aabb> { self.aabb.as_ref() }
+impl<Obj: Object> Bounded for ObjectList<Obj> {
+    fn aabb(&self) -> Aabb { self.aabb.as_ref() }
 }
 
 // endregion Object Impl

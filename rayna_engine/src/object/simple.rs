@@ -3,7 +3,7 @@ use crate::material::Material;
 use crate::mesh::Mesh as MeshTrait;
 use crate::object::transform::ObjectTransform;
 use crate::object::Object;
-use crate::shared::aabb::{Aabb, HasAabb};
+use crate::shared::aabb::{Aabb, Bounded};
 use crate::shared::intersect::FullIntersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
@@ -117,12 +117,12 @@ where
     }
 }
 
-impl<Mesh, Mat> HasAabb for SimpleObject<Mesh, Mat>
+impl<Mesh, Mat> Bounded for SimpleObject<Mesh, Mat>
 where
     Mesh: MeshTrait,
     Mat: Material,
 {
-    fn aabb(&self) -> Option<&Aabb> { self.aabb.as_ref() }
+    fn aabb(&self) -> Aabb { self.aabb.as_ref() }
 
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
 }

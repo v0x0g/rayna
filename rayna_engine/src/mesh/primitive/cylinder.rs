@@ -1,6 +1,6 @@
 use crate::core::types::{Number, Point2, Point3, Vector3};
-use crate::mesh::{Mesh, MeshProperties};
-use crate::shared::aabb::{Aabb, HasAabb};
+use crate::mesh::Mesh;
+use crate::shared::aabb::{Aabb, Bounded};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
@@ -183,12 +183,8 @@ impl Mesh for CylinderMesh {
     }
 }
 
-impl HasAabb for CylinderMesh {
-    fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
-}
-
-impl MeshProperties for CylinderMesh {
-    fn centre(&self) -> Point3 { self.centre }
+impl Bounded for CylinderMesh {
+    fn aabb(&self) -> Aabb { self.aabb }
 }
 
 // endregion Mesh Impl

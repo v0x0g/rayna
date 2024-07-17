@@ -1,6 +1,6 @@
 use crate::core::types::{Number, Point2, Point3, Vector3};
-use crate::mesh::{Mesh, MeshProperties};
-use crate::shared::aabb::{Aabb, HasAabb};
+use crate::mesh::{planar, Mesh};
+use crate::shared::aabb::{Aabb, Bounded};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
@@ -10,7 +10,7 @@ use std::fmt::Debug;
 use std::ops::Add;
 
 #[derive(Copy, Clone, Debug)]
-pub struct Triangle {
+pub struct TriangleMesh {
     /// The three corner vertices of the triangle
     vertices: [Point3; 3],
     /// The corresponding normal vectors at the vertices
@@ -18,7 +18,7 @@ pub struct Triangle {
     aabb: Aabb,
 }
 
-impl Triangle {
+impl TriangleMesh {
     pub fn new(vertices: impl Into<[Point3; 3]>, normals: impl Into<[Vector3; 3]>) -> Self {
         let (vertices, normals) = (vertices.into(), normals.into());
 
@@ -31,25 +31,18 @@ impl Triangle {
         Self {
             vertices,
             normals,
-            aabb: Aabb::encompass_points(vertices),
+            aabb: Aabb::encompass_points(vertices).with_min_padding(planar::AABB_PADDING),
         }
     }
 }
 
 // region Mesh Impl
 
-impl MeshProperties for Triangle {
-    fn centre(&self) -> Point3 {
-        let [a, b, c] = self.vertices.map(Vector3::from_point);
-        ((a + b + c) / 3.).to_point()
-    }
+impl Bounded for TriangleMesh {
+    fn aabb(&self) -> Aabb { self.aabb }
 }
 
-impl HasAabb for Triangle {
-    fn aabb(&self) -> Option<&Aabb> { Some(&self.aabb) }
-}
-
-impl Mesh for Triangle {
+impl Mesh for TriangleMesh {
     fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
         /*
         CREDITS:
@@ -109,7 +102,7 @@ impl Mesh for Triangle {
     }
 }
 
-impl Triangle {
+impl TriangleMesh {
     /// Interpolates across the vertex normals for a given point in barycentric coordinates
     fn interpolate_normals(normals: [Vector3; 3], bary_coords: Vector3) -> Option<Vector3> {
         std::iter::zip(normals, bary_coords)

@@ -1,5 +1,6 @@
 use crate::core::types::{Number, Point2, Point3, Vector3};
 use crate::mesh::{planar, Mesh};
+use crate::scene::Scene;
 use crate::shared::aabb::{Aabb, Bounded};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
@@ -43,7 +44,13 @@ impl Bounded for TriangleMesh {
 }
 
 impl Mesh for TriangleMesh {
-    fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(
+        &self,
+        _scene: &Scene,
+        ray: &Ray,
+        interval: &Interval<Number>,
+        _rng: &mut dyn RngCore,
+    ) -> Option<Intersection> {
         /*
         CREDITS:
 

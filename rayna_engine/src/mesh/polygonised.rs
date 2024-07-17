@@ -3,6 +3,7 @@ use crate::core::types::{Number, Point3, Vector3};
 use crate::mesh::list::ListMesh;
 use crate::mesh::triangle::TriangleMesh;
 use crate::mesh::Mesh;
+use crate::scene::Scene;
 use crate::shared::aabb::{Aabb, Bounded};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
@@ -166,7 +167,13 @@ impl Bounded for PolygonisedIsosurfaceMesh {
 }
 
 impl Mesh for PolygonisedIsosurfaceMesh {
-    fn intersect(&self, ray: &Ray, interval: &Interval<Number>, rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(
+        &self,
+        _scene: &Scene,
+        ray: &Ray,
+        interval: &Interval<Number>,
+        rng: &mut dyn RngCore,
+    ) -> Option<Intersection> {
         self.mesh.intersect(ray, interval, rng)
     }
 }

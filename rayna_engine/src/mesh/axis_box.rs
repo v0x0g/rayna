@@ -7,6 +7,7 @@ use rand_core::RngCore;
 use crate::core::types::{Number, Point3, Size3, Vector2, Vector3};
 
 use crate::mesh::Mesh;
+use crate::scene::Scene;
 use crate::shared::aabb::{Aabb, Bounded};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
@@ -61,7 +62,13 @@ impl From<(Point3, Size3)> for AxisBoxMesh {
 
 impl Mesh for AxisBoxMesh {
     //noinspection RsLiveness
-    fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(
+        &self,
+        scene: &Scene,
+        ray: &Ray,
+        interval: &Interval<Number>,
+        _rng: &mut dyn RngCore,
+    ) -> Option<Intersection> {
         /*
         CREDITS:
 

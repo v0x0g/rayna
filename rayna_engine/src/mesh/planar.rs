@@ -9,6 +9,7 @@
 
 use crate::core::types::{Number, Point2, Point3, Vector3};
 use crate::mesh::Mesh;
+use crate::scene::Scene;
 use crate::shared::aabb::{Aabb, Bounded};
 use crate::shared::intersect::Intersection;
 use crate::shared::interval::Interval;
@@ -16,7 +17,6 @@ use crate::shared::ray::Ray;
 use getset::CopyGetters;
 use num_traits::Zero;
 use rand_core::RngCore;
-
 // region Structs
 
 /// The recommended amount of padding around AABBs for planar objects
@@ -297,7 +297,13 @@ impl Plane {
 }
 
 impl Mesh for InfinitePlaneMesh {
-    fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(
+        &self,
+        _scene: &Scene,
+        ray: &Ray,
+        interval: &Interval<Number>,
+        _rng: &mut dyn RngCore,
+    ) -> Option<Intersection> {
         let mut i = self.plane.intersect_bounded(ray, interval)?;
         // Wrap uv's if required
         self.uv_wrap.apply_mut(&mut i.uv);
@@ -306,7 +312,13 @@ impl Mesh for InfinitePlaneMesh {
 }
 
 impl Mesh for ParallelogramMesh {
-    fn intersect(&self, ray: &Ray, interval: &Interval<Number>, _rng: &mut dyn RngCore) -> Option<Intersection> {
+    fn intersect(
+        &self,
+        _scene: &Scene,
+        ray: &Ray,
+        interval: &Interval<Number>,
+        _rng: &mut dyn RngCore,
+    ) -> Option<Intersection> {
         let i = self.plane.intersect_bounded(ray, interval)?;
         // Check in interval for our segment of the plane: `uv in [0, 1]`
         if (i.uv.cmple(Point2::ONE) & i.uv.cmpge(Point2::ZERO)).all() {

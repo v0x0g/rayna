@@ -49,6 +49,7 @@ use polygonised::PolygonisedIsosurfaceMesh;
 #[allow(unused_imports)]
 use raymarched::RaymarchedIsosurfaceMesh;
 // noinspection ALL - Used by enum_dispatch macro
+use crate::scene::Scene;
 #[allow(unused_imports)]
 use sphere::SphereMesh;
 // noinspection ALL - Used by enum_dispatch macro
@@ -78,7 +79,13 @@ pub trait Mesh: ComponentRequirements {
     ///
     /// # Return Value
     /// This should return the *first* intersection that is within the given range, else [None]
-    fn intersect(&self, ray: &Ray, interval: &Interval<Number>, rng: &mut dyn RngCore) -> Option<Intersection>;
+    fn intersect(
+        &self,
+        scene: &Scene,
+        ray: &Ray,
+        interval: &Interval<Number>,
+        rng: &mut dyn RngCore,
+    ) -> Option<Intersection>;
 
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
 }

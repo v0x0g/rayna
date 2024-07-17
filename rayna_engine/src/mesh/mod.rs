@@ -5,7 +5,7 @@
 //! ## Related
 //! - [`self::Mesh`]
 //! - [`self::MeshInstance`]
-//! - [`self::primitive::sphere::SphereMesh`]
+//! - [`sphere::SphereMesh`]
 //!
 //! # Code Structure
 //!
@@ -22,7 +22,7 @@
 //! - Add module: `pub mod sphere;`
 //! - Structs: `SphereObject`, with constructors `SphereObject::new()` etc
 //! - Add an entry to [MeshInstance] to correspond to the `SphereObject` for static-dispatch
-//! - See [`self::primitive::sphere`] for an example
+//! - See [`sphere`] for an example
 
 use crate::core::types::{Number, Point3};
 use crate::shared::aabb::Bounded;
@@ -35,18 +35,40 @@ use enum_dispatch::enum_dispatch;
 use rand_core::RngCore;
 // noinspection ALL - Used by enum_dispatch macro
 #[allow(unused_imports)]
+use axis_box::AxisBoxMesh;
+// noinspection ALL - Used by enum_dispatch macro
+#[allow(unused_imports)]
+use cylinder::CylinderMesh;
+// noinspection ALL - Used by enum_dispatch macro
+#[allow(unused_imports)]
+use list::ListMesh;
+// noinspection ALL - Used by enum_dispatch macro
+#[allow(unused_imports)]
+use polygonised::PolygonisedIsosurfaceMesh;
+// noinspection ALL - Used by enum_dispatch macro
+#[allow(unused_imports)]
+use raymarched::RaymarchedIsosurfaceMesh;
+// noinspection ALL - Used by enum_dispatch macro
+#[allow(unused_imports)]
+use sphere::SphereMesh;
+// noinspection ALL - Used by enum_dispatch macro
+#[allow(unused_imports)]
 use self::{
-    advanced::{batch_triangle::BatchTriangle, bvh_mesh::BvhMesh, dynamic::DynamicMesh, list::ListMesh},
-    isosurface::{polygonised::PolygonisedIsosurfaceMesh, raymarched::RaymarchedIsosurfaceMesh},
+    advanced::{batch_triangle::BatchTriangle, bvh_mesh::BvhMesh, dynamic::DynamicMesh},
     planar::{infinite_plane::InfinitePlaneMesh, parallelogram::ParallelogramMesh},
-    primitive::{axis_box::AxisBoxMesh, cylinder::CylinderMesh, sphere::SphereMesh},
 };
 
 pub mod advanced;
+pub mod axis_box;
+pub mod cylinder;
 pub mod isosurface;
+pub mod list;
 pub mod planar;
+pub mod polygonised;
 pub mod primitive;
-
+pub mod raymarched;
+pub mod sphere;
+pub mod triangle;
 // region Object traits
 
 #[enum_dispatch]

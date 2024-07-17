@@ -3,8 +3,7 @@ use getset::{CopyGetters, Getters};
 use rand_core::RngCore;
 use std::sync::Arc;
 
-use crate::core::types::{Number, Point2, Vector3};
-use crate::mesh::isosurface::SdfFunction;
+use crate::core::types::{Number, Point2, Point3, Vector3};
 use crate::mesh::Mesh;
 use crate::shared::aabb::{Aabb, Bounded};
 use crate::shared::intersect::Intersection;
@@ -24,6 +23,9 @@ pub struct RaymarchedIsosurfaceMesh {
     epsilon: Number,
 }
 
+pub trait SdfFunction: Fn(Point3) -> Number + Send + Sync + 'static {}
+impl<F: Fn(Point3) -> Number + Send + Sync + 'static> SdfFunction for F {}
+
 // region Constructors
 
 impl RaymarchedIsosurfaceMesh {
@@ -36,7 +38,7 @@ impl RaymarchedIsosurfaceMesh {
     ///
     /// * `sdf`: The **SDF** that defines the surface for the mesh.
     /// This SDF will be evaluated in world-space coordinates
-    pub fn new<SDF: SdfFunction + 'static>(sdf: SDF) -> Self {
+    pub fn new(sdf: impl SdfFunction) -> Self {
         Self {
             sdf: Arc::new(sdf),
             epsilon: Self::DEFAULT_EPSILON,
@@ -51,7 +53,7 @@ impl RaymarchedIsosurfaceMesh {
     /// * `sdf`: The **SDF** that defines the surface for the mesh
     /// * `max_iterations`: The maximum number of ray-marching steps allowed for intersections
     /// * `epsilon`: The distance threshold at which a ray is considered to have intersected with the surface
-    pub fn new_custom<SDF: SdfFunction + 'static>(sdf: SDF, max_iterations: usize, epsilon: Number) -> Self {
+    pub fn new_custom(sdf: impl SdfFunction, max_iterations: usize, epsilon: Number) -> Self {
         Self {
             sdf: Arc::new(sdf),
             epsilon,

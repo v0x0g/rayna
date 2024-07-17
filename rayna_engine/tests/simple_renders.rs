@@ -3,7 +3,7 @@ use rand::thread_rng;
 use rayna_engine::core::colour::ColourRgb;
 use rayna_engine::core::types::*;
 use rayna_engine::material::lambertian::LambertianMaterial;
-use rayna_engine::mesh::primitive::sphere::SphereMesh;
+use rayna_engine::mesh::sphere::SphereMesh;
 use rayna_engine::object::simple::SimpleObject;
 use rayna_engine::scene::camera::Camera;
 use rayna_engine::scene::StandardScene;

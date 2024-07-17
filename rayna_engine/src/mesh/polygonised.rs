@@ -1,8 +1,7 @@
 use crate::core::targets::MESH;
 use crate::core::types::{Number, Point3, Vector3};
-use crate::mesh::advanced::list::ListMesh;
-use crate::mesh::isosurface::SdfFunction;
-use crate::mesh::primitive::triangle::TriangleMesh;
+use crate::mesh::list::ListMesh;
+use crate::mesh::triangle::TriangleMesh;
 use crate::mesh::Mesh;
 use crate::shared::aabb::{Aabb, Bounded};
 use crate::shared::intersect::Intersection;
@@ -32,6 +31,9 @@ pub struct PolygonisedIsosurfaceMesh {
     #[get = "pub"]
     mesh: ListMesh,
 }
+
+pub trait SdfFunction: Fn(Point3) -> Number {}
+impl<F: Fn(Point3) -> Number> SdfFunction for F {}
 
 // region Constructors
 

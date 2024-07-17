@@ -50,8 +50,8 @@ use rayna_engine::{
 pub fn create_scene() -> StandardScene {
     // Specific types we use in this example
     use rayna_engine::{
-        material::lambertian::LambertianMaterial, mesh::primitive::sphere::SphereMesh, object::simple::SimpleObject,
-        object::transform::ObjectTransform, skybox::simple::SimpleSkybox, texture::solid::SolidTexture,
+        material::lambertian::LambertianMaterial, object::simple::SimpleObject, object::transform::ObjectTransform,
+        skybox::simple::SimpleSkybox, texture::solid::SolidTexture,
     };
 
     // Choose the default skybox, looks reasonably good
@@ -119,6 +119,8 @@ pub fn create_scene() -> StandardScene {
 use rayna_engine::render::renderer::Renderer;
 // These two control how the image is rendered
 use rand::rngs::SmallRng;
+// Specific types we use in this example
+use rayna_engine::mesh::sphere::SphereMesh;
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
 
 /// Here we create the renderer, using the scene and camera we created earlier.

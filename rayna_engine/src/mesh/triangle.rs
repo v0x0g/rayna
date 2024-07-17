@@ -31,7 +31,7 @@ impl TriangleMesh {
         Self {
             vertices,
             normals,
-            aabb: Aabb::encompass_points(vertices).with_min_padding(planar::AABB_PADDING),
+            aabb: Aabb::encompass_points(vertices).with_min_padding(planar::PLANAR_AABB_PADDING),
         }
     }
 }

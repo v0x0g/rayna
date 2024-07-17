@@ -9,7 +9,7 @@ use self::{
 };
 use crate::core::types::Colour;
 use crate::scene::Scene;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::shared::token::generate_component_token;
 use crate::shared::ComponentRequirements;
 use enum_dispatch::enum_dispatch;
@@ -20,7 +20,7 @@ use rand_core::RngCore;
 #[enum_dispatch]
 #[doc(notable_trait)]
 pub trait Texture: ComponentRequirements {
-    fn value(&self, scene: &Scene, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour;
+    fn value(&self, scene: &Scene, intersection: &MeshIntersection, rng: &mut dyn RngCore) -> Colour;
 }
 
 /// An optimised implementation of [Texture], using static dispatch

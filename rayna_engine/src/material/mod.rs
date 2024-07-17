@@ -5,7 +5,7 @@ use self::{
 };
 use crate::core::types::{Colour, Vector3};
 use crate::scene::Scene;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::shared::ray::Ray;
 use crate::shared::token::generate_component_token;
 use crate::shared::ComponentRequirements;
@@ -37,7 +37,7 @@ pub trait Material: ComponentRequirements {
     /// # use std::fmt::{Debug, DebugStruct, Formatter};
     /// # use rand::RngCore;
     /// # use rayna_engine::material::Material;
-    /// # use rayna_engine::shared::intersect::Intersection;
+    /// # use rayna_engine::shared::intersect::MeshIntersection;
     /// # use rayna_engine::shared::math::reflect;
     /// # use rayna_engine::shared::ray::Ray;
     /// # use rayna_engine::shared::{rng, ComponentRequirements};
@@ -48,7 +48,7 @@ pub trait Material: ComponentRequirements {
     /// #
     /// #
     /// impl Material for Test {
-    ///     fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
+    ///     fn scatter(&self, ray: &Ray, intersection: &MeshIntersection, rng: &mut dyn RngCore) -> Option<Vector3> {
     ///         let diffuse = false;
     ///         // Diffuse => random
     ///         if diffuse {
@@ -62,16 +62,22 @@ pub trait Material: ComponentRequirements {
     ///             Some(r)
     ///         }
     ///     }
-    /// #   fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
+    /// #   fn emitted_light(&self, ray: &Ray, intersection: &MeshIntersection, rng: &mut dyn RngCore) -> Colour {
     /// #       unimplemented!("code example")
     /// #   }
     /// #
-    /// #   fn reflected_light(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Colour, rng: &mut dyn RngCore) -> Colour {
+    /// #   fn reflected_light(&self, ray: &Ray, intersection: &MeshIntersection, future_ray: &Ray, future_col: &Colour, rng: &mut dyn RngCore) -> Colour {
     /// #       unimplemented!("code example")
     /// #   }
     /// }
     /// ```
-    fn scatter(&self, ray: &Ray, scene: &Scene, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3>;
+    fn scatter(
+        &self,
+        ray: &Ray,
+        scene: &Scene,
+        intersection: &MeshIntersection,
+        rng: &mut dyn RngCore,
+    ) -> Option<Vector3>;
 
     // /// Calculates the value of the probability of the material having scattered a ray in the given direction.
     // ///
@@ -98,7 +104,13 @@ pub trait Material: ComponentRequirements {
     /// Returns the light (colour) of emission for the given intersection and ray. The default implementation
     /// is to return black (`Pixel([0.; 3])`)
     #[allow(unused_variables)]
-    fn emitted_light(&self, ray: &Ray, scene: &Scene, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
+    fn emitted_light(
+        &self,
+        ray: &Ray,
+        scene: &Scene,
+        intersection: &MeshIntersection,
+        rng: &mut dyn RngCore,
+    ) -> Colour {
         Colour::BLACK
     }
 
@@ -121,7 +133,7 @@ pub trait Material: ComponentRequirements {
     /// # use std::fmt::{Debug, DebugStruct, Formatter};
     /// # use rand::RngCore;
     /// # use rayna_engine::material::Material;
-    /// # use rayna_engine::shared::intersect::Intersection;
+    /// # use rayna_engine::shared::intersect::MeshIntersection;
     /// # use rayna_engine::shared::math::reflect;
     /// # use rayna_engine::shared::ray::Ray;
     /// # use rayna_engine::shared::{rng, ComponentRequirements};
@@ -131,9 +143,9 @@ pub trait Material: ComponentRequirements {
     /// pub struct Test;
     /// #     /// #
     /// impl Material for Test {
-    /// #   fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> { unimplemented!() }
-    /// #   fn emitted_light(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour { unimplemented!() }
-    ///     fn reflected_light(&self, ray: &Ray, intersection: &Intersection, future_ray: &Ray, future_col: &Colour, rng: &mut dyn RngCore) -> Colour {
+    /// #   fn scatter(&self, ray: &Ray, intersection: &MeshIntersection, rng: &mut dyn RngCore) -> Option<Vector3> { unimplemented!() }
+    /// #   fn emitted_light(&self, ray: &Ray, intersection: &MeshIntersection, rng: &mut dyn RngCore) -> Colour { unimplemented!() }
+    ///     fn reflected_light(&self, ray: &Ray, intersection: &MeshIntersection, future_ray: &Ray, future_col: &Colour, rng: &mut dyn RngCore) -> Colour {
     ///         // Pure reflection
     ///         return *future_col;
     ///         // Pure absorbtion
@@ -145,7 +157,7 @@ pub trait Material: ComponentRequirements {
         &self,
         ray: &Ray,
         scene: &Scene,
-        intersection: &Intersection,
+        intersection: &MeshIntersection,
         future_ray: &Ray,
         future_col: &Colour,
         rng: &mut dyn RngCore,

@@ -1,11 +1,11 @@
 use crate::core::types::{Number, Point2, Point3, Vector3};
-use crate::material::Material;
-use derivative::Derivative;
+use crate::material::MaterialToken;
+use educe::Educe;
 use std::cmp::Ordering;
 
 /// A struct representing a ray-mesh intersection
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub struct Intersection {
+pub struct MeshIntersection {
     /// The position in world coordinates of the intersection
     pub pos_w: Point3,
     /// The position in mesh-local coordinates of the intersection
@@ -38,17 +38,17 @@ pub struct Intersection {
     /// Numeric ID for which "face" was hit
     ///
     /// For objects with a single 'surface' (like a [sphere](crate::mesh::sphere::SphereMesh), this would be always zero.
-    /// For an mesh that may have multiple faces (like a [box](`crate::mesh::primitive::axis_box::AxisBoxMesh`), this would unique per-side.
+    /// For a mesh that may have multiple faces (like a [box](`crate::mesh::primitive::axis_box::AxisBoxMesh`), this would unique per-side.
     pub side: usize,
 }
 
-impl Eq for Intersection {}
+impl Eq for MeshIntersection {}
 
-impl PartialOrd<Self> for Intersection {
+impl PartialOrd<Self> for MeshIntersection {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Number::partial_cmp(&self.dist, &other.dist) }
 }
 
-impl Ord for Intersection {
+impl Ord for MeshIntersection {
     fn cmp(&self, other: &Self) -> Ordering {
         Number::partial_cmp(&self.dist, &other.dist)
             .expect("couldn't compare intersections distances: invariant `.dist != NaN` failed")
@@ -57,27 +57,11 @@ impl Ord for Intersection {
 
 /// A small wrapper class that includes a reference to a material as well as
 /// the actual intersection with the model.
-///
-/// Only really used to provide a nicer return value for [`crate::object::Object::full_intersect()`].
-#[derive(Clone, Debug, Derivative)]
-#[derivative(Ord, PartialOrd, Eq, PartialEq)]
-pub struct FullIntersection<'mat, Mat: Material> {
-    pub intersection: Intersection,
+#[derive(Clone, Debug, Educe)]
+#[educe(Ord, PartialOrd, Eq, PartialEq)]
+pub struct ObjectIntersection {
+    pub intersection: MeshIntersection,
     /// NOTE: For all comparisons, this field is ignored ([PartialEq], [Ord], [PartialOrd])
     #[derivative(PartialOrd = "ignore", Ord = "ignore", PartialEq = "ignore")]
-    pub material: &'mat Mat,
-}
-
-impl<'mat, Mat: Material + 'mat> From<(&'mat Mat, Intersection)> for FullIntersection<'mat, Mat> {
-    fn from((material, intersection): (&'mat Mat, Intersection)) -> Self { Self { intersection, material } }
-}
-
-impl Intersection {
-    /// Converts a partial [`Intersection`] into a [`FullIntersection<Mat>`]
-    pub fn make_full<'mat, Mat: Material>(self, material: &'mat Mat) -> FullIntersection<'mat, Mat> {
-        FullIntersection {
-            intersection: self,
-            material,
-        }
-    }
+    pub material: MaterialToken,
 }

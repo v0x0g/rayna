@@ -6,7 +6,7 @@ use crate::core::types::Number;
 use crate::mesh::{Mesh, MeshInstance, MeshToken};
 use crate::scene::Scene;
 use crate::shared::aabb::{Aabb, Bounded};
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 
@@ -65,7 +65,7 @@ impl Mesh for ListMesh {
         ray: &Ray,
         interval: &Interval<Number>,
         rng: &mut dyn RngCore,
-    ) -> Option<Intersection> {
+    ) -> Option<MeshIntersection> {
         self.items
             .iter()
             .map(|t| scene.get_mesh(t))

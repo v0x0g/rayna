@@ -26,7 +26,7 @@
 
 use crate::core::types::{Number, Point3};
 use crate::shared::aabb::Bounded;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use crate::shared::token::generate_component_token;
@@ -85,7 +85,7 @@ pub trait Mesh: ComponentRequirements {
         ray: &Ray,
         interval: &Interval<Number>,
         rng: &mut dyn RngCore,
-    ) -> Option<Intersection>;
+    ) -> Option<MeshIntersection>;
 
     // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
 }

@@ -2,7 +2,7 @@ use crate::core::types::{Number, Point2, Point3, Vector3};
 use crate::mesh::{planar, Mesh};
 use crate::scene::Scene;
 use crate::shared::aabb::{Aabb, Bounded};
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use num_traits::Zero;
@@ -50,7 +50,7 @@ impl Mesh for TriangleMesh {
         ray: &Ray,
         interval: &Interval<Number>,
         _rng: &mut dyn RngCore,
-    ) -> Option<Intersection> {
+    ) -> Option<MeshIntersection> {
         /*
         CREDITS:
 
@@ -96,7 +96,7 @@ impl Mesh for TriangleMesh {
         // Therefore they must be opposing. Current way of handling this is to skip the point
         let normal = Self::interpolate_normals(self.normals, bary_coords)?;
 
-        Some(Intersection {
+        Some(MeshIntersection {
             pos_w,
             pos_l: bary_coords.to_point(),
             front_face: det.is_sign_negative(),

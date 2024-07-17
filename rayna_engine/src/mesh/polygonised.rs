@@ -5,7 +5,7 @@ use crate::mesh::triangle::TriangleMesh;
 use crate::mesh::Mesh;
 use crate::scene::Scene;
 use crate::shared::aabb::{Aabb, Bounded};
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use getset::{CopyGetters, Getters};
@@ -173,7 +173,7 @@ impl Mesh for PolygonisedIsosurfaceMesh {
         ray: &Ray,
         interval: &Interval<Number>,
         rng: &mut dyn RngCore,
-    ) -> Option<Intersection> {
+    ) -> Option<MeshIntersection> {
         self.mesh.intersect(ray, interval, rng)
     }
 }

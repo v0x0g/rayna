@@ -7,7 +7,7 @@ use crate::core::types::{Number, Point2, Point3, Vector3};
 use crate::mesh::Mesh;
 use crate::scene::Scene;
 use crate::shared::aabb::{Aabb, Bounded};
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 
@@ -78,7 +78,7 @@ impl Mesh for RaymarchedIsosurfaceMesh {
         ray: &Ray,
         interval: &Interval<Number>,
         _rng: &mut dyn RngCore,
-    ) -> Option<Intersection> {
+    ) -> Option<MeshIntersection> {
         // Start point at earliest pos on ray, or ray origin if unbounded
         let mut total_dist = interval.start.unwrap_or(0.0);
         let mut point = ray.at(total_dist);
@@ -107,7 +107,7 @@ impl Mesh for RaymarchedIsosurfaceMesh {
                 );
                 let normal = (high - low).normalize();
 
-                return Some(Intersection {
+                return Some(MeshIntersection {
                     pos_w: point,
                     pos_l: point,
                     uv: Point2::ZERO,

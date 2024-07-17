@@ -7,7 +7,7 @@ use rand_core::RngCore;
 
 use crate::core::types::{Colour, Transform2, Transform3};
 use crate::scene::Scene;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::texture::{Texture, TextureToken};
 
 #[derive(Clone, Debug)]
@@ -18,7 +18,7 @@ pub struct WorldCheckerTexture {
 }
 
 impl Texture for WorldCheckerTexture {
-    fn value(&self, scene: &Scene, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
+    fn value(&self, scene: &Scene, intersection: &MeshIntersection, rng: &mut dyn RngCore) -> Colour {
         let pos = self.transform.map_point(intersection.pos_w);
 
         let tok = choose_checker(pos.to_array(), self.odd, self.even);
@@ -34,7 +34,7 @@ pub struct UvCheckerTexture {
 }
 
 impl Texture for UvCheckerTexture {
-    fn value(&self, scene: &Scene, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
+    fn value(&self, scene: &Scene, intersection: &MeshIntersection, rng: &mut dyn RngCore) -> Colour {
         let pos = self.transform.map(intersection.uv);
 
         let tok = choose_checker(pos.to_array(), self.odd, self.even);

@@ -1,6 +1,6 @@
 use crate::core::types::{Channel, Colour, Number, Point3, Vector3};
 use crate::material::Material;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::shared::math;
 use crate::shared::ray::Ray;
 use crate::texture::{Texture, TextureToken};
@@ -21,7 +21,7 @@ impl Material for DielectricMaterial {
         &self,
         ray: &Ray,
         _scene: &Scene,
-        intersection: &Intersection,
+        intersection: &MeshIntersection,
         rng: &mut dyn RngCore,
     ) -> Option<Vector3> {
         let index_ratio = if intersection.front_face {
@@ -50,7 +50,7 @@ impl Material for DielectricMaterial {
         &self,
         ray: &Ray,
         scene: &Scene,
-        intersection: &Intersection,
+        intersection: &MeshIntersection,
         _future_ray: &Ray,
         future_col: &Colour,
         rng: &mut dyn RngCore,

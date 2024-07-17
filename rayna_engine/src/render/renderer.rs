@@ -8,7 +8,7 @@ use crate::render::render_opts::{RenderMode, RenderOpts};
 use crate::scene::camera::Camera;
 use crate::scene::camera::Viewport;
 use crate::scene::Scene;
-use crate::shared::intersect::FullIntersection;
+use crate::shared::intersect::ObjectIntersection;
 use crate::shared::interval::Interval;
 use crate::shared::math::Lerp;
 use crate::shared::ray::Ray;
@@ -425,7 +425,7 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore> Renderer<Obj, Sky, Rng> {
             return Self::ray_colour_recursive(scene, &ray, opts, interval, 0, rng);
         }
 
-        let Some(FullIntersection {
+        let Some(ObjectIntersection {
             intersection: intersect,
             material,
         }) = Self::calculate_intersection(scene, &ray, interval, rng)
@@ -496,7 +496,7 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore> Renderer<Obj, Sky, Rng> {
         ray: &Ray,
         interval: &Interval<Number>,
         rng: &mut Rng,
-    ) -> Option<FullIntersection<'o, Obj::Mat>> {
+    ) -> Option<ObjectIntersection<'o, Obj::Mat>> {
         scene.objects.full_intersect(ray, interval, rng)
     }
 
@@ -518,7 +518,7 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore> Renderer<Obj, Sky, Rng> {
         }
 
         // Intersect
-        let Some(FullIntersection { intersection, material }) =
+        let Some(ObjectIntersection { intersection, material }) =
             Self::calculate_intersection(scene, in_ray, interval, rng)
         else {
             return scene.skybox.sky_colour(in_ray);

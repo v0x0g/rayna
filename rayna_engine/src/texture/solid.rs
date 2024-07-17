@@ -2,7 +2,7 @@ use rand_core::RngCore;
 
 use crate::core::types::Colour;
 
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::texture::{Texture, TextureInstance};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -23,5 +23,5 @@ impl Default for SolidTexture {
 }
 
 impl Texture for SolidTexture {
-    fn value(&self, _intersection: &Intersection, _rng: &mut dyn RngCore) -> Colour { self.albedo }
+    fn value(&self, _intersection: &MeshIntersection, _rng: &mut dyn RngCore) -> Colour { self.albedo }
 }

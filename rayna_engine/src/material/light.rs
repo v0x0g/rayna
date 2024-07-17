@@ -1,7 +1,7 @@
 use crate::core::types::{Colour, Vector3};
 use crate::material::Material;
 use crate::scene::Scene;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::shared::ray::Ray;
 use crate::texture::{Texture, TextureToken};
 use rand_core::RngCore;
@@ -19,13 +19,19 @@ impl Material for LightMaterial {
         &self,
         _ray: &Ray,
         _scene: &Scene,
-        _intersection: &Intersection,
+        _intersection: &MeshIntersection,
         _rng: &mut dyn RngCore,
     ) -> Option<Vector3> {
         None
     }
 
-    fn emitted_light(&self, _ray: &Ray, _scene: &Scene, intersection: &Intersection, rng: &mut dyn RngCore) -> Colour {
+    fn emitted_light(
+        &self,
+        _ray: &Ray,
+        _scene: &Scene,
+        intersection: &MeshIntersection,
+        rng: &mut dyn RngCore,
+    ) -> Colour {
         scene.get_tex(self.emissive).value(intersection, rng)
     }
 
@@ -33,7 +39,7 @@ impl Material for LightMaterial {
         &self,
         _ray: &Ray,
         _scene: &Scene,
-        _intersection: &Intersection,
+        _intersection: &MeshIntersection,
         _future_ray: &Ray,
         _future_col: &Colour,
         _rng: &mut dyn RngCore,

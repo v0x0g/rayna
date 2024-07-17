@@ -1,5 +1,5 @@
 use crate::core::types::{Channel, Colour, Number, Point2, Point3, Vector2, Vector3};
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use approx::*;
@@ -157,7 +157,7 @@ pub fn uv(uv: impl Borrow<Point2>) {
 #[track_caller]
 pub fn intersection(
     ray: impl Borrow<Ray>,
-    intersect: impl Borrow<Intersection>,
+    intersect: impl Borrow<MeshIntersection>,
     interval: impl Borrow<Interval<Number>>,
 ) {
     debug_assert_only!();

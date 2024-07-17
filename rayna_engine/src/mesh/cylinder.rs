@@ -2,7 +2,7 @@ use crate::core::types::{Number, Point2, Point3, Vector3};
 use crate::mesh::Mesh;
 use crate::scene::Scene;
 use crate::shared::aabb::{Aabb, Bounded};
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use getset::CopyGetters;
@@ -68,7 +68,7 @@ impl Mesh for CylinderMesh {
         ray: &Ray,
         interval: &Interval<Number>,
         _rng: &mut dyn RngCore,
-    ) -> Option<Intersection> {
+    ) -> Option<MeshIntersection> {
         let rd = ray.dir();
 
         let oc = ray.pos() - self.origin;
@@ -177,7 +177,7 @@ impl Mesh for CylinderMesh {
         let pos_w = ray.at(dist);
         let pos_l = (pos_w - self.centre).into();
         let inside_sign = -Vector3::dot(rd, normal).signum();
-        return Some(Intersection {
+        return Some(MeshIntersection {
             pos_w,
             pos_l,
             normal,

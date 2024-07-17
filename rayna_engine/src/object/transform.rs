@@ -13,7 +13,7 @@
 
 use crate::core::types::{Point3, Transform3, Vector3};
 use crate::shared::aabb::Aabb;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::shared::ray::Ray;
 use getset::Getters;
 
@@ -55,8 +55,8 @@ impl ObjectTransform {
     /// Unlike [Self::new()], this *does* account for the mesh's translation from the origin,
     /// using the `obj_centre` parameter. See field documentation ([Self::transform]) for explanation
     /// and example of this position offset correction
-    pub fn new_corrected(transform: Transform3, obj_centre: impl Into<Point3>) -> Self {
-        let obj_centre = obj_centre.into();
+    pub fn new_corrected(transform: Transform3, centre: impl Into<Point3>) -> Self {
+        let obj_centre = centre.into();
         let correct_transform = Transform3::from_translation(-obj_centre.to_vector())
             .then(transform)
             .then_translate(obj_centre.to_vector());
@@ -65,16 +65,14 @@ impl ObjectTransform {
     }
 
     /// Applies transform correction to the `self` transform
-    pub fn with_correction(&self, obj_centre: impl Into<Point3>) -> Self {
-        Self::new_corrected(self.transform, obj_centre)
-    }
+    pub fn with_correction(&self, centre: impl Into<Point3>) -> Self { Self::new_corrected(self.transform, centre) }
 }
 
 impl From<Transform3> for ObjectTransform {
     fn from(value: Transform3) -> Self { Self::new(value) }
 }
 
-// Allows us to use `None` as a transform
+/// Allows us to use `None` as a transform
 impl From<Option<ObjectTransform>> for ObjectTransform {
     fn from(t: Option<ObjectTransform>) -> Self { t.unwrap_or_default() }
 }
@@ -99,7 +97,7 @@ impl ObjectTransform {
     }
 
     /// Transforms the outgoing intersection from mesh-space to world-space
-    pub fn outgoing_intersection(&self, original_ray: &Ray, mut intersection: Intersection) -> Intersection {
+    pub fn outgoing_intersection(&self, original_ray: &Ray, mut intersection: MeshIntersection) -> MeshIntersection {
         if self.is_identity {
             return intersection;
         }
@@ -130,10 +128,10 @@ impl ObjectTransform {
         return intersection;
     }
 
-    /// Given a transform and (optional) AABB, calculates the new AABB given that transform
-    pub fn calculate_aabb(&self, aabb: Option<&Aabb>) -> Option<Aabb> {
-        if self.is_identity {
-            aabb.copied()
+    /// Calculates the transformed version of some [`Aabb`]
+    pub fn calculate_aabb(&self, aabb: Aabb) -> Aabb {
+        if self.is_identity || aabb.is_infinite() {
+            aabb
         } else {
             // Calculate the resulting AABB by transforming the corners of the input AABB.
             // And then we encompass those

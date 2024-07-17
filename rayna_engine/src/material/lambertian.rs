@@ -1,6 +1,6 @@
 use crate::core::types::{Colour, Vector3};
 use crate::material::Material;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::shared::ray::Ray;
 use crate::shared::rng;
 use crate::texture::TextureInstance;
@@ -27,7 +27,7 @@ impl Material for LambertianMaterial {
         &self,
         _ray: &Ray,
         _scene: &Scene,
-        intersection: &Intersection,
+        intersection: &MeshIntersection,
         rng: &mut dyn RngCore,
     ) -> Option<Vector3> {
         // Completely random scatter direction, in same hemisphere as normal
@@ -43,7 +43,7 @@ impl Material for LambertianMaterial {
         &self,
         _ray: &Ray,
         _scene: &Scene,
-        intersect: &Intersection,
+        intersect: &MeshIntersection,
         _future_ray: &Ray,
         future_col: &Colour,
         rng: &mut dyn RngCore,

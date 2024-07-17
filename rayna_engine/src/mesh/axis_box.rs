@@ -9,7 +9,7 @@ use crate::core::types::{Number, Point3, Size3, Vector2, Vector3};
 use crate::mesh::Mesh;
 use crate::scene::Scene;
 use crate::shared::aabb::{Aabb, Bounded};
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use crate::shared::validate;
@@ -68,7 +68,7 @@ impl Mesh for AxisBoxMesh {
         ray: &Ray,
         interval: &Interval<Number>,
         _rng: &mut dyn RngCore,
-    ) -> Option<Intersection> {
+    ) -> Option<MeshIntersection> {
         /*
         CREDITS:
 
@@ -124,7 +124,7 @@ impl Mesh for AxisBoxMesh {
                         let pos_w = ray.at(dist);
                         // Remap from [-radius..radius] to [0..1]
                         let uvs = (uvs_raw / radius + Vector2::ONE) / 2.;
-                        return Some(Intersection {
+                        return Some(MeshIntersection {
                             pos_w,
                             pos_l: pos_w - self.centre.to_vector(),
                             normal: ray_normal * winding,

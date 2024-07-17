@@ -1,6 +1,6 @@
 use crate::core::types::{Channel, Colour, Number, Point3, Vector3};
 use crate::material::Material;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::shared::ray::Ray;
 use crate::shared::rng;
 use crate::texture::{Texture, TextureToken};
@@ -31,7 +31,7 @@ impl Material for IsotropicMaterial {
         &self,
         _ray: &Ray,
         _scene: &Scene,
-        _intersection: &Intersection,
+        _intersection: &MeshIntersection,
         rng: &mut dyn RngCore,
     ) -> Option<Vector3> {
         Some(rng::normal_on_unit_sphere(rng))
@@ -41,7 +41,7 @@ impl Material for IsotropicMaterial {
         &self,
         ray: &Ray,
         scene: &Scene,
-        intersection: &Intersection,
+        intersection: &MeshIntersection,
         _future_ray: &Ray,
         future_col: &Colour,
         rng: &mut dyn RngCore,

@@ -1,6 +1,6 @@
 use crate::core::types::{Colour, Number, Vector3};
 use crate::material::Material;
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::shared::ray::Ray;
 use crate::shared::{math, rng};
 use crate::texture::{Texture, TextureToken};
@@ -19,7 +19,7 @@ impl Material for MetalMaterial {
         &self,
         ray: &Ray,
         _scene: &Scene,
-        intersection: &Intersection,
+        intersection: &MeshIntersection,
         rng: &mut dyn RngCore,
     ) -> Option<Vector3> {
         let reflected = math::reflect(ray.dir(), intersection.ray_normal);
@@ -44,7 +44,7 @@ impl Material for MetalMaterial {
         &self,
         _ray: &Ray,
         scene: &Scene,
-        intersect: &Intersection,
+        intersect: &MeshIntersection,
         _future_ray: &Ray,
         future_col: &Colour,
         rng: &mut dyn RngCore,

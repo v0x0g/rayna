@@ -1,13 +1,14 @@
 use crate::core::types::Number;
-use crate::material::Material;
-use crate::mesh::Mesh as MeshTrait;
+use crate::material::{Material, MaterialInstance, MaterialToken};
+use crate::mesh::{Mesh as MeshTrait, MeshInstance, MeshToken};
 use crate::object::transform::ObjectTransform;
 use crate::object::Object;
+use crate::scene::Scene;
 use crate::shared::aabb::{Aabb, Bounded};
-use crate::shared::intersect::FullIntersection;
+use crate::shared::intersect::ObjectIntersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
-use getset::Getters;
+use getset::{CopyGetters, Getters};
 use rand_core::RngCore;
 
 /// The main struct that encapsulates all the different "components" that make up an mesh
@@ -33,61 +34,65 @@ use rand_core::RngCore;
 ///
 /// let transform = Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(69.0));
 ///
-/// // Fix the transform so it scales/rotates around the mesh's centre and not the origin
+/// // Fix the transform, so it scales/rotates around the mesh's centre and not the origin
 /// //  1. Move centre to origin
-/// //  2. Apply rotate/scale, while it is centred at origin
+/// //  2. Apply rotation/scaling, while it is centred at origin
 /// //  3. Move centre back to original position
 /// let transform = Transform3::from_translation(-mesh.centre().to_vector())
 ///     .then(transform)
 ///     .then_translate(mesh.centre().to_vector());
 /// ```
 ///
-/// This pre/post transform is encapsulated in [`ObjectTransform::new_corrected()`]
-#[derive(Getters, Clone, Debug)]
-#[get = "pub"]
-pub struct SimpleObject<Mesh: MeshTrait, Mat: Material> {
-    mesh: Mesh,
-    material: Mat,
+/// This pre-/post-transform is encapsulated in [`ObjectTransform::new_corrected()`]
+#[derive(Getters, CopyGetters, Clone, Debug)]
+pub struct SimpleObject {
+    #[get_copy = "pub"]
+    mesh_tok: MeshToken,
+    #[get_copy = "pub"]
+    mat_tok: MaterialToken,
+    #[get = "pub"]
     transform: ObjectTransform,
-    #[get(skip)]
-    aabb: Option<Aabb>,
+    aabb: Aabb,
 }
 
 // region Constructors
 
-impl<Mesh, Mat> SimpleObject<Mesh, Mat>
-where
-    Mesh: MeshTrait,
-    Mat: Material,
-{
-    /// Creates a new transformed mesh instance, using the given mesh and transform
-    ///
-    /// This will apply translation-correction to the given transform (see field [Self::transform]), using the
-    /// mesh's [`crate::mesh::MeshProperties::centre()`]
-    pub fn new(mesh: impl Into<Mesh>, material: impl Into<Mat>, transform: impl Into<ObjectTransform>) -> Self {
-        let mesh = mesh.into();
-        let transform = transform.into().with_correction(mesh.centre());
-        Self::new_uncorrected(mesh, material, transform)
-    }
-
-    /// Creates a new transformed mesh instance, using the given mesh and transform
-    ///
-    /// It is assumed that the mesh is either centred at the origin and the translation is stored in
-    /// the transform, or that the transform correctly accounts for the mesh's translation.
-    /// See field documentation ([Self::transform]) for explanation
-    pub fn new_uncorrected(
-        mesh: impl Into<Mesh>,
-        material: impl Into<Mat>,
+impl SimpleObject {
+    /// Creates a new volume from a mesh and material, inserting them into the scene
+    pub fn new_in(
+        scene: &mut Scene,
+        mesh: impl Into<MeshInstance>,
+        mat: impl Into<MaterialInstance>,
         transform: impl Into<ObjectTransform>,
     ) -> Self {
-        let (mesh, material, transform) = (mesh.into(), material.into(), transform.into());
+        let (mesh, material, transform) = (mesh.into(), mat.into(), transform.into());
         let aabb = transform.calculate_aabb(mesh.aabb());
+        let mesh_tok = scene.add_mesh(mesh);
+        let mat_tok = scene.add_mat(material);
 
         Self {
-            mesh,
+            mesh_tok,
+            mat_tok,
             aabb,
             transform,
-            material,
+        }
+    }
+
+    /// Creates a new volume from a mesh and material, that have already been inserted into the scene
+    pub fn new_from(
+        scene: &Scene,
+        mesh_tok: impl Into<MeshToken>,
+        mat_tok: impl Into<MaterialToken>,
+        transform: impl Into<ObjectTransform>,
+    ) -> Self {
+        let (mesh_tok, mat_tok, transform) = (mesh_tok.into(), mat_tok.into(), transform.into());
+        let aabb = transform.calculate_aabb(scene.get_mesh(mesh_tok).aabb());
+
+        Self {
+            mesh_tok,
+            mat_tok,
+            aabb,
+            transform,
         }
     }
 }
@@ -96,35 +101,26 @@ where
 
 // region Object Impl
 
-impl<Mesh, Mat> Object for SimpleObject<Mesh, Mat>
-where
-    Mesh: MeshTrait,
-    Mat: Material,
-{
-    type Mesh = Mesh;
-    type Mat = Mat;
-
-    fn full_intersect<'o>(
-        &'o self,
+impl Object for SimpleObject {
+    fn full_intersect(
+        &self,
+        scene: &Scene,
         orig_ray: &Ray,
         interval: &Interval<Number>,
         rng: &mut dyn RngCore,
-    ) -> Option<FullIntersection<'o, Mat>> {
+    ) -> Option<ObjectIntersection> {
         let trans_ray = self.transform.incoming_ray(orig_ray);
-        let inner = self.mesh.intersect(&trans_ray, interval, rng)?;
+        let inner = scene.get_mesh(self.mesh_tok).intersect(&trans_ray, interval, rng)?;
         let intersect = self.transform.outgoing_intersection(orig_ray, inner);
-        Some(intersect.make_full(&self.material))
+        Some(ObjectIntersection {
+            intersection: intersect,
+            material: self.mat_tok,
+        })
     }
 }
 
-impl<Mesh, Mat> Bounded for SimpleObject<Mesh, Mat>
-where
-    Mesh: MeshTrait,
-    Mat: Material,
-{
-    fn aabb(&self) -> Aabb { self.aabb.as_ref() }
-
-    // TODO: A fast method that simply checks if an intersection occurred at all, with no more info (shadow checks)
+impl Bounded for SimpleObject {
+    fn aabb(&self) -> Aabb { self.aabb }
 }
 
 // endregion Object Impl

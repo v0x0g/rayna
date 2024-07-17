@@ -1,5 +1,5 @@
 use crate::core::types::{Colour, Image, Number, Transform2};
-use crate::shared::intersect::Intersection;
+use crate::shared::intersect::MeshIntersection;
 use crate::texture::Texture;
 use glamour::TransformMap;
 use rand_core::RngCore;
@@ -26,7 +26,7 @@ impl From<Image> for ImageTexture {
 
 // TODO: Implement some sort of texture filtering and stuff
 impl Texture for ImageTexture {
-    fn value(&self, intersection: &Intersection, _rng: &mut dyn RngCore) -> Colour {
+    fn value(&self, intersection: &MeshIntersection, _rng: &mut dyn RngCore) -> Colour {
         // Calculate pixel positions after scale and offset
         let translated = self.transform.map(intersection.uv);
         // Flip y-axis to image coords

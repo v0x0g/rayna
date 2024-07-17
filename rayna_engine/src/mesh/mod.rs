@@ -25,6 +25,7 @@
 //! - See [`sphere`] for an example
 
 use crate::core::types::{Number, Point3};
+use crate::scene::Scene;
 use crate::shared::aabb::Bounded;
 use crate::shared::intersect::MeshIntersection;
 use crate::shared::interval::Interval;
@@ -33,40 +34,12 @@ use crate::shared::token::generate_component_token;
 use crate::shared::ComponentRequirements;
 use enum_dispatch::enum_dispatch;
 use rand_core::RngCore;
-// noinspection ALL - Used by enum_dispatch macro
-#[allow(unused_imports)]
-use axis_box::AxisBoxMesh;
-// noinspection ALL - Used by enum_dispatch macro
-#[allow(unused_imports)]
-use cylinder::CylinderMesh;
-// noinspection ALL - Used by enum_dispatch macro
-#[allow(unused_imports)]
-use list::ListMesh;
-// noinspection ALL - Used by enum_dispatch macro
-#[allow(unused_imports)]
-use polygonised::PolygonisedIsosurfaceMesh;
-// noinspection ALL - Used by enum_dispatch macro
-#[allow(unused_imports)]
-use raymarched::RaymarchedIsosurfaceMesh;
-// noinspection ALL - Used by enum_dispatch macro
-use crate::scene::Scene;
-#[allow(unused_imports)]
-use sphere::SphereMesh;
-// noinspection ALL - Used by enum_dispatch macro
-#[allow(unused_imports)]
-use self::{
-    advanced::{batch_triangle::BatchTriangle, bvh_mesh::BvhMesh, dynamic::DynamicMesh},
-    planar::{infinite_plane::InfinitePlaneMesh, parallelogram::ParallelogramMesh},
-};
 
-pub mod advanced;
 pub mod axis_box;
 pub mod cylinder;
-pub mod isosurface;
 pub mod list;
 pub mod planar;
 pub mod polygonised;
-pub mod primitive;
 pub mod raymarched;
 pub mod sphere;
 pub mod triangle;
@@ -96,15 +69,15 @@ pub trait Mesh: ComponentRequirements {
 #[enum_dispatch(Mesh)]
 #[derive(Clone, Debug)]
 pub enum MeshInstance {
-    SphereMesh,
-    CylinderMesh,
-    AxisBoxMesh,
-    ParallelogramMesh,
-    InfinitePlaneMesh,
-    RaymarchedIsosurfaceMesh,
-    PolygonisedIsosurfaceMesh,
-    TriangleMesh,
-    MeshList,
+    SphereMesh(self::sphere::SphereMesh),
+    CylinderMesh(self::cylinder::CylinderMesh),
+    AxisBoxMesh(self::axis_box::AxisBoxMesh),
+    ParallelogramMesh(self::planar::ParallelogramMesh),
+    InfinitePlaneMesh(self::planar::InfinitePlaneMesh),
+    RaymarchedIsosurfaceMesh(self::raymarched::RaymarchedIsosurfaceMesh),
+    PolygonisedIsosurfaceMesh(self::polygonised::PolygonisedIsosurfaceMesh),
+    TriangleMesh(self::triangle::TriangleMesh),
+    MeshList(self::list::ListMesh),
 }
 
 generate_component_token!(MeshToken for MeshInstance);

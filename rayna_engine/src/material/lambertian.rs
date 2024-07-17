@@ -42,12 +42,21 @@ impl Material for LambertianMaterial {
     fn reflected_light(
         &self,
         _ray: &Ray,
-        _scene: &Scene,
+        scene: &Scene,
         intersect: &MeshIntersection,
         _future_ray: &Ray,
         future_col: &Colour,
         rng: &mut dyn RngCore,
     ) -> Colour {
-        future_col * scene.get_tex(self.albedo).value(intersect, rng)
+        future_col * scene.get_tex(self.albedo).value(scene, intersect, rng)
+    }
+    fn emitted_light(
+        &self,
+        _ray: &Ray,
+        _scene: &Scene,
+        _intersection: &MeshIntersection,
+        _rng: &mut dyn RngCore,
+    ) -> Colour {
+        Colour::BLACK
     }
 }

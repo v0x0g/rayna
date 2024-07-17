@@ -53,9 +53,19 @@ impl Material for IsotropicMaterial {
         // NOTE: This is the colour at the exiting intersection, which might not be accurate if the texture
         //  is non-homogenous
         // TODO: Fix this texture issue somehow, maybe sample along the line and integrate that?
-        let attenuation_col = scene.get_tex(self.albedo).value(intersection, rng);
+        let attenuation_col = scene.get_tex(self.albedo).value(scene, intersection, rng);
 
         // future_col * (attenuation_col.exp(transmission))
         future_col * attenuation_col * transmission.exp()
+    }
+
+    fn emitted_light(
+        &self,
+        _ray: &Ray,
+        _scene: &Scene,
+        _intersection: &MeshIntersection,
+        _rng: &mut dyn RngCore,
+    ) -> Colour {
+        Colour::BLACK
     }
 }

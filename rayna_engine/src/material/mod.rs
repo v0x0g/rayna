@@ -1,8 +1,3 @@
-//noinspection ALL
-use self::{
-    dielectric::DielectricMaterial, dynamic::DynamicMaterial, isotropic::IsotropicMaterial,
-    lambertian::LambertianMaterial, light::LightMaterial, metal::MetalMaterial,
-};
 use crate::core::types::{Colour, Vector3};
 use crate::scene::Scene;
 use crate::shared::intersect::MeshIntersection;
@@ -103,16 +98,8 @@ pub trait Material: ComponentRequirements {
     /// # Return Value
     /// Returns the light (colour) of emission for the given intersection and ray. The default implementation
     /// is to return black (`Pixel([0.; 3])`)
-    #[allow(unused_variables)]
-    fn emitted_light(
-        &self,
-        ray: &Ray,
-        scene: &Scene,
-        intersection: &MeshIntersection,
-        rng: &mut dyn RngCore,
-    ) -> Colour {
-        Colour::BLACK
-    }
+    fn emitted_light(&self, ray: &Ray, scene: &Scene, intersection: &MeshIntersection, rng: &mut dyn RngCore)
+        -> Colour;
 
     /// This function calculates what light should be reflected, based off the future light/ray information
     ///
@@ -141,7 +128,7 @@ pub trait Material: ComponentRequirements {
     /// #
     /// # #[derive(Copy, Clone, Eq, PartialEq, Debug)]
     /// pub struct Test;
-    /// #     /// #
+    /// #
     /// impl Material for Test {
     /// #   fn scatter(&self, ray: &Ray, intersection: &MeshIntersection, rng: &mut dyn RngCore) -> Option<Vector3> { unimplemented!() }
     /// #   fn emitted_light(&self, ray: &Ray, intersection: &MeshIntersection, rng: &mut dyn RngCore) -> Colour { unimplemented!() }
@@ -177,17 +164,14 @@ pub trait Material: ComponentRequirements {
 /// If using it as a parameter or type argument in a library, constrain over `T:` [Material],
 /// and only use `T = ` [MaterialInstance] at the highest level where possible
 #[enum_dispatch(Material)]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub enum MaterialInstance {
-    LambertianMaterial,
-    MetalMaterial,
-    DielectricMaterial,
-    IsotropicMaterial,
-    LightMaterial,
+    #[default]
+    LambertianMaterial(self::lambertian::LambertianMaterial),
+    MetalMaterial(self::metal::MetalMaterial),
+    DielectricMaterial(self::dielectric::DielectricMaterial),
+    IsotropicMaterial(self::isotropic::IsotropicMaterial),
+    LightMaterial(self::light::LightMaterial),
 }
 
 generate_component_token!(MaterialToken for MaterialInstance);
-
-impl Default for MaterialInstance {
-    fn default() -> Self { LambertianMaterial::default().into() }
-}

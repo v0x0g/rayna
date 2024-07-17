@@ -45,7 +45,16 @@ impl Material for DielectricMaterial {
         return Some(dir);
     }
 
-    //noinspection DuplicatedCode
+    fn emitted_light(
+        &self,
+        _ray: &Ray,
+        _scene: &Scene,
+        _intersection: &MeshIntersection,
+        _rng: &mut dyn RngCore,
+    ) -> Colour {
+        Colour::BLACK
+    }
+
     fn reflected_light(
         &self,
         ray: &Ray,
@@ -70,7 +79,7 @@ impl Material for DielectricMaterial {
         let transmission = (-self.density * dist_inside) as Channel;
         // TODO: This is the colour at the exiting intersection, which might not be accurate if the texture
         //  is non-homogenous. Maybe sample along the line and integrate that?
-        let attenuation_col = scene.get_tex(self.albedo).value(intersection, rng);
+        let attenuation_col = scene.get_tex(self.albedo).value(scene, intersection, rng);
 
         // future_col * (attenuation_col.exp(transmission))
         future_col * attenuation_col * transmission.exp()

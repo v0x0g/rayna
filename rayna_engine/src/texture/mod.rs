@@ -2,11 +2,6 @@ pub mod checker;
 pub mod image;
 pub mod solid;
 
-use self::{
-    checker::{UvCheckerTexture, WorldCheckerTexture},
-    image::ImageTexture,
-    solid::SolidTexture,
-};
 use crate::core::types::Colour;
 use crate::scene::Scene;
 use crate::shared::intersect::MeshIntersection;
@@ -25,19 +20,16 @@ pub trait Texture: ComponentRequirements {
 
 /// An optimised implementation of [Texture], using static dispatch
 #[enum_dispatch(Texture)]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub enum TextureInstance {
-    SolidTexture,
-    WorldCheckerTexture,
-    UvCheckerTexture,
-    ImageTexture,
+    #[default]
+    SolidTexture(self::solid::SolidTexture),
+    WorldCheckerTexture(self::checker::WorldCheckerTexture),
+    UvCheckerTexture(self::checker::UvCheckerTexture),
+    ImageTexture(self::image::ImageTexture),
 }
 
 generate_component_token!(TextureToken for TextureInstance);
-
-impl Default for TextureInstance {
-    fn default() -> Self { SolidTexture::default().into() }
-}
 
 /// Special function to be called when an error occurs during texture value calculations,
 /// and a value cannot be generated. Calling this has an advantage over panicking since it won't crash anything,

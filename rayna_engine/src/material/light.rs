@@ -28,11 +28,11 @@ impl Material for LightMaterial {
     fn emitted_light(
         &self,
         _ray: &Ray,
-        _scene: &Scene,
+        scene: &Scene,
         intersection: &MeshIntersection,
         rng: &mut dyn RngCore,
     ) -> Colour {
-        scene.get_tex(self.emissive).value(intersection, rng)
+        scene.get_tex(self.emissive).value(scene, intersection, rng)
     }
 
     fn reflected_light(

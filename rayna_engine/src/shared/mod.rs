@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 
 pub mod aabb;
-pub mod generic_bvh;
 pub mod intersect;
 pub mod interval;
 pub mod math;

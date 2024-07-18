@@ -27,6 +27,12 @@ macro_rules! generate_component_token {
                 )
             }
         }
+
+        impl core::convert::From<$crate::core::types::IdToken> for $token_type {
+            fn from(value: $crate::core::types::IdToken) -> Self {
+                Self(value)
+            }
+        }
     };
 }
 

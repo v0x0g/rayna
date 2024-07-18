@@ -7,12 +7,13 @@ use crate::shared::aabb::Bounded;
 use crate::shared::intersect::ObjectIntersection;
 use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
+use crate::shared::token::generate_component_token;
 use crate::shared::ComponentRequirements;
 
+mod list;
 pub mod simple;
 pub mod transform;
 pub mod volumetric;
-
 // TODO: Should objects (as well as other traits) have some sort of identifier?
 
 #[doc(notable_trait)]
@@ -21,6 +22,7 @@ pub trait Object: ComponentRequirements + Bounded {
     ///
     /// # Return Value
     /// This should return the *first* intersection that is within the given range, else [`None`]
+    // TODO: rename to intersect
     fn full_intersect(
         &self,
         scene: &Scene,
@@ -38,3 +40,5 @@ pub enum ObjectInstance {
     SimpleObject(simple::SimpleObject),
     VolumetricObject(volumetric::VolumetricObject),
 }
+
+generate_component_token!(ObjectToken for ObjectInstance);

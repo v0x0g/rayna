@@ -102,7 +102,7 @@ impl SimpleObject {
 // region Object Impl
 
 impl Object for SimpleObject {
-    fn full_intersect(
+    fn intersect(
         &self,
         scene: &Scene,
         orig_ray: &Ray,

@@ -23,7 +23,7 @@ pub trait Object: ComponentRequirements + Bounded {
     /// # Return Value
     /// This should return the *first* intersection that is within the given range, else [`None`]
     // TODO: rename to intersect
-    fn full_intersect(
+    fn intersect(
         &self,
         scene: &Scene,
         ray: &Ray,

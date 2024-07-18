@@ -86,7 +86,7 @@ impl VolumetricObject {
 // region Object Impl
 
 impl Object for VolumetricObject {
-    fn full_intersect(
+    fn intersect(
         &self,
         scene: &Scene,
         orig_ray: &Ray,

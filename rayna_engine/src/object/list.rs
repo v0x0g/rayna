@@ -56,7 +56,7 @@ impl Bounded for ListObject {
 }
 
 impl Object for ListObject {
-    fn full_intersect(
+    fn intersect(
         &self,
         scene: &Scene,
         ray: &Ray,

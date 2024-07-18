@@ -172,6 +172,7 @@ impl Aabb {
 
 // region Bounded trait
 
+#[enum_dispatch]
 pub trait Bounded: ComponentRequirements {
     /// Gets the bounding box for this object.
     ///

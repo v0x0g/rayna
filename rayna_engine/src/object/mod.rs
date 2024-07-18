@@ -35,7 +35,7 @@ pub trait Object: ComponentRequirements + Bounded {
 }
 
 #[derive(Clone, Debug)]
-#[enum_dispatch(Object)]
+#[enum_dispatch(Object, Bounded)]
 pub enum ObjectInstance {
     SimpleObject(simple::SimpleObject),
     VolumetricObject(volumetric::VolumetricObject),

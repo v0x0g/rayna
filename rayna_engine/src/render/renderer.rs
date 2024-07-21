@@ -14,14 +14,11 @@ use crate::shared::math::Lerp;
 use crate::shared::ray::Ray;
 use crate::shared::validate;
 use crate::skybox::Skybox;
-use ndarray::Zip;
 use num_integer::Roots as _;
 use puffin::profile_function;
 use rand::distributions::Distribution;
 use rand::distributions::Uniform;
 use rand_core::{RngCore, SeedableRng};
-use rayon::prelude::*;
-use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use smallvec::SmallVec;
 use std::ops::DerefMut as _;
 use std::time::Duration;
@@ -35,16 +32,16 @@ use super::accum_buffer::AccumulationBuffer;
 ///
 #[derive(derivative::Derivative, getset::Getters, getset::Setters)]
 #[derivative(Debug)]
-pub struct Renderer<Obj, Sky, Rng> {
+pub struct Renderer<Rng> {
     /// A thread pool used to distribute the workload
-    thread_pool: ThreadPool,
+    thread_pool: rayon::ThreadPool,
     data_pool: opool::Pool<PooledDataAllocator, PooledData<Rng>>,
     /// Accumulation buffer storing the [accumulated] result of previous renders.
     accum_buffer: AccumulationBuffer,
     // Purposefully storing these in the render (though not really required)
     // for future compatibility with GPU renderer
     #[getset(get = "pub")]
-    scene: Scene<Obj, Sky>,
+    scene: Scene,
     #[getset(get = "pub")]
     camera: Camera,
     #[getset(get = "pub")]
@@ -57,18 +54,16 @@ pub enum RendererCreateError {
     ThreadPoolError {
         #[backtrace]
         #[from]
-        source: ThreadPoolBuildError,
+        source: rayon::ThreadPoolBuildError,
     },
 }
 
 // region Construction
 
-impl<Obj, Sky, Rng> Renderer<Obj, Sky, Rng> {
+impl<Rng> Renderer<Rng> {
     /// Creates a new renderer instance, using default values for the scene, camera, and render options
     pub fn new_default() -> Result<Self, RendererCreateError>
     where
-        Obj: Default,
-        Sky: Default,
         Rng: SeedableRng,
     {
         Self::new_from(
@@ -311,7 +306,7 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send + SeedableRng> Renderer<Obj, 
         let accum = accum_buffer.new_frame([w, h]);
 
         thread_pool.install(|| {
-            let pixels = Zip::indexed(accum.deref_mut())
+            let pixels = ndarray::Zip::indexed(accum.deref_mut())
                 .and(dest_img.deref_mut())
                 .into_par_iter()
                 // Return on panic as fast as possible; don't keep processing all the pixels on panic

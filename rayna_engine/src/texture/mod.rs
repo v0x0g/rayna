@@ -1,5 +1,6 @@
 pub mod checker;
 pub mod image;
+mod noise;
 pub mod solid;
 
 use crate::core::types::Colour;

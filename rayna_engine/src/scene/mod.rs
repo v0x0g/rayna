@@ -14,7 +14,7 @@ use rand_core::RngCore;
 use std::collections::HashMap;
 
 pub mod camera;
-pub mod preset;
+// pub mod preset;
 
 /// Represents the environment, containing the objects in a scene along with the skybox.
 ///
@@ -68,7 +68,6 @@ pub mod preset;
 pub struct Scene {
     // TODO: See if there's a way to get rid of the duplicated token/insertion code,
     //  it might be possible using some fancy trait, and some `unsafe` trickery
-    pub name: String,
     noise2d: HashMap<NoiseToken, NoiseInstance<2>>,
     noise3d: HashMap<NoiseToken, NoiseInstance<3>>,
     textures: HashMap<TextureToken, TextureInstance>,
@@ -79,7 +78,6 @@ pub struct Scene {
     skybox: SkyboxInstance,
 }
 
-/// Adding instances
 impl Scene {
     /// Generates a new [`IdToken`]
     ///
@@ -91,13 +89,37 @@ impl Scene {
         use std::sync::atomic::{AtomicU32, Ordering};
 
         // Assert we can combine two u32's into a token
-        const_format::assertcp_eq!(IdToken::BITS >= 2 * u32::BITS, "expected IdToken to fit two u32's");
+        const_format::assertcp!(IdToken::BITS >= 2 * u32::BITS, "expected IdToken to fit two u32's");
         static COUNTER: AtomicU32 = AtomicU32::new(1);
         let count = COUNTER.fetch_add(1, Ordering::Relaxed) as IdToken;
         let mask = thread_rng().next_u32() as IdToken;
         // Concat [mask][count] for a guaranteed unique ID
         (mask << (u32::BITS as IdToken)) | count
     }
+
+    pub fn new(skybox: impl Into<SkyboxInstance>) -> Self {
+        Self {
+            noise2d: HashMap::new(),
+            noise3d: HashMap::new(),
+            textures: HashMap::new(),
+            materials: HashMap::new(),
+            meshes: HashMap::new(),
+            objects: HashMap::new(),
+            custom_root: None,
+            skybox: skybox.into(),
+        }
+    }
+
+    /// Sets the custom root object for this scene
+    ///
+    /// This overrides the default behaviour, so all intersection calls are passed through
+    /// to the root object. The default is to render all objects present in the scene
+    /// (see [`Self::all_obj`]
+    pub fn set_custom_root(&mut self, obj: impl Into<ObjectInstance>) { self.custom_root = Some(obj.into()); }
+    /// Gets the object that was set as the custom scene root
+    ///
+    /// See [`Self::set_custom_root`] for an explanation of custom roots
+    pub fn get_custom_root(&self) -> Option<&ObjectInstance> { self.custom_root.as_ref() }
 }
 
 /// A helper macro that generates functions for adding and removing components to a scene.
@@ -186,15 +208,6 @@ gen_components! {
     ( mat    in self.materials : MaterialInstance => MaterialToken ),
     ( mesh   in self.meshes    : MeshInstance     => MeshToken     ),
     ( obj    in self.objects   : ObjectInstance   => ObjectToken   ),
-}
-
-impl Scene {
-    ///
-    pub fn set_custom_root(&mut self, obj: impl Into<ObjectInstance>) { self.custom_root = Some(obj.into()); }
-    /// Gets the object that was set as the custom scene root
-    ///
-    /// See [`Self::set_custom_root`] for an explanation of custom roots
-    pub fn get_custom_root(&self) -> Option<&ObjectInstance> { self.custom_root.as_ref() }
 }
 
 impl Scene {

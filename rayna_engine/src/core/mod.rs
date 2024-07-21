@@ -1,4 +1,5 @@
 pub mod colour;
+pub mod gradient;
 pub mod image;
 pub mod macros;
 pub mod profiler;

@@ -32,7 +32,6 @@ use crate::shared::interval::Interval;
 use crate::shared::ray::Ray;
 use crate::shared::token::generate_component_token;
 use crate::shared::ComponentRequirements;
-use enum_dispatch::enum_dispatch;
 use rand_core::RngCore;
 
 pub mod axis_box;
@@ -45,7 +44,7 @@ pub mod sphere;
 pub mod triangle;
 // region Object traits
 
-#[enum_dispatch]
+#[enum_dispatch::enum_dispatch]
 #[doc(notable_trait)]
 pub trait Mesh: ComponentRequirements {
     /// Attempts to perform an intersection between the given ray and the target mesh
@@ -66,7 +65,7 @@ pub trait Mesh: ComponentRequirements {
 /// An optimised implementation of [Mesh].
 ///
 /// See [`crate::material::MaterialInstance`] for an explanation of the [`macro@enum_dispatch`] macro usage
-#[enum_dispatch(Mesh)]
+#[enum_dispatch::enum_dispatch(Mesh)]
 #[derive(Clone, Debug)]
 pub enum MeshInstance {
     SphereMesh(self::sphere::SphereMesh),

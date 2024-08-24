@@ -1,13 +1,13 @@
+use crate::core::aabb::{Aabb, Bounded};
+use crate::core::intersect::ObjectIntersection;
+use crate::core::interval::Interval;
+use crate::core::ray::Ray;
 use crate::core::types::Number;
-use crate::material::{Material, MaterialInstance, MaterialToken};
+use crate::material::{MaterialInstance, MaterialToken};
 use crate::mesh::{Mesh as MeshTrait, MeshInstance, MeshToken};
 use crate::object::transform::ObjectTransform;
 use crate::object::Object;
 use crate::scene::Scene;
-use crate::shared::aabb::{Aabb, Bounded};
-use crate::shared::intersect::ObjectIntersection;
-use crate::shared::interval::Interval;
-use crate::shared::ray::Ray;
 use getset::{CopyGetters, Getters};
 use rand_core::RngCore;
 
@@ -86,7 +86,7 @@ impl SimpleObject {
         transform: impl Into<ObjectTransform>,
     ) -> Self {
         let (mesh_tok, mat_tok, transform) = (mesh_tok.into(), mat_tok.into(), transform.into());
-        let aabb = transform.calculate_aabb(scene.get_mesh(mesh_tok).aabb());
+        let aabb = transform.calculate_aabb(scene.get_mesh(&mesh_tok).aabb());
 
         Self {
             mesh_tok,
@@ -110,7 +110,9 @@ impl Object for SimpleObject {
         rng: &mut dyn RngCore,
     ) -> Option<ObjectIntersection> {
         let trans_ray = self.transform.incoming_ray(orig_ray);
-        let inner = scene.get_mesh(self.mesh_tok).intersect(&trans_ray, interval, rng)?;
+        let inner = scene
+            .get_mesh(&self.mesh_tok)
+            .intersect(scene, &trans_ray, interval, rng)?;
         let intersect = self.transform.outgoing_intersection(orig_ray, inner);
         Some(ObjectIntersection {
             intersection: intersect,

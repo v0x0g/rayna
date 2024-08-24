@@ -1,9 +1,8 @@
+use crate::core::intersect::MeshIntersection;
+use crate::core::ray::Ray;
+use crate::core::rng;
 use crate::core::types::{Colour, Vector3};
 use crate::material::Material;
-use crate::shared::intersect::MeshIntersection;
-use crate::shared::ray::Ray;
-use crate::shared::rng;
-use crate::texture::TextureInstance;
 use crate::texture::{Texture, TextureToken};
 
 use crate::scene::Scene;
@@ -12,10 +11,6 @@ use rand::RngCore;
 #[derive(Copy, Clone, Debug)]
 pub struct LambertianMaterial {
     pub albedo: TextureToken,
-}
-
-impl Default for LambertianMaterial {
-    fn default() -> Self { Colour::HALF_GREY.into() }
 }
 
 impl From<TextureToken> for LambertianMaterial {
@@ -48,7 +43,7 @@ impl Material for LambertianMaterial {
         future_col: &Colour,
         rng: &mut dyn RngCore,
     ) -> Colour {
-        future_col * scene.get_tex(self.albedo).value(scene, intersect, rng)
+        future_col * scene.get_tex(&self.albedo).value(scene, intersect, rng)
     }
     fn emitted_light(
         &self,

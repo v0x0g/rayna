@@ -24,15 +24,15 @@
 //! - Add an entry to [MeshInstance] to correspond to the `SphereObject` for static-dispatch
 //! - See [`sphere`] for an example
 
-use crate::core::types::{Number, Point3};
+use crate::core::aabb::Aabb;
+use crate::core::aabb::Bounded;
+use crate::core::component::Component;
+use crate::core::intersect::MeshIntersection;
+use crate::core::interval::Interval;
+use crate::core::ray::Ray;
+use crate::core::token::generate_component_token;
+use crate::core::types::Number;
 use crate::scene::Scene;
-use crate::shared::aabb::Bounded;
-use crate::shared::intersect::MeshIntersection;
-use crate::shared::interval::Interval;
-use crate::shared::ray::Ray;
-use crate::shared::token::generate_component_token;
-use crate::shared::ComponentRequirements;
-use enum_dispatch::enum_dispatch;
 use rand_core::RngCore;
 
 pub mod axis_box;
@@ -45,9 +45,9 @@ pub mod sphere;
 pub mod triangle;
 // region Object traits
 
-#[enum_dispatch]
+#[enum_dispatch::enum_dispatch]
 #[doc(notable_trait)]
-pub trait Mesh: ComponentRequirements {
+pub trait Mesh: Component + Bounded {
     /// Attempts to perform an intersection between the given ray and the target mesh
     ///
     /// # Return Value
@@ -66,7 +66,7 @@ pub trait Mesh: ComponentRequirements {
 /// An optimised implementation of [Mesh].
 ///
 /// See [`crate::material::MaterialInstance`] for an explanation of the [`macro@enum_dispatch`] macro usage
-#[enum_dispatch(Mesh)]
+#[enum_dispatch::enum_dispatch(Mesh, Bounded)]
 #[derive(Clone, Debug)]
 pub enum MeshInstance {
     SphereMesh(self::sphere::SphereMesh),

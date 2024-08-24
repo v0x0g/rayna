@@ -1,10 +1,9 @@
+use crate::core::component::Component;
+use crate::core::intersect::MeshIntersection;
+use crate::core::ray::Ray;
+use crate::core::token::generate_component_token;
 use crate::core::types::{Colour, Vector3};
 use crate::scene::Scene;
-use crate::shared::intersect::MeshIntersection;
-use crate::shared::ray::Ray;
-use crate::shared::token::generate_component_token;
-use crate::shared::ComponentRequirements;
-use crate::texture::{Texture, TextureInstance};
 use enum_dispatch::enum_dispatch;
 use rand::RngCore;
 
@@ -17,7 +16,7 @@ pub mod metal;
 /// The trait that defines what properties a material has
 #[enum_dispatch]
 #[doc(notable_trait)]
-pub trait Material: ComponentRequirements {
+pub trait Material: Component {
     /// Scatters the input ray, according to the material's properties
     ///
     /// # Arguments
@@ -164,9 +163,8 @@ pub trait Material: ComponentRequirements {
 /// If using it as a parameter or type argument in a library, constrain over `T:` [Material],
 /// and only use `T = ` [MaterialInstance] at the highest level where possible
 #[enum_dispatch(Material)]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub enum MaterialInstance {
-    #[default]
     LambertianMaterial(self::lambertian::LambertianMaterial),
     MetalMaterial(self::metal::MetalMaterial),
     DielectricMaterial(self::dielectric::DielectricMaterial),

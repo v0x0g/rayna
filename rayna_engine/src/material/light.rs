@@ -1,8 +1,8 @@
+use crate::core::intersect::MeshIntersection;
+use crate::core::ray::Ray;
 use crate::core::types::{Colour, Vector3};
 use crate::material::Material;
 use crate::scene::Scene;
-use crate::shared::intersect::MeshIntersection;
-use crate::shared::ray::Ray;
 use crate::texture::{Texture, TextureToken};
 use rand_core::RngCore;
 
@@ -32,7 +32,7 @@ impl Material for LightMaterial {
         intersection: &MeshIntersection,
         rng: &mut dyn RngCore,
     ) -> Colour {
-        scene.get_tex(self.emissive).value(scene, intersection, rng)
+        scene.get_tex(&self.emissive).value(scene, intersection, rng)
     }
 
     fn reflected_light(

@@ -1,14 +1,14 @@
+use crate::core::aabb::{Aabb, Bounded};
+use crate::core::intersect::{MeshIntersection, ObjectIntersection};
+use crate::core::interval::Interval;
+use crate::core::ray::Ray;
+use crate::core::rng;
 use crate::core::types::Number;
 use crate::material::{MaterialInstance, MaterialToken};
-use crate::mesh::{MeshInstance, MeshToken};
+use crate::mesh::{Mesh, MeshInstance, MeshToken};
 use crate::object::transform::ObjectTransform;
 use crate::object::Object;
 use crate::scene::Scene;
-use crate::shared::aabb::{Aabb, Bounded};
-use crate::shared::intersect::{MeshIntersection, ObjectIntersection};
-use crate::shared::interval::Interval;
-use crate::shared::ray::Ray;
-use crate::shared::rng;
 use getset::{CopyGetters, Getters};
 use rand::Rng;
 use rand_core::RngCore;
@@ -68,7 +68,7 @@ impl VolumetricObject {
     ) -> Self {
         let (mesh_tok, mat_tok, density, transform) =
             (mesh_tok.into(), mat_tok.into(), density.into(), transform.into());
-        let aabb = transform.calculate_aabb(scene.get_mesh(mesh_tok).aabb());
+        let aabb = transform.calculate_aabb(scene.get_mesh(&mesh_tok).aabb());
 
         Self {
             mesh_tok,
@@ -94,7 +94,7 @@ impl Object for VolumetricObject {
         rng: &mut dyn RngCore,
     ) -> Option<ObjectIntersection> {
         let ray = self.transform.incoming_ray(orig_ray);
-        let mesh = scene.get_mesh(self.mesh_tok);
+        let mesh = scene.get_mesh(&self.mesh_tok);
 
         // FIXME: Volumes are broken when the ray starts inside the volume
         //  Fix this once the path-tracking stack is rewritten
@@ -109,7 +109,7 @@ impl Object for VolumetricObject {
         //  exists at all along the ray. Then, we clamp that distance value to our interval, so we still get the right value
         let entering_dist = {
             let enter_interval = Interval::FULL;
-            let d = mesh.intersect(&ray, &enter_interval, rng)?.dist;
+            let d = mesh.intersect(scene, &ray, &enter_interval, rng)?.dist;
             // If we have start bound, move intersection along, so it happened there at the earliest
             if let Some(start) = interval.start {
                 d.max(start)
@@ -120,7 +120,7 @@ impl Object for VolumetricObject {
         let exiting_dist = {
             // Have to add a slight offset so we don't intersect with the same point twice
             let exit_interval = Interval::from(entering_dist + 0.001..);
-            let d = mesh.intersect(&ray, &exit_interval, rng)?.dist;
+            let d = mesh.intersect(scene, &ray, &exit_interval, rng)?.dist;
 
             // Clamp intersection dist to end of interval (if volume larger than interval)
             if let Some(end) = interval.end {

@@ -1,10 +1,10 @@
+use crate::core::aabb::{Aabb, Bounded};
+use crate::core::intersect::MeshIntersection;
+use crate::core::interval::Interval;
+use crate::core::ray::Ray;
 use crate::core::types::{Number, Point2, Point3, Vector3};
 use crate::mesh::{planar, Mesh};
 use crate::scene::Scene;
-use crate::shared::aabb::{Aabb, Bounded};
-use crate::shared::intersect::MeshIntersection;
-use crate::shared::interval::Interval;
-use crate::shared::ray::Ray;
 use num_traits::Zero;
 use rand_core::RngCore;
 use std::fmt::Debug;

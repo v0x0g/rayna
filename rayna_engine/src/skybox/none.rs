@@ -1,5 +1,5 @@
+use crate::core::ray::Ray;
 use crate::core::types::Colour;
-use crate::shared::ray::Ray;
 use crate::skybox::Skybox;
 
 #[derive(Copy, Clone, Debug, Default)]

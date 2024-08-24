@@ -5,9 +5,9 @@ use num_traits::float::FloatCore;
 use num_traits::Euclid;
 use rand_core::RngCore;
 
+use crate::core::intersect::MeshIntersection;
 use crate::core::types::{Colour, Transform2, Transform3};
 use crate::scene::Scene;
-use crate::shared::intersect::MeshIntersection;
 use crate::texture::{Texture, TextureToken};
 
 #[derive(Clone, Debug)]
@@ -22,7 +22,7 @@ impl Texture for WorldCheckerTexture {
         let pos = self.transform.map_point(intersection.pos_w);
 
         let tok = choose_checker(pos.to_array(), self.odd, self.even);
-        scene.get_tex(tok).value(scene, intersection, rng)
+        scene.get_tex(&tok).value(scene, intersection, rng)
     }
 }
 
@@ -38,7 +38,7 @@ impl Texture for UvCheckerTexture {
         let pos = self.transform.map(intersection.uv);
 
         let tok = choose_checker(pos.to_array(), self.odd, self.even);
-        scene.get_tex(tok).value(scene, intersection, rng)
+        scene.get_tex(&tok).value(scene, intersection, rng)
     }
 }
 

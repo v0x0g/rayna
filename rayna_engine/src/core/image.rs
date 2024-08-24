@@ -1,17 +1,17 @@
+use crate::core::math::Lerp;
 use crate::core::types::{Colour, Number};
-use crate::shared::math::Lerp;
 use getset::{CopyGetters, Getters};
 use ndarray::{ArcArray, Ix2, Shape};
 use std::ops::{Deref, DerefMut};
 
-#[derive(CopyGetters, Getters, Derivative, Clone)]
-#[derivative(Debug)]
+#[derive(CopyGetters, Getters, Clone, educe::Educe)]
+#[educe(Debug)]
 pub struct Image<Col = Colour> {
     #[get_copy = "pub"]
     width: usize,
     #[get_copy = "pub"]
     height: usize,
-    #[derivative(Debug = "ignore")]
+    #[educe(Debug(ignore))]
     #[get = "pub"]
     data: ArcArray<Col, Ix2>,
 }

@@ -3,13 +3,13 @@ use getset::{CopyGetters, Getters};
 use rand_core::RngCore;
 use std::sync::Arc;
 
+use crate::core::aabb::{Aabb, Bounded};
+use crate::core::intersect::MeshIntersection;
+use crate::core::interval::Interval;
+use crate::core::ray::Ray;
 use crate::core::types::{Number, Point2, Point3, Vector3};
 use crate::mesh::Mesh;
 use crate::scene::Scene;
-use crate::shared::aabb::{Aabb, Bounded};
-use crate::shared::intersect::MeshIntersection;
-use crate::shared::interval::Interval;
-use crate::shared::ray::Ray;
 
 /// A mesh struct that is created by ray-marching for a given SDF.
 #[derive(CopyGetters, Getters, Educe, Clone)]

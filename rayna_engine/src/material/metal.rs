@@ -1,8 +1,8 @@
+use crate::core::intersect::MeshIntersection;
+use crate::core::ray::Ray;
 use crate::core::types::{Colour, Number, Vector3};
+use crate::core::{math, rng};
 use crate::material::Material;
-use crate::shared::intersect::MeshIntersection;
-use crate::shared::ray::Ray;
-use crate::shared::{math, rng};
 use crate::texture::{Texture, TextureToken};
 
 use crate::scene::Scene;
@@ -49,7 +49,7 @@ impl Material for MetalMaterial {
         future_col: &Colour,
         rng: &mut dyn RngCore,
     ) -> Colour {
-        future_col * scene.get_tex(self.albedo).value(scene, intersect, rng)
+        future_col * scene.get_tex(&self.albedo).value(scene, intersect, rng)
     }
 
     fn emitted_light(

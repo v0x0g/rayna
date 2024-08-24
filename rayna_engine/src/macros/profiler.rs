@@ -16,8 +16,7 @@ macro_rules! profiler {
 
     (@inner {tracing_target: $tracing_target:expr, name: $name:ident, port: $port:expr}) => {
         pub mod $name {
-            use std::sync::{Mutex, MutexGuard};
-            use once_cell::sync::Lazy;
+            use std::sync::{Mutex, MutexGuard, LazyLock};
             use puffin_http::Server;
             use puffin::{
                 FrameSink, FrameSinkId, StreamInfoRef, ScopeDetails,
@@ -43,8 +42,8 @@ macro_rules! profiler {
             }
 
             #[doc = concat!("The instance of the ", stringify!($name), " thread profilers' server")]
-            pub static SERVER : Lazy<Mutex<Server>>
-                = Lazy::new(|| {
+            pub static SERVER : LazyLock<Mutex<Server>>
+                = LazyLock::new(|| {
                     tracing::debug!(
                         target: $tracing_target,
                         "starting puffin_http server for {} profiler at {}",
@@ -64,7 +63,7 @@ macro_rules! profiler {
 
             #[doc = concat!("Accessor for the ", stringify!($name), " thread reporter")]
             pub fn lock() -> MutexGuard<'static, GlobalProfiler> {
-                static PROFILER: Lazy<Mutex<GlobalProfiler>> = Lazy::new(Default::default);
+                static PROFILER: LazyLock<Mutex<GlobalProfiler>> = LazyLock::new(Default::default);
                 PROFILER.lock().expect(&format!("poisoned std::sync::mutex for {}", stringify!($name)))
             }
 

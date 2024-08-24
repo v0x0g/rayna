@@ -62,6 +62,6 @@ impl Ord for MeshIntersection {
 pub struct ObjectIntersection {
     pub intersection: MeshIntersection,
     /// NOTE: For all comparisons, this field is ignored ([PartialEq], [Ord], [PartialOrd])
-    #[derivative(PartialOrd = "ignore", Ord = "ignore", PartialEq = "ignore")]
+    #[educe(Ord = false, Eq = false)]
     pub material: MaterialToken,
 }

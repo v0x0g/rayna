@@ -19,5 +19,3 @@ pub type Size3 = glamour::Size3<Number>;
 pub type Matrix4 = glamour::Matrix4<Number>;
 pub type Transform2 = glamour::Transform2<Number, Number>;
 pub type Transform3 = glamour::Transform3<Number, Number>;
-/// Numeric identifier used to uniquely mark entities, used in mesh/object/etc. tokens
-pub type IdToken = u64;

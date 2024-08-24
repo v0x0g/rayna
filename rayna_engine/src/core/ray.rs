@@ -1,5 +1,5 @@
 use crate::core::types::{Number, Point3, Vector3};
-use crate::shared::validate;
+use crate::core::validate;
 use getset::CopyGetters;
 
 #[derive(Copy, Clone, PartialEq, Debug, CopyGetters)]

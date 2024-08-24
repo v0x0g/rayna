@@ -1,8 +1,8 @@
+use crate::core::intersect::MeshIntersection;
+use crate::core::math;
+use crate::core::ray::Ray;
 use crate::core::types::{Channel, Colour, Number, Point3, Vector3};
 use crate::material::Material;
-use crate::shared::intersect::MeshIntersection;
-use crate::shared::math;
-use crate::shared::ray::Ray;
 use crate::texture::{Texture, TextureToken};
 
 use crate::scene::Scene;
@@ -79,7 +79,7 @@ impl Material for DielectricMaterial {
         let transmission = (-self.density * dist_inside) as Channel;
         // TODO: This is the colour at the exiting intersection, which might not be accurate if the texture
         //  is non-homogenous. Maybe sample along the line and integrate that?
-        let attenuation_col = scene.get_tex(self.albedo).value(scene, intersection, rng);
+        let attenuation_col = scene.get_tex(&self.albedo).value(scene, intersection, rng);
 
         // future_col * (attenuation_col.exp(transmission))
         future_col * attenuation_col * transmission.exp()

@@ -1,18 +1,14 @@
+use crate::core::intersect::MeshIntersection;
 use crate::core::types::{Colour, Image, Number, Transform2};
-use crate::shared::intersect::MeshIntersection;
+use crate::scene::Scene;
 use crate::texture::Texture;
 use glamour::TransformMap;
 use rand_core::RngCore;
-use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub struct ImageTexture {
     pub image: Image,
     pub transform: Transform2,
-}
-
-impl From<Image> for ImageTexture {
-    fn from(value: Image) -> Self { Self::from(Arc::new(value)) }
 }
 
 impl From<Image> for ImageTexture {
@@ -26,7 +22,7 @@ impl From<Image> for ImageTexture {
 
 // TODO: Implement some sort of texture filtering and stuff
 impl Texture for ImageTexture {
-    fn value(&self, intersection: &MeshIntersection, _rng: &mut dyn RngCore) -> Colour {
+    fn value(&self, _scene: &Scene, intersection: &MeshIntersection, _rng: &mut dyn RngCore) -> Colour {
         // Calculate pixel positions after scale and offset
         let translated = self.transform.map(intersection.uv);
         // Flip y-axis to image coords

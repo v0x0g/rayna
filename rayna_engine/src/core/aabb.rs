@@ -1,18 +1,17 @@
-use crate::shared::ComponentRequirements;
+use crate::core::component::Component;
 use enum_dispatch::enum_dispatch;
 use std::borrow::Borrow;
 
-use crate::core::types::{Number, Point3, Size3, Vector3};
+use crate::core::types::{Number, Point3, Size3};
 use getset::*;
-use itertools::Itertools;
 
-use crate::shared::interval::Interval;
-use crate::shared::ray::Ray;
+use crate::core::interval::Interval;
+use crate::core::ray::Ray;
 
 /// An **Axis-Aligned Bounding Box** (AABB)
 ///
 /// The box spans between the two corners `min` and `max`'
-#[derive(CopyGetters, Copy, Clone, Debug, PartialEq, Default)]
+#[derive(CopyGetters, Copy, Clone, Debug, Default)]
 #[getset(get_copy = "pub")]
 pub struct Aabb {
     /// The lower corner of the [Aabb]; the corner with the smallest coordinates
@@ -41,7 +40,7 @@ impl Aabb {
 
     /// Returns an [Aabb] that surrounds the two given boxes
     pub fn encompass(a: impl Borrow<Self>, b: impl Borrow<Self>) -> Self {
-        let (a, b) = (a.borrow(), b.borrow());
+        let (a, b): (&Self, &Self) = (a.borrow(), b.borrow());
         let min = Point3::min(a.min, b.min);
         let max = Point3::max(a.max, b.max);
         Self::new(min, max)
@@ -78,6 +77,16 @@ impl Aabb {
 
 // endregion Constructors
 
+// region Traits
+
+impl const PartialEq for Aabb {
+    fn eq(&self, other: &Self) -> bool { self.min == other.min && self.max == other.max }
+}
+
+impl const Eq for Aabb {}
+
+// endregion Traits
+
 // region Helper
 impl Aabb {
     /// A special [`Aabb`] value that indicates the lack of bounds, aka an infinite bounding box.
@@ -98,14 +107,14 @@ impl Aabb {
     pub const fn corners(&self) -> [Point3; 8] {
         let (l, h) = (self.min, self.max);
         [
-            [l.x, l.y, l.z].into(),
-            [l.x, l.y, h.z].into(),
-            [l.x, h.y, l.z].into(),
-            [l.x, h.y, h.z].into(),
-            [h.x, l.y, l.z].into(),
-            [h.x, l.y, h.z].into(),
-            [h.x, h.y, l.z].into(),
-            [h.x, h.y, h.z].into(),
+            Point3 { x: l.x, y: l.y, z: l.z },
+            Point3 { x: l.x, y: l.y, z: h.z },
+            Point3 { x: l.x, y: h.y, z: l.z },
+            Point3 { x: l.x, y: h.y, z: h.z },
+            Point3 { x: h.x, y: l.y, z: l.z },
+            Point3 { x: h.x, y: l.y, z: h.z },
+            Point3 { x: h.x, y: h.y, z: l.z },
+            Point3 { x: h.x, y: h.y, z: h.z },
         ]
     }
 
@@ -173,7 +182,7 @@ impl Aabb {
 // region Bounded trait
 
 #[enum_dispatch]
-pub trait Bounded: ComponentRequirements {
+pub trait Bounded: Component {
     /// Gets the bounding box for this object.
     ///
     /// If the mesh can't be bounded (e.g. infinite plane), return [`Aabb::INFINITE`]

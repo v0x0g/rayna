@@ -1,7 +1,7 @@
+use crate::core::intersect::MeshIntersection;
+use crate::core::interval::Interval;
+use crate::core::ray::Ray;
 use crate::core::types::{Channel, Colour, Number, Point2, Point3, Vector2, Vector3};
-use crate::shared::intersect::MeshIntersection;
-use crate::shared::interval::Interval;
-use crate::shared::ray::Ray;
 use approx::*;
 use std::borrow::Borrow;
 

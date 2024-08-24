@@ -48,14 +48,16 @@ nonzero = "0.2.0"
 cfg-if = "1.0.0"
 itertools = "0.13.0"
 educe = "0.6.0"
+derive-where = "1.2.7"
+derive_more = { version = "1.0.0", features = ["full"] }
 approx = "0.5.1"
 strum = "0.26.2"
 strum_macros = "0.26.2"
 getset = "0.1.2"
 paste = "1.0.15"
-const_format = "0.2.32"
+const_format = { version = "0.2.32", features = ["assertcp", "assertc"] }
 image = "0.25.1"
-valuable = "0.1.0"
+valuable = { version = "0.1.0", features = ["derive"] }
 
 # Performance
 opool = "0.1.1" # PATCHED
@@ -71,10 +73,10 @@ rayon = "1.8.0"
 # Using a custom fork of `puffin`
 # - So we can have multiple instances of the `puffin_http::Server` that are disjoint
 # - So that we can use a `profile_scope_custom!()` macro
-puffin = { git = "ssh://git@github.com/v0x0g/fork-puffin.git", branch = "main" }
-puffin_http = { git = "ssh://git@github.com/v0x0g/fork-puffin.git", branch = "main" }
+puffin = { git = "https://github.com/v0x0g/fork-puffin.git", branch = "main" }
+puffin_http = { git = "https://github.com/v0x0g/fork-puffin.git", branch = "main" }
 # Custom features from fork, removed type bounds
-opool = { git = "ssh://git@github.com/v0x0g/fork-opool.git", branch = "main" }
+opool = { git = "https://github.com/v0x0g/fork-opool.git", branch = "main" }
 
 
 # ===== BUILD PROFILES =====

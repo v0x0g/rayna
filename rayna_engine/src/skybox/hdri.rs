@@ -1,6 +1,6 @@
+use crate::core::ray::Ray;
 use crate::core::types::{Colour, Image, Number};
 use crate::mesh::sphere;
-use crate::shared::ray::Ray;
 use crate::skybox::Skybox;
 use std::sync::Arc;
 

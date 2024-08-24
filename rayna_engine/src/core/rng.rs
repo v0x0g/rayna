@@ -3,7 +3,7 @@
 use crate::core::types::{Channel, Colour, Number, Vector2, Vector3};
 use glamour::AngleConsts;
 
-use crate::shared::validate;
+use crate::core::validate;
 use rand::distributions::uniform::SampleRange;
 use rand::Rng;
 use rand_core::SeedableRng;

@@ -1,11 +1,11 @@
+use crate::core::aabb::{Aabb, Bounded};
+use crate::core::intersect::MeshIntersection;
+use crate::core::interval::Interval;
+use crate::core::ray::Ray;
 use crate::core::types::{Number, Point2, Point3, Vector3};
+use crate::core::validate;
 use crate::mesh::Mesh;
 use crate::scene::Scene;
-use crate::shared::aabb::{Aabb, Bounded};
-use crate::shared::intersect::MeshIntersection;
-use crate::shared::interval::Interval;
-use crate::shared::ray::Ray;
-use crate::shared::validate;
 use getset::CopyGetters;
 use glamour::AngleConsts;
 use rand_core::RngCore;

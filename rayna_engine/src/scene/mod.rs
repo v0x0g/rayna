@@ -1,20 +1,19 @@
-use crate::core::types::{IdToken, Number};
+use crate::core::intersect::ObjectIntersection;
+use crate::core::interval::Interval;
+use crate::core::ray::Ray;
+use crate::core::token::IdToken;
+use crate::core::types::Number;
 use crate::material::{MaterialInstance, MaterialToken};
 use crate::mesh::{MeshInstance, MeshToken};
 use crate::noise::{NoiseInstance, NoiseToken};
-use crate::object::{ObjectInstance, ObjectToken};
-use crate::shared::intersect::ObjectIntersection;
-use crate::shared::interval::Interval;
-use crate::shared::ray::Ray;
+use crate::object::{Object as _, ObjectInstance, ObjectToken};
 use crate::skybox::SkyboxInstance;
 use crate::texture::{TextureInstance, TextureToken};
-use const_format::formatcp;
-use paste::paste;
 use rand_core::RngCore;
 use std::collections::HashMap;
 
 pub mod camera;
-pub mod preset;
+// pub mod preset;
 
 /// Represents the environment, containing the objects in a scene along with the skybox.
 ///
@@ -68,7 +67,6 @@ pub mod preset;
 pub struct Scene {
     // TODO: See if there's a way to get rid of the duplicated token/insertion code,
     //  it might be possible using some fancy trait, and some `unsafe` trickery
-    pub name: String,
     noise2d: HashMap<NoiseToken, NoiseInstance<2>>,
     noise3d: HashMap<NoiseToken, NoiseInstance<3>>,
     textures: HashMap<TextureToken, TextureInstance>,
@@ -79,24 +77,63 @@ pub struct Scene {
     skybox: SkyboxInstance,
 }
 
-/// Adding instances
 impl Scene {
     /// Generates a new [`IdToken`]
     ///
     /// The exact order of token generation is unspecified and an internal implementation detail
     fn new_token_id() -> IdToken {
         use rand::thread_rng;
-        use rand::SeedableRng as _;
         use rand_core::RngCore as _;
         use std::sync::atomic::{AtomicU32, Ordering};
 
-        // Assert we can combine two u32's into a token
-        const_format::assertcp_eq!(IdToken::BITS >= 2 * u32::BITS, "expected IdToken to fit two u32's");
         static COUNTER: AtomicU32 = AtomicU32::new(1);
-        let count = COUNTER.fetch_add(1, Ordering::Relaxed) as IdToken;
-        let mask = thread_rng().next_u32() as IdToken;
+        let count = COUNTER.fetch_add(1, Ordering::Relaxed) as u64;
+        let mask = thread_rng().next_u32() as u64;
         // Concat [mask][count] for a guaranteed unique ID
-        (mask << (u32::BITS as IdToken)) | count
+        IdToken::from((mask << (u32::BITS)) | count)
+    }
+
+    pub fn new() -> Self {
+        Self {
+            noise2d: HashMap::new(),
+            noise3d: HashMap::new(),
+            textures: HashMap::new(),
+            materials: HashMap::new(),
+            meshes: HashMap::new(),
+            objects: HashMap::new(),
+            custom_root: None,
+            skybox: SkyboxInstance::default(),
+        }
+    }
+
+    /// Sets the custom root object for this scene
+    ///
+    /// This overrides the default behaviour, so all intersection calls are passed through
+    /// to the root object. The default is to render all objects present in the scene
+    /// (see [`Self::all_obj`]
+    pub fn set_custom_root(&mut self, obj: impl Into<ObjectInstance>) { self.custom_root = Some(obj.into()); }
+    /// Gets the object that was set as the custom scene root
+    ///
+    /// See [`Self::set_custom_root`] for an explanation of custom roots
+    pub fn get_custom_root(&self) -> Option<&ObjectInstance> { self.custom_root.as_ref() }
+
+    /// See [`Object::intersect()``]
+    pub fn intersect(
+        &self,
+        ray: &Ray,
+        interval: &Interval<Number>,
+        rng: &mut impl RngCore,
+    ) -> Result<ObjectIntersection, &SkyboxInstance> {
+        // Use custom root if present, else iterate all objects
+        match self.custom_root.as_ref() {
+            Some(root) => root.intersect(&self, ray, interval, rng),
+            None => self
+                .objects
+                .values()
+                .filter_map(|o| o.intersect(&self, ray, interval, rng))
+                .min(),
+        }
+        .ok_or(&self.skybox)
     }
 }
 
@@ -125,56 +162,52 @@ macro_rules! gen_components {
         ($ident:ident in self.$field_name:ident : $inst_type:ty => $token_type:ty $(,)?)
     ),* $(,)?} => {
 
-impl Scene { $(paste!(
+impl Scene { $(paste::paste!(
 
-    #[doc = formatcp!(
-        "Internal method to generate a {token_type} token",
-        token_type = stringify!($token_type)
+    #[doc = concat!(
+        "Internal method to generate a ", stringify!($token_type), " token"
     )]
     fn [<new_ $ident _token>]() -> $token_type {
         $token_type::from(Self::new_token_id())
     }
 
-    #[doc = formatcp!(
-        "Adds a {inst_type} to the scene, returning a {token_type} that can be used to\
+    #[doc = concat!(
+        "Adds a ", stringify!(inst_type), " to the scene, returning a ", stringify!(token_type), " that can be used to\
         reference it in other components",
-        inst_type = stringify!($inst_type), token_type = stringify!($token_type),
     )]
     pub fn [<add_ $ident>] (&mut self, value: impl Into<$inst_type>) -> $token_type {
+        let tok = Self::[<new_ $ident _token>]();
         // All tokens should be unique
-        self.$field_name.try_insert(Self::[<new_ $ident _token>](), value.into())
+        self.$field_name.try_insert(tok, value.into())
             .expect("generated token was not unique");
         tok
     }
 
-    #[doc = formatcp!(
-        "Uses a {token_type} to obtain a reference to a {inst_type}, panicking\
+    #[doc = concat!(
+        "Uses a ", stringify!(token_type), " to obtain a reference to a ", stringify!($inst_type), ", panicking\
         if the token did not exist in the scene",
-        inst_type = stringify!($inst_type), token_type = stringify!($token_type),
     )]
-    pub fn [<get_ $ident>] (&self, tok: $token_type) -> &$inst_type {
+    pub fn [<get_ $ident>] (&self, tok: &$token_type) -> &$inst_type {
         self.[<try_get_ $ident>](tok)
-            .expect("{} token {} did not exist", stringify!($inst_type), tok)
+            .expect(&format!("{} token {} did not exist", stringify!($inst_type), tok))
     }
 
-    #[doc = formatcp!(
-        "Uses a {token_type} to obtain a reference to a {inst_type}, returning [`None`]\
+    #[doc = concat!(
+        "Uses a ", stringify!(token_type), " to obtain a reference to a ", stringify!(inst_type), ", returning [`None`]\
         if the token did not exist in the scene",
-        inst_type = stringify!($inst_type), token_type = stringify!($token_type),
     )]
-    pub fn [<try_get_ $ident>] (&self, tok: $token_type) -> Option<&$inst_type> {
-        self.$field.get(tok)
+    pub fn [<try_get_ $ident>] (&self, tok: &$token_type) -> Option<&$inst_type> {
+        self.$field_name.get(tok)
     }
 
-    #[doc(formatcp!(
-        "Returns an iterator over all the {ident} components in the scene",
-        ident = stringify!($ident)
-    ))]
+    #[doc = concat!(
+        "Returns an iterator over all the ", stringify!(ident), " components in the scene"
+    )]
     pub fn [<all_ $ident>] (&self) -> impl Iterator<Item = (&$token_type, &$inst_type)> {
-        self.$field.iter()
+        self.$field_name.iter()
     }
 
-))*}
+);)*}
 
     };
 }
@@ -186,32 +219,4 @@ gen_components! {
     ( mat    in self.materials : MaterialInstance => MaterialToken ),
     ( mesh   in self.meshes    : MeshInstance     => MeshToken     ),
     ( obj    in self.objects   : ObjectInstance   => ObjectToken   ),
-}
-
-impl Scene {
-    ///
-    pub fn set_custom_root(&mut self, obj: impl Into<ObjectInstance>) { self.custom_root = Some(obj.into()); }
-    /// Gets the object that was set as the custom scene root
-    ///
-    /// See [`Self::set_custom_root`] for an explanation of custom roots
-    pub fn get_custom_root(&self) -> Option<&ObjectInstance> { self.custom_root.as_ref() }
-}
-
-impl Scene {
-    fn full_intersect(
-        &self,
-        ray: &Ray,
-        interval: &Interval<Number>,
-        rng: &mut impl RngCore,
-    ) -> Option<ObjectIntersection> {
-        // Use custom root if present, else iterate all objects
-        match self.custom_root.as_ref() {
-            Some(root) => root.full_intersect(&self, ray, interval, rng),
-            None => self
-                .objects
-                .values()
-                .filter_map(|o| o.full_intersect(&self, ray, interval, rng))
-                .min(),
-        }
-    }
 }

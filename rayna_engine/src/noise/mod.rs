@@ -1,6 +1,18 @@
-//! # TODO:
-//! This module is a stub until I can find a good solution for working with the [`noise`] crate
+use crate::core::token::generate_component_token;
+use crate::core::types::Number;
 
 pub mod boxed;
 
-pub trait Noise<const D: usize>: crate::shared::ComponentRequirements {}
+#[enum_dispatch::enum_dispatch]
+#[doc(notable_trait)]
+pub trait Noise<const D: usize>: crate::core::component::Component {
+    fn value(&self, coords: &[Number; D]) -> Number;
+}
+
+#[derive(Clone, Debug)]
+#[enum_dispatch::enum_dispatch(Noise<D>)]
+pub enum NoiseInstance<const D: usize> {
+    BoxedNoise(self::boxed::BoxedNoise<D>),
+}
+
+generate_component_token!(NoiseToken for NoiseInstance);

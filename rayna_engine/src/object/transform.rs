@@ -11,10 +11,10 @@
 //! The matrix inverse of `transform`. This is the matrix corresponding to the transformation from
 //! mesh-space to world-space
 
+use crate::core::aabb::Aabb;
+use crate::core::intersect::MeshIntersection;
+use crate::core::ray::Ray;
 use crate::core::types::{Point3, Transform3, Vector3};
-use crate::shared::aabb::Aabb;
-use crate::shared::intersect::MeshIntersection;
-use crate::shared::ray::Ray;
 use getset::Getters;
 
 /// A struct that holds both a [Transform3] and it's inverse.
@@ -135,9 +135,7 @@ impl ObjectTransform {
         } else {
             // Calculate the resulting AABB by transforming the corners of the input AABB.
             // And then we encompass those
-            aabb.map(Aabb::corners)
-                .map(|corners| corners.map(|c| self.transform.map_point(c)))
-                .map(Aabb::encompass_points)
+            Aabb::encompass_points(aabb.corners().map(|p| self.transform.map_point(p)))
         }
     }
 }

@@ -1,11 +1,10 @@
 use crate::core::types::Number;
 use nonzero::nonzero;
-use serde::Serialize;
 use std::num::NonZeroUsize;
 use strum_macros::{Display, EnumIter, IntoStaticStr};
 use valuable::Valuable;
 
-#[derive(Copy, Clone, Debug, Valuable, Serialize)]
+#[derive(Copy, Clone, Debug, Valuable)]
 pub struct RenderOpts {
     /// The target width of the render (pixels)
     pub width: NonZeroUsize,
@@ -28,9 +27,7 @@ pub struct RenderOpts {
     pub ray_branching: NonZeroUsize,
 }
 
-#[derive(
-    Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Valuable, Serialize, EnumIter, IntoStaticStr, Display,
-)]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Valuable, EnumIter, IntoStaticStr, Display)]
 pub enum RenderMode {
     /// Used physically-based rendering, makes pretty images
     #[default]

@@ -1,6 +1,6 @@
+use crate::core::math::Lerp;
+use crate::core::ray::Ray;
 use crate::core::types::{Channel, Colour};
-use crate::shared::math::Lerp;
-use crate::shared::ray::Ray;
 use crate::skybox::Skybox;
 
 /// A skybox that mixes between blue and white, depending on pitch

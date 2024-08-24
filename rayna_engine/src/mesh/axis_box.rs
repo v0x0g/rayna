@@ -6,13 +6,13 @@ use rand_core::RngCore;
 
 use crate::core::types::{Number, Point3, Size3, Vector2, Vector3};
 
+use crate::core::aabb::{Aabb, Bounded};
+use crate::core::intersect::MeshIntersection;
+use crate::core::interval::Interval;
+use crate::core::ray::Ray;
+use crate::core::validate;
 use crate::mesh::Mesh;
 use crate::scene::Scene;
-use crate::shared::aabb::{Aabb, Bounded};
-use crate::shared::intersect::MeshIntersection;
-use crate::shared::interval::Interval;
-use crate::shared::ray::Ray;
-use crate::shared::validate;
 
 /// Built instance of a box mesh
 #[derive(Copy, Clone, Debug, CopyGetters)]
@@ -64,7 +64,7 @@ impl Mesh for AxisBoxMesh {
     //noinspection RsLiveness
     fn intersect(
         &self,
-        scene: &Scene,
+        _scene: &Scene,
         ray: &Ray,
         interval: &Interval<Number>,
         _rng: &mut dyn RngCore,

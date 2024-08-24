@@ -1,27 +1,23 @@
+use crate::core::intersect::ObjectIntersection;
+use crate::core::interval::Interval;
+use crate::core::math::Lerp;
 use crate::core::profiler;
+use crate::core::ray::Ray;
 use crate::core::targets::*;
 use crate::core::types::{Channel, Colour, Image, Number, Vector2};
+use crate::core::validate;
 use crate::material::Material;
-use crate::object::Object;
 use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::{RenderMode, RenderOpts};
 use crate::scene::camera::Camera;
 use crate::scene::camera::Viewport;
 use crate::scene::Scene;
-use crate::shared::intersect::ObjectIntersection;
-use crate::shared::interval::Interval;
-use crate::shared::math::Lerp;
-use crate::shared::ray::Ray;
-use crate::shared::validate;
 use crate::skybox::Skybox;
-use ndarray::Zip;
 use num_integer::Roots as _;
 use puffin::profile_function;
 use rand::distributions::Distribution;
 use rand::distributions::Uniform;
 use rand_core::{RngCore, SeedableRng};
-use rayon::prelude::*;
-use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder};
 use smallvec::SmallVec;
 use std::ops::DerefMut as _;
 use std::time::Duration;
@@ -33,18 +29,17 @@ use super::accum_buffer::AccumulationBuffer;
 /// The main struct that does the rendering of scenes
 ///
 ///
-#[derive(derivative::Derivative, getset::Getters, getset::Setters)]
-#[derivative(Debug)]
-pub struct Renderer<Obj, Sky, Rng> {
+#[derive(getset::Getters, getset::Setters)]
+pub struct Renderer<Rng> {
     /// A thread pool used to distribute the workload
-    thread_pool: ThreadPool,
+    thread_pool: rayon::ThreadPool,
     data_pool: opool::Pool<PooledDataAllocator, PooledData<Rng>>,
     /// Accumulation buffer storing the [accumulated] result of previous renders.
     accum_buffer: AccumulationBuffer,
     // Purposefully storing these in the render (though not really required)
     // for future compatibility with GPU renderer
     #[getset(get = "pub")]
-    scene: Scene<Obj, Sky>,
+    scene: Scene,
     #[getset(get = "pub")]
     camera: Camera,
     #[getset(get = "pub")]
@@ -57,34 +52,27 @@ pub enum RendererCreateError {
     ThreadPoolError {
         #[backtrace]
         #[from]
-        source: ThreadPoolBuildError,
+        source: rayon::ThreadPoolBuildError,
     },
 }
 
 // region Construction
 
-impl<Obj, Sky, Rng> Renderer<Obj, Sky, Rng> {
+// TODO: Remove `Rng` bound from renderer
+//   Add new constructor parameter `rng_ctor: impl Fn() -> impl Rng` (maybe boxed)
+//   Pass that into `PooledDataAllocator`
+impl<Rng> Renderer<Rng> {
     /// Creates a new renderer instance, using default values for the scene, camera, and render options
     pub fn new_default() -> Result<Self, RendererCreateError>
     where
-        Obj: Default,
-        Sky: Default,
         Rng: SeedableRng,
     {
-        Self::new_from(
-            Scene {
-                objects: Obj::default(),
-                skybox: Sky::default(),
-            },
-            Camera::default(),
-            RenderOpts::default(),
-            0,
-        )
+        Self::new_from(Scene::new(), Camera::default(), RenderOpts::default(), 0)
     }
 
     /// Creates a new renderer instance, from the given scene, camera, and render options
     pub fn new_from(
-        scene: Scene<Obj, Sky>,
+        scene: Scene,
         camera: Camera,
         options: RenderOpts,
         num_threads: usize,
@@ -107,8 +95,8 @@ impl<Obj, Sky, Rng> Renderer<Obj, Sky, Rng> {
     }
 
     /// Helper method to create the thread pool
-    fn create_thread_pool(num_threads: usize) -> Result<ThreadPool, ThreadPoolBuildError> {
-        ThreadPoolBuilder::new()
+    fn create_thread_pool(num_threads: usize) -> Result<rayon::ThreadPool, rayon::ThreadPoolBuildError> {
+        rayon::ThreadPoolBuilder::new()
             .num_threads(num_threads)
             .thread_name(|id| format!("Renderer::worker_{id}"))
             .start_handler(|id| {
@@ -131,7 +119,7 @@ impl<Obj, Sky, Rng> Renderer<Obj, Sky, Rng> {
 }
 
 /// Clone Renderer
-impl<Obj: Clone, Sky: Clone, Rng: SeedableRng> Clone for Renderer<Obj, Sky, Rng> {
+impl<Rng: SeedableRng> Clone for Renderer<Rng> {
     fn clone(&self) -> Self {
         // No good way to clone thread pool or data pool
         Self::new_from(
@@ -148,7 +136,7 @@ impl<Obj: Clone, Sky: Clone, Rng: SeedableRng> Clone for Renderer<Obj, Sky, Rng>
 
 // region Properties
 
-impl<Obj, Sky, Rng> Renderer<Obj, Sky, Rng> {
+impl<Rng> Renderer<Rng> {
     /// Clears the accumulation buffer, removing all previous renderer frames
     pub fn clear_accumulation(&mut self) { self.accum_buffer.clear(); }
 
@@ -162,7 +150,7 @@ impl<Obj, Sky, Rng> Renderer<Obj, Sky, Rng> {
     /// Sets the scene to be rendered.
     ///
     /// Also clears the accumulation buffer
-    pub fn set_scene(&mut self, scene: Scene<Obj, Sky>) {
+    pub fn set_scene(&mut self, scene: Scene) {
         self.scene = scene;
         self.clear_accumulation();
     }
@@ -176,7 +164,7 @@ impl<Obj, Sky, Rng> Renderer<Obj, Sky, Rng> {
     }
 
     /// Changes the number of threads used for rendering
-    pub fn set_thread_count(&mut self, num_threads: usize) -> Result<(), ThreadPoolBuildError> {
+    pub fn set_thread_count(&mut self, num_threads: usize) -> Result<(), rayon::ThreadPoolBuildError> {
         self.thread_pool = Self::create_thread_pool(num_threads)?;
         Ok(())
     }
@@ -199,6 +187,7 @@ struct PooledData<Rng> {
     pub msaa_distr: Uniform<Number>,
 }
 
+/// Struct used with [`opool`], that allocates instances of [`PooledData<R>`] for us
 #[derive(Copy, Clone, Debug, Default)]
 struct PooledDataAllocator;
 impl<Rng: SeedableRng> opool::PoolAllocator<PooledData<Rng>> for PooledDataAllocator {
@@ -219,7 +208,7 @@ impl<Rng: SeedableRng> opool::PoolAllocator<PooledData<Rng>> for PooledDataAlloc
 
 // region High-level Rendering
 
-impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send + SeedableRng> Renderer<Obj, Sky, Rng> {
+impl<Rng: RngCore + Send + SeedableRng> Renderer<Rng> {
     // TODO: Should `render()` be fallible?
     pub fn render(&mut self) -> Render<Image> {
         profile_function!();
@@ -269,8 +258,6 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send + SeedableRng> Renderer<Obj, 
     fn render_failed(w: usize, h: usize) -> Image {
         profile_function!();
 
-        #[memoize::memoize(Capacity: 8)] // Keep cap small since images can be huge
-        #[cold]
         fn internal(w: usize, h: usize) -> Image {
             profile_function!();
 
@@ -295,30 +282,33 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send + SeedableRng> Renderer<Obj, 
     ///
     /// This is only called when the viewport is valid, and therefore an image can be rendered
     fn render_actual(
-        thread_pool: &ThreadPool,
+        thread_pool: &rayon::ThreadPool,
         data_pool: &opool::Pool<PooledDataAllocator, PooledData<Rng>>,
         accum_buffer: &mut AccumulationBuffer,
-        scene: &Scene<Obj, Sky>,
+        scene: &Scene,
         render_opts: &RenderOpts,
         viewport: &Viewport,
         interval: &Interval<Number>,
     ) -> Image {
+        use rayon::iter::{IntoParallelIterator as _, ParallelIterator as _};
+
         profile_function!();
 
         let [w, h] = render_opts.dims();
 
-        let mut dest_img = Image::new_blank(w, h); // Output image
+        let mut dest_img = Image::new_blank(w, h);
         let accum = accum_buffer.new_frame([w, h]);
 
-        thread_pool.install(|| {
-            let pixels = Zip::indexed(accum.deref_mut())
-                .and(dest_img.deref_mut())
-                .into_par_iter()
-                // Return on panic as fast as possible; don't keep processing all the pixels on panic
-                // Otherwise we get (literally) millions of panics (1 per pixel) which just hangs the renderer as it prints
-                .panic_fuse();
+        let pixels = ndarray::Zip::indexed(accum.deref_mut())
+            .and(dest_img.deref_mut())
+            .into_par_iter()
+            // Return on panic as fast as possible; don't keep processing all the pixels on panic
+            // Otherwise we get (literally) millions of panics (1 per pixel) which just hangs the renderer as it prints
+            .panic_fuse();
 
+        thread_pool.install(|| {
             pixels.for_each_init(
+                // Get pooled rng data for each work batch
                 || {
                     let profiler_scope = puffin::profile_scope_custom!("inner");
 
@@ -332,7 +322,7 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send + SeedableRng> Renderer<Obj, 
                     accum.insert_sample(sample);
                     *dest = accum.get();
                 },
-            );
+            )
         });
 
         return dest_img;
@@ -343,12 +333,12 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore + Send + SeedableRng> Renderer<Obj, 
 
 // region Low-level Rendering
 
-impl<Obj: Object, Sky: Skybox, Rng: RngCore> Renderer<Obj, Sky, Rng> {
+impl<Rng: RngCore> Renderer<Rng> {
     /// Renders a single pixel in the scene, and returns the colour
     ///
     /// Takes into account [`RenderOpts::msaa`]
     fn render_px_msaa(
-        scene: &Scene<Obj, Sky>,
+        scene: &Scene,
         opts: &RenderOpts,
         viewport: &Viewport,
         interval: &Interval<Number>,
@@ -409,7 +399,7 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore> Renderer<Obj, Sky, Rng> {
     ///
     /// This handles the switching between render modes
     fn render_px_once(
-        scene: &Scene<Obj, Sky>,
+        scene: &Scene,
         viewport: &Viewport,
         opts: &RenderOpts,
         interval: &Interval<Number>,
@@ -425,14 +415,11 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore> Renderer<Obj, Sky, Rng> {
             return Self::ray_colour_recursive(scene, &ray, opts, interval, 0, rng);
         }
 
-        let Some(ObjectIntersection {
-            intersection: intersect,
-            material,
-        }) = Self::calculate_intersection(scene, &ray, interval, rng)
-        else {
-            return scene.skybox.sky_colour(&ray);
+        let (intersection, material) = match scene.intersect(&ray, interval, rng) {
+            Ok(ObjectIntersection { intersection, material }) => (intersection, scene.get_mat(&material)),
+            Err(skybox) => return skybox.sky_colour(&ray),
         };
-        validate::intersection(ray, &intersect, interval);
+        validate::intersection(ray, &intersection, interval);
 
         // Some colours to help with visualisation
         const N_COL: usize = 13;
@@ -454,28 +441,32 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore> Renderer<Obj, Sky, Rng> {
 
         return match mode {
             RenderMode::PBR => unreachable!("mode == RenderMode::PBR already checked"),
-            RenderMode::OutwardNormal => Colour::from(intersect.normal.as_array().map(|f| (f / 2.) as Channel + 0.5)),
-            RenderMode::RayNormal => Colour::from(intersect.ray_normal.as_array().map(|f| (f / 2.) as Channel + 0.5)),
+            RenderMode::OutwardNormal => {
+                Colour::from(intersection.normal.as_array().map(|f| (f / 2.) as Channel + 0.5))
+            }
+            RenderMode::RayNormal => {
+                Colour::from(intersection.ray_normal.as_array().map(|f| (f / 2.) as Channel + 0.5))
+            }
             RenderMode::Scatter => Colour::from(
                 material
-                    .scatter(&ray, &intersect, rng)
+                    .scatter(&ray, scene, &intersection, rng)
                     .unwrap_or_default()
                     .as_array()
                     .map(|f| (f / 2.) as Channel + 0.5),
             ),
             RenderMode::Uv => Colour::from([
-                (intersect.uv.x as Channel).clamp(0., 1.),
-                (intersect.uv.y as Channel).clamp(0., 1.),
+                (intersection.uv.x as Channel).clamp(0., 1.),
+                (intersection.uv.y as Channel).clamp(0., 1.),
                 0.,
             ]),
-            RenderMode::FrontFace => COLOURS[intersect.front_face as usize],
+            RenderMode::FrontFace => COLOURS[intersection.front_face as usize],
             RenderMode::Side => {
                 // TODO: Make `Object: Hash`
-                let hash = intersect.side % (N_COL - 1) + 1;
+                let hash = intersection.side % (N_COL - 1) + 1;
                 COLOURS[hash]
             }
             RenderMode::Distance => {
-                let dist = intersect.dist;
+                let dist = intersection.dist;
                 // let val = (dist + 1.).log2();
                 let val = 2. * dist.cbrt();
 
@@ -490,23 +481,13 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore> Renderer<Obj, Sky, Rng> {
         };
     }
 
-    /// Calculates the nearest intersection in the scene for the given ray
-    fn calculate_intersection<'o>(
-        scene: &'o Scene<Obj, Sky>,
-        ray: &Ray,
-        interval: &Interval<Number>,
-        rng: &mut Rng,
-    ) -> Option<ObjectIntersection<'o, Obj::Mat>> {
-        scene.objects.full_intersect(ray, interval, rng)
-    }
-
     /// Recursive function that calculates the colour in the scene for a given ray.
     ///
     /// # Recursion
     /// This will recurse each time the ray scatters off an object in the scene, up to a limit imposed by [RenderOpts::bounces].
     /// It should be fine for all *reasonable* bounce limits (~200), but will most likely overflow the stack past that.
     fn ray_colour_recursive(
-        scene: &Scene<Obj, Sky>,
+        scene: &Scene,
         in_ray: &Ray,
         opts: &RenderOpts,
         interval: &Interval<Number>,
@@ -517,16 +498,14 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore> Renderer<Obj, Sky, Rng> {
             return Colour::from([0.; 3]);
         }
 
-        // Intersect
-        let Some(ObjectIntersection { intersection, material }) =
-            Self::calculate_intersection(scene, in_ray, interval, rng)
-        else {
-            return scene.skybox.sky_colour(in_ray);
+        let (intersection, material) = match scene.intersect(in_ray, interval, rng) {
+            Ok(ObjectIntersection { intersection, material }) => (intersection, scene.get_mat(&material)),
+            Err(skybox) => return skybox.sky_colour(in_ray),
         };
         validate::intersection(in_ray, &intersection, interval);
 
         let col_emitted = {
-            let col = material.emitted_light(in_ray, &intersection, rng);
+            let col = material.emitted_light(in_ray, scene, &intersection, rng);
             validate::colour(&col);
             col
         };
@@ -543,7 +522,7 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore> Renderer<Obj, Sky, Rng> {
         // Calculate the lighting samples for the scattered ray
         for _ in 0..opts.ray_branching.get() {
             let scatter_ray = {
-                let Some(future_ray_dir) = material.scatter(in_ray, &intersection, rng) else {
+                let Some(future_ray_dir) = material.scatter(in_ray, scene, &intersection, rng) else {
                     scatter_samples.push(Colour::BLACK);
                     continue;
                 };
@@ -557,7 +536,8 @@ impl<Obj: Object, Sky: Skybox, Rng: RngCore> Renderer<Obj, Sky, Rng> {
             let scatter_col = {
                 let col_future = Self::ray_colour_recursive(scene, &scatter_ray, opts, interval, depth + 1, rng);
                 validate::colour(&col_future);
-                let col_scattered = material.reflected_light(in_ray, &intersection, &scatter_ray, &col_future, rng);
+                let col_scattered =
+                    material.reflected_light(in_ray, scene, &intersection, &scatter_ray, &col_future, rng);
                 validate::colour(&col_scattered);
                 col_scattered
             };

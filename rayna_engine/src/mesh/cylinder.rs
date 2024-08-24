@@ -1,10 +1,10 @@
+use crate::core::aabb::{Aabb, Bounded};
+use crate::core::intersect::MeshIntersection;
+use crate::core::interval::Interval;
+use crate::core::ray::Ray;
 use crate::core::types::{Number, Point2, Point3, Vector3};
 use crate::mesh::Mesh;
 use crate::scene::Scene;
-use crate::shared::aabb::{Aabb, Bounded};
-use crate::shared::intersect::MeshIntersection;
-use crate::shared::interval::Interval;
-use crate::shared::ray::Ray;
 use getset::CopyGetters;
 use glamour::AngleConsts;
 use rand_core::RngCore;
@@ -64,7 +64,7 @@ impl CylinderMesh {
 impl Mesh for CylinderMesh {
     fn intersect(
         &self,
-        scene: &Scene,
+        _scene: &Scene,
         ray: &Ray,
         interval: &Interval<Number>,
         _rng: &mut dyn RngCore,

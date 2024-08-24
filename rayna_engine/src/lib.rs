@@ -38,12 +38,12 @@
 #![doc(test(attr(deny(all))))]
 
 pub mod core;
+pub mod macros;
 pub mod material;
 pub mod mesh;
 pub mod noise;
 pub mod object;
 pub mod render;
 pub mod scene;
-pub mod shared;
 pub mod skybox;
 pub mod texture;

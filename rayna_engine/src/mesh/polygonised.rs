@@ -1,13 +1,13 @@
+use crate::core::aabb::{Aabb, Bounded};
+use crate::core::intersect::MeshIntersection;
+use crate::core::interval::Interval;
+use crate::core::ray::Ray;
 use crate::core::targets::MESH;
 use crate::core::types::{Number, Point3, Vector3};
 use crate::mesh::list::ListMesh;
 use crate::mesh::triangle::TriangleMesh;
 use crate::mesh::Mesh;
 use crate::scene::Scene;
-use crate::shared::aabb::{Aabb, Bounded};
-use crate::shared::intersect::MeshIntersection;
-use crate::shared::interval::Interval;
-use crate::shared::ray::Ray;
 use getset::{CopyGetters, Getters};
 use isosurface::distance::Signed;
 use isosurface::extractor::IndexedInterleavedNormals;
@@ -47,7 +47,7 @@ impl PolygonisedIsosurfaceMesh {
     /// The resulting mesh has dimensions of a `N*N*N` grid, where `N = resolution`
     /// * `sdf`: The **SDF** that defines the surface for the mesh.
     /// This SDF will be evaluated in local-space: `x,y,z: [0, 1]`
-    pub fn new<SDF: SdfFunction>(resolution: usize, sdf: SDF) -> Self {
+    pub fn new_in<SDF: SdfFunction>(scene: &mut Scene, resolution: usize, sdf: SDF) -> Self {
         let source = SdfWrapper {
             func: sdf,
             epsilon: 1e-7,
@@ -115,7 +115,7 @@ impl PolygonisedIsosurfaceMesh {
 
         // TODO: Use TrianglesMesh
         let triangles = zip(tri_verts, tri_normals).map(|(v, n)| TriangleMesh::new(v, n));
-        let mesh = ListMesh::new(triangles);
+        let mesh = ListMesh::new_in(scene, triangles);
 
         Self { resolution, mesh }
     }
@@ -169,12 +169,12 @@ impl Bounded for PolygonisedIsosurfaceMesh {
 impl Mesh for PolygonisedIsosurfaceMesh {
     fn intersect(
         &self,
-        _scene: &Scene,
+        scene: &Scene,
         ray: &Ray,
         interval: &Interval<Number>,
         rng: &mut dyn RngCore,
     ) -> Option<MeshIntersection> {
-        self.mesh.intersect(ray, interval, rng)
+        self.mesh.intersect(scene, ray, interval, rng)
     }
 }
 

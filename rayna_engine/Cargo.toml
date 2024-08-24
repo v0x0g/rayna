@@ -45,6 +45,8 @@ indextree = "4.6.0"
 image = { workspace = true }
 paste = { workspace = true }
 const_format = { workspace = true }
+derive-where = { workspace = true }
+derive_more = { workspace = true }
 
 # Perf
 puffin = { workspace = true } # PATCHED

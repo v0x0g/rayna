@@ -60,7 +60,21 @@ impl From<image::DynamicImage> for Image<Colour> {
         // Have to transmute the data buffer because it's flattened, which we don't want
         let data = unsafe {
             // SAFETY: `Colour` is a wrapper around a `[Channel; Colour::CHANNEL_COUNT]`, so we can safely transmute
-            let (ptr, len, cap) = data.into_raw_parts();
+            // Using inlined `Vec::into_raw_parts()`
+            let mut me = std::mem::ManuallyDrop::new(data);
+            let (ptr, len, cap) = (me.as_mut_ptr(), me.len(), me.capacity());
+            debug_assert!(
+                len % Colour::CHANNEL_COUNT == 0,
+                "len {} % channels {} != 0",
+                len,
+                Colour::CHANNEL_COUNT
+            );
+            debug_assert!(
+                cap % Colour::CHANNEL_COUNT == 0,
+                "cap {} % channels {} != 0",
+                cap,
+                Colour::CHANNEL_COUNT
+            );
             Vec::from_raw_parts(
                 ptr as *mut Colour,
                 len / Colour::CHANNEL_COUNT,
@@ -115,10 +129,14 @@ impl<Col> Image<Col> {
 impl<Col> Deref for Image<Col> {
     type Target = ArcArray<Col, Ix2>;
 
-    fn deref(&self) -> &Self::Target { &self.data }
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
 }
 impl<Col> DerefMut for Image<Col> {
-    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.data }
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.data
+    }
 }
 
 // endregion Deref

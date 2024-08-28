@@ -46,7 +46,6 @@ pub mod triangle;
 // region Object traits
 
 #[enum_dispatch::enum_dispatch]
-#[doc(notable_trait)]
 pub trait Mesh: Component + Bounded {
     /// Attempts to perform an intersection between the given ray and the target mesh
     ///

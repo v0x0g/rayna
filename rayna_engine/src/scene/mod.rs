@@ -67,8 +67,8 @@ pub mod camera;
 pub struct Scene {
     // TODO: See if there's a way to get rid of the duplicated token/insertion code,
     //  it might be possible using some fancy trait, and some `unsafe` trickery
-    noise2d: HashMap<NoiseToken, NoiseInstance<2>>,
-    noise3d: HashMap<NoiseToken, NoiseInstance<3>>,
+    noise2d: HashMap<NoiseToken<2>, NoiseInstance<2>>,
+    noise3d: HashMap<NoiseToken<3>, NoiseInstance<3>>,
     textures: HashMap<TextureToken, TextureInstance>,
     materials: HashMap<MaterialToken, MaterialInstance>,
     meshes: HashMap<MeshToken, MeshInstance>,
@@ -111,11 +111,15 @@ impl Scene {
     /// This overrides the default behaviour, so all intersection calls are passed through
     /// to the root object. The default is to render all objects present in the scene
     /// (see [`Self::all_obj`]
-    pub fn set_custom_root(&mut self, obj: impl Into<ObjectInstance>) { self.custom_root = Some(obj.into()); }
+    pub fn set_custom_root(&mut self, obj: impl Into<ObjectInstance>) {
+        self.custom_root = Some(obj.into());
+    }
     /// Gets the object that was set as the custom scene root
     ///
     /// See [`Self::set_custom_root`] for an explanation of custom roots
-    pub fn get_custom_root(&self) -> Option<&ObjectInstance> { self.custom_root.as_ref() }
+    pub fn get_custom_root(&self) -> Option<&ObjectInstance> {
+        self.custom_root.as_ref()
+    }
 
     /// See [`Object::intersect()``]
     pub fn intersect(
@@ -177,9 +181,8 @@ impl Scene { $(paste::paste!(
     )]
     pub fn [<add_ $ident>] (&mut self, value: impl Into<$inst_type>) -> $token_type {
         let tok = Self::[<new_ $ident _token>]();
-        // All tokens should be unique
-        self.$field_name.try_insert(tok, value.into())
-            .expect("generated token was not unique");
+        assert!(!self.$field_name.contains_key(&tok), "generated token was not unique");
+        self.$field_name.insert(tok, value.into());
         tok
     }
 
@@ -213,10 +216,10 @@ impl Scene { $(paste::paste!(
 }
 
 gen_components! {
-    ( noise2 in self.noise2d   : NoiseInstance<2> => NoiseToken    ),
-    ( noise3 in self.noise3d   : NoiseInstance<3> => NoiseToken    ),
-    ( tex    in self.textures  : TextureInstance  => TextureToken  ),
-    ( mat    in self.materials : MaterialInstance => MaterialToken ),
-    ( mesh   in self.meshes    : MeshInstance     => MeshToken     ),
-    ( obj    in self.objects   : ObjectInstance   => ObjectToken   ),
+    ( noise2 in self.noise2d   : NoiseInstance<2> => NoiseToken::<2> ),
+    ( noise3 in self.noise3d   : NoiseInstance<3> => NoiseToken::<3> ),
+    ( tex    in self.textures  : TextureInstance  => TextureToken    ),
+    ( mat    in self.materials : MaterialInstance => MaterialToken   ),
+    ( mesh   in self.meshes    : MeshInstance     => MeshToken       ),
+    ( obj    in self.objects   : ObjectInstance   => ObjectToken     ),
 }

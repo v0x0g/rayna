@@ -17,7 +17,6 @@ pub mod transform;
 pub mod volumetric;
 // TODO: Should objects (as well as other traits) have some sort of identifier?
 
-#[doc(notable_trait)]
 #[enum_dispatch]
 pub trait Object: Component + Bounded {
     /// Attempts to perform an intersection between the given ray and the target object

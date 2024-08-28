@@ -50,7 +50,7 @@ pub struct Renderer<Rng> {
 pub enum RendererCreateError {
     #[error("failed to create worker thread pool")]
     ThreadPoolError {
-        #[backtrace]
+        // #[backtrace] // Requires #![feature(generic_member_access)]
         #[from]
         source: rayon::ThreadPoolBuildError,
     },
@@ -138,7 +138,9 @@ impl<Rng: SeedableRng> Clone for Renderer<Rng> {
 
 impl<Rng> Renderer<Rng> {
     /// Clears the accumulation buffer, removing all previous renderer frames
-    pub fn clear_accumulation(&mut self) { self.accum_buffer.clear(); }
+    pub fn clear_accumulation(&mut self) {
+        self.accum_buffer.clear();
+    }
 
     /// Sets the camera.
     ///
@@ -379,11 +381,12 @@ impl<Rng: RngCore> Renderer<Rng> {
         }
 
         samples.clear();
-        sample_coords
-            .iter()
-            .map(|&Vector2 { x, y }| Self::render_px_once(scene, viewport, opts, interval, x, y, rng_render))
-            .inspect(|p| validate::colour(p))
-            .collect_into(samples);
+        samples.extend(
+            sample_coords
+                .iter()
+                .map(|&Vector2 { x, y }| Self::render_px_once(scene, viewport, opts, interval, x, y, rng_render))
+                .inspect(|p| validate::colour(p)),
+        );
 
         let overall_colour = {
             let accum: Colour = samples.iter().copied().sum();

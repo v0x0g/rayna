@@ -4,7 +4,6 @@ use crate::core::types::Number;
 pub mod boxed;
 
 #[enum_dispatch::enum_dispatch]
-#[doc(notable_trait)]
 pub trait Noise<const D: usize>: crate::core::component::Component {
     fn value(&self, coords: &[Number; D]) -> Number;
 }
@@ -15,4 +14,4 @@ pub enum NoiseInstance<const D: usize> {
     BoxedNoise(self::boxed::BoxedNoise<D>),
 }
 
-generate_component_token!(NoiseToken for NoiseInstance);
+generate_component_token!(NoiseToken < {const N: usize} as {N} > for NoiseInstance);

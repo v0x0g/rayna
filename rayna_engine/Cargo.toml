@@ -37,7 +37,7 @@ educe = { workspace = true }
 approx = { workspace = true }
 strum = { workspace = true }
 strum_macros = { workspace = true }
-smallvec = { version = "1.11.2", features = ["const_generics", "const_new", "specialization"] }
+smallvec = { version = "1.11.2", features = ["const_generics", "const_new"] }
 enum_dispatch = "0.3.12"
 getset = { workspace = true }
 itertools = { workspace = true }

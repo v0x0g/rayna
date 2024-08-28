@@ -12,7 +12,6 @@ use enum_dispatch::enum_dispatch;
 ///
 /// This simply needs to return the sky colour for a given ray
 #[enum_dispatch]
-#[doc(notable_trait)]
 pub trait Skybox: Component {
     fn sky_colour(&self, ray: &Ray) -> Colour;
 }
@@ -30,5 +29,7 @@ pub enum SkyboxInstance {
 
 /// This allows us to use [Option::None] as shorthand for no skybox
 impl From<Option<SkyboxInstance>> for SkyboxInstance {
-    fn from(value: Option<SkyboxInstance>) -> Self { value.unwrap_or(Self::NoSkybox(Default::default())) }
+    fn from(value: Option<SkyboxInstance>) -> Self {
+        value.unwrap_or(Self::NoSkybox(Default::default()))
+    }
 }

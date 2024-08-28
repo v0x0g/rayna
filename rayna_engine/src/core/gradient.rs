@@ -2,9 +2,9 @@
 
 use crate::core::math::Lerp;
 use crate::core::types::Number;
-use getset::CopyGetters;
+use getset::{CopyGetters, Setters};
 use smallvec::SmallVec;
-use std::fmt::Debug;
+use std::{fmt::Debug, ops::Deref};
 
 #[derive(Clone, Copy, Debug, Default, CopyGetters)]
 #[get_copy = "pub"]
@@ -13,33 +13,34 @@ pub struct GradientPoint<T: Copy + Debug> {
     value: T,
 }
 
-#[derive(Clone, Copy, Debug, Default, CopyGetters)]
-#[get_copy = "pub"]
+#[derive(Clone, Copy, Debug, Default, CopyGetters, Setters)]
+#[getset(get_copy = "pub", set = "pub")]
 pub struct GradientDomain {
     min: Number,
     max: Number,
 }
 
-impl GradientDomain {
-    pub fn new(min: Number, max: Number) -> Self { Self { min, max } }
-
-    pub fn set_min(&mut self, min: Number) { self.min = min; }
-
-    pub fn set_max(&mut self, max: Number) { self.max = max; }
-}
-
 #[derive(Clone, Debug, Default)]
 pub struct Gradient<T: Copy + Debug> {
-    // Store a few points inline
+    // Store a small number of points inline
     points: SmallVec<[GradientPoint<T>; 8]>,
     domain: GradientDomain,
+}
+
+impl<T: Copy + Debug> Gradient<T> {
+    pub fn domain(&self) -> GradientDomain {
+        self.domain
+    }
+    pub fn points(&self) -> &[GradientPoint<T>] {
+        self.points.deref()
+    }
 }
 
 impl<T: Copy + Debug> Gradient<T> {
     pub fn new() -> Self {
         Self {
             points: SmallVec::new(),
-            domain: GradientDomain::new(0.0, 0.0),
+            domain: GradientDomain { min: 0.0, max: 0.0 },
         }
     }
 
@@ -115,9 +116,11 @@ impl<T: Copy + Debug> Gradient<T> {
     }
 }
 
-impl<T: Copy + Debug> const IntoIterator for Gradient<T> {
+impl<T: Copy + Debug> IntoIterator for Gradient<T> {
     type Item = GradientPoint<T>;
     type IntoIter = smallvec::IntoIter<[GradientPoint<T>; 8]>;
 
-    fn into_iter(self) -> Self::IntoIter { self.points.into_iter() }
+    fn into_iter(self) -> Self::IntoIter {
+        self.points.into_iter()
+    }
 }

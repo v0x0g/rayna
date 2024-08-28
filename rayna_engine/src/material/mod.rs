@@ -15,7 +15,6 @@ pub mod metal;
 
 /// The trait that defines what properties a material has
 #[enum_dispatch]
-#[doc(notable_trait)]
 pub trait Material: Component {
     /// Scatters the input ray, according to the material's properties
     ///

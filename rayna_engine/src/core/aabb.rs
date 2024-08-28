@@ -79,11 +79,13 @@ impl Aabb {
 
 // region Traits
 
-impl const PartialEq for Aabb {
-    fn eq(&self, other: &Self) -> bool { self.min == other.min && self.max == other.max }
+impl PartialEq for Aabb {
+    fn eq(&self, other: &Self) -> bool {
+        self.min == other.min && self.max == other.max
+    }
 }
 
-impl const Eq for Aabb {}
+impl Eq for Aabb {}
 
 // endregion Traits
 
@@ -101,7 +103,9 @@ impl Aabb {
         max: Point3::INFINITY,
     };
 
-    pub const fn is_infinite(&self) -> bool { *self == Self::INFINITE }
+    pub fn is_infinite(&self) -> bool {
+        *self == Self::INFINITE
+    }
 
     // Returns the corners of the AABB
     pub const fn corners(&self) -> [Point3; 8] {
@@ -118,14 +122,20 @@ impl Aabb {
         ]
     }
 
-    pub const fn size(&self) -> Size3 { Size3::from_vector(self.max() - self.min()) }
-    pub const fn area(&self) -> Number {
+    pub fn size(&self) -> Size3 {
+        Size3::from_vector(self.max() - self.min())
+    }
+    pub fn area(&self) -> Number {
         let size = self.size().to_vector();
         ((size.x * size.y) + (size.y * size.z) + (size.z * size.x)) * 2.
     }
-    pub const fn volume(&self) -> Number { self.size().volume() }
+    pub fn volume(&self) -> Number {
+        self.size().volume()
+    }
 
-    pub const fn center(&self) -> Point3 { self.max + (self.size().to_vector() / 2.0) }
+    pub fn center(&self) -> Point3 {
+        self.max + (self.size().to_vector() / 2.0)
+    }
 }
 
 // endregion Helper

@@ -1,7 +1,7 @@
 // NOTE: I adapted this based off the `noise` crate's gradient
 
-use crate::core::math::Lerp;
 use crate::core::types::Number;
+use crate::math::num::Lerp;
 use getset::{CopyGetters, Setters};
 use smallvec::SmallVec;
 use std::{fmt::Debug, ops::Deref};

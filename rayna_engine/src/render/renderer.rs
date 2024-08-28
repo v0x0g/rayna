@@ -1,12 +1,12 @@
 use crate::core::intersect::ObjectIntersection;
 use crate::core::interval::Interval;
-use crate::core::math::Lerp;
 use crate::core::profiler;
 use crate::core::ray::Ray;
 use crate::core::targets::*;
 use crate::core::types::{Channel, Colour, Image, Number, Vector2};
 use crate::core::validate;
 use crate::material::Material;
+use crate::math::num::Lerp;
 use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::{RenderMode, RenderOpts};
 use crate::scene::camera::Camera;

@@ -1,6 +1,6 @@
-use crate::core::math::Lerp;
 use crate::core::ray::Ray;
 use crate::core::types::{Channel, Colour};
+use crate::math::num::Lerp;
 use crate::skybox::Skybox;
 
 /// A skybox that mixes between blue and white, depending on pitch
@@ -26,5 +26,7 @@ impl Skybox for SimpleSkybox {
 pub struct WhiteSkybox;
 
 impl Skybox for WhiteSkybox {
-    fn sky_colour(&self, _ray: &Ray) -> Colour { Colour::WHITE }
+    fn sky_colour(&self, _ray: &Ray) -> Colour {
+        Colour::WHITE
+    }
 }

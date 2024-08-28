@@ -19,6 +19,7 @@
 pub mod core;
 pub mod macros;
 pub mod material;
+pub mod math;
 pub mod mesh;
 pub mod noise;
 pub mod object;

@@ -1,5 +1,5 @@
-use crate::core::math::Lerp;
 use crate::core::types::{Colour, Number};
+use crate::math::num::Lerp;
 use getset::{CopyGetters, Getters};
 use ndarray::{ArcArray, Ix2, Shape};
 use std::ops::{Deref, DerefMut};

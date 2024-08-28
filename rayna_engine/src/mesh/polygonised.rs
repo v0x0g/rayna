@@ -76,16 +76,20 @@ impl PolygonisedIsosurfaceMesh {
         // Group the vertex coordinates into groups of three, so we get a 3D point
         // Interleaved with normals, so extract that out too
         let (raw_verts, raw_normals): (Vec<_>, Vec<_>) = raw_vertex_normal_coords
-            .array_chunks::<3>()
-            .map(|vs| vs.map(|v| v as Number))
-            .array_chunks::<2>()
-            .map(|[v, n]| (Point3::from(v), Vector3::from(n)))
+            .iter()
+            .copied()
+            .map(|v| v as Number)
+            .tuples::<(_, _, _)>()
+            .tuples::<(_, _)>()
+            .map(|(v, n)| (Point3::from(v), Vector3::from(n)))
             .unzip();
 
         // Group the indices in chunks of three as well, for the three vertices of each triangle
         let triangle_indices = raw_indices
-            .array_chunks::<3>()
-            .map(|vs| vs.map(|v| v as usize))
+            .iter()
+            .copied()
+            .tuples()
+            .map(|(a, b, c)| [a, b, c].map(|i| i as usize))
             .collect_vec();
 
         // Loop over all indices, map them to the vertex positions, and create a triangle
@@ -95,7 +99,7 @@ impl PolygonisedIsosurfaceMesh {
             .into_iter()
             // Unpack the vertices and normals for the triangle
             .map(|vert_indices| (vert_indices.map(|i| raw_verts[i]), vert_indices.map(|i| raw_normals[i])))
-            .filter_map(|(verts, normals)| {
+            .filter_map(|(verts, mut normals)| {
                 // Sometimes this generates "empty" triangles that have duplicate vertices
                 // This is invalid, so skip those. Not sure if it's a bug or intentional :(
                 if verts[0] == verts[1] || verts[1] == verts[2] || verts[2] == verts[0] {
@@ -105,10 +109,15 @@ impl PolygonisedIsosurfaceMesh {
                 // Normals are not normalised by [SdfSource], so do that here.
                 // If for any vertex there is a zero gradient normal, skip those because
                 // I don't know a good way to handle them
-                let Some(normals) = normals.try_map(Vector3::try_normalize) else {
-                    warn!(target: MESH,  "triangle with empty normals; normals: {normals:?}");
-                    return None;
-                };
+                for (src, dest) in std::iter::zip(normals.clone().into_iter(), &mut normals) {
+                    match src.try_normalize() {
+                        None => {
+                            warn!(target: MESH,  "triangle with empty normals; normals: {normals:?}");
+                            return None;
+                        }
+                        Some(norm) => *dest = norm,
+                    };
+                }
                 return Some((verts, normals));
             })
             .unzip();
@@ -163,7 +172,9 @@ impl<F: SdfFunction> HermiteSource for SdfWrapper<F> {
 // region Mesh Impl
 
 impl Bounded for PolygonisedIsosurfaceMesh {
-    fn aabb(&self) -> Aabb { self.mesh.aabb() }
+    fn aabb(&self) -> Aabb {
+        self.mesh.aabb()
+    }
 }
 
 impl Mesh for PolygonisedIsosurfaceMesh {

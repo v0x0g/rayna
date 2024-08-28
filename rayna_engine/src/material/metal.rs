@@ -1,8 +1,9 @@
 use crate::core::intersect::MeshIntersection;
 use crate::core::ray::Ray;
+use crate::core::rng;
 use crate::core::types::{Colour, Number, Vector3};
-use crate::core::{math, rng};
 use crate::material::Material;
+use crate::math::vector;
 use crate::texture::{Texture, TextureToken};
 
 use crate::scene::Scene;
@@ -22,7 +23,7 @@ impl Material for MetalMaterial {
         intersection: &MeshIntersection,
         rng: &mut dyn RngCore,
     ) -> Option<Vector3> {
-        let reflected = math::reflect(ray.dir(), intersection.ray_normal);
+        let reflected = vector::reflect(ray.dir(), intersection.ray_normal);
         let rand = rng::normal_on_unit_sphere(rng);
 
         // Generate some fuzzy reflections by adding a "cloud" of random points

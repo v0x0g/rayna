@@ -1,8 +1,8 @@
 use crate::core::intersect::MeshIntersection;
-use crate::core::math;
 use crate::core::ray::Ray;
 use crate::core::types::{Channel, Colour, Number, Point3, Vector3};
 use crate::material::Material;
+use crate::math::vector;
 use crate::texture::{Texture, TextureToken};
 
 use crate::scene::Scene;
@@ -37,9 +37,9 @@ impl Material for DielectricMaterial {
 
         let dir = if total_internal_reflection || schlick_approx_reflect {
             // Cannot refract, have to reflect
-            math::reflect(ray.dir(), intersection.ray_normal)
+            vector::reflect(ray.dir(), intersection.ray_normal)
         } else {
-            math::refract(ray.dir(), intersection.ray_normal, index_ratio)
+            vector::refract(ray.dir(), intersection.ray_normal, index_ratio)
         };
 
         return Some(dir);

@@ -6,7 +6,7 @@ use crate::core::types::Number;
 use crate::material::{MaterialInstance, MaterialToken};
 use crate::mesh::{Mesh as MeshTrait, MeshInstance, MeshToken};
 use crate::object::transform::ObjectTransform;
-use crate::object::{Object, ObjectToken};
+use crate::object::Object;
 use crate::scene::Scene;
 use getset::{CopyGetters, Getters};
 use rand_core::RngCore;

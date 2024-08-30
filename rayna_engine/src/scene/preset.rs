@@ -7,6 +7,7 @@
 #![allow(non_snake_case)]
 #![allow(unused)]
 
+use crate::core::rng;
 use crate::core::types::{Angle, Channel, Colour, Image, Number, Point3, Size3, Transform3, Vector3};
 use crate::math::num::Lerp;
 use crate::{
@@ -18,7 +19,7 @@ use crate::{
         axis_box::AxisBoxMesh,
         cylinder::CylinderMesh,
         list::ListMesh,
-        planar::{InfinitePlaneMesh, ParallelogramMesh},
+        planar::{InfinitePlaneMesh, ParallelogramMesh, Plane, UvWrappingMode},
         polygonised::PolygonisedIsosurfaceMesh,
         raymarched::RaymarchedIsosurfaceMesh,
         sphere::SphereMesh,
@@ -27,14 +28,19 @@ use crate::{
     noise::boxed::BoxedNoise,
     object::{simple::SimpleObject, transform::ObjectTransform, volumetric::VolumetricObject},
     scene::{camera::Camera, Scene},
-    skybox::simple::{SimpleSkybox, WhiteSkybox},
+    skybox::{
+        none::NoSkybox,
+        simple::{SimpleSkybox, WhiteSkybox},
+    },
     texture::{
         checker::{UvCheckerTexture, WorldCheckerTexture},
         image::ImageTexture,
         noise::{NoiseSource, NoiseTexture},
         solid::SolidTexture,
+        TextureToken,
     },
 };
+use rand::Rng as _;
 
 /// Holds a preset scene that is pre-made, so that scenes can easily be loaded
 /// without having to recreate them each time
@@ -105,9 +111,6 @@ pub fn TESTING() -> PresetScene {
 
 /// From **RayTracing in A Weekend**, the demo scene at the end of the chapter (extended of course)
 pub fn RTIAW_DEMO() -> PresetScene {
-    use crate::core::rng;
-    use rand::Rng as _;
-
     let mut scene = Scene::new();
     scene.set_skybox(SimpleSkybox);
 
@@ -197,431 +200,373 @@ pub fn RTIAW_DEMO() -> PresetScene {
     }
 }
 
-// /// From **RayTracing in A Weekend**, the demo scene at the end of the chapter (night edition)
-// pub fn RTIAW_DEMO_DARK() -> PresetScene {
-//     let mut objects = Vec::new();
+/// From **RayTracing in A Weekend**, the demo scene at the end of the chapter (night edition)
+pub fn RTIAW_DEMO_DARK() -> PresetScene {
+    let mut scene = Scene::new();
+    scene.set_skybox(NoSkybox);
 
-//     let grid_dims = -15..=15;
-//     let rng = &mut thread_rng();
+    let grid_dims = -15..=15;
+    let rng = &mut rand::thread_rng();
 
-//     // Objects
-//     for a in grid_dims.clone() {
-//         for b in grid_dims.clone() {
-//             let (a, b) = (a as Number, b as Number);
+    // Objects
+    for a in grid_dims.clone() {
+        for b in grid_dims.clone() {
+            let (a, b) = (a as Number, b as Number);
 
-//             let centre = Point3::new(a, 0.2, b) + (Vector3::new(rng.gen(), 0., rng.gen()) * 0.9);
-//             const BIG_BALL_CENTRE: Point3 = Point3 { x: 4., y: 0.2, z: 0. };
+            let centre = Point3::new(a, 0.2, b) + (Vector3::new(rng.gen(), 0., rng.gen()) * 0.9);
+            const BIG_BALL_CENTRE: Point3 = Point3 { x: 4., y: 0.2, z: 0. };
 
-//             if (centre - BIG_BALL_CENTRE).length() <= 1.0 {
-//                 continue;
-//             }
+            if (centre - BIG_BALL_CENTRE).length() <= 1.0 {
+                continue;
+            }
 
-//             let material_choice = rng.gen::<Number>();
-//             let material: MaterialInstance<TextureInstance> = if material_choice < 0.6 {
-//                 LambertianMaterial {
-//                     albedo: (rng::colour_rgb(rng) * rng::colour_rgb(rng)).into(),
-//                 }
-//                 .into()
-//             } else if material_choice <= 0.8 {
-//                 MetalMaterial {
-//                     albedo: rng::colour_rgb_range(rng, 0.5..=1.0).into(),
-//                     fuzz: rng.gen_range(0.0..=0.5),
-//                 }
-//                 .into()
-//             } else if material_choice <= 0.95 {
-//                 DielectricMaterial {
-//                     albedo: rng::colour_rgb_range(rng, 0.5..1.0).into(),
-//                     refractive_index: rng.gen_range(1.0..=10.0),
-//                     density: 69.0,
-//                 }
-//                 .into()
-//             } else {
-//                 LightMaterial {
-//                     emissive: rng::colour_rgb_range(rng, 0.0..0.8).into(),
-//                 }
-//                 .into()
-//             };
+            let material_choice = rng.gen::<Number>();
+            let material: MaterialInstance = if material_choice < 0.6 {
+                LambertianMaterial {
+                    albedo: scene.add_tex(rng::colour_rgb(rng) * rng::colour_rgb(rng)),
+                }
+                .into()
+            } else if material_choice <= 0.8 {
+                MetalMaterial {
+                    albedo: scene.add_tex(rng::colour_rgb_range(rng, 0.5..=1.0)),
+                    fuzz: rng.gen_range(0.0..=0.5),
+                }
+                .into()
+            } else if material_choice <= 0.95 {
+                DielectricMaterial {
+                    albedo: scene.add_tex(rng::colour_rgb_range(rng, 0.5..1.0)),
+                    refractive_index: rng.gen_range(1.0..=10.0),
+                    density: 69.0,
+                }
+                .into()
+            } else {
+                LightMaterial {
+                    emissive: scene.add_tex(rng::colour_rgb_range(rng, 0.0..0.8)),
+                }
+                .into()
+            };
 
-//             let obj_choice = rng.gen::<Number>();
-//             let obj: MeshInstance = if obj_choice < 0.7 {
-//                 SphereMesh::new(centre, 0.2).into()
-//             } else {
-//                 AxisBoxMesh::new_centred(centre, rng::vector_in_unit_cube_01(rng) * 0.8).into()
-//             };
-//             objects.push(SimpleObject::new(obj, material, None));
-//         }
-//     }
+            let obj_choice = rng.gen::<Number>();
+            let obj: MeshInstance = if obj_choice < 0.7 {
+                SphereMesh::new(centre, 0.2).into()
+            } else {
+                AxisBoxMesh::new_centred(centre, rng::vector_in_unit_cube_01(rng) * 0.8).into()
+            };
+            let obj = SimpleObject::new_in(&mut scene, obj, material, None);
+            scene.add_obj(obj);
+        }
+    }
 
-//     // Lights
-//     for a in grid_dims.clone() {
-//         for b in grid_dims.clone() {
-//             let (a, b) = (a as Number, b as Number);
+    // Lights
+    for a in grid_dims.clone() {
+        for b in grid_dims.clone() {
+            let (a, b) = (a as Number, b as Number);
 
-//             let centre = Point3::new(a, 3.2, b) + (Vector3::new(rng.gen(), 0., rng.gen()) * 0.9);
-//             const BIG_BALL_CENTRE: Point3 = Point3 { x: 4., y: 0.2, z: 0. };
+            let centre = Point3::new(a, 3.2, b) + (Vector3::new(rng.gen(), 0., rng.gen()) * 0.9);
+            const BIG_BALL_CENTRE: Point3 = Point3 { x: 4., y: 0.2, z: 0. };
 
-//             if (centre - BIG_BALL_CENTRE).length() <= 1.8 {
-//                 continue;
-//             }
+            if (centre - BIG_BALL_CENTRE).length() <= 1.8 {
+                continue;
+            }
 
-//             let material_choice = rng.gen::<Number>();
-//             let material: MaterialInstance<TextureInstance> = LightMaterial {
-//                 emissive: rng::colour_rgb_range(rng, 10.0..50.0).into(),
-//             }
-//             .into();
+            let material: MaterialInstance = LightMaterial {
+                emissive: scene.add_tex(rng::colour_rgb_range(rng, 10.0..50.0)),
+            }
+            .into();
 
-//             let obj_choice = rng.gen::<Number>();
-//             let obj: MeshInstance = if obj_choice <= 0.99 {
-//                 continue;
-//             } else if obj_choice <= 0.995 {
-//                 SphereMesh::new(centre, 0.2).into()
-//             } else {
-//                 AxisBoxMesh::new_centred(centre, rng::vector_in_unit_cube_01(rng) * 0.8).into()
-//             };
-//             objects.push(SimpleObject::new(obj, material, None));
-//         }
-//     }
+            let obj_choice = rng.gen::<Number>();
+            let obj: MeshInstance = if obj_choice <= 0.99 {
+                continue;
+            } else if obj_choice <= 0.995 {
+                SphereMesh::new(centre, 0.2).into()
+            } else {
+                AxisBoxMesh::new_centred(centre, rng::vector_in_unit_cube_01(rng) * 0.8).into()
+            };
+            let obj = SimpleObject::new_in(&mut scene, obj, material, None);
+            scene.add_obj(obj);
+        }
+    }
 
-//     objects.push(SimpleObject::new(
-//         SphereMesh::new((0., 1., 0.), 1.),
-//         DielectricMaterial {
-//             refractive_index: 1.5,
-//             density: 69.0,
-//             albedo: [1.; 3].into(),
-//         },
-//         None,
-//     ));
-//     objects.push(SimpleObject::new(
-//         SphereMesh::new((-4., 1., 0.), 1.),
-//         LambertianMaterial {
-//             albedo: [0.4, 0.2, 0.1].into(),
-//         },
-//         None,
-//     ));
-//     objects.push(SimpleObject::new(
-//         SphereMesh::new((4., 1., 0.), 1.),
-//         MetalMaterial {
-//             albedo: [0.7, 0.6, 0.5].into(),
-//             fuzz: 0.,
-//         },
-//         None,
-//     ));
+    let mesh = scene.add_mesh(SphereMesh::new((0., 1., 0.), 1.));
+    let tex = scene.add_tex([1.; 3]);
+    let mat = scene.add_mat(DielectricMaterial {
+        refractive_index: 1.5,
+        density: 69.0,
+        albedo: tex,
+    });
+    let obj = SimpleObject::new_from(&scene, mesh, mat, None);
+    scene.add_obj(obj);
+    let mesh = scene.add_mesh(SphereMesh::new((-4., 1., 0.), 1.));
+    let tex = scene.add_tex([0.4, 0.2, 0.1]);
+    let mat = scene.add_mat(LambertianMaterial { albedo: tex });
+    let obj = SimpleObject::new_from(&scene, mesh, mat, None);
+    scene.add_obj(obj);
+    let mesh = scene.add_mesh(SphereMesh::new((4., 1., 0.), 1.));
+    let tex = scene.add_tex([0.7, 0.6, 0.5]);
+    let mat = scene.add_mat(MetalMaterial { albedo: tex, fuzz: 0. });
+    let obj = SimpleObject::new_from(&scene, mesh, mat, None);
+    scene.add_obj(obj);
 
-//     objects.push(SimpleObject::new(
-//         InfinitePlaneMesh::new(Planar::new(Point3::ZERO, Vector3::X, Vector3::Z), UvWrappingMode::Wrap),
-//         LambertianMaterial {
-//             albedo: LocalNoiseTexture {
-//                 source: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69u32)).set_scale(10000.)).to_dyn_box(),
-//             }
-//             .into(),
-//         },
-//         None,
-//     ));
+    let mesh = scene.add_mesh(InfinitePlaneMesh::new(
+        Plane::new(Point3::ZERO, Vector3::X, Vector3::Z),
+        UvWrappingMode::Wrap,
+    ));
+    let noise = scene.add_noise3(BoxedNoise::from(
+        noise::ScalePoint::new(noise::Perlin::new(69u32)).set_scale(10000.),
+    ));
+    let tex = scene.add_tex(NoiseTexture::Monochrome {
+        noise: NoiseSource::LocalPos(noise),
+        colour: Colour::WHITE,
+    });
+    let mat = scene.add_mat(LambertianMaterial { albedo: tex });
+    let obj = SimpleObject::new_from(&scene, mesh, mat, None);
+    scene.add_obj(obj);
 
-//     PresetScene {
-//         name: "RTIAW Demo (Night)",
-//         camera: Camera {
-//             pos: Point3::new(13., 2., 3.),
-//             fwd: Vector3::new(-13., -2., -3.).normalize(),
-//             v_fov: Angle::from_degrees(20.),
-//             focus_dist: 10.,
-//             defocus_angle: Angle::from_degrees(0.6),
-//         },
-//         scene: Scene {
-//             objects: objects.into(),
-//             skybox: NoSkybox.into(),
-//         },
-//     }
-// }
+    PresetScene {
+        name: "RTIAW Demo (Night)",
+        camera: Camera {
+            pos: Point3::new(13., 2., 3.),
+            fwd: Vector3::new(-13., -2., -3.).normalize(),
+            v_fov: Angle::from_degrees(20.),
+            focus_dist: 10.,
+            defocus_angle: Angle::from_degrees(0.6),
+        },
+        scene,
+    }
+}
 
-// /// From **RayTracing The Next Week**, the demo scene at the end of the chapter (extended of course)
-// pub fn RTTNW_DEMO() -> PresetScene {
-//     let mut objects: Vec<ObjectInstance<MeshInstance, MaterialInstance<TextureInstance>>> = Vec::new();
-//     let rng = &mut thread_rng();
+/// From **RayTracing The Next Week**, the demo scene at the end of the chapter (extended of course)
+pub fn RTTNW_DEMO() -> PresetScene {
+    let mut scene = Scene::new();
+    let rng = &mut rand::thread_rng();
 
-//     // Const trait impls aren't yet stabilised, so we can't call TextureInstance::From(Pixel) yet
-//     const fn solid_texture(albedo: [Channel; 3]) -> TextureInstance {
-//         let pixel = Colour { 0: albedo };
-//         let solid = SolidTexture { albedo: pixel };
-//         let texture = TextureInstance::SolidTexture(solid);
-//         texture
-//     }
+    {
+        // BOXES (FLOOR)
+        const COUNT: usize = 20;
+        const HALF_COUNT: Number = COUNT as Number / 2.;
+        const WIDTH: Number = 1.;
 
-//     {
-//         // BOXES (FLOOR)
-//         const COUNT: usize = 20;
-//         const HALF_COUNT: Number = COUNT as Number / 2.;
-//         const WIDTH: Number = 1.;
+        // NOTE: Only need to use one material, shared across all boxes
+        let tex = scene.add_tex([0.48, 0.83, 0.53]);
+        let mat = scene.add_mat(LambertianMaterial { albedo: tex });
 
-//         let mut floor: Vec<MeshInstance> = vec![];
-//         for i in 0..COUNT {
-//             for j in 0..COUNT {
-//                 let low = Point3::new(-HALF_COUNT * WIDTH, 0., -HALF_COUNT * WIDTH)
-//                     + Vector3::new(i as Number * WIDTH, 0., j as Number * WIDTH);
-//                 let high = low + Vector3::new(WIDTH, rng.gen_range(0.0..=1.0), WIDTH);
+        let mut floor = vec![];
+        for i in 0..COUNT {
+            for j in 0..COUNT {
+                let low = Point3::new(-HALF_COUNT * WIDTH, 0., -HALF_COUNT * WIDTH)
+                    + Vector3::new(i as Number * WIDTH, 0., j as Number * WIDTH);
+                let high = low + Vector3::new(WIDTH, rng.gen_range(0.0..=1.0), WIDTH);
 
-//                 floor.push(AxisBoxMesh::new(low, high).into());
-//             }
-//         }
+                floor.push((AxisBoxMesh::new(low, high)));
+            }
+        }
 
-//         objects.push(
-//             SimpleObject::new(
-//                 BvhMesh::new(floor),
-//                 LambertianMaterial {
-//                     albedo: solid_texture([0.48, 0.83, 0.53]),
-//                 },
-//                 None,
-//             )
-//             .into(),
-//         );
-//     }
+        let mesh = ListMesh::new_in(&mut scene, floor);
+        let mesh = scene.add_mesh(mesh);
+        scene.add_obj(SimpleObject::new_from(&scene, mesh, mat, None));
+    }
 
-//     {
-//         // LIGHT
-//         objects.push(
-//             SimpleObject::new(
-//                 ParallelogramMesh::new(Planar::new((1.23, 5.54, 1.47), (3., 0., 0.), (0., 0., 2.65))),
-//                 LightMaterial {
-//                     emissive: solid_texture([7.; 3]),
-//                 },
-//                 None,
-//             )
-//             .into(),
-//         );
-//     }
+    {
+        // LIGHT
+        let mesh = scene.add_mesh(ParallelogramMesh::new(Plane::new(
+            (1.23, 5.54, 1.47),
+            (3., 0., 0.),
+            (0., 0., 2.65),
+        )));
+        let tex = scene.add_tex([7.; 3]);
+        let mat = scene.add_mat(LightMaterial { emissive: tex });
+        scene.add_obj(SimpleObject::new_from(&scene, mesh, mat, None));
+    }
 
-//     {
-//         // BROWN SPHERE
-//         objects.push(
-//             SimpleObject::new(
-//                 SphereMesh::new((4., 4., 2.), 0.5),
-//                 LambertianMaterial {
-//                     albedo: solid_texture([0.7, 0.3, 0.1]),
-//                 },
-//                 None,
-//             )
-//             .into(),
-//         );
+    {
+        // BROWN SPHERE
+        let mesh = scene.add_mesh(SphereMesh::new((4., 4., 2.), 0.5));
+        let tex = scene.add_tex([0.7, 0.3, 0.1]);
+        let mat = scene.add_mat(LambertianMaterial { albedo: tex });
+        scene.add_obj(SimpleObject::new_from(&scene, mesh, mat, None));
 
-//         // GLASS SPHERE
-//         objects.push(
-//             SimpleObject::new(
-//                 SphereMesh::new((2.6, 1.5, 0.45), 0.5),
-//                 DielectricMaterial {
-//                     albedo: [1.; 3].into(),
-//                     density: 1.0,
-//                     refractive_index: 1.5,
-//                 },
-//                 None,
-//             )
-//             .into(),
-//         );
+        // GLASS SPHERE
+        let mesh = scene.add_mesh(SphereMesh::new((2.6, 1.5, 0.45), 0.5));
+        let tex = scene.add_tex([1.; 3]);
+        let mat = scene.add_mat(DielectricMaterial {
+            albedo: tex,
+            density: 1.0,
+            refractive_index: 1.5,
+        });
+        scene.add_obj(SimpleObject::new_from(&scene, mesh, mat, None));
 
-//         // METAL SPHERE (RIGHT)
-//         objects.push(
-//             SimpleObject::new(
-//                 SphereMesh::new((0., 1.5, 1.45), 0.5),
-//                 MetalMaterial {
-//                     albedo: [0.8, 0.8, 0.9].into(),
-//                     fuzz: 1.,
-//                 },
-//                 None,
-//             )
-//             .into(),
-//         );
+        // METAL SPHERE (RIGHT)
+        let mesh = scene.add_mesh(SphereMesh::new((0., 1.5, 1.45), 0.5));
+        let tex = scene.add_tex([0.8, 0.8, 0.9]);
+        let mat = scene.add_mat(MetalMaterial { albedo: tex, fuzz: 1. });
+        scene.add_obj(SimpleObject::new_from(&scene, mesh, mat, None));
 
-//         // SUBSURFACE SCATTER BLUE SPHERE (LEFT)
-//         objects.push(
-//             SimpleObject::new(
-//                 SphereMesh::new((3.6, 1.5, 1.45), 0.7),
-//                 DielectricMaterial {
-//                     albedo: [1.; 3].into(),
-//                     refractive_index: 1.5,
-//                     density: 0.0,
-//                 },
-//                 None,
-//             )
-//             .into(),
-//         );
-//         objects.push(
-//             VolumetricObject::new(
-//                 // BLUE HAZE INSIDE
-//                 SphereMesh::new((3.6, 1.5, 1.45), 0.6999),
-//                 IsotropicMaterial {
-//                     albedo: [0.2, 0.4, 0.9].into(),
-//                     density: 0.3,
-//                 },
-//                 2.0,
-//                 None,
-//             )
-//             .into(),
-//         );
+        // SUBSURFACE SCATTER BLUE SPHERE (LEFT)
+        let mesh = scene.add_mesh(SphereMesh::new((3.6, 1.5, 1.45), 0.7));
+        let tex = scene.add_tex([1.; 3]);
+        let mat = scene.add_mat(DielectricMaterial {
+            albedo: tex,
+            refractive_index: 1.5,
+            density: 0.0,
+        });
+        scene.add_obj(SimpleObject::new_from(&scene, mesh, mat, None));
+        // BLUE HAZE INSIDE
+        let mesh = scene.add_mesh(SphereMesh::new((3.6, 1.5, 1.45), 0.6999));
+        let tex = scene.add_tex([0.2, 0.4, 0.9]);
+        let mat = scene.add_mat(IsotropicMaterial {
+            albedo: tex,
+            density: 0.3,
+        });
+        scene.add_obj(VolumetricObject::new_from(&scene, mesh, mat, 2.0, None));
 
-//         // // EARTH SPHERE
-//         // objects.push(
-//         //     SimpleObject::new(
-//         //         SphereMesh::new((4., 2., 4.), 1.0),
-//         //         LambertianMaterial {
-//         //             albedo: ImageTexture::from(Image::from(
-//         //                 image::load_from_memory(include_bytes!("../../../media/texture/nasa-earthmap/5400x2700.jpg"))
-//         //                     .expect("compile-time image resource should be valid"),
-//         //             ))
-//         //             .into(),
-//         //         },
-//         //         None,
-//         //     )
-//         //     .into(),
-//         // );
+        // EARTH SPHERE
+        let mesh = scene.add_mesh(SphereMesh::new((4., 2., 4.), 1.0));
+        // let tex = scene.add_tex(ImageTexture::from(Image::from(
+        //     image::load_from_memory(include_bytes!("../../../media/texture/nasa-earthmap/5400x2700.jpg"))
+        //         .expect("compile-time image resource should be valid"),
+        // )));
+        let tex = scene.add_tex(ImageTexture::from(Image::from_fn(2, 2, |x, y| {
+            [[(0., 1., 0.), (0., 0., 1.)], [(1., 1., 1.), (0., 0., 0.)]][x][y].into()
+        })));
+        let mat = scene.add_mat(LambertianMaterial { albedo: tex });
+        scene.add_obj(SimpleObject::new_from(&scene, mesh, mat, None));
 
-//         // NOISE SPHERE
-//         objects.push(
-//             SimpleObject::new(
-//                 SphereMesh::new((2.2, 2.8, 3.0), 0.8),
-//                 LambertianMaterial {
-//                     albedo: WorldNoiseTexture {
-//                         source: ColourSource::Greyscale(ScalePoint::new(Perlin::new(69)).set_scale(4.)).to_dyn_box(),
-//                     }
-//                     .into(),
-//                 },
-//                 None,
-//             )
-//             .into(),
-//         );
-//     }
+        // NOISE SPHERE
+        let noise = scene.add_noise3(BoxedNoise::from(
+            noise::ScalePoint::new(noise::Perlin::new(69)).set_scale(4.),
+        ));
+        let tex = scene.add_tex(NoiseTexture::Monochrome {
+            noise: NoiseSource::WorldPos(noise),
+            colour: Colour::WHITE,
+        });
+        let mat = scene.add_mat(LambertianMaterial { albedo: tex });
+        let mesh = scene.add_mesh(SphereMesh::new((2.2, 2.8, 3.0), 0.8));
+        scene.add_obj(SimpleObject::new_from(&scene, mesh, mat, None));
+    }
 
-//     {
-//         // CUBE OF BALLS
+    {
+        // CUBE OF BALLS
 
-//         const COUNT: usize = 1000;
-//         const SPREAD: Number = 0.825;
+        const COUNT: usize = 1000;
+        const SPREAD: Number = 0.825;
+        const SIZE: Number = 0.1;
 
-//         let balls = (0..COUNT)
-//             .into_iter()
-//             .map(|_| SphereMesh::new((rng::vector_in_unit_cube(rng) * SPREAD).to_point(), 0.1).into())
-//             .collect();
+        let balls = (0..COUNT)
+            .into_iter()
+            .map(|_| SphereMesh::new((rng::vector_in_unit_cube(rng) * SPREAD).to_point(), SIZE));
 
-//         objects.push(
-//             SimpleObject::new(
-//                 BvhMesh::new(balls),
-//                 LambertianMaterial {
-//                     albedo: solid_texture([0.85; 3]),
-//                 },
-//                 Transform3::from_scale_rotation_translation(
-//                     Vector3::ONE,
-//                     Vector3::Y,
-//                     Angle::from_degrees(15.),
-//                     // The original cube was not centred at middle, but "centred" at the corner
-//                     Vector3::new(-1.0, 2.7, 3.95) + Vector3::splat(SPREAD),
-//                 ),
-//             )
-//             .into(),
-//         );
-//     }
+        let tex = scene.add_tex([0.85; 3]);
+        let mat = scene.add_mat(LambertianMaterial { albedo: tex });
+        let mesh = ListMesh::new_in(&mut scene, balls);
+        let mesh = scene.add_mesh(mesh);
+        let trans = Transform3::from_scale_rotation_translation(
+            Vector3::ONE,
+            Vector3::Y,
+            Angle::from_degrees(15.),
+            // The original cube was not centred at middle, but "centred" at the corner
+            Vector3::new(-1.0, 2.7, 3.95) + Vector3::splat(SPREAD),
+        );
+        scene.add_obj(SimpleObject::new_from(&scene, mesh, mat, trans));
+    }
 
-//     {
-//         // HAZE
+    {
+        // HAZE
 
-//         // objects.push(
-//         //     VolumetricObject::new(
-//         //         SphereMesh::new(Point3::ZERO, 50.),
-//         //         IsotropicMaterial { albedo: [1.; 3].into() },
-//         //         0.003,
-//         //         None,
-//         //     )
-//         //     .into(),
-//         // );
-//     }
+        let mesh = scene.add_mesh(SphereMesh::new(Point3::ZERO, 50.));
+        let tex = scene.add_tex([1.; 3]);
+        let mat = scene.add_mat(IsotropicMaterial {
+            albedo: tex,
+            density: 0.003,
+        });
+        scene.add_obj(VolumetricObject::new_from(&scene, mesh, mat, 0.003, None));
+    }
 
-//     PresetScene {
-//         name: "RTTNW Demo",
-//         camera: Camera {
-//             pos: Point3::new(4.78, 2.78, -6.0),
-//             fwd: Vector3::new(-1., 0., 3.).normalize(),
-//             v_fov: Angle::from_degrees(40.),
-//             focus_dist: 1.,
-//             defocus_angle: Angle::from_degrees(0.0),
-//         },
-//         scene: Scene {
-//             objects: objects.into(),
-//             skybox: None.into(),
-//         },
-//     }
-// }
+    PresetScene {
+        name: "RTTNW Demo",
+        camera: Camera {
+            pos: Point3::new(4.78, 2.78, -6.0),
+            fwd: Vector3::new(-1., 0., 3.).normalize(),
+            v_fov: Angle::from_degrees(40.),
+            focus_dist: 1.,
+            defocus_angle: Angle::from_degrees(0.0),
+        },
+        scene,
+    }
+}
 
-// /// The classic cornell box scene
-// pub fn CORNELL() -> PresetScene {
-//     let mut objects = Vec::new();
+/// The classic cornell box scene
+pub fn CORNELL() -> PresetScene {
+    let mut scene = Scene::new();
+    scene.set_skybox(None);
 
-//     fn quad(
-//         objs: &mut Vec<SimpleObject<MeshInstance, MaterialInstance<TextureInstance>>>,
-//         p: impl Into<Point3>,
-//         u: impl Into<Vector3>,
-//         v: impl Into<Vector3>,
-//         albedo: impl Into<TextureInstance>,
-//     ) {
-//         objs.push(SimpleObject::new(
-//             ParallelogramMesh::new(Planar::new(p, u, v)),
-//             LambertianMaterial { albedo: albedo.into() },
-//             None,
-//         ));
-//     }
+    let red = scene.add_tex([0.65, 0.05, 0.05]);
+    let green = scene.add_tex([0.12, 0.45, 0.15]);
+    let warm_grey = scene.add_tex([0.85, 0.74, 0.55]);
+    let light = scene.add_tex([15.; 3]);
 
-//     let red = [0.65, 0.05, 0.05];
-//     let green = [0.12, 0.45, 0.15];
-//     let warm_grey = [0.85, 0.74, 0.55];
-//     let light = [15.; 3];
+    {
+        // WALLS
 
-//     let o = &mut objects;
+        fn quad(
+            scene: &mut Scene,
+            p: impl Into<Point3>,
+            u: impl Into<Vector3>,
+            v: impl Into<Vector3>,
+            albedo: TextureToken,
+        ) {
+            let obj = SimpleObject::new_in(
+                scene,
+                ParallelogramMesh::new(Plane::new(p, u, v)),
+                LambertianMaterial { albedo },
+                None,
+            );
+            scene.add_obj(obj);
+        }
+        quad(&mut scene, (0., 0., 0.), Vector3::Y, Vector3::Z, red); // Left
+        quad(&mut scene, (0., 0., 0.), Vector3::X, Vector3::Y, warm_grey); // Back
+        quad(&mut scene, (0., 0., 0.), Vector3::Z, Vector3::X, warm_grey); // Floor
+        quad(&mut scene, (1., 0., 0.), Vector3::Z, Vector3::Y, green); // Right
+        quad(&mut scene, (0., 1., 0.), Vector3::X, Vector3::Z, warm_grey); // Ceiling
+    }
 
-//     {
-//         // WALLS
+    {
+        // LIGHT
+        let mesh = ParallelogramMesh::new(Plane::new((0.4, 0.9999, 0.4), (0.2, 0., 0.), (0., 0., 0.2)));
+        let mat = LightMaterial { emissive: light };
+        let obj = SimpleObject::new_in(&mut scene, mesh, mat, None);
+        scene.add_obj(obj);
+    }
 
-//         quad(o, (0., 0., 0.), Vector3::Y, Vector3::Z, red); // Left
-//         quad(o, (0., 0., 0.), Vector3::X, Vector3::Y, warm_grey); // Back
-//         quad(o, (0., 0., 0.), Vector3::Z, Vector3::X, warm_grey); // Floor
-//         quad(o, (1., 0., 0.), Vector3::Z, Vector3::Y, green); // Right
-//         quad(o, (0., 1., 0.), Vector3::X, Vector3::Z, warm_grey); // Ceiling
+    {
+        // INNER BOXES
 
-//         o.push(SimpleObject::new(
-//             ParallelogramMesh::new(Planar::new((0.4, 0.9999, 0.4), (0.2, 0., 0.), (0., 0., 0.2))),
-//             LightMaterial { emissive: light.into() },
-//             None,
-//         ));
-//     }
+        // Big
+        let obj = SimpleObject::new_in(
+            &mut scene,
+            AxisBoxMesh::new((0.231, 0., 0.117), (0.531, 0.595, 0.414)),
+            LambertianMaterial { albedo: warm_grey },
+            Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(15.)),
+        );
+        scene.add_obj(obj);
+        // Small
+        let obj = SimpleObject::new_in(
+            &mut scene,
+            AxisBoxMesh::new((0.477, 0., 0.531), (0.774, 0.297, 0.829)),
+            LambertianMaterial { albedo: warm_grey },
+            Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(-18.)),
+        );
+        scene.add_obj(obj);
+    }
 
-//     {
-//         // INNER BOXES
-
-//         // Big
-//         o.push(SimpleObject::new(
-//             AxisBoxMesh::new((0.231, 0., 0.117), (0.531, 0.595, 0.414)),
-//             LambertianMaterial {
-//                 albedo: warm_grey.into(),
-//             },
-//             Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(15.)),
-//         ));
-//         // Small
-//         o.push(SimpleObject::new(
-//             AxisBoxMesh::new((0.477, 0., 0.531), (0.774, 0.297, 0.829)),
-//             LambertianMaterial {
-//                 albedo: warm_grey.into(),
-//             },
-//             Transform3::from_axis_angle(Vector3::Y, Angle::from_degrees(-18.)),
-//         ));
-//     }
-
-//     PresetScene {
-//         name: "Cornell Box",
-//         camera: Camera {
-//             pos: Point3::new(0.5, 0.5, 2.3),
-//             fwd: Vector3::new(0., 0., -1.).normalize(),
-//             v_fov: Angle::from_degrees(40.),
-//             focus_dist: 1.,
-//             defocus_angle: Angle::from_degrees(0.),
-//         },
-//         scene: Scene {
-//             objects: objects.into(),
-//             skybox: None.into(),
-//         },
-//     }
-// }
+    PresetScene {
+        name: "Cornell Box",
+        camera: Camera {
+            pos: Point3::new(0.5, 0.5, 2.3),
+            fwd: Vector3::new(0., 0., -1.).normalize(),
+            v_fov: Angle::from_degrees(40.),
+            focus_dist: 1.,
+            defocus_angle: Angle::from_degrees(0.),
+        },
+        scene,
+    }
+}

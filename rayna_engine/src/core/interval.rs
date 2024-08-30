@@ -14,7 +14,9 @@ pub struct Interval<T> {
 }
 
 impl<T> From<RangeFull> for Interval<T> {
-    fn from(_value: RangeFull) -> Self { Self { start: None, end: None } }
+    fn from(_value: RangeFull) -> Self {
+        Self { start: None, end: None }
+    }
 }
 impl<T> From<RangeInclusive<T>> for Interval<T> {
     fn from(value: RangeInclusive<T>) -> Self {
@@ -181,7 +183,9 @@ impl<T: Display> Display for Interval<T> {
 }
 
 impl<T> Interval<T> {
-    pub fn with_start(self, start: Option<T>) -> Self { Self { start, ..self } }
+    pub fn with_start(self, start: Option<T>) -> Self {
+        Self { start, ..self }
+    }
     pub fn with_some_start(self, start: T) -> Self {
         Self {
             start: Some(start),
@@ -189,6 +193,10 @@ impl<T> Interval<T> {
         }
     }
 
-    pub fn with_end(self, end: Option<T>) -> Self { Self { end, ..self } }
-    pub fn with_some_end(self, end: T) -> Self { Self { end: Some(end), ..self } }
+    pub fn with_end(self, end: Option<T>) -> Self {
+        Self { end, ..self }
+    }
+    pub fn with_some_end(self, end: T) -> Self {
+        Self { end: Some(end), ..self }
+    }
 }

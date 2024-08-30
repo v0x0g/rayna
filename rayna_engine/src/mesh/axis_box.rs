@@ -44,16 +44,22 @@ impl AxisBoxMesh {
 }
 
 impl From<(Point3, Point3)> for AxisBoxMesh {
-    fn from((a, b): (Point3, Point3)) -> Self { Self::new(a, b) }
+    fn from((a, b): (Point3, Point3)) -> Self {
+        Self::new(a, b)
+    }
 }
 
 impl From<[Point3; 2]> for AxisBoxMesh {
-    fn from([a, b]: [Point3; 2]) -> Self { Self::new(a, b) }
+    fn from([a, b]: [Point3; 2]) -> Self {
+        Self::new(a, b)
+    }
 }
 
 impl From<(Point3, Size3)> for AxisBoxMesh {
     /// Creates a box with the given centre and dimensions
-    fn from((centre, size): (Point3, Size3)) -> Self { Self::new_centred(centre, size) }
+    fn from((centre, size): (Point3, Size3)) -> Self {
+        Self::new_centred(centre, size)
+    }
 }
 
 // endregion Constructors
@@ -153,7 +159,9 @@ impl Mesh for AxisBoxMesh {
 }
 
 impl Bounded for AxisBoxMesh {
-    fn aabb(&self) -> Aabb { self.aabb }
+    fn aabb(&self) -> Aabb {
+        self.aabb
+    }
 }
 
 // endregion Mesh Implementation

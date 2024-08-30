@@ -10,7 +10,9 @@ use tracing::*;
 pub struct MiniquadBackend<App: UiApp>(PhantomData<App>);
 
 impl<App: UiApp> Default for MiniquadBackend<App> {
-    fn default() -> Self { Self(PhantomData::default()) }
+    fn default() -> Self {
+        Self(PhantomData::default())
+    }
 }
 
 impl<App: UiApp> UiBackend<App> for MiniquadBackend<App> {
@@ -74,9 +76,13 @@ impl<App: UiApp> mq::EventHandler for MiniquadWrapper<App> {
 
     // ===== PASS-THROUGH EVENTS TO EGUI_MQ =====
 
-    fn mouse_motion_event(&mut self, x: f32, y: f32) { self.egui_mq.mouse_motion_event(x, y); }
+    fn mouse_motion_event(&mut self, x: f32, y: f32) {
+        self.egui_mq.mouse_motion_event(x, y);
+    }
 
-    fn mouse_wheel_event(&mut self, dx: f32, dy: f32) { self.egui_mq.mouse_wheel_event(dx, dy); }
+    fn mouse_wheel_event(&mut self, dx: f32, dy: f32) {
+        self.egui_mq.mouse_wheel_event(dx, dy);
+    }
 
     fn mouse_button_down_event(&mut self, mb: mq::MouseButton, x: f32, y: f32) {
         self.egui_mq.mouse_button_down_event(mb, x, y);

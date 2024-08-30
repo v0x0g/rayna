@@ -88,9 +88,15 @@ impl UvWrappingMode {
     /// Applies the wrapping mode to the UV coordinate, returning the new coordinate
     #[inline(always)]
     pub fn apply(self, uvs: Point2) -> Point2 {
-        fn wrap(x: Number) -> Number { x.rem_euclid(1.0) }
-        fn mirror(x: Number) -> Number { ((x % 2.0) - 1.0).abs() }
-        fn clamp(x: Number) -> Number { x.clamp(0., 1.) }
+        fn wrap(x: Number) -> Number {
+            x.rem_euclid(1.0)
+        }
+        fn mirror(x: Number) -> Number {
+            ((x % 2.0) - 1.0).abs()
+        }
+        fn clamp(x: Number) -> Number {
+            x.clamp(0., 1.)
+        }
 
         match self {
             Self::Wrap => Point2::new(wrap(uvs.x), wrap(uvs.y)),
@@ -108,7 +114,9 @@ impl UvWrappingMode {
 
     /// Applies the wrapping mode to the UV coordinate, writing the modified coordinate into the reference
     #[inline(always)]
-    pub fn apply_mut(self, uvs: &mut Point2) { *uvs = self.apply(*uvs); }
+    pub fn apply_mut(self, uvs: &mut Point2) {
+        *uvs = self.apply(*uvs);
+    }
 }
 
 // endregion UV Wrap
@@ -203,11 +211,15 @@ impl Plane {
 
 /// Create from three point array
 impl<P: Into<Point3>> From<[P; 3]> for Plane {
-    fn from([p, a, b]: [P; 3]) -> Self { Self::new_points(p, a, b) }
+    fn from([p, a, b]: [P; 3]) -> Self {
+        Self::new_points(p, a, b)
+    }
 }
 /// Create from three point tuple
 impl<P: Into<Point3>, A: Into<Point3>, B: Into<Point3>> From<(P, A, B)> for Plane {
-    fn from((p, a, b): (P, A, B)) -> Self { Self::new_points(p, a, b) }
+    fn from((p, a, b): (P, A, B)) -> Self {
+        Self::new_points(p, a, b)
+    }
 }
 
 impl ParallelogramMesh {
@@ -235,11 +247,15 @@ impl InfinitePlaneMesh {
 }
 
 impl<T: Into<Plane>> From<T> for ParallelogramMesh {
-    fn from(plane: T) -> Self { Self::new(plane) }
+    fn from(plane: T) -> Self {
+        Self::new(plane)
+    }
 }
 
 impl<T: Into<Plane>> From<T> for InfinitePlaneMesh {
-    fn from(plane: T) -> Self { Self::new(plane, UvWrappingMode::default()) }
+    fn from(plane: T) -> Self {
+        Self::new(plane, UvWrappingMode::default())
+    }
 }
 
 // endregion
@@ -330,11 +346,15 @@ impl Mesh for ParallelogramMesh {
 }
 
 impl Bounded for InfinitePlaneMesh {
-    fn aabb(&self) -> Aabb { Aabb::INFINITE }
+    fn aabb(&self) -> Aabb {
+        Aabb::INFINITE
+    }
 }
 
 impl Bounded for ParallelogramMesh {
-    fn aabb(&self) -> Aabb { self.aabb }
+    fn aabb(&self) -> Aabb {
+        self.aabb
+    }
 }
 
 // endregion Mesh Impl

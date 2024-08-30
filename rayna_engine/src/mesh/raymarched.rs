@@ -68,7 +68,9 @@ impl RaymarchedIsosurfaceMesh {
 // region Mesh Impl
 
 impl Bounded for RaymarchedIsosurfaceMesh {
-    fn aabb(&self) -> Aabb { Aabb::INFINITE }
+    fn aabb(&self) -> Aabb {
+        Aabb::INFINITE
+    }
 }
 
 impl Mesh for RaymarchedIsosurfaceMesh {

@@ -91,7 +91,9 @@ impl crate::backend::UiApp for RaynaApp {
         }
     }
 
-    fn on_shutdown(&mut self) -> () { info!(target: MAIN, "ui app shutdown") }
+    fn on_shutdown(&mut self) -> () {
+        info!(target: MAIN, "ui app shutdown")
+    }
 
     fn on_update(&mut self, ctx: &Context) -> () {
         // `egui`/`eframe` call `new_frame()` for us if "puffin" feature enabled in them

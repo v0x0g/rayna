@@ -19,7 +19,9 @@ const PI: Number = <Number as AngleConsts>::PI;
 #[derive(Copy, Clone, Debug, Default)]
 pub struct RngPoolAllocator;
 impl<R: SeedableRng> opool::PoolAllocator<R> for RngPoolAllocator {
-    fn allocate(&self) -> R { R::from_entropy() }
+    fn allocate(&self) -> R {
+        R::from_entropy()
+    }
 }
 
 // region 1D

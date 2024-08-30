@@ -12,17 +12,25 @@ pub struct SolidTexture {
 }
 
 impl<T: Into<Colour>> From<T> for SolidTexture {
-    fn from(value: T) -> Self { Self { albedo: value.into() } }
+    fn from(value: T) -> Self {
+        Self { albedo: value.into() }
+    }
 }
 
 impl<T: Into<Colour>> From<T> for TextureInstance {
-    fn from(value: T) -> Self { SolidTexture::from(value).into() }
+    fn from(value: T) -> Self {
+        SolidTexture::from(value).into()
+    }
 }
 
 impl Default for SolidTexture {
-    fn default() -> Self { Colour::BLACK.into() }
+    fn default() -> Self {
+        Colour::BLACK.into()
+    }
 }
 
 impl Texture for SolidTexture {
-    fn value(&self, _scene: &Scene, _intersection: &MeshIntersection, _rng: &mut dyn RngCore) -> Colour { self.albedo }
+    fn value(&self, _scene: &Scene, _intersection: &MeshIntersection, _rng: &mut dyn RngCore) -> Colour {
+        self.albedo
+    }
 }

@@ -13,7 +13,7 @@ use rand_core::RngCore;
 use std::collections::HashMap;
 
 pub mod camera;
-// pub mod preset;
+pub mod preset;
 
 /// Represents the environment, containing the objects in a scene along with the skybox.
 ///
@@ -28,9 +28,10 @@ pub mod camera;
 ///
 /// TODO: More docs, and some proper doc tests
 ///
+///
 /// # Examples
 ///
-///## API Comparison
+/// ## API Comparison
 ///
 /// ```ignore // Old API won't compile anyway
 /// # use rayna_engine::core::types::{Colour, Point3};
@@ -40,7 +41,8 @@ pub mod camera;
 /// # use rayna_engine::scene::Scene;
 /// # use rayna_engine::texture::TextureInstance;
 /// # let scene = Scene::new();
-/// // OLD VERSION:  Note the duplicated material etc
+/// // Old Version:
+/// // Note the duplicated material etc
 /// SimpleObject::new(
 ///     SphereMesh::new( [0., 0., -1.], 1.0 ),
 ///     LambertianMaterial {
@@ -55,13 +57,48 @@ pub mod camera;
 ///     },
 ///     None
 /// );
-/// // NEW VERSION: Note we just reuse the same material token instead
+/// ```
+///
+/// ```
+/// # use rayna_engine::core::types::{Colour, Point3};
+/// # use rayna_engine::material::lambertian::LambertianMaterial;
+/// # use rayna_engine::mesh::primitive::sphere::SphereMesh;
+/// # use rayna_engine::object::simple::SimpleObject;
+/// # use rayna_engine::scene::Scene;
+/// # use rayna_engine::texture::TextureInstance;
+/// # let scene = Scene::new();
+/// // New Version:
+/// // Note we just reuse the same material token instead
 /// let tex_tok  = scene.add_tex(Colour::RED);
 /// let mat_tok  = scene.add_mat(LambertianMaterial::new(tex_tok));
 /// let mesh1_tok = scene.add_mesh(SphereMesh::new([0., 0., -1.], 1.0));
 /// let obj1_tok  = scene.add_obj(SimpleObject::new(mesh1_tok, mat_tok, None));
 /// let mesh2_tok = scene.add_mesh(SphereMesh::new([1., 1., 0.], 1.0));
-/// let obj2_tok  = scene.add_obj(SimpleObject::new(mesh1_tok, mat_tok, None));
+/// let obj2_tok  = scene.add_obj(SimpleObject::new(mesh2_tok, mat_tok, None));
+/// ```
+///
+/// ## Limitations
+///
+/// The following example will not compile, giving error `E0499`. This is not a limitation of the API,
+/// but the compiler's borrow analysis.
+/// The compiler is unable to reason that the calls to `scene.add_xxx()` immediately drop the reference on returning
+/// and so a temporary explicit variable is needed.
+///
+/// See examples in discussions [here](https://users.rust-lang.org/t/error-e0499-cannot-borrow-self-as-mutable-more-than-once-at-a-time/46006/2) and [here](https://internals.rust-lang.org/t/why-compiler-reqires-explicit-vars-to-resolve-cannot-borrow-more-than-once-in-this-case/19720)
+///
+/// ```compile_fail
+/// # use rayna_engine::core::types::{Colour, Point3};
+/// # use rayna_engine::material::lambertian::LambertianMaterial;
+/// # use rayna_engine::mesh::primitive::sphere::SphereMesh;
+/// # use rayna_engine::object::simple::SimpleObject;
+/// # use rayna_engine::scene::Scene;
+/// # let scene = Scene::new();
+/// scene.add_obj(SimpleObject::new_from(
+///     &scene,
+///     scene.add_mesh(SphereMesh::new((0., -0.3, 0.), 0.1)),
+///     scene.add_mat(LambertianMaterial::new(scene.add_tex(Colour::WHITE))),
+///     None,
+/// ));
 /// ```
 #[derive(Clone, Debug)]
 pub struct Scene {
@@ -119,6 +156,13 @@ impl Scene {
     /// See [`Self::set_custom_root`] for an explanation of custom roots
     pub fn get_custom_root(&self) -> Option<&ObjectInstance> {
         self.custom_root.as_ref()
+    }
+
+    pub fn get_skybox(&self) -> &SkyboxInstance {
+        &self.skybox
+    }
+    pub fn set_skybox(&mut self, skybox: impl Into<SkyboxInstance>) {
+        self.skybox = skybox.into()
     }
 
     /// See [`Object::intersect()``]
@@ -179,7 +223,7 @@ impl Scene { $(paste::paste!(
         "Adds a ", stringify!(inst_type), " to the scene, returning a ", stringify!(token_type), " that can be used to\
         reference it in other components",
     )]
-    pub fn [<add_ $ident>] (&mut self, value: impl Into<$inst_type>) -> $token_type {
+    pub fn [<add_ $ident>] <'l>(&'l mut self, value: impl Into<$inst_type>) -> $token_type {
         let tok = Self::[<new_ $ident _token>]();
         assert!(!self.$field_name.contains_key(&tok), "generated token was not unique");
         self.$field_name.insert(tok, value.into());

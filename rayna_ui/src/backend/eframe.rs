@@ -11,7 +11,9 @@ use tracing::*;
 pub struct EframeBackend<App: UiApp>(PhantomData<App>);
 
 impl<App: UiApp> Default for EframeBackend<App> {
-    fn default() -> Self { Self(PhantomData::default()) }
+    fn default() -> Self {
+        Self(PhantomData::default())
+    }
 }
 
 impl<App: UiApp> UiBackend<App> for EframeBackend<App> {
@@ -47,7 +49,11 @@ impl<App: UiApp> UiBackend<App> for EframeBackend<App> {
 
 struct Wrapper<App: UiApp>(App);
 impl<App: UiApp> eframe::App for Wrapper<App> {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) { self.0.on_update(ctx); }
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.0.on_update(ctx);
+    }
 
-    fn on_exit(&mut self, _glow: Option<&eframe::glow::Context>) { self.0.on_shutdown(); }
+    fn on_exit(&mut self, _glow: Option<&eframe::glow::Context>) {
+        self.0.on_shutdown();
+    }
 }

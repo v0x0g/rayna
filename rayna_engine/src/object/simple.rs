@@ -6,7 +6,7 @@ use crate::core::types::Number;
 use crate::material::{MaterialInstance, MaterialToken};
 use crate::mesh::{Mesh as MeshTrait, MeshInstance, MeshToken};
 use crate::object::transform::ObjectTransform;
-use crate::object::Object;
+use crate::object::{Object, ObjectToken};
 use crate::scene::Scene;
 use getset::{CopyGetters, Getters};
 use rand_core::RngCore;
@@ -59,6 +59,8 @@ pub struct SimpleObject {
 
 impl SimpleObject {
     /// Creates a new volume from a mesh and material, inserting them into the scene
+    ///
+    /// This returns the object, which must then be inserted via [`Scene::add_obj`]
     pub fn new_in(
         scene: &mut Scene,
         mesh: impl Into<MeshInstance>,
@@ -79,6 +81,8 @@ impl SimpleObject {
     }
 
     /// Creates a new volume from a mesh and material, that have already been inserted into the scene
+    ///
+    /// This returns the object, which must then be inserted via [`Scene::add_obj`]
     pub fn new_from(
         scene: &Scene,
         mesh_tok: impl Into<MeshToken>,
@@ -122,7 +126,9 @@ impl Object for SimpleObject {
 }
 
 impl Bounded for SimpleObject {
-    fn aabb(&self) -> Aabb { self.aabb }
+    fn aabb(&self) -> Aabb {
+        self.aabb
+    }
 }
 
 // endregion Object Impl

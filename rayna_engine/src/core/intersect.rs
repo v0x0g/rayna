@@ -45,7 +45,9 @@ pub struct MeshIntersection {
 impl Eq for MeshIntersection {}
 
 impl PartialOrd<Self> for MeshIntersection {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Number::partial_cmp(&self.dist, &other.dist) }
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Number::partial_cmp(&self.dist, &other.dist)
+    }
 }
 
 impl Ord for MeshIntersection {

@@ -42,7 +42,9 @@ impl ListObject {
 
 // region Object Impl
 impl Bounded for ListObject {
-    fn aabb(&self) -> Aabb { self.aabb }
+    fn aabb(&self) -> Aabb {
+        self.aabb
+    }
 }
 
 impl Object for ListObject {

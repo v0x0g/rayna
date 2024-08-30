@@ -42,7 +42,9 @@ impl ListMesh {
 
 // region Mesh Impl
 impl Bounded for ListMesh {
-    fn aabb(&self) -> Aabb { self.aabb }
+    fn aabb(&self) -> Aabb {
+        self.aabb
+    }
 }
 
 impl Mesh for ListMesh {

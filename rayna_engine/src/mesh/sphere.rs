@@ -104,7 +104,9 @@ impl Mesh for SphereMesh {
 }
 
 impl Bounded for SphereMesh {
-    fn aabb(&self) -> Aabb { self.aabb }
+    fn aabb(&self) -> Aabb {
+        self.aabb
+    }
 }
 
 // endregion Mesh Impl

@@ -50,9 +50,13 @@ pub enum RenderMode {
 
 impl RenderOpts {
     /// Returns the dimensions of the render (width and height) as a [usize] slice
-    pub fn dims(&self) -> [usize; 2] { [self.width.get(), self.height.get()] }
+    pub fn dims(&self) -> [usize; 2] {
+        [self.width.get(), self.height.get()]
+    }
 
-    pub fn aspect_ratio(&self) -> Number { self.width.get() as Number / self.height.get() as Number }
+    pub fn aspect_ratio(&self) -> Number {
+        self.width.get() as Number / self.height.get() as Number
+    }
 }
 
 impl Default for RenderOpts {

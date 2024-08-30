@@ -11,7 +11,9 @@ pub struct HdrImageSkybox {
 }
 
 impl From<Image> for HdrImageSkybox {
-    fn from(image: Image) -> Self { Self { image: Arc::new(image) } }
+    fn from(image: Image) -> Self {
+        Self { image: Arc::new(image) }
+    }
 }
 
 impl Skybox for HdrImageSkybox {

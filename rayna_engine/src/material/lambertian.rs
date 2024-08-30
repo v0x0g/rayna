@@ -14,7 +14,9 @@ pub struct LambertianMaterial {
 }
 
 impl From<TextureToken> for LambertianMaterial {
-    fn from(value: TextureToken) -> Self { Self { albedo: value } }
+    fn from(value: TextureToken) -> Self {
+        Self { albedo: value }
+    }
 }
 
 impl Material for LambertianMaterial {

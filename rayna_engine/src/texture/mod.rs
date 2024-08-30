@@ -1,6 +1,6 @@
 pub mod checker;
 pub mod image;
-mod noise;
+pub mod noise;
 pub mod solid;
 
 use crate::core::component::Component;
@@ -26,6 +26,7 @@ pub enum TextureInstance {
     WorldCheckerTexture(self::checker::WorldCheckerTexture),
     UvCheckerTexture(self::checker::UvCheckerTexture),
     ImageTexture(self::image::ImageTexture),
+    NoiseTexture(self::noise::NoiseTexture),
 }
 
 impl Default for TextureInstance {

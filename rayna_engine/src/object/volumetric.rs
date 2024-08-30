@@ -172,7 +172,9 @@ impl Object for VolumetricObject {
 }
 
 impl Bounded for VolumetricObject {
-    fn aabb(&self) -> Aabb { self.aabb }
+    fn aabb(&self) -> Aabb {
+        self.aabb
+    }
 }
 
 // endregion Object Impl

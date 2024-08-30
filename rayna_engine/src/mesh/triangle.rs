@@ -40,7 +40,9 @@ impl TriangleMesh {
 // region Mesh Impl
 
 impl Bounded for TriangleMesh {
-    fn aabb(&self) -> Aabb { self.aabb }
+    fn aabb(&self) -> Aabb {
+        self.aabb
+    }
 }
 
 impl Mesh for TriangleMesh {

@@ -65,20 +65,28 @@ impl ObjectTransform {
     }
 
     /// Applies transform correction to the `self` transform
-    pub fn with_correction(&self, centre: impl Into<Point3>) -> Self { Self::new_corrected(self.transform, centre) }
+    pub fn with_correction(&self, centre: impl Into<Point3>) -> Self {
+        Self::new_corrected(self.transform, centre)
+    }
 }
 
 impl From<Transform3> for ObjectTransform {
-    fn from(value: Transform3) -> Self { Self::new(value) }
+    fn from(value: Transform3) -> Self {
+        Self::new(value)
+    }
 }
 
 /// Allows us to use `None` as a transform
 impl From<Option<ObjectTransform>> for ObjectTransform {
-    fn from(t: Option<ObjectTransform>) -> Self { t.unwrap_or_default() }
+    fn from(t: Option<ObjectTransform>) -> Self {
+        t.unwrap_or_default()
+    }
 }
 
 impl Default for ObjectTransform {
-    fn default() -> Self { Self::IDENTITY }
+    fn default() -> Self {
+        Self::IDENTITY
+    }
 }
 
 // endregion Creating

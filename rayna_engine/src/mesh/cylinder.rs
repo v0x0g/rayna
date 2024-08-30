@@ -191,7 +191,9 @@ impl Mesh for CylinderMesh {
 }
 
 impl Bounded for CylinderMesh {
-    fn aabb(&self) -> Aabb { self.aabb }
+    fn aabb(&self) -> Aabb {
+        self.aabb
+    }
 }
 
 // endregion Mesh Impl

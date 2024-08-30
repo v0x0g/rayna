@@ -41,13 +41,19 @@ impl Ray {
     /// Gets the position at a given distance along the ray
     ///
     /// `pos + (t * dir)`
-    pub fn at(&self, t: Number) -> Point3 { self.pos + (self.dir * t) }
+    pub fn at(&self, t: Number) -> Point3 {
+        self.pos + (self.dir * t)
+    }
 }
 // TODO: Impl Into<Point3>
 /// Destructure ray into position and direction
 impl From<Ray> for (Point3, Vector3) {
-    fn from(value: Ray) -> Self { (value.pos, value.dir) }
+    fn from(value: Ray) -> Self {
+        (value.pos, value.dir)
+    }
 }
 impl From<&Ray> for (Point3, Vector3) {
-    fn from(value: &Ray) -> Self { (value.pos, value.dir) }
+    fn from(value: &Ray) -> Self {
+        (value.pos, value.dir)
+    }
 }

@@ -59,9 +59,9 @@ pub struct PresetScene {
 // /// # Warning
 // /// Currently all scenes are re-created each time this is called.
 // /// You will want to cache this value somewhere
-// pub fn ALL() -> [PresetScene; 5] {
-//     [TESTING(), RTIAW_DEMO(), RTIAW_DEMO_DARK(), RTTNW_DEMO(), CORNELL()]
-// }
+pub fn ALL() -> [PresetScene; 5] {
+    [TESTING(), RTIAW_DEMO(), RTIAW_DEMO_DARK(), RTTNW_DEMO(), CORNELL()]
+}
 
 /// A testing scene used only during development
 pub fn TESTING() -> PresetScene {

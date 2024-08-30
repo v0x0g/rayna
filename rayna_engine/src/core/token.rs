@@ -35,6 +35,7 @@ pub struct IdToken(u64);
 /// rayna_engine::core::token::generate_component_token!(MaterialToken for MaterialInstance);
 /// ```
 #[rustfmt::skip] // rustfmt issue #5974
+#[allow(rustdoc::private_doc_tests)] // Publicly exported below
 macro_rules! generate_component_token {
     ($token_type:ident $(< {$($token_generic_tt:tt)+} as {$($token_generic_name:ident),+} >)? for $inst_type:ty) => {
         #[doc = concat!(

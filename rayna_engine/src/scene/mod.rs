@@ -6,7 +6,7 @@ use crate::core::types::Number;
 use crate::material::{MaterialInstance, MaterialToken};
 use crate::mesh::{MeshInstance, MeshToken};
 use crate::noise::{NoiseInstance, NoiseToken};
-use crate::object::{Object as _, ObjectInstance, ObjectToken};
+use crate::object::{Object, ObjectInstance, ObjectToken};
 use crate::skybox::SkyboxInstance;
 use crate::texture::{TextureInstance, TextureToken};
 use rand_core::RngCore;
@@ -33,7 +33,8 @@ pub mod preset;
 ///
 /// ## API Comparison
 ///
-/// ```ignore // Old API won't compile anyway
+/// ```rust,ignore
+/// #  // Old API won't compile anyway
 /// # use rayna_engine::core::types::{Colour, Point3};
 /// # use rayna_engine::material::lambertian::LambertianMaterial;
 /// # use rayna_engine::mesh::primitive::sphere::SphereMesh;
@@ -79,20 +80,21 @@ pub mod preset;
 ///
 /// ## Limitations
 ///
-/// The following example will not compile, giving error `E0499`. This is not a limitation of the API,
+/// The following example will not compile, giving error [`E0499`](https://doc.rust-lang.org/error_codes/E0499.html). This is not a limitation of the API,
 /// but the compiler's borrow analysis.
 /// The compiler is unable to reason that the calls to `scene.add_xxx()` immediately drop the reference on returning
 /// and so a temporary explicit variable is needed.
 ///
 /// See examples in discussions [here](https://users.rust-lang.org/t/error-e0499-cannot-borrow-self-as-mutable-more-than-once-at-a-time/46006/2) and [here](https://internals.rust-lang.org/t/why-compiler-reqires-explicit-vars-to-resolve-cannot-borrow-more-than-once-in-this-case/19720)
 ///
-/// ```compile_fail
+/// ```rust, compile_fail, E0499
 /// # use rayna_engine::core::types::{Colour, Point3};
 /// # use rayna_engine::material::lambertian::LambertianMaterial;
 /// # use rayna_engine::mesh::primitive::sphere::SphereMesh;
 /// # use rayna_engine::object::simple::SimpleObject;
 /// # use rayna_engine::scene::Scene;
 /// # let scene = Scene::new();
+/// // Errors with E0499
 /// scene.add_obj(SimpleObject::new_from(
 ///     &scene,
 ///     scene.add_mesh(SphereMesh::new((0., -0.3, 0.), 0.1)),
@@ -165,7 +167,7 @@ impl Scene {
         self.skybox = skybox.into()
     }
 
-    /// See [`Object::intersect()``]
+    /// See [`Object::intersect()`]
     pub fn intersect(
         &self,
         ray: &Ray,
@@ -260,10 +262,10 @@ impl Scene { $(paste::paste!(
 }
 
 gen_components! {
-    ( noise2 in self.noise2d   : NoiseInstance<2> => NoiseToken::<2> ),
-    ( noise3 in self.noise3d   : NoiseInstance<3> => NoiseToken::<3> ),
-    ( tex    in self.textures  : TextureInstance  => TextureToken    ),
-    ( mat    in self.materials : MaterialInstance => MaterialToken   ),
-    ( mesh   in self.meshes    : MeshInstance     => MeshToken       ),
-    ( obj    in self.objects   : ObjectInstance   => ObjectToken     ),
+    ( noise2 in self.noise2d   : NoiseInstance::<2> => NoiseToken::<2> ),
+    ( noise3 in self.noise3d   : NoiseInstance::<3> => NoiseToken::<3> ),
+    ( tex    in self.textures  : TextureInstance    => TextureToken    ),
+    ( mat    in self.materials : MaterialInstance   => MaterialToken   ),
+    ( mesh   in self.meshes    : MeshInstance       => MeshToken       ),
+    ( obj    in self.objects   : ObjectInstance     => ObjectToken     ),
 }

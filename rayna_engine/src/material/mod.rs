@@ -149,18 +149,7 @@ pub trait Material: Component {
     ) -> Colour;
 }
 
-/// An optimised implementation of [Material].
-///
-/// By using an enum, we can replace dynamic-dispatch with static dispatch.
-/// Just in case we do require dynamic dispatch for some reason, there is a
-/// [MaterialInstance::DynamicMaterial] variant, which wraps a generic material in a [std::sync::Arc]
-///
-/// # Using This Type
-/// You generally don't want to instantiate this type directly using the variants (as the names and variants might change),
-/// instead prefer to use the [Into::into()] or [From::from()] implementations.
-///
-/// If using it as a parameter or type argument in a library, constrain over `T:` [Material],
-/// and only use `T = ` [MaterialInstance] at the highest level where possible
+/// A wrapper that encapsulates all the different types of material
 #[enum_dispatch(Material)]
 #[derive(Clone, Debug)]
 pub enum MaterialInstance {

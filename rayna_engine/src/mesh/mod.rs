@@ -64,7 +64,7 @@ pub trait Mesh: Component + Bounded {
 
 /// An optimised implementation of [Mesh].
 ///
-/// See [`crate::material::MaterialInstance`] for an explanation of the [`macro@enum_dispatch`] macro usage
+/// See [`crate::material::MaterialInstance`] for an explanation of the [`macro@enum_dispatch::enum_dispatch`] macro usage
 #[enum_dispatch::enum_dispatch(Mesh, Bounded)]
 #[derive(Clone, Debug)]
 pub enum MeshInstance {

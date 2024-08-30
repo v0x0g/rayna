@@ -4,7 +4,7 @@
 //! You should store an instance of [`Plane`] inside your mesh struct, and then simply validate the UV coordinates
 //! of the planar intersection for whichever shape your dreams do so desire...
 //!
-//! Most planar types ([`self::parallelogram::ParallelogramMesh`], [`self::infinite_plane::InfinitePlaneMesh`]) can't be instantiated directly,
+//! Most planar types ([`ParallelogramMesh`], [`InfinitePlaneMesh`]) can't be instantiated directly,
 //! but can be easily converted via the [`From<Plane>`] conversion.
 
 use crate::core::aabb::{Aabb, Bounded};
@@ -22,7 +22,7 @@ use rand_core::RngCore;
 /// The recommended amount of padding around AABBs for planar objects
 ///
 /// Because planes are infinitely thin, we need to add padding to ensure they have at least some volume.
-/// Otherwise, there is a chance that the [`crate::shared::aabb::Aabb`] will always be missed because it has zero size.
+/// Otherwise, there is a chance that the [`Aabb`] will always be missed because it has zero size.
 pub const PLANAR_AABB_PADDING: Number = 1e-6;
 
 /// A helper struct that is used in planar objects (objects that exist in a subsection of a 2D plane)

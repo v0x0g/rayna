@@ -38,7 +38,7 @@ pub struct MeshIntersection {
     /// Numeric ID for which "face" was hit
     ///
     /// For objects with a single 'surface' (like a [sphere](crate::mesh::sphere::SphereMesh), this would be always zero.
-    /// For a mesh that may have multiple faces (like a [box](`crate::mesh::primitive::axis_box::AxisBoxMesh`), this would unique per-side.
+    /// For a mesh that may have multiple faces (like a [box](`crate::mesh::axis_box::AxisBoxMesh`), this would unique per-side.
     pub side: usize,
 }
 

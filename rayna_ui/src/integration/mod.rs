@@ -5,21 +5,19 @@
 
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::integration::worker::BgWorker;
-use crate::targets::INTEGRATION;
-use egui::ColorImage;
-use rayna_engine::render::render::Render;
+use crate::targets::*;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::render::renderer::Renderer;
 use rayna_engine::scene::camera::Camera;
-use rayna_engine::scene::StandardScene;
+use rayna_engine::scene::Scene;
 use std::any::Any;
 use std::sync::Arc;
 use std::thread::JoinHandle;
 use thiserror::Error;
 use tracing::{debug, error, trace};
 
-pub mod message;
-mod worker;
+pub(crate) mod message;
+pub(crate) mod worker;
 
 // TODO: Refactor how the worker is handled
 
@@ -32,7 +30,7 @@ pub enum IntegrationError {
     #[error("render channel from background worker disconnected")]
     RenderChannelDisconnected,
     #[error("worker thread died unexpectedly")]
-    WorkerDied(Arc<Box<dyn Any + Send + 'static>>),
+    WorkerDied(Arc<dyn Any + Send + 'static>),
     #[error("failed to spawn thread for BgWorker")]
     WorkerSpawnFailed(#[from] std::io::Error),
 }
@@ -40,7 +38,6 @@ pub enum IntegrationError {
 pub(crate) struct Integration {
     msg_tx: flume::Sender<MessageToWorker>,
     msg_rx: flume::Receiver<MessageToUi>,
-    render_rx: flume::Receiver<Render<ColorImage>>,
     worker_handle: WorkerHandle,
 }
 
@@ -54,14 +51,14 @@ enum WorkerHandle {
     /// <https://i.imgflip.com/15ifk6.jpg>
     #[allow(non_camel_case_types)]
     TechnicalDifficulties_PleaseStandBy,
-    /// The worker thread had an oopsie, and pooped it's pants. Here's the error message, nicely double-wrapped up for christmas
-    Errored(Arc<Box<dyn Any + Send + 'static>>),
+    /// The worker thread had an oopsie, and pooped it's pants. Here's the error message
+    Errored(Arc<dyn Any + Send + 'static>),
 }
 
 impl Integration {
     pub(crate) fn new(
         initial_render_opts: &RenderOpts,
-        initial_scene: &StandardScene,
+        initial_scene: &Scene,
         initial_camera: &Camera,
     ) -> Result<Self, IntegrationError> {
         debug!(target: INTEGRATION, "creating new integration instance");
@@ -71,14 +68,11 @@ impl Integration {
         let (main_tx, work_rx) = flume::unbounded::<MessageToWorker>();
         // Worker -> Main thread
         let (work_tx, main_rx) = flume::unbounded::<MessageToUi>();
-        // Worker  -> Main thread (renders)
-        let (rend_tx, rend_rx) = flume::bounded::<Render<ColorImage>>(1);
 
         trace!(target: INTEGRATION, "creating worker");
         let worker = BgWorker {
             msg_rx: work_rx,
             msg_tx: work_tx,
-            render_tx: rend_tx,
             renderer: Renderer::new_from(
                 initial_scene.clone(),
                 initial_camera.clone(),
@@ -92,7 +86,6 @@ impl Integration {
         Ok(Self {
             msg_tx: main_tx,
             msg_rx: main_rx,
-            render_rx: rend_rx,
             worker_handle: WorkerHandle::Running(thread),
         })
     }
@@ -110,9 +103,9 @@ impl Integration {
                     unreachable!("already matched that worker_handle is `Running`")
                 };
                 let ret_value = worker_handle.join();
-                let err: Arc<Box<dyn Any + Send + 'static>> = match ret_value {
-                    Ok(()) => Arc::new(Box::new(())),
-                    Err(e) => Arc::new(e),
+                let err: Arc<dyn Any + Send + 'static> = match ret_value {
+                    Ok(()) => Arc::new(()),
+                    Err(e) => Arc::from(e),
                 };
                 self.worker_handle = WorkerHandle::Errored(err.clone());
                 return Err(IntegrationError::WorkerDied(err.clone()));
@@ -141,31 +134,12 @@ impl Integration {
 
     // region ===== RECEIVING =====
 
-    //noinspection DuplicatedCode - No point extracting five lines
-    /// Tries to receive the next render from the worker
-    ///
-    /// # Return Value
-    /// See [Self::try_recv_message]
-    pub fn try_recv_render(&mut self) -> Option<Result<Render<ColorImage>, IntegrationError>> {
-        puffin::profile_function!();
-
-        if let Err(e) = self.ensure_worker_alive() {
-            return Some(Err(e));
-        }
-
-        return match self.render_rx.try_recv() {
-            Ok(render) => Some(Ok(render)),
-            Err(flume::TryRecvError::Empty) => None,
-            Err(flume::TryRecvError::Disconnected) => Some(Err(IntegrationError::RenderChannelDisconnected)),
-        };
-    }
-
-    //noinspection DuplicatedCode
     /// Tries to receive the next message from the worker
     ///
     /// # Return Value
     /// The outer [`Result`] corresponds to whether there was an error during message reception,
     /// or all messages were received successfully. The inner [`Option`] corresponds to whether or not there was
+    /// a message available
     pub fn try_recv_message(&mut self) -> Option<Result<MessageToUi, IntegrationError>> {
         puffin::profile_function!();
 

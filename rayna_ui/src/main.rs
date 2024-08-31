@@ -1,10 +1,4 @@
 #![doc = include_str!("../readme.md")]
-#![feature(type_alias_impl_trait)]
-#![feature(trait_alias)]
-#![feature(associated_type_defaults)]
-#![feature(error_generic_member_access)]
-#![feature(slice_as_chunks)]
-#![feature(vec_into_raw_parts)]
 // Be aggressive on warnings
 #![deny(rustdoc::all)]
 #![deny(clippy::all)]
@@ -15,17 +9,12 @@
     let_underscore,
     nonstandard_style,
     refining_impl_trait,
-    rust_2018_compatibility,
-    rust_2021_compatibility,
-    rust_2024_compatibility,
     unused
 )]
 // Don't allow any warnings in doctests
 #![doc(test(attr(deny(all))))]
 
-use crate::app::RaynaApp;
 use crate::targets::*;
-use crate::ui_val::APP_NAME;
 use tracing::debug;
 use tracing_subscriber::prelude::*;
 
@@ -37,7 +26,7 @@ pub mod profiler;
 pub mod targets;
 pub mod ui_val;
 
-fn main() -> anyhow::Result<()> {
+fn main() {
     // ===== Tracing =====
 
     let stderr_output = tracing_subscriber::fmt::layer()
@@ -98,14 +87,11 @@ fn main() -> anyhow::Result<()> {
     // ===== UI Backend =====
 
     // TODO: Allow backend selection from CLI arguments; use `clap` crate
-    let mut backends = backend::get_all::<RaynaApp>();
+    let mut backends = backend::get_all::<crate::app::RaynaApp>();
     let backend = backends.remove("eframe").unwrap();
 
+    // Doesn't return Err, expected to always succeed or panic if fatal
     debug!(target: MAIN, "run");
-    match backend.run(APP_NAME) {
-        Ok(()) => debug!(target: MAIN, "run complete (success)"),
-        Err(e) => debug!(target: MAIN, err = ?e, "run complete (error)"),
-    }
-
-    Ok(())
+    backend.run(crate::ui_val::APP_NAME);
+    debug!(target: MAIN, "run complete");
 }

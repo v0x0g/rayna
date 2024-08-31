@@ -1,15 +1,20 @@
+use rayna_engine::core::types::Image;
+use rayna_engine::render::render::Render;
 use rayna_engine::render::render_opts::RenderOpts;
 use rayna_engine::scene::camera::Camera;
-use rayna_engine::scene::StandardScene;
+use rayna_engine::scene::Scene;
 
 /// A message sent by the UI to the worker
 #[derive(Debug, Clone)]
 pub(crate) enum MessageToWorker {
     SetRenderOpts(RenderOpts),
-    SetScene(StandardScene),
+    SetScene(Scene),
     SetCamera(Camera),
 }
 
 /// A message sent from the worker, to the UI
 #[derive(Clone, Debug)]
-pub(crate) enum MessageToUi {}
+pub(crate) enum MessageToUi {
+    RenderComplete(Render<Image>),
+    RenderError(),
+}

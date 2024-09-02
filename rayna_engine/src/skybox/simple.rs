@@ -1,5 +1,5 @@
 use crate::core::ray::Ray;
-use crate::core::types::{Channel, Colour};
+use crate::core::types::Colour;
 use crate::math::num::Lerp;
 use crate::skybox::Skybox;
 
@@ -17,7 +17,7 @@ impl Skybox for SimpleSkybox {
         let blue = Colour::from([0.5, 0.7, 1.]);
 
         // TODO: Come back once `Colour: Lerp<Number>`
-        Colour::lerp(white, blue, a as Channel)
+        Colour::lerp(white, blue, a)
     }
 }
 

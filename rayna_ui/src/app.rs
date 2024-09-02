@@ -183,8 +183,7 @@ impl RaynaApp {
                     let w_drag = cols[0].edit_nonzero_usize(&mut render_opts.width, UNIT_PX, DRAG_SPEED_PX);
                     let h_drag = cols[1].edit_nonzero_usize(&mut render_opts.height, UNIT_PX, DRAG_SPEED_PX);
                     let drag = h_drag | w_drag;
-                    // don't use `.changed()` so it waits till interact complete
-                    *dirty_render_opts = drag.drag_stopped() || (drag.lost_focus() && drag.changed());
+                    *dirty_render_opts = drag.changed();
 
                     if cols[2].button("Fill").clicked() {
                         *dirty_render_opts = true;

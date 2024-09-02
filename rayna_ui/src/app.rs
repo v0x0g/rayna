@@ -478,10 +478,6 @@ impl RaynaApp {
                         .set(render.img.to_egui(), self.render_buf_tex_options);
                     self.render_stats = render.stats;
                 }
-
-                Ok(MessageToUi::RenderError()) => {
-                    error!(target: UI, "render error");
-                }
             }
         }
     }

@@ -16,5 +16,4 @@ pub(crate) enum MessageToWorker {
 #[derive(Clone, Debug)]
 pub(crate) enum MessageToUi {
     RenderComplete(Render<Image>),
-    RenderError(),
 }

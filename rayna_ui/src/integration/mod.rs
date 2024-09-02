@@ -117,8 +117,6 @@ impl Integration {
         Ok(())
     }
 
-    // region ===== SENDING =====
-
     /// Sends a message to the worker
     pub fn send_message(&mut self, message: MessageToWorker) -> Result<(), IntegrationError> {
         puffin::profile_function!();
@@ -129,10 +127,6 @@ impl Integration {
             .send(message)
             .map_err(|_| IntegrationError::TxChannelDisconnected)
     }
-
-    // endregion
-
-    // region ===== RECEIVING =====
 
     /// Tries to receive the next message from the worker
     ///
@@ -153,6 +147,4 @@ impl Integration {
             Err(flume::TryRecvError::Disconnected) => Some(Err(IntegrationError::RxChannelDisconnected)),
         };
     }
-
-    // endregion
 }

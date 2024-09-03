@@ -7,11 +7,17 @@ use puffin::profile_function;
 use tracing::*;
 
 #[derive(Debug, Copy, Clone)]
-pub struct MiniquadBackend<App: UiApp>(PhantomData<App>);
+pub struct MiniquadBackend<App: UiApp>(pub PhantomData<App>);
 
 impl<App: UiApp> Default for MiniquadBackend<App> {
     fn default() -> Self {
-        Self(PhantomData::default())
+        Self::new()
+    }
+}
+
+impl<App: UiApp> MiniquadBackend<App> {
+    pub const fn new() -> Self {
+        Self(PhantomData)
     }
 }
 

@@ -14,8 +14,11 @@
 // Don't allow any warnings in doctests
 #![doc(test(attr(deny(all))))]
 
+use std::ops::Deref;
+
 use crate::targets::*;
-use tracing::debug;
+use clap::Parser;
+use tracing::*;
 use tracing_subscriber::prelude::*;
 
 pub mod app;
@@ -26,7 +29,21 @@ pub mod profiler;
 pub mod targets;
 pub mod ui_val;
 
+#[derive(clap::Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// Which UI rendering backend to use
+    ///
+    /// If not supplied, automatically selects any available backend
+    #[arg(short, long)]
+    backend: Option<String>,
+}
+
 fn main() {
+    // ===== CLI Args =====
+
+    let args = Args::parse();
+
     // ===== Tracing =====
 
     let stderr_output = tracing_subscriber::fmt::layer()
@@ -86,12 +103,34 @@ fn main() {
 
     // ===== UI Backend =====
 
-    // TODO: Allow backend selection from CLI arguments; use `clap` crate
-    let mut backends = backend::get_all::<crate::app::RaynaApp>();
-    let backend = backends.remove("eframe").unwrap();
+    let backend_ctor = match args.backend {
+        Some(backend_selection) => match BACKENDS.iter().find(|b| b.0 == backend_selection.deref()) {
+            Some(backend) => backend,
+            None => {
+                error!("cannot select backend {backend_selection}: does not exist");
+                info!(
+                    "valid backends are: {}",
+                    itertools::Itertools::join(&mut BACKENDS.iter().map(|b| b.0), ", ")
+                );
+                return;
+            }
+        },
+        None => BACKENDS
+            .first()
+            .expect("failed to auto select backend: no backends available"),
+    };
 
     // Doesn't return Err, expected to always succeed or panic if fatal
     debug!(target: MAIN, "run");
-    backend.run(crate::ui_val::APP_NAME);
+    (backend_ctor.1)().run(&crate::ui_val::APP_NAME);
     debug!(target: MAIN, "run complete");
 }
+
+const BACKENDS: &'static [(&'static str, fn() -> Box<dyn backend::UiBackend<app::RaynaApp>>)] = &[
+    #[cfg(feature = "backend_eframe")]
+    ("eframe", || Box::new(backend::eframe::EframeBackend::new())),
+    #[cfg(feature = "backend_miniquad")]
+    ("miniquad", || Box::new(backend::miniquad::MiniquadBackend::new())),
+];
+
+const_format::assertcp!(BACKENDS.len() > 0, "compiled without any backend flags enabled");

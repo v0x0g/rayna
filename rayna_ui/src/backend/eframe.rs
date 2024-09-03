@@ -5,11 +5,17 @@ use crate::targets::MAIN;
 use tracing::*;
 
 #[derive(Debug, Copy, Clone)]
-pub struct EframeBackend<App: UiApp>(PhantomData<App>);
+pub struct EframeBackend<App: UiApp>(pub PhantomData<App>);
 
 impl<App: UiApp> Default for EframeBackend<App> {
     fn default() -> Self {
-        Self(PhantomData::default())
+        Self::new()
+    }
+}
+
+impl<App: UiApp> EframeBackend<App> {
+    pub const fn new() -> Self {
+        Self(PhantomData)
     }
 }
 

@@ -1,7 +1,3 @@
-use std::collections::HashMap;
-
-use tracing::debug;
-
 #[cfg(feature = "backend_eframe")]
 pub mod eframe;
 #[cfg(feature = "backend_miniquad")]
@@ -29,21 +25,4 @@ pub trait UiApp: 'static {
     fn on_update(&mut self, ctx: &egui::Context) -> ();
     /// Called when the app is being shut down
     fn on_shutdown(&mut self) -> ();
-}
-/// Gets a map of all the [`UiBackend`] implementations available
-pub fn get_all<App: UiApp + 'static>() -> HashMap<&'static str, Box<dyn UiBackend<App>>> {
-    let mut backends: HashMap<&'static str, Box<dyn UiBackend<App>>> = HashMap::new();
-
-    #[cfg(feature = "backend_eframe")]
-    {
-        debug!(target: crate::targets::MAIN, "have backend: eframe");
-        backends.insert("eframe", Box::new(self::eframe::EframeBackend::default()));
-    }
-    #[cfg(feature = "backend_miniquad")]
-    {
-        debug!(target: crate::targets::MAIN, "have backend: miniquad");
-        backends.insert("miniquad", Box::new(self::miniquad::MiniquadBackend::default()));
-    }
-
-    backends
 }

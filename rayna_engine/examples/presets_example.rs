@@ -39,7 +39,6 @@ pub fn main() {
             samples: nonzero!(10_usize),
             mode: RenderMode::PBR,
             ray_depth: 10,
-            ray_branching: nonzero!(1_usize),
         },
         0,
     )

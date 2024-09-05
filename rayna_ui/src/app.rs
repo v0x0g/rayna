@@ -205,11 +205,6 @@ impl RaynaApp {
                     .edit_usize(&mut render_opts.ray_depth, "", DRAG_SPEED_NUM_SMALL)
                     .changed();
                 ui.end_row();
-                ui.label("Ray Branching");
-                *dirty_render_opts |= ui
-                    .edit_nonzero_usize(&mut render_opts.ray_branching, "", DRAG_SPEED_NUM_SMALL)
-                    .changed();
-                ui.end_row();
                 ui.label("Render Mode");
                 egui::ComboBox::from_id_source("mode")
                     .selected_text(<&'static str>::from(render_opts.mode))
@@ -321,9 +316,6 @@ impl RaynaApp {
                 ui.end_row();
                 ui.label("Depth");
                 ui.label(&stats.opts.ray_depth.to_string());
-                ui.end_row();
-                ui.label("Branching");
-                ui.label(&stats.opts.ray_branching.to_string());
                 ui.end_row();
                 ui.label("Mode");
                 ui.label(&stats.opts.mode.to_string());

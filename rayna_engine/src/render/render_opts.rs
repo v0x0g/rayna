@@ -17,14 +17,6 @@ pub struct RenderOpts {
     pub mode: RenderMode,
     /// How many times a ray can bounce
     pub ray_depth: usize,
-    /// (Advanced) How many sub-rays each ray should split into, each time it bounces
-    ///
-    /// E.g. If this is `2`, we get `1 -> 2 -> 4 -> 8 -> 16 -> ...` rays at each bounce (assuming they all scatter)
-    ///
-    /// # Performance
-    /// Note that this causes an exponential increase in the number of rays. It is advisable to keep this very low.
-    /// This is mostly only effective in highly diffuse scenes.
-    pub ray_branching: NonZeroUsize,
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Valuable, EnumIter, IntoStaticStr, Display)]
@@ -67,7 +59,6 @@ impl Default for RenderOpts {
             samples: nonzero!(1_usize),
             mode: Default::default(),
             ray_depth: 5,
-            ray_branching: nonzero!(1_usize),
         }
     }
 }

@@ -111,12 +111,11 @@ use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
 /// seedable ([rand::SeedableRng]) and thread-safe ([std::marker::Send])
 pub fn create_renderer(scene: Scene, camera: Camera) -> Renderer<SmallRng> {
     let render_options = RenderOpts {
-        width: nonzero::nonzero!(200_usize),       // Image Dimensions
-        height: nonzero::nonzero!(200_usize),      // Image Dimensions
-        samples: nonzero::nonzero!(1_usize),       // Sample each pixel multiple times
-        mode: RenderMode::PBR,                     // Make normal renders
-        ray_depth: 3,                              // Bounce three times
-        ray_branching: nonzero::nonzero!(1_usize), // Ignore this; advanced and probably useless
+        width: nonzero::nonzero!(200_usize),  // Image Dimensions
+        height: nonzero::nonzero!(200_usize), // Image Dimensions
+        samples: nonzero::nonzero!(1_usize),  // Sample each pixel multiple times
+        mode: RenderMode::PBR,                // Make normal renders
+        ray_depth: 3,                         // Bounce three times
     };
     return Renderer::new_from(scene, camera, render_options, 2).unwrap();
 }

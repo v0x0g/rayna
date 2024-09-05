@@ -14,7 +14,6 @@ pub const SIMPLE_RENDER_OPTIONS: RenderOpts = RenderOpts {
     samples: nonzero!(10_usize),
     mode: RenderMode::PBR,
     ray_depth: 5,
-    ray_branching: nonzero!(1_usize),
 };
 
 pub const RENDERER_THREAD_COUNT: usize = 4;

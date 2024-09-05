@@ -6,7 +6,7 @@ use crate::core::targets::*;
 use crate::core::types::{Channel, Colour, Image, Number, Vector2};
 use crate::core::validate;
 use crate::material::Material;
-use crate::math::num::Lerp;
+use crate::math::num::Lerp as _;
 use crate::render::render::{Render, RenderStats};
 use crate::render::render_opts::{RenderMode, RenderOpts};
 use crate::scene::camera::Camera;
@@ -14,15 +14,7 @@ use crate::scene::camera::Viewport;
 use crate::scene::Scene;
 use crate::skybox::Skybox;
 use num_integer::Roots as _;
-use puffin::profile_function;
-use rand::distributions::Distribution;
-use rand::distributions::Uniform;
-use rand_core::{RngCore, SeedableRng};
-use smallvec::SmallVec;
 use std::ops::DerefMut as _;
-use std::time::Duration;
-use thiserror::Error;
-use tracing::{error, trace};
 
 use super::accum_buffer::AccumulationBuffer;
 
@@ -46,7 +38,7 @@ pub struct Renderer<Rng> {
     options: RenderOpts,
 }
 
-#[derive(Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum RendererCreateError {
     #[error("failed to create worker thread pool")]
     ThreadPoolError {
@@ -58,15 +50,9 @@ pub enum RendererCreateError {
 
 // region Construction
 
-// TODO: Remove `Rng` bound from renderer
-//   Add new constructor parameter `rng_ctor: impl Fn() -> impl Rng` (maybe boxed)
-//   Pass that into `PooledDataAllocator`
-impl<Rng> Renderer<Rng> {
+impl<Rng: rand::SeedableRng> Renderer<Rng> {
     /// Creates a new renderer instance, using default values for the scene, camera, and render options
-    pub fn new_default() -> Result<Self, RendererCreateError>
-    where
-        Rng: SeedableRng,
-    {
+    pub fn new_default() -> Result<Self, RendererCreateError> {
         Self::new_from(Scene::new(), Camera::default(), RenderOpts::default(), 0)
     }
 
@@ -76,12 +62,12 @@ impl<Rng> Renderer<Rng> {
         camera: Camera,
         options: RenderOpts,
         num_threads: usize,
-    ) -> Result<Self, RendererCreateError>
-    where
-        Rng: SeedableRng,
-    {
+    ) -> Result<Self, RendererCreateError> {
         let thread_pool = Self::create_thread_pool(num_threads).map_err(RendererCreateError::from)?;
-        let data_pool = Self::create_data_pool();
+        // Create a pool that should have enough RNGs stored for all of our threads
+        // We pool randoms so we don't have to init/create them in hot paths
+        // PERF: Validate that we don't call the pool allocator during runtime
+        let data_pool = opool::Pool::new_prefilled(256, PooledDataAllocator);
         let accum_buffer = AccumulationBuffer::default();
 
         Ok(Self {
@@ -93,33 +79,10 @@ impl<Rng> Renderer<Rng> {
             options,
         })
     }
-
-    /// Helper method to create the thread pool
-    fn create_thread_pool(num_threads: usize) -> Result<rayon::ThreadPool, rayon::ThreadPoolBuildError> {
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(num_threads)
-            .thread_name(|id| format!("Renderer::worker_{id}"))
-            .start_handler(|id| {
-                trace!(target: RENDERER, "renderer worker {id} start");
-                profiler::renderer::init_thread();
-            })
-            .exit_handler(|id| trace!(target: RENDERER, "renderer worker {id} exit"))
-            .build()
-    }
-
-    /// Helper method to create the data pool
-    fn create_data_pool() -> opool::Pool<PooledDataAllocator, PooledData<Rng>>
-    where
-        Rng: SeedableRng,
-    {
-        // Create a pool that should have enough RNGs stored for all of our threads
-        // We pool randoms so we don't have to init/create them in hot paths
-        opool::Pool::new_prefilled(256, PooledDataAllocator)
-    }
 }
 
 /// Clone Renderer
-impl<Rng: SeedableRng> Clone for Renderer<Rng> {
+impl<Rng: rand::SeedableRng> Clone for Renderer<Rng> {
     fn clone(&self) -> Self {
         // No good way to clone thread pool or data pool
         Self::new_from(
@@ -149,6 +112,7 @@ impl<Rng> Renderer<Rng> {
         self.camera = camera;
         self.clear_accumulation();
     }
+
     /// Sets the scene to be rendered.
     ///
     /// Also clears the accumulation buffer
@@ -170,6 +134,19 @@ impl<Rng> Renderer<Rng> {
         self.thread_pool = Self::create_thread_pool(num_threads)?;
         Ok(())
     }
+
+    /// Helper method to create the thread pool
+    fn create_thread_pool(num_threads: usize) -> Result<rayon::ThreadPool, rayon::ThreadPoolBuildError> {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(num_threads)
+            .thread_name(|id| format!("Renderer::worker_{id}"))
+            .start_handler(|id| {
+                tracing::trace!(target: RENDERER, "renderer worker {id} start");
+                profiler::renderer::init_thread();
+            })
+            .exit_handler(|id| tracing::trace!(target: RENDERER, "renderer worker {id} exit"))
+            .build()
+    }
 }
 
 // endregion Properties
@@ -186,17 +163,17 @@ struct PooledData<Rng> {
     /// Buffer of [Colour] values
     pub px_samples: Vec<Colour>,
     /// The [Uniform] number distribution for creating MSAA values
-    pub msaa_distr: Uniform<Number>,
+    pub msaa_distr: rand::distributions::Uniform<Number>,
 }
 
 /// Struct used with [`opool`], that allocates instances of [`PooledData<R>`] for us
 #[derive(Copy, Clone, Debug, Default)]
 struct PooledDataAllocator;
-impl<Rng: SeedableRng> opool::PoolAllocator<PooledData<Rng>> for PooledDataAllocator {
+impl<Rng: rand::SeedableRng> opool::PoolAllocator<PooledData<Rng>> for PooledDataAllocator {
     fn allocate(&self) -> PooledData<Rng> {
         // I will admit I have no idea if you can fill an array from a function like this
         let rngs = [(); 2].map(|()| Rng::from_entropy());
-        let msaa_dist = Uniform::new_inclusive(-0.5, 0.5);
+        let msaa_dist = rand::distributions::Uniform::new_inclusive(-0.5, 0.5);
         PooledData {
             rngs,
             px_coords: vec![],
@@ -210,10 +187,10 @@ impl<Rng: SeedableRng> opool::PoolAllocator<PooledData<Rng>> for PooledDataAlloc
 
 // region High-level Rendering
 
-impl<Rng: RngCore + Send + SeedableRng> Renderer<Rng> {
+impl<Rng: rand::RngCore + Send + rand::SeedableRng> Renderer<Rng> {
     // TODO: Should `render()` be fallible?
     pub fn render(&mut self) -> Render<Image> {
-        profile_function!();
+        puffin::profile_function!();
 
         // Render image, and collect stats
 
@@ -222,7 +199,7 @@ impl<Rng: RngCore + Send + SeedableRng> Renderer<Rng> {
 
         let image = match self.camera.calculate_viewport() {
             Err(err) => {
-                trace!(target: RENDERER, ?err, "couldn't calculate viewport");
+                tracing::trace!(target: RENDERER, ?err, "couldn't calculate viewport");
                 let [w, h] = self.options.dims();
                 Self::render_failed(w, h)
             }
@@ -241,7 +218,7 @@ impl<Rng: RngCore + Send + SeedableRng> Renderer<Rng> {
         };
 
         let end = puffin::now_ns();
-        let duration = Duration::from_nanos(end.abs_diff(start));
+        let duration = std::time::Duration::from_nanos(end.abs_diff(start));
 
         Render {
             img: image,
@@ -258,10 +235,10 @@ impl<Rng: RngCore + Send + SeedableRng> Renderer<Rng> {
     /// (and so we can't make an actual render)
     /// Probably only called if the viewport couldn't be calculated
     fn render_failed(w: usize, h: usize) -> Image {
-        profile_function!();
+        puffin::profile_function!();
 
         fn internal(w: usize, h: usize) -> Image {
-            profile_function!();
+            puffin::profile_function!();
 
             Image::from_fn(w, h, |x, y| {
                 Colour::from({
@@ -294,7 +271,7 @@ impl<Rng: RngCore + Send + SeedableRng> Renderer<Rng> {
     ) -> Image {
         use rayon::iter::{IntoParallelIterator as _, ParallelIterator as _};
 
-        profile_function!();
+        puffin::profile_function!();
 
         let [w, h] = render_opts.dims();
 
@@ -335,7 +312,7 @@ impl<Rng: RngCore + Send + SeedableRng> Renderer<Rng> {
 
 // region Low-level Rendering
 
-impl<Rng: RngCore> Renderer<Rng> {
+impl<Rng: rand::RngCore> Renderer<Rng> {
     /// Renders a single pixel in the scene, and returns the colour
     ///
     /// Takes into account [`RenderOpts::msaa`]
@@ -348,6 +325,8 @@ impl<Rng: RngCore> Renderer<Rng> {
         y: usize,
         pooled_data: &mut PooledData<Rng>,
     ) -> Colour {
+        use rand::distributions::Distribution as _;
+
         let sample_count = opts.samples.get();
 
         let PooledData {
@@ -513,45 +492,29 @@ impl<Rng: RngCore> Renderer<Rng> {
             col
         };
 
-        // PERF: Chose num samples as a tradeoff between not allocating on heap, and wasting stack space
-        //  If we go above 8 branches, the sheer amount of intersections will have a much bigger perf impact
-        //  than any heap allocations. Also we want to make sure we don't overflow the stack with high depths
-        let mut scatter_samples = SmallVec::<[Colour; 8]>::new();
-
-        // NOTE: The number of rays increases almost exponentially, with the number of branches and bounce depth
-        //  For a given `d: depth, b: branches`, we check `(b^(d+1) - 1) / (b - 1)` rays, per pixel
-        //  Normally, any more than 4 branches is visually indistinguishable, as well as crazy slow
-
         // Calculate the lighting samples for the scattered ray
-        for _ in 0..opts.ray_branching.get() {
-            let scatter_ray = {
-                let Some(future_ray_dir) = material.scatter(in_ray, scene, &intersection, rng) else {
-                    scatter_samples.push(Colour::BLACK);
-                    continue;
-                };
-                validate::normal3(&future_ray_dir);
-                let future_ray = Ray::new(intersection.pos_w, future_ray_dir);
+        let scatter_ray = material
+            .scatter(in_ray, scene, &intersection, rng)
+            .map(|scatter_vector| {
+                validate::normal3(&scatter_vector);
+                let future_ray = Ray::new(intersection.pos_w, scatter_vector);
                 validate::ray(future_ray);
                 future_ray
-            };
+            });
 
-            // Follow ray and calculate future bounces
-            let scatter_col = {
+        // Follow ray and calculate future bounces
+        let col_scatter = scatter_ray
+            .map(|scatter_ray| {
                 let col_future = Self::ray_colour_recursive(scene, &scatter_ray, opts, interval, depth + 1, rng);
                 validate::colour(&col_future);
                 let col_scattered =
                     material.reflected_light(in_ray, scene, &intersection, &scatter_ray, &col_future, rng);
                 validate::colour(&col_scattered);
                 col_scattered
-            };
+            })
+            .unwrap_or(Colour::BLACK);
 
-            scatter_samples.push(scatter_col);
-        }
-
-        let col_scatter_sum = scatter_samples.iter().copied().sum::<Colour>();
-        let col_scattered = col_scatter_sum / scatter_samples.len() as Channel;
-
-        col_emitted + col_scattered
+        col_emitted + col_scatter
     }
 }
 

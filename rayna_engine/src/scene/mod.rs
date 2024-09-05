@@ -222,7 +222,7 @@ impl Scene { $(paste::paste!(
     }
 
     #[doc = concat!(
-        "Adds a ", stringify!(inst_type), " to the scene, returning a ", stringify!(token_type), " that can be used to\
+        "Adds a ", stringify!($inst_type), " to the scene, returning a ", stringify!($token_type), " that can be used to\
         reference it in other components",
     )]
     pub fn [<add_ $ident>] <'l>(&'l mut self, value: impl Into<$inst_type>) -> $token_type {
@@ -233,7 +233,7 @@ impl Scene { $(paste::paste!(
     }
 
     #[doc = concat!(
-        "Uses a ", stringify!(token_type), " to obtain a reference to a ", stringify!($inst_type), ", panicking\
+        "Uses a ", stringify!($token_type), " to obtain a reference to a ", stringify!($inst_type), ", panicking\
         if the token did not exist in the scene",
     )]
     pub fn [<get_ $ident>] (&self, tok: &$token_type) -> &$inst_type {
@@ -242,7 +242,7 @@ impl Scene { $(paste::paste!(
     }
 
     #[doc = concat!(
-        "Uses a ", stringify!(token_type), " to obtain a reference to a ", stringify!(inst_type), ", returning [`None`]\
+        "Uses a ", stringify!($token_type), " to obtain a reference to a ", stringify!($inst_type), ", returning [`None`]\
         if the token did not exist in the scene",
     )]
     pub fn [<try_get_ $ident>] (&self, tok: &$token_type) -> Option<&$inst_type> {
@@ -250,13 +250,43 @@ impl Scene { $(paste::paste!(
     }
 
     #[doc = concat!(
-        "Returns an iterator over all the ", stringify!(ident), " components in the scene"
+        "Returns an iterator over all the ", stringify!($ident), " components in the scene"
     )]
     pub fn [<all_ $ident>] (&self) -> impl Iterator<Item = (&$token_type, &$inst_type)> {
         self.$field_name.iter()
     }
 
-);)*}
+);)*} // impl Scene
+
+/// Allow for indexing a scene by component tokens
+$(impl std::ops::Index<$token_type> for Scene {
+    type Output = $inst_type;
+
+    #[doc = concat!(" Index into a scene by the [struct@", stringify!($token_type), "] to access the [struct@", stringify!($inst_type), "] components.")]
+    #[doc = concat!(" ")]
+    #[doc = concat!(" # See Also")]
+    #[doc = concat!(" [fn@Scene::get_", stringify!($ident), "()]")]
+    fn index(&self, index: $token_type) -> &Self::Output {
+        paste::paste!{
+            self.[<get_ $ident>](&index)
+        }
+    }
+})* // impl Index<$token_type>
+
+/// Allow for indexing a scene by component token references
+$(impl std::ops::Index<&$token_type> for Scene {
+    type Output = $inst_type;
+
+    #[doc = concat!(" Index into a scene by the [struct@", stringify!($token_type), "] to access the [struct@", stringify!($inst_type), "] components.")]
+    #[doc = concat!(" ")]
+    #[doc = concat!(" # See Also")]
+    #[doc = concat!(" [fn@Scene::get_", stringify!($ident), "()]")]
+    fn index(&self, index: &$token_type) -> &Self::Output {
+        paste::paste!{
+            self.[<get_ $ident>](index)
+        }
+    }
+})* // impl Index<$token_type>
 
     };
 }

@@ -20,7 +20,6 @@ pub struct WorldCheckerTexture {
 impl Texture for WorldCheckerTexture {
     fn value(&self, scene: &Scene, intersection: &MeshIntersection, rng: &mut dyn RngCore) -> Colour {
         let pos = self.transform.map_point(intersection.pos_w);
-
         let tok = choose_checker(pos.to_array(), self.odd, self.even);
         scene.get_tex(&tok).value(scene, intersection, rng)
     }
@@ -36,18 +35,13 @@ pub struct UvCheckerTexture {
 impl Texture for UvCheckerTexture {
     fn value(&self, scene: &Scene, intersection: &MeshIntersection, rng: &mut dyn RngCore) -> Colour {
         let pos = self.transform.map(intersection.uv);
-
         let tok = choose_checker(pos.to_array(), self.odd, self.even);
         scene.get_tex(&tok).value(scene, intersection, rng)
     }
 }
 
 #[inline(always)]
-pub fn choose_checker<C: Euclid + FloatCore>(
-    coords: impl IntoIterator<Item = C>,
-    odd: TextureToken,
-    even: TextureToken,
-) -> TextureToken {
+pub fn choose_checker<T, C: Euclid + FloatCore>(coords: impl IntoIterator<Item = C>, odd: T, even: T) -> T {
     let two: C = C::one() + C::one();
     let sum: C = coords.into_iter().map(C::floor).fold(C::zero(), |a: C, b: C| a + b);
     let is_even = C::rem_euclid(&sum, &two) < C::one();

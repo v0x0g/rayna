@@ -338,6 +338,7 @@ pub fn RTIAW_DEMO_DARK() -> PresetScene {
 /// From **RayTracing The Next Week**, the demo scene at the end of the chapter (extended of course)
 pub fn RTTNW_DEMO() -> PresetScene {
     let mut scene = Scene::new();
+    scene.set_skybox(None);
     let rng = &mut rand::thread_rng();
 
     {

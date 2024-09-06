@@ -34,27 +34,6 @@ let obj_tok  = scene.insert_obj(SimpleObject::new(mesh_tok, mat_tok));
 ```
 Objects, Meshes, etc
 ```rust
-struct LambertianMaterial { tex: TextureToken, } // Old, nested
-struct LambertianMaterial<T: Texture> { tex: T } // New, token
-```
-
-Implementing traits
-```rust
-// Need to add a way to get the `&MaterialInstance` ref from a token
-// So add some helper method to scene
-impl Scene {
-    pub fn get_mat<'mat>(&'mat self, mat_tok: MaterialToken) ->  &'mat MaterialInstance {
-        &self.materials[mat_tok]
-    }
-}
-
-// Maybe we can use the index trait?
-impl Index<MaterialToken> for Scene {
-    type Output = MaterialInstance;
-    fn index(&self, mat_tok: MaterialToken) -> &Self::Output { self.get_mat(mat_tok) }
-}
-impl Index<MeshToken> for Scene {
-    type Output = MeshInstance;
-    fn index(&self, mesh_tok: MeshToken) -> &Self::Output { self.get_mesh(mesh_tok) }
-}
+struct LambertianMaterial { tex: TextureToken, } // New, token
+struct LambertianMaterial<T: Texture> { tex: T } // Old, nested
 ```

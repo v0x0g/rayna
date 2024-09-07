@@ -61,8 +61,8 @@ valuable = { version = "0.1.0", features = ["derive"] }
 
 # Performance
 opool = "0.1.1" # PATCHED
-puffin = "0.19.0" # PATCHED
-puffin_http = "0.16.0" # PATCHED
+puffin = "0.19.0"
+puffin_http = "0.16.0"
 rayon = "1.8.0"
 
 
@@ -70,11 +70,6 @@ rayon = "1.8.0"
 
 
 [patch.crates-io]
-# Using a custom fork of `puffin`
-# - So we can have multiple instances of the `puffin_http::Server` that are disjoint
-# - So that we can use a `profile_scope_custom!()` macro
-puffin = { git = "https://github.com/v0x0g/fork-puffin.git", branch = "main" }
-puffin_http = { git = "https://github.com/v0x0g/fork-puffin.git", branch = "main" }
 # Custom features from fork, removed type bounds
 opool = { git = "https://github.com/v0x0g/fork-opool.git", branch = "main" }
 

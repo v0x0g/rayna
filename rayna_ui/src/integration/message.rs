@@ -15,5 +15,5 @@ pub(crate) enum MessageToWorker {
 /// A message sent from the worker, to the UI
 #[derive(Clone, Debug)]
 pub(crate) enum MessageToUi {
-    RenderComplete(Render<Image>),
+    RenderComplete(Render<(Image, egui::ColorImage)>),
 }

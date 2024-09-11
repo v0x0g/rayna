@@ -465,10 +465,11 @@ impl RaynaApp {
                 Ok(MessageToUi::RenderComplete(render)) => {
                     trace!(target: UI, "received new frame from worker");
 
-                    puffin::profile_scope!("update_tex");
-                    self.render_buf_tex
-                        .set(render.img.to_egui(), self.render_buf_tex_options);
-                    self.render_stats = render.stats;
+                    {
+                        puffin::profile_scope!("update_tex");
+                        self.render_buf_tex.set(render.img.1, self.render_buf_tex_options);
+                        self.render_stats = render.stats;
+                    }
                 }
             }
         }

@@ -1,6 +1,8 @@
+use crate::ext::img_ext::ImageExt;
 use crate::integration::message::{MessageToUi, MessageToWorker};
 use crate::targets::*;
 use rayna_engine::core::profiler;
+use rayna_engine::render::render::Render;
 use rayna_engine::render::renderer::Renderer;
 use tracing::*;
 
@@ -80,9 +82,19 @@ impl BgWorker {
                 }
             }
 
-            let render_result = {
-                puffin::profile_scope!("make_render");
+            let render = {
+                puffin::profile_scope!("render");
                 renderer.render()
+            };
+            let render = {
+                use crate::ext::img_ext::ImageExt as _;
+
+                puffin::profile_scope!("convert");
+
+                Render {
+                    stats: render.stats,
+                    img: (render.img.clone(), render.img.to_egui()),
+                }
             };
 
             {
@@ -90,7 +102,7 @@ impl BgWorker {
 
                 // If an error is received, it means all receivers are dropped
                 // meaning the main thread must have exited
-                if let Err(_a) = msg_tx.send(MessageToUi::RenderComplete(render_result)) {
+                if let Err(_) = msg_tx.send(MessageToUi::RenderComplete(render)) {
                     error!(target: BG_WORKER, "failed to send render to ui: all receivers dropped");
                     error!(target: BG_WORKER, "worked will now exit");
                     break 'run;

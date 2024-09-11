@@ -1,0 +1,69 @@
+use crate::core::types::{Number, Point2, Point3, Vector3};
+use crate::material::MaterialToken;
+use educe::Educe;
+use std::cmp::Ordering;
+
+/// A struct representing a ray-mesh intersection
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct MeshIntersection {
+    /// The position in world coordinates of the intersection
+    pub pos_w: Point3,
+    /// The position in mesh-local coordinates of the intersection
+    pub pos_l: Point3,
+    /// Surface normal at intersection.
+    /// This should point in the *outwards* direction, irrespective of the
+    /// incident ray
+    ///
+    /// # Invariants
+    ///  - Must be normalised
+    ///  - Cannot be zero/nan
+    pub normal: Vector3,
+    /// Surface normal at intersection.
+    /// This should point in the *opposite* direction to the incident ray
+    ///
+    /// # Invariants
+    /// - Must be normalised
+    /// - Cannot be Zero/Nan
+    pub ray_normal: Vector3,
+    pub front_face: bool,
+    /// Distance along the ray that the intersection occurred
+    pub dist: Number,
+    /// The UV coordinates for the point on the mesh's surface. Normally used for texture mapping.
+    ///
+    /// # Convention
+    /// As a general rule, for any *bounded* face (one that doesn't extend to infinity along any direction),
+    /// this should range from `0.0..=1.0` for both dimensions. If the surface is infinite (e.g. infinite ground plane),
+    /// then it is acceptable to use unbounded UV coordinates, if not wrapping/mirroring them
+    pub uv: Point2,
+    /// Numeric ID for which "face" was hit
+    ///
+    /// For objects with a single 'surface' (like a [sphere](crate::mesh::sphere::SphereMesh), this would be always zero.
+    /// For a mesh that may have multiple faces (like a [box](`crate::mesh::axis_box::AxisBoxMesh`), this would unique per-side.
+    pub side: usize,
+}
+
+impl Eq for MeshIntersection {}
+
+impl PartialOrd<Self> for MeshIntersection {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Number::partial_cmp(&self.dist, &other.dist)
+    }
+}
+
+impl Ord for MeshIntersection {
+    fn cmp(&self, other: &Self) -> Ordering {
+        Number::partial_cmp(&self.dist, &other.dist)
+            .expect("couldn't compare intersections distances: invariant `.dist != NaN` failed")
+    }
+}
+
+/// A small wrapper class that includes a reference to a material as well as
+/// the actual intersection with the model.
+#[derive(Clone, Debug, Educe)]
+#[educe(Ord, PartialOrd, Eq, PartialEq)]
+pub struct ObjectIntersection {
+    pub intersection: MeshIntersection,
+    /// NOTE: For all comparisons, this field is ignored ([PartialEq], [Ord], [PartialOrd])
+    #[educe(Ord = false, Eq = false)]
+    pub material: MaterialToken,
+}

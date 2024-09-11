@@ -1,13 +1,13 @@
+use crate::core::ray::Ray;
 use crate::core::types::{Angle, Number, Point3, Transform3, Vector3};
-use crate::shared::ray::Ray;
-use crate::shared::{rng, validate};
+use crate::core::{rng, validate};
 use puffin::profile_function;
 use rand::Rng;
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use valuable::Valuable;
 
-#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
+// TODO: Multiple camera types (yes, make it a component)
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Camera {
     /// Position the camera is located at
     pub pos: Point3,
@@ -167,7 +167,7 @@ impl Camera {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Viewport {
     pub pos: Point3,
     pub pixel_center: Point3,

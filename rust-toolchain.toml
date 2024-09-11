@@ -1,3 +1,2 @@
 [toolchain]
-# TODO: Toolchain is out of date, needs updating (although this will introduce build errors)
-channel = "nightly-2024-06-26"
+channel = "stable"

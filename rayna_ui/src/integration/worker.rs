@@ -1,34 +1,22 @@
 use crate::ext::img_ext::ImageExt;
 use crate::integration::message::{MessageToUi, MessageToWorker};
-use crate::targets::BG_WORKER;
-use egui::ColorImage;
-use puffin::{profile_function, profile_scope};
+use crate::targets::*;
 use rayna_engine::core::profiler;
-use rayna_engine::material::MaterialInstance;
-use rayna_engine::mesh::MeshInstance;
-use rayna_engine::object::ObjectInstance;
 use rayna_engine::render::render::Render;
 use rayna_engine::render::renderer::Renderer;
-use rayna_engine::skybox::SkyboxInstance;
-use rayna_engine::texture::TextureInstance;
-use std::thread::JoinHandle;
-use std::time::Duration;
-use tracing::{info, trace, warn};
+use tracing::*;
 
-#[derive(Clone, Debug)]
 pub(super) struct BgWorker {
     /// Sender for messages from the worker, back to the UI
     pub msg_tx: flume::Sender<MessageToUi>,
     /// Receiver for messages from the UI, to the worker
     pub msg_rx: flume::Receiver<MessageToWorker>,
-    pub render_tx: flume::Sender<Render<ColorImage>>,
-    pub renderer:
-        Renderer<ObjectInstance<MeshInstance, MaterialInstance<TextureInstance>>, SkyboxInstance, rand::rngs::SmallRng>,
+    pub renderer: Renderer<rand::rngs::SmallRng>,
 }
 
 impl BgWorker {
     /// Starts the worker in a background thread, returning the thread handle
-    pub fn start_bg_thread(self) -> std::io::Result<JoinHandle<()>> {
+    pub fn start_bg_thread(self) -> std::io::Result<std::thread::JoinHandle<()>> {
         std::thread::Builder::new()
             .name("BgWorker::thread".into())
             .spawn(move || self.thread_run())
@@ -43,69 +31,81 @@ impl BgWorker {
         let Self {
             msg_tx,
             msg_rx,
-            render_tx,
             mut renderer,
         } = self;
 
-        loop {
+        'run: loop {
             profiler::renderer::lock().new_frame();
 
-            profile_function!(); // place here not at the start since we are looping
+            puffin::profile_function!(); // place here not at the start since we are looping
 
-            if msg_rx.is_disconnected() {
-                warn!(target: BG_WORKER, "all senders disconnected from channel");
-                break;
-            }
-
-            // Have two conditions: (empty) or (disconnected)
-            // Checked if disconnected above and skip if empty, so just check Ok() here
             {
-                profile_scope!("receive_messages");
-                while let Ok(msg) = msg_rx.try_recv() {
-                    match msg {
-                        MessageToWorker::SetRenderOpts(o) => {
-                            trace!(target: BG_WORKER, ?o, "got render opts from ui");
-                            renderer.set_options(o);
+                puffin::profile_scope!("receive_messages");
+                'recv: loop {
+                    match msg_rx.try_recv() {
+                        Ok(msg) => match msg {
+                            MessageToWorker::SetRenderOpts(o) => {
+                                debug!(target: BG_WORKER, ?o, "got render opts from ui");
+                                renderer.set_options(o);
+                            }
+                            MessageToWorker::SetScene(s) => {
+                                debug!(target: BG_WORKER, ?s, "got scene from ui");
+                                renderer.set_scene(s);
+                            }
+                            MessageToWorker::SetCamera(c) => {
+                                debug!(target: BG_WORKER, ?c, "got scene from ui");
+                                renderer.set_camera(c);
+                            }
+                        },
+                        Err(flume::TryRecvError::Empty) => {
+                            trace!(target: BG_WORKER, "no messages from ui");
+                            break 'recv;
                         }
-                        MessageToWorker::SetScene(s) => {
-                            trace!(target: BG_WORKER, ?s, "got scene from ui");
-                            renderer.set_scene(s);
-                        }
-                        MessageToWorker::SetCamera(c) => {
-                            trace!(target: BG_WORKER, ?c, "got scene from ui");
-                            renderer.set_camera(c);
+                        Err(flume::TryRecvError::Disconnected) => {
+                            error!(target:BG_WORKER, "failed to receive messages from ui: all senders dropped");
+                            error!(target: BG_WORKER, "worker will now exit");
+                            break 'run;
                         }
                     }
                 }
             }
 
             {
-                profile_scope!("waiting_channel_empty");
+                puffin::profile_scope!("waiting_channel_empty");
                 // UI hasn't received the last message we sent
                 if !msg_tx.is_empty() {
                     trace!(target: BG_WORKER, "channel not empty, waiting");
-                    std::thread::sleep(Duration::from_millis(10));
+                    std::thread::sleep(std::time::Duration::from_millis(1));
                     continue;
                 } else {
                     trace!(target: BG_WORKER, "channel empty, sending new image");
                 }
             }
 
-            let render_result = {
-                profile_scope!("make_render");
-                let render = renderer.render();
+            let render = {
+                puffin::profile_scope!("render");
+                renderer.render()
+            };
+            let render = {
+                use crate::ext::img_ext::ImageExt as _;
+
+                puffin::profile_scope!("convert");
 
                 Render {
-                    img: render.img.to_egui(),
                     stats: render.stats,
+                    img: (render.img.clone(), render.img.to_egui()),
                 }
             };
 
             {
-                profile_scope!("send_frame");
+                puffin::profile_scope!("send_frame");
 
-                if let Err(_) = render_tx.send(render_result) {
-                    warn!(target: BG_WORKER, "failed to send rendered frame to UI")
+                // If an error is received, it means all receivers are dropped
+                // meaning the main thread must have exited
+                if let Err(_) = msg_tx.send(MessageToUi::RenderComplete(render)) {
+                    error!(target: BG_WORKER, "failed to send render to ui: all receivers dropped");
+                    error!(target: BG_WORKER, "worked will now exit");
+                    break 'run;
                 }
             }
         }

@@ -1,32 +1,32 @@
+use crate::core::intersect::MeshIntersection;
+use crate::core::ray::Ray;
+use crate::core::rng;
 use crate::core::types::{Colour, Vector3};
 use crate::material::Material;
-use crate::shared::intersect::Intersection;
-use crate::shared::ray::Ray;
-use crate::shared::rng;
-use crate::texture::Texture;
-use crate::texture::TextureInstance;
+use crate::texture::{Texture, TextureToken};
 
+use crate::scene::Scene;
 use rand::RngCore;
 
 #[derive(Copy, Clone, Debug)]
-pub struct LambertianMaterial<Tex: Texture> {
-    pub albedo: Tex,
+pub struct LambertianMaterial {
+    pub albedo: TextureToken,
 }
 
-impl Default for LambertianMaterial<TextureInstance> {
-    fn default() -> Self {
-        Self {
-            albedo: [0.5; 3].into(),
-        }
+impl From<TextureToken> for LambertianMaterial {
+    fn from(value: TextureToken) -> Self {
+        Self { albedo: value }
     }
 }
 
-impl<Tex: Texture> From<Tex> for LambertianMaterial<Tex> {
-    fn from(value: Tex) -> Self { Self { albedo: value } }
-}
-
-impl<Tex: Texture> Material for LambertianMaterial<Tex> {
-    fn scatter(&self, _ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
+impl Material for LambertianMaterial {
+    fn scatter(
+        &self,
+        _ray: &Ray,
+        _scene: &Scene,
+        intersection: &MeshIntersection,
+        rng: &mut dyn RngCore,
+    ) -> Option<Vector3> {
         // Completely random scatter direction, in same hemisphere as normal
         let rand = rng::vector_in_unit_sphere(rng);
         // Bias towards the normal so we get a `cos(theta)` distribution (Lambertian scatter)
@@ -39,11 +39,21 @@ impl<Tex: Texture> Material for LambertianMaterial<Tex> {
     fn reflected_light(
         &self,
         _ray: &Ray,
-        intersect: &Intersection,
+        scene: &Scene,
+        intersect: &MeshIntersection,
         _future_ray: &Ray,
         future_col: &Colour,
         rng: &mut dyn RngCore,
     ) -> Colour {
-        future_col * self.albedo.value(intersect, rng)
+        future_col * scene.get_tex(&self.albedo).value(scene, intersect, rng)
+    }
+    fn emitted_light(
+        &self,
+        _ray: &Ray,
+        _scene: &Scene,
+        _intersection: &MeshIntersection,
+        _rng: &mut dyn RngCore,
+    ) -> Colour {
+        Colour::BLACK
     }
 }

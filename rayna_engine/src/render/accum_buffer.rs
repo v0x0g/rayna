@@ -29,7 +29,9 @@ pub struct AccumulationValue<C = ColourRgb> {
 
 impl<C: Add<Output = C> + Div<Number, Output = C> + Clone> AccumulationValue<C> {
     /// Inserts a sample with a weighting of one
-    pub fn insert_sample(&mut self, sample: C) -> C { self.insert_sample_weighted(sample, 1.0) }
+    pub fn insert_sample(&mut self, sample: C) -> C {
+        self.insert_sample_weighted(sample, 1.0)
+    }
 
     /// Inserts a sample with a given weight
     ///
@@ -42,7 +44,9 @@ impl<C: Add<Output = C> + Div<Number, Output = C> + Clone> AccumulationValue<C> 
     }
 
     /// Gets the overall accumulated colour value
-    pub fn get(&self) -> C { self.mean.clone() }
+    pub fn get(&self) -> C {
+        self.mean.clone()
+    }
 }
 
 impl<C: Default + Clone> AccumulationBuffer<C> {
@@ -74,5 +78,7 @@ impl<C: Default + Clone> AccumulationBuffer<C> {
     ///
     /// This is the number of times that [`Self::new_frame`] has been called, so it
     /// might be different to the per-pixel accumulation counters.
-    pub fn frame_count(&self) -> usize { self.counter }
+    pub fn frame_count(&self) -> usize {
+        self.counter
+    }
 }

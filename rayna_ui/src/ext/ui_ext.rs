@@ -67,6 +67,10 @@ impl UiExt for egui::Ui {
         .ui(self)
     }
 
-    fn fill_available_width(&mut self) { self.allocate_space(egui::Vec2::new(self.available_width(), 0.0)); }
-    fn fill_available_height(&mut self) { self.allocate_space(egui::Vec2::new(0.0, self.available_height())); }
+    fn fill_available_width(&mut self) {
+        self.allocate_space(egui::Vec2::new(self.available_width(), 0.0));
+    }
+    fn fill_available_height(&mut self) {
+        self.allocate_space(egui::Vec2::new(0.0, self.available_height()));
+    }
 }

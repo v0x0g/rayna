@@ -1,6 +1,6 @@
+use crate::core::ray::Ray;
 use crate::core::types::{Colour, Image, Number};
-use crate::mesh::primitive::sphere;
-use crate::shared::ray::Ray;
+use crate::mesh::sphere;
 use crate::skybox::Skybox;
 use std::sync::Arc;
 
@@ -11,7 +11,9 @@ pub struct HdrImageSkybox {
 }
 
 impl From<Image> for HdrImageSkybox {
-    fn from(image: Image) -> Self { Self { image: Arc::new(image) } }
+    fn from(image: Image) -> Self {
+        Self { image: Arc::new(image) }
+    }
 }
 
 impl Skybox for HdrImageSkybox {

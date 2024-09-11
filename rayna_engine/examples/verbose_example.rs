@@ -1,7 +1,9 @@
 // Type aliases used everywhere in the engine. Always import this
 use rayna_engine::core::types::*;
 
+// Standard Camera struct
 use rayna_engine::scene::camera::Camera;
+
 /// Creates a camera object, that controls where the image is rendered from.
 ///
 /// See [Camera] for documentation for the fields a camera has.
@@ -32,85 +34,63 @@ pub fn create_camera() -> Camera {
     return camera;
 }
 
-// The scene struct is generic, use `StandardScene` most of the time
-// as it's the easiest, and generally most performant
-use rayna_engine::scene::StandardScene;
-// Standard enum types, that wrap the other types into one, for static-dispatch.
-// So you can accept only one type (`MeshInstance`), but it actually accepts
-// spheres, boxes, triangles, etc
-use rayna_engine::{
-    material::MaterialInstance, mesh::MeshInstance, object::ObjectInstance, skybox::SkyboxInstance,
-    texture::TextureInstance,
-};
+// Scene type that holds all the components
+use rayna_engine::scene::Scene;
 
 /// Creates the scene that will be rendered
 ///
 /// The scene contains a list of all of the objects that will be rendered, as well
 /// as the skybox.
-pub fn create_scene() -> StandardScene {
+pub fn create_scene() -> Scene {
     // Specific types we use in this example
     use rayna_engine::{
-        material::lambertian::LambertianMaterial, mesh::primitive::sphere::SphereMesh, object::simple::SimpleObject,
+        material::lambertian::LambertianMaterial, mesh::sphere::SphereMesh, object::simple::SimpleObject,
         object::transform::ObjectTransform, skybox::simple::SimpleSkybox, texture::solid::SolidTexture,
+        texture::TextureInstance,
     };
 
+    // Create the scene object
+    let mut scene = Scene::new();
     // Choose the default skybox, looks reasonably good
-    let skybox = SimpleSkybox;
-
-    // Create a vector to hold our scene objects. We will convert this into a
-    // proper type later.
-    // Note all the specified types here, normally this is implicit via the compiler
-    let mut objects = Vec::<ObjectInstance<MeshInstance, MaterialInstance<TextureInstance>>>::new();
+    scene.set_skybox(SimpleSkybox);
 
     // Create an object and add it to the scene
-    objects.push(
-        SimpleObject::new(
-            // Create a sphere for the mesh (shape) of the object
-            // NOTE: Using a tuple for sphere pos, since it's `impl Into<Point3>`
-            SphereMesh::new((1., 0., 0.), 0.95),
-            // A lambertian material is a fancy way of saying a diffuse material,
-            // such as a painted wall, or concrete. It wants a texture, which we can
-            // create by converting a colour, which turns into a uniform texture
-            LambertianMaterial {
-                albedo: Colour::RED.into(),
-            },
-            // The identity transform does nothing, so it leaves the object as-is.
-            ObjectTransform::IDENTITY,
-        )
-        // NOTE: the call to `.into()` at the end, to convert it to `ObjectInstance`
-        .into(),
-    );
-    objects.push(
-        SimpleObject::new(
-            // NOTE: Using an array for sphere pos, since it's `impl Into<Point3>`
-            SphereMesh::new([-1., 0., 0.], 0.95),
-            LambertianMaterial {
-                // NOTE: Explicitly doing the `Colour -> TextureInstance` conversion here
-                albedo: TextureInstance::from(SolidTexture::from(Colour::WHITE * 0.5)),
-            },
-            // NOTE: Can use `Option::None` for the identity transform
-            // `Option::Some(transform)` also works
-            None,
-        )
-        .into(),
-    );
-    objects.push(
-        SimpleObject::new(
-            // NOTE: Using an array for sphere pos, since it's `impl Into<Point3>`
-            SphereMesh::new([0., -0.2, -0.6], 0.2),
-            LambertianMaterial {
-                albedo: TextureInstance::from([0.2, 0.4, 1.0]),
-            },
-            None,
-        )
-        .into(),
-    );
 
-    let scene = StandardScene {
-        // Convert our vec of objects into an `ObjectInstance`
-        objects: ObjectInstance::from(objects), // or `objects.into()`
-        skybox: SkyboxInstance::from(skybox),   // or `skybox.into()`
-    };
+    // Use a sphere for the mesh (shape) of the object
+    // NOTE: Using a tuple for sphere pos, since it's `impl Into<Point3>`
+    let mesh = scene.add_mesh(SphereMesh::new((1., 0., 0.), 0.95));
+    // A lambertian material is a fancy way of saying a diffuse material,
+    // such as a painted wall, or concrete. It wants a texture, which we can
+    // create by converting a colour, which turns into a uniform texture
+    let tex = scene.add_tex(Colour::RED);
+    let mat = scene.add_mat(LambertianMaterial { albedo: tex });
+    // The identity transform does nothing, so it leaves the object as-is.
+    let trans = ObjectTransform::IDENTITY;
+    scene.add_obj(SimpleObject::new_from(&scene, mesh, mat, trans));
+
+    // Create a second object
+    // Here we use `SimpleObject::new_in()` to add the material and mesh to the scene
+    // automatically.
+
+    // NOTE: Using an array for sphere pos, since it's `impl Into<Point3>`
+    let mesh = SphereMesh::new([-1., 0., 0.], 0.95);
+    // NOTE: Explicitly doing the `Colour -> TextureInstance` conversion here
+    let tex = TextureInstance::from(SolidTexture::from(Colour::WHITE * 0.5));
+    let tex = scene.add_tex(tex);
+    let mat = LambertianMaterial { albedo: tex };
+    // NOTE: Can use `Option::None` for the identity transform
+    // `Option::Some(transform)` also works
+    let trans = None;
+    let obj = SimpleObject::new_in(&mut scene, mesh, mat, trans);
+    scene.add_obj(obj);
+
+    // Create the third object
+
+    // NOTE: Using an array for sphere pos, since it's `impl Into<Point3>`
+    let mesh = scene.add_mesh(SphereMesh::new([0., -0.2, -0.6], 0.2));
+    let tex = scene.add_tex(TextureInstance::from([0.2, 0.4, 1.0]));
+    let mat = scene.add_mat(LambertianMaterial { albedo: tex });
+    scene.add_obj(SimpleObject::new_from(&scene, mesh, mat, None));
 
     return scene;
 }
@@ -119,6 +99,7 @@ pub fn create_scene() -> StandardScene {
 use rayna_engine::render::renderer::Renderer;
 // These two control how the image is rendered
 use rand::rngs::SmallRng;
+// Specific types we use in this example
 use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
 
 /// Here we create the renderer, using the scene and camera we created earlier.
@@ -128,17 +109,13 @@ use rayna_engine::render::render_opts::{RenderMode, RenderOpts};
 /// Type parameters provided here, but normally are inferred by the compiler.
 /// We use the [SmallRng] as the RNG source, although any RNG will work as long as it's
 /// seedable ([rand::SeedableRng]) and thread-safe ([std::marker::Send])
-pub fn create_renderer(
-    scene: StandardScene,
-    camera: Camera,
-) -> Renderer<ObjectInstance<MeshInstance, MaterialInstance<TextureInstance>>, SkyboxInstance, SmallRng> {
+pub fn create_renderer(scene: Scene, camera: Camera) -> Renderer<SmallRng> {
     let render_options = RenderOpts {
-        width: nonzero::nonzero!(200_usize),       // Image Dimensions
-        height: nonzero::nonzero!(200_usize),      // Image Dimensions
-        samples: nonzero::nonzero!(1_usize),       // Sample each pixel multiple times
-        mode: RenderMode::PBR,                     // Make normal renders
-        ray_depth: 3,                              // Bounce three times
-        ray_branching: nonzero::nonzero!(1_usize), // Ignore this; advanced and probably useless
+        width: nonzero::nonzero!(200_usize),  // Image Dimensions
+        height: nonzero::nonzero!(200_usize), // Image Dimensions
+        samples: nonzero::nonzero!(1_usize),  // Sample each pixel multiple times
+        mode: RenderMode::PBR,                // Make normal renders
+        ray_depth: 3,                         // Bounce three times
     };
     return Renderer::new_from(scene, camera, render_options, 2).unwrap();
 }
@@ -147,10 +124,8 @@ pub fn create_renderer(
 ///
 /// We don't need to take in the scene or camera, since they're already stored inside
 /// the renderer. All we need to do is call [Renderer::render()]!!
-pub fn do_renders<Obj, Sky, Rng>(mut renderer: Renderer<Obj, Sky, Rng>) -> (Image, Image)
+pub fn do_renders<Rng>(mut renderer: Renderer<Rng>) -> (Image, Image)
 where
-    Obj: rayna_engine::object::Object,
-    Sky: rayna_engine::skybox::Skybox,
     Rng: rand::RngCore + std::marker::Send + rand::SeedableRng,
 {
     // Render a single image, without accumulation (since it's the first render)
@@ -215,16 +190,21 @@ pub fn save_and_show_images((image_single, image_accum): (Image, Image)) {
     opener::open(&path_accum).ok();
 
     // Also print to the console, using ANSI code fanciness
+    // This is for demo purposes only
     println!("press enter to print the images to the terminal...");
     std::io::stdin().lines().next();
     viuer::print(&image::DynamicImage::from(output_single), &Default::default()).expect("failed to print image");
+    println!(
+        "{}",
+        String::from_iter(std::iter::repeat('\n').take(viuer::terminal_size().1 as usize))
+    );
     viuer::print(&image::DynamicImage::from(output_accum), &Default::default()).expect("failed to print image");
     std::thread::sleep(std::time::Duration::from_secs(2)); // Sleep to allow time to print
 }
 
 pub fn main() {
     // See each of the functions for how this works
-    let scene: StandardScene = create_scene();
+    let scene: Scene = create_scene();
     let camera: Camera = create_camera();
     let renderer = create_renderer(scene, camera);
     let (image_single, image_accum) = do_renders(renderer);

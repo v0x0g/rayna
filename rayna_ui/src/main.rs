@@ -1,10 +1,4 @@
 #![doc = include_str!("../readme.md")]
-#![feature(type_alias_impl_trait)]
-#![feature(trait_alias)]
-#![feature(associated_type_defaults)]
-#![feature(error_generic_member_access)]
-#![feature(slice_as_chunks)]
-#![feature(vec_into_raw_parts)]
 // Be aggressive on warnings
 #![deny(rustdoc::all)]
 #![deny(clippy::all)]
@@ -15,29 +9,41 @@
     let_underscore,
     nonstandard_style,
     refining_impl_trait,
-    rust_2018_compatibility,
-    rust_2021_compatibility,
-    rust_2024_compatibility,
     unused
 )]
 // Don't allow any warnings in doctests
 #![doc(test(attr(deny(all))))]
 
-use crate::app::RaynaApp;
+use std::ops::Deref;
+
 use crate::targets::*;
-use crate::ui_val::APP_NAME;
-use tracing::debug;
+use clap::Parser;
+use tracing::*;
 use tracing_subscriber::prelude::*;
 
-mod app;
-mod backend;
-mod ext;
-mod integration;
-mod profiler;
-pub(crate) mod targets;
-mod ui_val;
+pub mod app;
+pub mod backend;
+pub mod ext;
+pub mod integration;
+pub mod profiler;
+pub mod targets;
+pub mod ui_val;
 
-fn main() -> anyhow::Result<()> {
+#[derive(clap::Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// Which UI rendering backend to use
+    ///
+    /// If not supplied, automatically selects any available backend
+    #[arg(short, long)]
+    backend: Option<String>,
+}
+
+fn main() {
+    // ===== CLI Args =====
+
+    let args = Args::parse();
+
     // ===== Tracing =====
 
     let stderr_output = tracing_subscriber::fmt::layer()
@@ -97,15 +103,34 @@ fn main() -> anyhow::Result<()> {
 
     // ===== UI Backend =====
 
-    // TODO: Allow backend selection from CLI arguments; use `clap` crate
-    let mut backends = backend::get_all::<RaynaApp>();
-    let backend = backends.remove("eframe").unwrap();
+    let backend_ctor = match args.backend {
+        Some(backend_selection) => match BACKENDS.iter().find(|b| b.0 == backend_selection.deref()) {
+            Some(backend) => backend,
+            None => {
+                error!("cannot select backend {backend_selection}: does not exist");
+                info!(
+                    "valid backends are: {}",
+                    itertools::Itertools::join(&mut BACKENDS.iter().map(|b| b.0), ", ")
+                );
+                return;
+            }
+        },
+        None => BACKENDS
+            .first()
+            .expect("failed to auto select backend: no backends available"),
+    };
 
+    // Doesn't return Err, expected to always succeed or panic if fatal
     debug!(target: MAIN, "run");
-    match backend.run(APP_NAME) {
-        Ok(()) => debug!(target: MAIN, "run complete (success)"),
-        Err(e) => debug!(target: MAIN, err = ?e, "run complete (error)"),
-    }
-
-    Ok(())
+    (backend_ctor.1)().run(&crate::ui_val::APP_NAME);
+    debug!(target: MAIN, "run complete");
 }
+
+const BACKENDS: &'static [(&'static str, fn() -> Box<dyn backend::UiBackend<app::RaynaApp>>)] = &[
+    #[cfg(feature = "backend_eframe")]
+    ("eframe", || Box::new(backend::eframe::EframeBackend::new())),
+    #[cfg(feature = "backend_miniquad")]
+    ("miniquad", || Box::new(backend::miniquad::MiniquadBackend::new())),
+];
+
+const_format::assertcp!(BACKENDS.len() > 0, "compiled without any backend flags enabled");

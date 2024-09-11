@@ -20,26 +20,34 @@ impl<const N: usize> Colour<N> {
     pub const CHANNEL_COUNT: usize = N;
 }
 
-impl<const N: usize> const Default for Colour<N> {
-    fn default() -> Self { Self::new([0.; N]) }
+impl<const N: usize> Default for Colour<N> {
+    fn default() -> Self {
+        Self::new([0.; N])
+    }
 }
 
 // region Constructors
 
 impl<const N: usize> Colour<N> {
-    pub const fn new(val: [Channel; N]) -> Self { Self(val) }
+    pub const fn new(val: [Channel; N]) -> Self {
+        Self(val)
+    }
 }
 
 // endregion Constructors
 
 // region RGB Impl
 
-impl const From<(Channel, Channel, Channel)> for ColourRgb {
-    fn from(val: (Channel, Channel, Channel)) -> Self { Self::new(val.into()) }
+impl From<(Channel, Channel, Channel)> for ColourRgb {
+    fn from(val: (Channel, Channel, Channel)) -> Self {
+        Self::new(val.into())
+    }
 }
-impl const From<ColourRgb> for (Channel, Channel, Channel) {
+impl From<ColourRgb> for (Channel, Channel, Channel) {
     //noinspection RsLiveness - `r,g,b` are used
-    fn from(ColourRgb { 0: [r, g, b] }: ColourRgb) -> Self { (r, g, b) }
+    fn from(ColourRgb { 0: [r, g, b] }: ColourRgb) -> Self {
+        (r, g, b)
+    }
 }
 
 // endregion RGB Impl
@@ -49,6 +57,7 @@ impl const From<ColourRgb> for (Channel, Channel, Channel) {
 impl<const N: usize> Colour<N> {
     pub const BLACK: Self = Self::new([0.; N]);
     pub const WHITE: Self = Self::new([1.; N]);
+    pub const HALF_GREY: Self = Self::new([0.5; N]);
 }
 
 impl Colour<3> {
@@ -61,10 +70,12 @@ impl Colour<3> {
 
 // region To/From impls
 
-impl<const N: usize> const From<[Channel; N]> for Colour<N> {
-    fn from(val: [Channel; N]) -> Self { Self::new(val) }
+impl<const N: usize> From<[Channel; N]> for Colour<N> {
+    fn from(val: [Channel; N]) -> Self {
+        Self::new(val)
+    }
 }
-impl<const N: usize> const From<&[Channel]> for Colour<N> {
+impl<const N: usize> From<&[Channel]> for Colour<N> {
     /// Converts a slice reference into a colour
     ///
     /// # Panics
@@ -80,38 +91,50 @@ impl<const N: usize> const From<&[Channel]> for Colour<N> {
         Self::new(val)
     }
 }
-impl<const N: usize> const From<Colour<N>> for [Channel; N] {
+impl<const N: usize> From<Colour<N>> for [Channel; N] {
     //noinspection RsLiveness - `val` is used
-    fn from(Colour::<N> { 0: val }: Colour<N>) -> Self { val }
+    fn from(Colour::<N> { 0: val }: Colour<N>) -> Self {
+        val
+    }
 }
 
 // endregion To/From impls
 
 // region Iterating/Indexing
 
-impl<const N: usize> const IntoIterator for Colour<N> {
+impl<const N: usize> IntoIterator for Colour<N> {
     type Item = Channel;
     type IntoIter = array::IntoIter<Channel, N>;
 
-    fn into_iter(self) -> Self::IntoIter { self.0.into_iter() }
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
 }
 
-impl<const N: usize> const Deref for Colour<N> {
+impl<const N: usize> Deref for Colour<N> {
     type Target = [Channel; N];
 
-    fn deref(&self) -> &Self::Target { &self.0 }
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
-impl<const N: usize> const DerefMut for Colour<N> {
-    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.0 }
+impl<const N: usize> DerefMut for Colour<N> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
 }
 
-impl<const N: usize> const Index<usize> for Colour<N> {
+impl<const N: usize> Index<usize> for Colour<N> {
     type Output = Channel;
 
-    fn index(&self, index: usize) -> &Self::Output { &self.0[index] }
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
 }
-impl<const N: usize> const IndexMut<usize> for Colour<N> {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output { &mut self.0[index] }
+impl<const N: usize> IndexMut<usize> for Colour<N> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.0[index]
+    }
 }
 
 // endregion Iterating/Indexing
@@ -121,7 +144,9 @@ impl<const N: usize> const IndexMut<usize> for Colour<N> {
 impl<const N: usize> Colour<N> {
     /// Maps each element of the colour with the given closure, and returns the new colour
     #[inline]
-    pub fn map(&self, op: impl Fn(Channel) -> Channel) -> Self { self.0.map(op).into() }
+    pub fn map(&self, op: impl Fn(Channel) -> Channel) -> Self {
+        self.0.map(op).into()
+    }
     /// Maps each element of the colour with the given closure, with the element of another, and returns the new colour.
     #[inline]
     pub fn map2(&self, other: &Self, mut op: impl FnMut(Channel, Channel) -> Channel) -> Self {
@@ -130,7 +155,9 @@ impl<const N: usize> Colour<N> {
 
     /// Same as [Self::map], but acts in_place
     #[inline]
-    pub fn map_assign(&mut self, op: impl Fn(&mut Channel)) { self.0.iter_mut().for_each(op) }
+    pub fn map_assign(&mut self, op: impl Fn(&mut Channel)) {
+        self.0.iter_mut().for_each(op)
+    }
     /// Same as [Self::map2], but acts in_place
     #[inline]
     pub fn map2_assign(&mut self, other: &Self, mut op: impl FnMut(&mut Channel, Channel)) {
@@ -206,20 +233,30 @@ impl_op_assign!(impl {<const N: usize>} core::ops::ShlAssign : fn shl_assign(col
 impl_op_assign!(impl {<const N: usize>} core::ops::ShrAssign : fn shr_assign(col: Colour<N>, shift: usize) { col.0.rotate_right(shift) });
 
 impl<const N: usize> core::iter::Sum for Colour<N> {
-    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self { iter.fold(Self::BLACK, Self::add) }
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Self::BLACK, Self::add)
+    }
 }
 impl<const N: usize> core::iter::Product for Colour<N> {
-    fn product<I: Iterator<Item = Self>>(iter: I) -> Self { iter.fold(Self::BLACK, Self::mul) }
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Self::BLACK, Self::mul)
+    }
 }
 
 impl<const N: usize> num_traits::Zero for Colour<N> {
-    fn zero() -> Self { Self::BLACK }
+    fn zero() -> Self {
+        Self::BLACK
+    }
 
-    fn is_zero(&self) -> bool { *self == Self::BLACK }
+    fn is_zero(&self) -> bool {
+        *self == Self::BLACK
+    }
 }
 
 impl<const N: usize> num_traits::One for Colour<N> {
-    fn one() -> Self { Self::WHITE }
+    fn one() -> Self {
+        Self::WHITE
+    }
 }
 
 // endregion

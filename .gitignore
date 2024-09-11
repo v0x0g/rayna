@@ -9,30 +9,30 @@
 ### GIT FILES ###
 
 # Allow repo settings
-!.gitignore
-!.gitattributes
-!readme.md
+!/.gitignore
+!/.gitattributes
+!/readme.md
 
 
 ### CARGO ###
 
-!./Cargo.toml
+!/Cargo.toml
 # Creating a binary, so remove from .gitignore
 #!Cargo.lock
-!rustfmt.toml
-!rust-toolchain.toml
+!/rustfmt.toml
+!/rust-toolchain.toml
 
 
 ### CODE ###
 
-!rayna_engine/
-!rayna_engine/**
-!rayna_ui/
-!rayna_ui/**
+!/rayna_engine/
+!/rayna_engine/**
+!/rayna_ui/
+!/rayna_ui/**
 
 
 ### MISC ###
 
-!scripts
-!scripts/**
+!/scripts
+!/scripts/**
 

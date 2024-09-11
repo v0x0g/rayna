@@ -1,11 +1,10 @@
 use crate::core::types::Number;
 use nonzero::nonzero;
-use serde::Serialize;
 use std::num::NonZeroUsize;
 use strum_macros::{Display, EnumIter, IntoStaticStr};
 use valuable::Valuable;
 
-#[derive(Copy, Clone, Debug, Valuable, Serialize)]
+#[derive(Copy, Clone, Debug, Valuable)]
 pub struct RenderOpts {
     /// The target width of the render (pixels)
     pub width: NonZeroUsize,
@@ -18,19 +17,9 @@ pub struct RenderOpts {
     pub mode: RenderMode,
     /// How many times a ray can bounce
     pub ray_depth: usize,
-    /// (Advanced) How many sub-rays each ray should split into, each time it bounces
-    ///
-    /// E.g. If this is `2`, we get `1 -> 2 -> 4 -> 8 -> 16 -> ...` rays at each bounce (assuming they all scatter)
-    ///
-    /// # Performance
-    /// Note that this causes an exponential increase in the number of rays. It is advisable to keep this very low.
-    /// This is mostly only effective in highly diffuse scenes.
-    pub ray_branching: NonZeroUsize,
 }
 
-#[derive(
-    Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Valuable, Serialize, EnumIter, IntoStaticStr, Display,
-)]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Valuable, EnumIter, IntoStaticStr, Display)]
 pub enum RenderMode {
     /// Used physically-based rendering, makes pretty images
     #[default]
@@ -53,9 +42,13 @@ pub enum RenderMode {
 
 impl RenderOpts {
     /// Returns the dimensions of the render (width and height) as a [usize] slice
-    pub fn dims(&self) -> [usize; 2] { [self.width.get(), self.height.get()] }
+    pub fn dims(&self) -> [usize; 2] {
+        [self.width.get(), self.height.get()]
+    }
 
-    pub fn aspect_ratio(&self) -> Number { self.width.get() as Number / self.height.get() as Number }
+    pub fn aspect_ratio(&self) -> Number {
+        self.width.get() as Number / self.height.get() as Number
+    }
 }
 
 impl Default for RenderOpts {
@@ -66,7 +59,6 @@ impl Default for RenderOpts {
             samples: nonzero!(1_usize),
             mode: Default::default(),
             ray_depth: 5,
-            ray_branching: nonzero!(1_usize),
         }
     }
 }

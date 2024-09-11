@@ -1,21 +1,29 @@
+use crate::core::intersect::MeshIntersection;
+use crate::core::ray::Ray;
+use crate::core::rng;
 use crate::core::types::{Colour, Number, Vector3};
 use crate::material::Material;
-use crate::shared::intersect::Intersection;
-use crate::shared::ray::Ray;
-use crate::shared::{math, rng};
-use crate::texture::Texture;
+use crate::math::vector;
+use crate::texture::{Texture, TextureToken};
 
+use crate::scene::Scene;
 use rand::RngCore;
 
 #[derive(Copy, Clone, Debug)]
-pub struct MetalMaterial<Tex: Texture> {
-    pub albedo: Tex,
+pub struct MetalMaterial {
+    pub albedo: TextureToken,
     pub fuzz: Number,
 }
 
-impl<Tex: Texture> Material for MetalMaterial<Tex> {
-    fn scatter(&self, ray: &Ray, intersection: &Intersection, rng: &mut dyn RngCore) -> Option<Vector3> {
-        let reflected = math::reflect(ray.dir(), intersection.ray_normal);
+impl Material for MetalMaterial {
+    fn scatter(
+        &self,
+        ray: &Ray,
+        _scene: &Scene,
+        intersection: &MeshIntersection,
+        rng: &mut dyn RngCore,
+    ) -> Option<Vector3> {
+        let reflected = vector::reflect(ray.dir(), intersection.ray_normal);
         let rand = rng::normal_on_unit_sphere(rng);
 
         // Generate some fuzzy reflections by adding a "cloud" of random points
@@ -36,11 +44,22 @@ impl<Tex: Texture> Material for MetalMaterial<Tex> {
     fn reflected_light(
         &self,
         _ray: &Ray,
-        intersect: &Intersection,
+        scene: &Scene,
+        intersect: &MeshIntersection,
         _future_ray: &Ray,
         future_col: &Colour,
         rng: &mut dyn RngCore,
     ) -> Colour {
-        future_col * self.albedo.value(intersect, rng)
+        future_col * scene.get_tex(&self.albedo).value(scene, intersect, rng)
+    }
+
+    fn emitted_light(
+        &self,
+        _ray: &Ray,
+        _scene: &Scene,
+        _intersection: &MeshIntersection,
+        _rng: &mut dyn RngCore,
+    ) -> Colour {
+        Colour::BLACK
     }
 }

@@ -1,13 +1,13 @@
 use approx::assert_relative_eq;
 use rand::thread_rng;
 use rayna_engine::core::colour::ColourRgb;
+use rayna_engine::core::rng;
 use rayna_engine::core::types::*;
 use rayna_engine::material::lambertian::LambertianMaterial;
-use rayna_engine::mesh::primitive::sphere::SphereMesh;
+use rayna_engine::mesh::sphere::SphereMesh;
 use rayna_engine::object::simple::SimpleObject;
 use rayna_engine::scene::camera::Camera;
-use rayna_engine::scene::StandardScene;
-use rayna_engine::shared::rng;
+use rayna_engine::scene::Scene;
 use rayna_engine::skybox::simple::WhiteSkybox;
 
 mod common;
@@ -33,17 +33,16 @@ pub fn sphere_colours() {
 
 /// Internal implementation for [sphere_colours()]
 fn sphere_colours_internal(target_col: ColourRgb, thresh: Channel) {
-    let scene = StandardScene {
-        objects: SimpleObject::new_uncorrected(
-            SphereMesh::new(Point3::ZERO, 1.0),
-            LambertianMaterial {
-                albedo: target_col.into(),
-            },
-            None,
-        )
-        .into(),
-        skybox: WhiteSkybox.into(),
-    };
+    let mut scene = Scene::new();
+
+    scene.set_skybox(WhiteSkybox);
+
+    let tex = scene.add_tex(target_col);
+    let mat = scene.add_mat(LambertianMaterial { albedo: tex });
+    let mesh = scene.add_mesh(SphereMesh::new(Point3::ZERO, 1.0));
+    let obj = SimpleObject::new_from(&scene, mesh, mat, None);
+    scene.add_obj(obj);
+
     let camera = Camera {
         pos: Point3::ZERO,
         v_fov: Angle::from_degrees(45.),

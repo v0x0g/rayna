@@ -1,6 +1,14 @@
+pub mod aabb;
 pub mod colour;
+pub mod component;
+pub mod gradient;
 pub mod image;
-pub mod macros;
+pub mod intersect;
+pub mod interval;
 pub mod profiler;
+pub mod ray;
+pub mod rng;
 pub mod targets;
+pub mod token;
 pub mod types;
+pub mod validate;
